@@ -1,48 +1,37 @@
 #include <Arduino.h>
 #include "hardware.h"
 #include <Wire.h>
-#include <Adafruit_INA219.h>
-#include <LiquidCrystal_PCF8574.h>
 
+#include <LiquidCrystal_PCF8574.h>
+//#include "valve_mgmt.h"
+#include "motor.h"
+#include "terminal.h"
+
+void callback_app();
 
 HardwareSerial Serial3(USART3);
 
-Adafruit_INA219 ina219;
 
 //using Matthias Hertel driver https://github.com/mathertel/LiquidCrystal_PCF8574
 LiquidCrystal_PCF8574 lcd(0x27);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 
+char inChar;
+byte valvenr;
+byte position;
+
+
+
 void setup() {
+
+   // status led
+  pinMode(LED, OUTPUT);
+
   // Debug UART
   Serial3.begin(115200);
   while(!Serial3);
   Serial3.println("Arduino Menu Library");Serial3.flush();
 
-  // status led
-  pinMode(LED, OUTPUT);
-
-  // valve MUX relay
-  pinMode(CTRL_MUX, OUTPUT);
-
-  // L293 enable pins
-  pinMode(CTRL_ENA0, OUTPUT);
-  pinMode(CTRL_ENA1, OUTPUT);
-  pinMode(CTRL_ENA2, OUTPUT);
-  pinMode(CTRL_ENA3, OUTPUT);
-  pinMode(CTRL_ENA4, OUTPUT);
-  pinMode(CTRL_ENA5, OUTPUT);
-
-  // L293 direction pin
-  pinMode(CTRL_DIRECTION, OUTPUT); 
-
-  // Initialize the INA219
-  if (! ina219.begin()) {
-    Serial3.println("Failed to find INA219 chip");
-    while (1) { delay(10); }
-  }
-  ina219.setCalibration_16V_320mA();  
-  
   // LCD
   lcd.begin(16,2);  
   lcd.setBacklight(255);
@@ -51,13 +40,24 @@ void setup() {
   lcd.setCursor(0, 1);
   lcd.print("r-site.net");
   delay(2000);
+
+  // valve app setup
+  appsetup();
+
+  Terminal_Init();
 }
 
 void loop() {
   static int x = 0;
-  float current_mA = 0;
-  char inChar;
+  
+  unsigned char len = 0;
+
+  
   static uint32_t time = 0;
+  static uint32_t loop_10ms = 0;
+  static uint32_t loop_100ms = 0;
+
+  int16_t recvcmd;
 
   
 
@@ -66,8 +66,10 @@ void loop() {
 
     //Serial3.println("ttt");
 
-    current_mA = ina219.getCurrent_mA();
-    Serial3.print("Current:       "); Serial3.print(current_mA); Serial3.println(" mA");
+    //current_mA = ina219.getCurrent_mA();
+    //Serial3.print("Current:       "); Serial3.print(current_mA); Serial3.println(" mA");
+    //Serial3.print("Revs: "); Serial3.println(revcounter);
+
     
     digitalWrite(LED, !digitalRead(LED));   // turn the LED on (HIGH is the voltage level)
     //delay(1000);              // wait for a second
@@ -77,39 +79,73 @@ void loop() {
 
     if (x<3) {
       x++;
-      digitalWrite(CTRL_MUX, !digitalRead(CTRL_MUX));
+      //digitalWrite(CTRL_MUX, !digitalRead(CTRL_MUX));
     }
 
   }
 
+  // 100 ms loop
+  if (millis() > (uint32_t) 100 + loop_100ms ) {
+    loop_100ms = millis();  
 
-  if (Serial3.available()) {
-    // get the new byte:
-    inChar = (char)Serial3.read();   
-  }
-  else inChar = 0;
+    // len = Serial3.available();
+    // if (len==1) {
+    //   inChar = (char)Serial3.read(); 
+    // }
+    // else if (len==2) {
+    //   inChar  = (char)Serial3.read(); 
+    //   valvenr = (byte)Serial3.read() - 48;
+    // }
+    // else {
+    //   while(Serial3.available()) { Serial3.read(); }
+    // }
+    //else inChar = 0;
 
-  if(inChar == 'a') {
-    ENA0_ON();
-    Serial3.println("ENA0 on");
-    Serial3.flush();
-  }
-  else if (inChar == 's') {
-    ENA0_OFF();
-    Serial3.println("ENA0 off");
-    Serial3.flush();
-  }
-  else if (inChar == 'q') {
-    DIR_ON();
-    Serial3.println("DIR on");
-    Serial3.flush();
-  }
-  else if (inChar == 'w') {
-    DIR_OFF();
-    Serial3.println("DIR off");
-    Serial3.flush();
+    recvcmd = Terminal_Serve();
   }
 
-  delay(50);
+
+  // if(inChar == 'a') {
+  //   //ENA0_ON();
+  //   Serial3.println("ENA0 on");
+  //   Serial3.flush();
+  // }
+  // else if (inChar == 's') {
+  //   //ENA0_OFF();
+  //   Serial3.println("ENA0 off");
+  //   Serial3.flush();
+  // }
+  // else if (inChar == 'q') {
+  //   //DIR_ON();
+  //   //MUX_ON();
+  //   Serial3.println("DIR on");
+  //   Serial3.flush();
+  // }
+  // else if (inChar == 'w') {
+  //   //DIR_OFF();
+  //   //MUX_ON();
+  //   Serial3.println("DIR off");
+  //   Serial3.flush();
+  // }
+
+  //delay(50);
+
+  // 10 ms loop
+  if (millis() > (uint32_t) 10 + loop_10ms ) {    
+    loop_10ms = millis();  
+    //valvecycle();
+
+    appcycle(inChar, valvenr, position);
+    
+    inChar = 0;   // clear command for next cycle
+  }
+}
+
+
+void callback_app(char cmd, byte valveindex, byte pos) {
+
+  valvenr = valveindex;
+  inChar = cmd;
+  position = pos;
 
 }

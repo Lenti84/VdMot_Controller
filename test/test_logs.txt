@@ -1,0 +1,45 @@
+mit 70 mA Limit
+A: learned closing_count = 10907<\r>
+<\n>
+A: learned opening_count = 13754<\r>
+<\n>
+A: learned deadzone_count = 4294964449<\r>
+<\n>
+A: learned scaler = 137
+
+
+A: learned closing_count = 10798<\r>
+<\n>
+A: learned opening_count = 13637<\r>
+<\n>
+A: learned deadzone_count = 4294964457<\r>
+<\n>
+A: learned scaler = 136
+
+A: learned closing_count = 10958<\r>
+<\n>
+A: learned opening_count = 13533<\r>
+<\n>
+A: learned deadzone_count = 4294964721<\r>
+<\n>
+A: learned scaler = 135
+
+A: learned closing_count = 10950<\r>
+<\n>
+A: learned opening_count = 13545<\r>
+<\n>
+A: learned deadzone_count = 4294964701<\r>
+<\n>
+A: learned scaler = 135<\r>
+
+
+
+
+mit 65 mA Limit
+A: learned closing_count = 10541<\r>
+<\n
+A: learned opening_count = 12936<\r>
+<\n>
+A: learned deadzone_count = 4294964901<\r>
+<\n>
+A: learned scaler = 129
