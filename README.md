@@ -13,6 +13,8 @@ It controls up to 12 HmIP-VdMot actuators and is based on custom hardware.
 - supply voltage 10...24V
 - housing for 35mm DIN rail
 
+PCB 3D: ![-](./hardware/b-sample_pcb_3D.PNG "b-sample pcb 3D")
+
 ## Software
 - tbd
 
