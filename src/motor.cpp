@@ -13,7 +13,9 @@
 #define DIR_OPEN       0 
 
 // define number of supported valves
-#define VALVECOUNT      12
+//#define VALVECOUNT      12
+
+#define TIMEOUT_UNDERCURRENT    150          // cycles of "byte motorcycle (byte valvenr, byte cmd)"
 
 // befehle motor statemachine
 #define CMD_M_OPEN      'o'
@@ -38,6 +40,7 @@
 #define M_RES_ENDSTOP     6
 #define M_RES_STOP        7
 #define M_RES_STOP_ISR    8
+#define M_RES_NOCURRENT   9
 
 
 void set_motor (unsigned char valvenr, unsigned char dir);
@@ -47,11 +50,11 @@ void callback_motorstop ();
 byte motorcycle (byte valvenr, byte cmd);
 byte appcycle(byte cmd, byte valvenr);
 
-
+enum ASTATE appstate;
 
 Adafruit_INA219 ina219;
 
-
+//byte appstate = A_INIT;
 //int counter;
 //unsigned long time;
 float        current_mA = 0;
@@ -59,16 +62,11 @@ unsigned int isr_counter;      // ISR var for counting revolutions
 byte         isr_turning;      // ISR var for state of motor
 unsigned int isr_target;       // ISR var for valve target count
 
-struct valves {
-//typedef struct valves {
-  unsigned int closing_count;  
-  unsigned int opening_count;
-  unsigned int deadzone_count;  
-  unsigned int scaler;
-  byte valve_position;
-};
+valves myvalves[ACTUATOR_COUNT];
 
-valves myvalves[12];
+char command;
+byte valvenr;
+byte poschangecmd;
 
 //volatile uint32_t revcounter;
 
@@ -103,38 +101,39 @@ byte appsetup () {
   // external interrupt for counting revs
   //attachInterrupt(digitalPinToInterrupt(REVINPIN),isr_counter,RISING);
 
+
+
+  // init valve data
+  for (int x = 0;x<ACTUATOR_COUNT;x++) {
+      myvalves[x].actual_position = 0;
+      myvalves[x].target_position = 0;
+      myvalves[x].meancurrent = 0;
+      myvalves[x].scaler = 89;
+      myvalves[x].status = VLV_STATE_UNKNOWN;
+  }
+
+  appstate = A_INIT;
+
   return 0;
 }
 
 
-byte appcycle (byte cmd, byte valvenr, byte position) {
-  #define A_INIT      0
-  #define A_IDLE      1
-  #define A_CLOSE     2
-  #define A_OPEN1     3
-  #define A_OPEN2     4
-  #define A_LEARN1    5
-  #define A_LEARN2    6
-  #define A_LEARN3    7
-  #define A_LEARN4    8
-  #define A_CLOSE1    9
-  #define A_CLOSE2    10 
+byte appcycle () {
   
   byte temp;
+  //byte stateresult;
 
-  static byte appstate = A_INIT;
   //static int cyclecnt = 0;
   //static int debouncecnt = 0;
   byte result;
 
-  static byte valve_target;
+  static byte pos_change;
 
   static unsigned int closing_count;  
   static unsigned int opening_count;
   static unsigned int deadzone_count;
   
   static unsigned int scaler;
-  //static byte valve_position;
   static byte valveindex;
 
   switch (appstate) {
@@ -142,49 +141,52 @@ byte appcycle (byte cmd, byte valvenr, byte position) {
                   if ( motorcycle(0, CMD_M_NOTHING) == M_RES_IDLE ) {                    
                      Serial3.println("A: init ready");
                      appstate = A_IDLE;
-                     valveindex = 0;
                      
-                     myvalves[valveindex].scaler = 130;
-                     myvalves[valveindex].valve_position = 0;    
+                     //valveindex = 0;                     
+                     //myvalves[valveindex].scaler = 130;
+                     //myvalves[valveindex].target_position = 0;    
 
-                    valveindex = 255;
+                     valveindex = 255;
                     
                   }
                   break;
 
     case A_IDLE:  
                   valveindex = valvenr;
-                  if (cmd == CMD_A_OPEN) {                    
+                  if (command == CMD_A_OPEN) {                    
                     Serial3.print("A: cmd open for valve ");                  
                     Serial3.println(valveindex);                    
                     appstate = A_OPEN1;
-                    valve_target = position;
+                    pos_change = poschangecmd;
                   }
-                  else if (cmd == CMD_A_CLOSE) {
+                  else if (command == CMD_A_CLOSE) {
                     Serial3.print("A: cmd close for valve ");                  
                     Serial3.println(valveindex);                                        
                     appstate = A_CLOSE1;  
-                    valve_target = position;
+                    pos_change = poschangecmd;
                   }
-                  else if (cmd == CMD_A_LEARN) {                    
+                  else if (command == CMD_A_LEARN) {                    
                     Serial3.print("A: cmd learn for valve ");                  
                     Serial3.println(valveindex);                    
                     appstate = A_LEARN1;  
                   }
                   else {
                     appstate = A_IDLE;  
-                  }                  
+                  }           
+
+                  command = '\0';       // clear command for next loop call, prevents reevaluating
                   break;
 
     case A_OPEN1: // start valve opening
-                  isr_target = myvalves[valveindex].scaler * valve_target;
+                  isr_target = myvalves[valveindex].scaler * pos_change;
                   
                   if (motorcycle (valveindex, CMD_M_OPEN) == M_RES_OPENS) {
                     Serial3.print("A: begin opening by ");                  
-                    Serial3.println(valve_target);                                                            
+                    Serial3.println(pos_change);
+                    myvalves[valveindex].status = VLV_STATE_OPENING;                                                            
                     appstate = A_OPEN2;
                     isr_counter=0;
-                  }   
+                  }
                   else {
                     Serial3.print("A: cant open valve");                  
                     appstate = A_IDLE;
@@ -196,23 +198,32 @@ byte appcycle (byte cmd, byte valvenr, byte position) {
                   if (temp == M_RES_STOP) {
                     Serial3.println("A: opened valve");                  
                     appstate = A_IDLE;
-                    myvalves[valveindex].valve_position += valve_target;                    
-                    Serial3.print("A: new position "); Serial3.println(myvalves[valveindex].valve_position);
+                    myvalves[valveindex].actual_position += pos_change;
+                    myvalves[valveindex].status = VLV_STATE_IDLE;                    
+                    Serial3.print("A: new position "); Serial3.println(myvalves[valveindex].actual_position);
                   }
+                  else if (temp == M_RES_NOCURRENT) {
+                    Serial3.println("A: undercurrent");
+                    myvalves[valveindex].status = VLV_STATE_OPENCIR;
+                    appstate = A_IDLE;
+                    isr_counter=0;
+                  } 
                   else if (temp == M_RES_ENDSTOP) {
                     Serial3.println("A: opened valve to end stop");
                     appstate = A_IDLE;
-                    myvalves[valveindex].valve_position = 100;
-                    Serial3.print("A: new position "); Serial3.println(myvalves[valveindex].valve_position);
+                    myvalves[valveindex].status = VLV_STATE_IDLE;
+                    myvalves[valveindex].actual_position = 100;
+                    Serial3.print("A: new position "); Serial3.println(myvalves[valveindex].actual_position);
                   }                  
                   break;
 
     case A_CLOSE1: // start valve closing
-                  isr_target = myvalves[valveindex].scaler * valve_target;
+                  isr_target = myvalves[valveindex].scaler * pos_change;
                   
                   if (motorcycle (valveindex, CMD_M_CLOSE) == M_RES_CLOSES) {
                     Serial3.print("A: begin closing by ");                  
-                    Serial3.println(valve_target);                                                            
+                    Serial3.println(pos_change);       
+                    myvalves[valveindex].status = VLV_STATE_CLOSING;                                                     
                     appstate = A_CLOSE2;
                     isr_counter=0;
                   }   
@@ -227,14 +238,22 @@ byte appcycle (byte cmd, byte valvenr, byte position) {
                   if (temp == M_RES_STOP) {
                     Serial3.println("A: closed valve");
                     appstate = A_IDLE;
-                    myvalves[valveindex].valve_position -= valve_target; 
-                    Serial3.print("A: new position "); Serial3.println(myvalves[valveindex].valve_position);                   
+                    myvalves[valveindex].status = VLV_STATE_IDLE;
+                    myvalves[valveindex].actual_position -= pos_change; 
+                    Serial3.print("A: new position "); Serial3.println(myvalves[valveindex].actual_position);                   
                   }
+                  else if (temp == M_RES_NOCURRENT) {
+                    Serial3.println("A: undercurrent");
+                    myvalves[valveindex].status = VLV_STATE_OPENCIR;
+                    appstate = A_IDLE;
+                    isr_counter=0;
+                  } 
                   else if (temp == M_RES_ENDSTOP) {
                     Serial3.println("A: closed valve to end stop");
                     appstate = A_IDLE;
-                    myvalves[valveindex].valve_position = 0;
-                    Serial3.print("A: new position "); Serial3.println(myvalves[valveindex].valve_position);
+                    myvalves[valveindex].status = VLV_STATE_IDLE;
+                    myvalves[valveindex].actual_position = 0;
+                    Serial3.print("A: new position "); Serial3.println(myvalves[valveindex].actual_position);
                   }                  
                   break;                  
     
@@ -242,20 +261,29 @@ byte appcycle (byte cmd, byte valvenr, byte position) {
                   Serial3.println("A: try learning valve");                  
                   // first: closing completely
                   motorcycle (valveindex, CMD_M_CLOSE);
+                  myvalves[valveindex].status = VLV_STATE_CLOSING;
                   appstate = A_LEARN2;
                   isr_target = 65535;       // max value to disable stopping
                   break;
 
     case A_LEARN2:
                   // waiting for closed valve
-                  if (motorcycle (valveindex, 0) == M_RES_ENDSTOP) {
+                  temp = motorcycle (valveindex, 0);
+                  if (temp == M_RES_ENDSTOP) {
                     Serial3.println("A: closed valve before learning, now opening");                  
                     // second: opening completely and count rotations
                     isr_counter=0;
+                    myvalves[valveindex].status = VLV_STATE_OPENING;
                     motorcycle (valveindex, CMD_M_OPEN);
                     isr_target = 65535;       // max value to disable stopping
                     appstate = A_LEARN3;
-                  }                  
+                  }
+                  else if (temp == M_RES_NOCURRENT) {
+                    Serial3.println("A: undercurrent");
+                    myvalves[valveindex].status = VLV_STATE_OPENCIR;
+                    appstate = A_IDLE;
+                    isr_counter=0;
+                  }               
                   break;
                   
     case A_LEARN3:
@@ -265,6 +293,7 @@ byte appcycle (byte cmd, byte valvenr, byte position) {
                     opening_count = isr_counter;                    
                     // third: closing completely and count rotations
                     isr_counter=0;
+                    myvalves[valveindex].status = VLV_STATE_CLOSING;
                     motorcycle (valveindex, CMD_M_CLOSE);
                     isr_target = 65535;       // max value to disable stopping
                     appstate = A_LEARN4;
@@ -289,7 +318,8 @@ byte appcycle (byte cmd, byte valvenr, byte position) {
                     myvalves[valveindex].opening_count = opening_count;
                     myvalves[valveindex].deadzone_count = deadzone_count;
                     myvalves[valveindex].scaler = scaler;
-                    myvalves[valveindex].valve_position = 0;    // because valve was closed completely                    
+                    myvalves[valveindex].actual_position = 0;    // because valve was closed completely                    
+                    myvalves[valveindex].status = VLV_STATE_IDLE;
 
                     valveindex = 255;
                                                                                 
@@ -315,10 +345,12 @@ byte motorcycle (byte valvenr, byte cmd) {
   #define M_TURNING   4
   #define M_STOP      5
   #define M_STOP_ISR  6
+  #define M_UNDERCURR 7
 
   static byte motorstate = M_INIT;
   static int cyclecnt = 0;
   static int debouncecnt = 0;
+  static byte undercurrcnt = 0;
   byte result;
 
   // quickpass for isr state switching
@@ -359,10 +391,12 @@ byte motorcycle (byte valvenr, byte cmd) {
                     }
   
                     // correct motor nr?
-                    if (motorstate != M_IDLE && valvenr > VALVECOUNT) {
+                    if (motorstate != M_IDLE && valvenr > ACTUATOR_COUNT) {
                       motorstate = M_IDLE;
                       result = M_RES_IDLE;
                     }
+
+                    undercurrcnt = 0;
                     
                     break;
       
@@ -413,11 +447,21 @@ byte motorcycle (byte valvenr, byte cmd) {
                     }
 
                     //if (debouncecnt > 50 && cyclecnt > 5) {
-                    if (debouncecnt > 5) {
+                    if (debouncecnt > 7) {
 
                       current_mA = ina219.getCurrent_mA();
 
-                      if(current_mA > 65 || current_mA < -65) {
+                      if(current_mA < 3 && current_mA > -3) {
+                        undercurrcnt++;
+                        if (undercurrcnt > TIMEOUT_UNDERCURRENT)
+                        {
+                          undercurrcnt = 0;
+                          motorstate = M_UNDERCURR;
+                        }                        
+                      }
+
+                      if(current_mA > 60 || current_mA < -60)
+                      {
                         //motorstate = M_STOP;  
                         motorstate = M_IDLE;
                         result = M_RES_ENDSTOP;
@@ -429,7 +473,8 @@ byte motorcycle (byte valvenr, byte cmd) {
                         Serial3.print("M: Cnt:     "); Serial3.println(isr_counter, DEC);                                 
                         Serial3.println("M: Autostop, reached end stop");
                       }
-                      else {
+                      else 
+                      {
                         //Serial3.print("M: Current: "); Serial3.print(current_mA); Serial3.println(" mA");
                       }
                       //cyclecnt=0;
@@ -456,6 +501,19 @@ byte motorcycle (byte valvenr, byte cmd) {
                     Serial3.println("M: target stop");  
                     motorstate = M_STOP;
                     result = M_RES_STOP_ISR;  
+                    break;
+
+      case M_UNDERCURR:         
+                    detachInterrupt(digitalPinToInterrupt(REVINPIN));
+                    Serial3.println("M: state undercurrent detected, stopped");    
+                                                      
+                    ena_motor(0, 0);
+                    isr_turning = 0;
+                    MUX_OFF();
+                    
+                    motorstate = M_IDLE;
+                    result = M_RES_NOCURRENT;                  
+                    
                     break;
                     
       default:      motorstate = M_IDLE;
@@ -509,4 +567,25 @@ void callback_motorstop () {
   ena_motor(0, 0);
   isr_turning = 0;
   motorcycle(0, CMD_M_STOP_ISR);  
+}
+
+
+
+// returns state of application  state machine
+enum ASTATE appgetstate () {
+  return appstate;
+}
+
+
+
+int16_t appsetaction(char cmd, byte valveindex, byte posdelta) {
+
+  if(appstate == A_IDLE) {
+    valvenr = valveindex;
+    command = cmd;
+    poschangecmd = posdelta;
+    return 0;
+  }
+  else return -1;
+
 }

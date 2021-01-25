@@ -1,25 +1,19 @@
 #include <Arduino.h>
 #include "hardware.h"
 #include <Wire.h>
-
 #include <LiquidCrystal_PCF8574.h>
-//#include "valve_mgmt.h"
 #include "motor.h"
 #include "terminal.h"
-
-void callback_app();
-
-HardwareSerial Serial3(USART3);
+#include "communication.h"
 
 
 //using Matthias Hertel driver https://github.com/mathertel/LiquidCrystal_PCF8574
 LiquidCrystal_PCF8574 lcd(0x27);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 
-char inChar;
-byte valvenr;
-byte position;
 
+
+unsigned char target_position_mirror[ACTUATOR_COUNT];
 
 
 void setup() {
@@ -27,10 +21,11 @@ void setup() {
    // status led
   pinMode(LED, OUTPUT);
 
-  // Debug UART
-  Serial3.begin(115200);
-  while(!Serial3);
-  Serial3.println("Arduino Menu Library");Serial3.flush();
+  // terminal for debug
+  Terminal_Init();
+
+  // serial communication to ESP8266
+  communication_setup();
 
   // LCD
   lcd.begin(16,2);  
@@ -44,13 +39,19 @@ void setup() {
   // valve app setup
   appsetup();
 
-  Terminal_Init();
+  // do after call appsetup();
+  // for(int x = 0; x<ACTUATOR_COUNT; x++)
+  // {
+  //     target_position_mirror[x] = myvalves[x].target_position;
+  // }
+
+
 }
 
 void loop() {
   static int x = 0;
   
-  unsigned char len = 0;
+  //unsigned char len = 0;
 
   
   static uint32_t time = 0;
@@ -82,70 +83,78 @@ void loop() {
       //digitalWrite(CTRL_MUX, !digitalRead(CTRL_MUX));
     }
 
+    //Serial.println("help");
+    //Serial.println("gactp 0 14 ");
+
+    Serial.println("STMalive");   // send alive to ESP8266
+
   }
 
   // 100 ms loop
   if (millis() > (uint32_t) 100 + loop_100ms ) {
     loop_100ms = millis();  
 
-    // len = Serial3.available();
-    // if (len==1) {
-    //   inChar = (char)Serial3.read(); 
-    // }
-    // else if (len==2) {
-    //   inChar  = (char)Serial3.read(); 
-    //   valvenr = (byte)Serial3.read() - 48;
-    // }
-    // else {
-    //   while(Serial3.available()) { Serial3.read(); }
-    // }
-    //else inChar = 0;
+    // if application is idle search for new tasks
+    if(appgetstate() == A_IDLE) {
+
+      // check all valves
+      for(int x=0; x<ACTUATOR_COUNT; x++)
+      {
+          // handle first found difference then break
+          //if(target_position_mirror[x] != myvalves[x].target_position)
+          if(myvalves[x].actual_position != myvalves[x].target_position)
+          {
+              Serial3.print("M: target pos changed for valve "); Serial3.println(x, 10);
+              
+              // check if valve was learned before
+              if(myvalves[x].status == VLV_STATE_UNKNOWN) 
+              {
+                Serial3.print("M: learning started for valve "); Serial3.println(x, 10);
+                appsetaction(CMD_A_LEARN,x,0);
+              }
+              else // valve was learned before
+              {
+                // should valve be opened
+                //if(myvalves[x].target_position > target_position_mirror[x]) {
+                if(myvalves[x].target_position > myvalves[x].actual_position) {
+                  appsetaction(CMD_A_OPEN,x,myvalves[x].target_position-myvalves[x].actual_position);
+                }
+                // valve should be closed
+                else {
+                  appsetaction(CMD_A_CLOSE,x,myvalves[x].actual_position-myvalves[x].target_position);
+                }
+              }
+          }
+      }
+      
+      // update target position mirror for next cycle
+      // for(int x = 0; x<ACTUATOR_COUNT; x++)
+      // {
+      //     target_position_mirror[x] = myvalves[x].target_position;
+      // }
+
+    }
 
     recvcmd = Terminal_Serve();
+
   }
 
-
-  // if(inChar == 'a') {
-  //   //ENA0_ON();
-  //   Serial3.println("ENA0 on");
-  //   Serial3.flush();
-  // }
-  // else if (inChar == 's') {
-  //   //ENA0_OFF();
-  //   Serial3.println("ENA0 off");
-  //   Serial3.flush();
-  // }
-  // else if (inChar == 'q') {
-  //   //DIR_ON();
-  //   //MUX_ON();
-  //   Serial3.println("DIR on");
-  //   Serial3.flush();
-  // }
-  // else if (inChar == 'w') {
-  //   //DIR_OFF();
-  //   //MUX_ON();
-  //   Serial3.println("DIR off");
-  //   Serial3.flush();
-  // }
-
-  //delay(50);
 
   // 10 ms loop
   if (millis() > (uint32_t) 10 + loop_10ms ) {    
     loop_10ms = millis();  
-    //valvecycle();
-
-    appcycle(inChar, valvenr, position);
     
-    inChar = 0;   // clear command for next cycle
+    appcycle();
+    
+    communication_loop();
+
+    // while(Serial.available()>0) {
+    //   int testchar;
+    //   testchar = Serial.read();
+    //   //Serial.write(testchar);    // echo for test
+    //   Serial3.write(testchar);
+    // }
+
   }
 }
 
-
-void callback_app(char cmd, byte valveindex, byte pos) {
-
-  valvenr = valveindex;
-  inChar = cmd;
-  position = pos;
-
-}

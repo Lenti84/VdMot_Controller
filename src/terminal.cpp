@@ -12,10 +12,12 @@
 #include <Arduino.h>
 #include "hardware.h"
 #include "terminal.h"
+#include "motor.h"
 
 //extern HardwareSerial Serial3;
 extern void callback_app(char cmd, byte valveindex, byte pos);
 
+HardwareSerial Serial3(USART3);
 
 #define TERM_MAX_CMD_LEN		15			// max length of a command without arguments
 #define TERM_ARG_CNT			 2			// number of allowed command arguments
@@ -23,6 +25,11 @@ extern void callback_app(char cmd, byte valveindex, byte pos);
 
 
 int16_t Terminal_Init (void) {
+
+	Serial3.begin(115200);
+	while(!Serial3);
+	Serial3.println("VdMot Controller"); Serial3.flush();
+
 	return 0;
 }
 
@@ -112,8 +119,8 @@ int16_t Terminal_Serve (void) {
 			//y = atoi(arg0ptr);
 
 			if(argcnt == 1) {				
-				//Serial3.println("learn valve x");
-				callback_app('l',x,0);
+				//Serial3.println("learn valve x");				
+				if (appsetaction(CMD_A_LEARN,x,0)!=0) Serial3.println("valve machine not idle");				
 			}
 			else Serial3.println("to few arguments");
 
@@ -127,7 +134,7 @@ int16_t Terminal_Serve (void) {
 			y = atoi(arg1ptr);
 
 			if(argcnt == 2) {								
-				callback_app('o',x,y);
+				if (appsetaction(CMD_A_OPEN,x,y)!=0) Serial3.println("valve machine not idle");
 			}
 			else Serial3.println("to few arguments");
 
@@ -141,7 +148,27 @@ int16_t Terminal_Serve (void) {
 			y = atoi(arg1ptr);
 
 			if(argcnt == 2) {								
-				callback_app('c',x,y);
+				if (appsetaction(CMD_A_CLOSE,x,y)!=0) Serial3.println("valve machine not idle");
+			}
+			else Serial3.println("to few arguments");
+
+			return CMD_CLOSE;
+		}
+
+		// set target value
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp("settar",&cmd[0],6) == 0) {
+			x = atoi(arg0ptr);
+			y = atoi(arg1ptr);
+
+			if(argcnt == 2)
+			{								
+				//if (appsetaction(CMD_A_CLOSE,x,y)!=0) Serial3.println("valve machine not idle");
+				if(y<=100 && y>=0)
+				{
+					myvalves[x].target_position = y;
+					Serial3.print("set valve "); Serial3.print(x, 10); Serial3.print(" to "); Serial3.println(y);
+				}
 			}
 			else Serial3.println("to few arguments");
 

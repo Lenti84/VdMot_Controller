@@ -16,7 +16,7 @@
 extern int16_t Terminal_Init (void);
 extern int16_t Terminal_Serve (void);
 
-
+extern HardwareSerial Serial3;
 
 #endif //_TERMINAL_H
 
