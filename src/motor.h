@@ -7,7 +7,9 @@
 #define ACTUATOR_COUNT  12
 
 #define CMD_A_OPEN      'o'
+#define CMD_A_OPEN_END  'p'
 #define CMD_A_CLOSE     'c'
+#define CMD_A_CLOSE_END 'v'
 #define CMD_A_LEARN     'l'
 #define CMD_A_TARGET    't'
 

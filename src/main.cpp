@@ -110,18 +110,21 @@ void loop() {
               if(myvalves[x].status == VLV_STATE_UNKNOWN) 
               {
                 Serial3.print("M: learning started for valve "); Serial3.println(x, 10);
-                appsetaction(CMD_A_LEARN,x,0);
+                appsetaction(CMD_A_LEARN,x,0);    
+                //myvalves[x].status = VLV_STATE_IDLE;   // for test
               }
               else // valve was learned before
               {
                 // should valve be opened
                 //if(myvalves[x].target_position > target_position_mirror[x]) {
                 if(myvalves[x].target_position > myvalves[x].actual_position) {
-                  appsetaction(CMD_A_OPEN,x,myvalves[x].target_position-myvalves[x].actual_position);
+                  if(myvalves[x].target_position == 100) appsetaction(CMD_A_OPEN_END,x,0);
+                  else appsetaction(CMD_A_OPEN,x,myvalves[x].target_position-myvalves[x].actual_position);
                 }
                 // valve should be closed
                 else {
-                  appsetaction(CMD_A_CLOSE,x,myvalves[x].actual_position-myvalves[x].target_position);
+                  if(myvalves[x].target_position == 0) appsetaction(CMD_A_CLOSE_END,x,0);
+                  else appsetaction(CMD_A_CLOSE,x,myvalves[x].actual_position-myvalves[x].target_position);
                 }
               }
           }
