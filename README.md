@@ -50,9 +50,9 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 
 PCB 3D: ![-](./hardware/b-sample_pcb_3D.PNG "b-sample pcb 3D")
 
-B-sample integration: ![-](./hardware/b-sample_1.PNG "b-sample integration")
+B-sample integration: ![-](./hardware/b-sample_1.png "b-sample integration")
 
-housing: ![-](./hardware/housing.PNG "housing")
+housing: ![-](./hardware/housing.png "housing")
 
 ## Software
 - written in C / C++
