@@ -70,3 +70,5 @@ PCB 3D: ![-](./hardware/b-sample_pcb_3D.PNG "b-sample pcb 3D")
     - flash STM32
 
 
+
+This project is licensed under the terms of the GNU General Public License v3.0 license.
