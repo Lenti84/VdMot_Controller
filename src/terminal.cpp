@@ -19,6 +19,8 @@ extern void callback_app(char cmd, byte valveindex, byte pos);
 
 HardwareSerial Serial3(USART3);
 
+#define COMM_DBG				Serial3		// serial port for debugging
+
 #define TERM_MAX_CMD_LEN		15			// max length of a command without arguments
 #define TERM_ARG_CNT			 2			// number of allowed command arguments
 #define TERM_MAX_ARG_LEN		20			// max length of one command argument
@@ -40,62 +42,70 @@ int16_t Terminal_Init (void) {
   * @retval None
   */
 int16_t Terminal_Serve (void) {
-	int16_t		key;
-	char		cmdbuf[50];
-	uint8_t		cmdindex=0;
-	uint8_t		charenter=0;
-	//float		ftempval;
-	int			itempval;
+static char buffer[300];
+    static char *bufptr = buffer;
+    static unsigned int buflen = 0;
+    int availcnt;
+    unsigned int found = 0;
 
-	uint16_t		x;
-	uint16_t		y;
-	char*		cmdptr;
-	char*		cmdptrend;
-
-	char 		cmd[TERM_MAX_CMD_LEN] 				= "\0";			// command
-	char		arg[TERM_ARG_CNT][TERM_MAX_ARG_LEN];				// max. TERM_ARG_CNT arguments
-	char*		arg0ptr = &arg[0][0];
-	char*		arg1ptr = &arg[1][0];
+	char*       cmdptr;
+    char*	    cmdptrend;
+    char        cmd[10];
+    char		arg0[20];	
+    char        arg1[20];		
+	char*		arg0ptr = arg0;
+	char*		arg1ptr = arg1;
 	uint8_t		argcnt = 0;
 
-	arg[0][0] = '\0';
-	arg[1][0] = '\0';
-	//arg[2][0] = '\0';
-	//arg[3][0] = '\0';
+	//int			itempval;
+	uint16_t		x;
+	uint16_t		y;
 
-	key = Serial3.read();
 
-	// get data from USART buffer
-	while (key > -1 && cmdindex<48) {								// do until buffer is empty (-1)
-	//while( Serial3.available() && cmdindex < 48 ) {
-			
-		if ( (((char) key) == '\r') || (((char) key) == '\n') ) {	// if linefeed detected
-			charenter = 1;											// set flag
-		}
-		else {														// else
-			cmdbuf[cmdindex] = (char) (key & 0xFF);					// write char to buffer
-			cmdindex++;												// increment buffer index
-		}
-		key = Serial3.read();   									// get another received char
-		
-		if(cmdindex>=48) cmdindex=0;								// overlength -> reset
-		if(charenter) cmdbuf[cmdindex] = ' ';						// mark string end
-	}
+	availcnt = COMM_DBG.available(); 
+    if(availcnt>0)
+    {    
+        for (int c = 0; c < availcnt; c++)
+        {           
+            *bufptr++ = (char) COMM_DBG.read();
+            buflen++;
+        }
+        if (buflen>=sizeof(buffer)) {
+            buffer[sizeof(buffer)-1] = '\r';
+        }
+    }
+
+	// if there is a little in the buffer
+    if(buflen > 5) 
+    {
+        for (unsigned int c = 0; c < buflen; c++)
+        {           
+            if(buffer[c] == '\r') 
+            {
+                buffer[c] = '\0';
+                //Serial.print("recv "); Serial.println(buffer);
+                found = 1;
+
+                buflen = 0;           	// reset counter
+                bufptr = buffer;    	// reset ptr
+            }
+        }
+    }
 
 	// was something received
-	if(charenter) {
+	if(found) {
 
 		// devide request into command and data
 		// ****************************************
-		cmdptr = &cmdbuf[0];
+		cmdptr = buffer;
 
-		for(x=0;x<3;x++){
+		for(unsigned int x=0;x<3;x++){
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
-				if(x==0) 		strncpy(&cmd[0],cmdptr,TERM_MAX_CMD_LEN-1);		// comand
-				else if(x==1) { strncpy(&arg[0][0],cmdptr,TERM_MAX_ARG_LEN-1); argcnt=1;	} 	// 1st argument
-				else if(x==2) {	strncpy(&arg[1][0],cmdptr,TERM_MAX_ARG_LEN-1); argcnt=2;	} 	// 2nd argument
+				if(x==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
+				else if(x==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
+				else if(x==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -176,6 +186,83 @@ int16_t Terminal_Serve (void) {
 		}
 
 
+		// disable uart tx, helps flashing ESP8266 without unplugging
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp("stxen",&cmd[0],5) == 0) {
+			x = atoi(arg0ptr);
+
+			if(argcnt == 1) {				
+				
+				if (x == 0) 
+				{					
+					COMM_DBG.println("comm: disable tx pin");
+					// set uart1 tx pin PA9 to input, no pull
+					MODIFY_REG(GPIOA->CRH, GPIO_CRH_CNF9 + GPIO_CRH_MODE9, GPIO_CRH_CNF9_0);
+				}
+				else {
+					COMM_DBG.println("comm: enable tx pin");
+					// set uart1 tx pin PA9 to output 10 Mhz, alternate function
+					MODIFY_REG(GPIOA->CRH, GPIO_CRH_CNF9 + GPIO_CRH_MODE9, GPIO_CRH_CNF9_1 + GPIO_CRH_MODE9_0);
+				}
+			}
+			else COMM_DBG.println("to few arguments");
+
+			//return CMD_LEARN;
+		}
+
+		// set muxer
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp("smux",&cmd[0],4) == 0) {
+			x = atoi(arg0ptr);
+			if(argcnt == 1) {
+				if(x==0) MUX_OFF();
+				else MUX_ON();
+			}
+		}
+
+		// set direction
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp("sdir",&cmd[0],4) == 0) {
+			x = atoi(arg0ptr);
+			if(argcnt == 1) {
+				if(x==0) DIR_OFF();
+				else DIR_ON();
+			}
+		}
+
+		// set enable
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp("sena",&cmd[0],4) == 0) {
+			x = atoi(arg0ptr);
+			y = atoi(arg1ptr);
+			if(argcnt == 2) {
+				if(x==0) {
+					if(y==0) ENA0_OFF();
+					else ENA0_ON();
+				}
+				else if (x==1) {
+					if(y==0) ENA1_OFF();
+					else ENA1_ON();
+				}
+				else if (x==2) {
+					if(y==0) ENA2_OFF();
+					else ENA2_ON();
+				}
+				else if (x==3) {
+					if(y==0) ENA3_OFF();
+					else ENA3_ON();
+				}
+				else if (x==4) {
+					if(y==0) ENA4_OFF();
+					else ENA4_ON();
+				}
+				else if (x==5) {
+					if(y==0) ENA5_OFF();
+					else ENA5_ON();
+				}
+			}
+		}
+
 		// unknown command
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else {
@@ -188,6 +275,7 @@ int16_t Terminal_Serve (void) {
 	}
 	else return -1;
 
+return 0;
 }
 
 

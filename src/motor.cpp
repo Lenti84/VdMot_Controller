@@ -9,8 +9,8 @@
 #include "STM32TimerInterrupt.h"
 
 
-#define DIR_CLOSE      1
-#define DIR_OPEN       0 
+#define DIR_CLOSE      (int)  1
+#define DIR_OPEN       (int)  0 
 
 #define TIMER0_INTERVAL_MS        1
 
@@ -44,11 +44,11 @@
 #define M_RES_NOCURRENT   9
 
 
-void set_motor (unsigned char valvenr, unsigned char dir);
-void ena_motor (unsigned char valvenr, unsigned char state);
+void set_motor (int smvalvenr, int dir);
+void ena_motor (int emvalvenr, int state);
 void isr_count ();
 void callback_motorstop ();
-byte motorcycle (byte valvenr, byte cmd);
+byte motorcycle (int mvalvenr, byte cmd);
 byte appcycle(byte cmd, byte valvenr);
 
 void TimerHandler0();
@@ -68,14 +68,14 @@ int current_mA = 0;                     // current valve motor in 1/10 mA
 volatile unsigned int isr_counter;      // ISR var for counting revolutions
 volatile byte         isr_turning;      // ISR var for state of motor
 volatile unsigned int isr_target;       // ISR var for valve target count
-volatile byte         isr_valvenr;      // ISR var for valve nr
+volatile int          isr_valvenr;      // ISR var for valve nr
 volatile byte         isr_timer_go;     // ISR var for timer pwm start
 volatile byte         isr_timer_fin;    // ISR var for timer pwm finished
 
 valves myvalves[ACTUATOR_COUNT];
 
 char command;
-byte valvenr;
+int valvenr;
 byte poschangecmd;
 unsigned int m_meancurrent;           // mean current in mA
 
@@ -117,16 +117,19 @@ byte appsetup () {
 
 
   // init valve data
-  for (int x = 0;x<ACTUATOR_COUNT;x++) {
+  for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {
       myvalves[x].actual_position = 50;
       myvalves[x].target_position = 50;
       myvalves[x].meancurrent = 20;
       myvalves[x].scaler = 89;
       myvalves[x].status = VLV_STATE_UNKNOWN;
+      myvalves[x].sensorindex = 65535;        // marks that no slot is selected
+      myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
+      // distribute learn timing equaly over valve slots
+      myvalves[x].learn_time = (unsigned int) (((long)LEARN_AFTER_TIME_DEFAULT * ((long)x+1)) / (long)ACTUATOR_COUNT);
   }
 
   appstate = A_INIT;
-
 
 
   // Interval in microsecs
@@ -136,7 +139,6 @@ byte appsetup () {
   }
   else
     Serial.println(F("Can't set ITimer0. Select another freq. or timer"));
-
 
 
   return 0;
@@ -159,7 +161,7 @@ byte appcycle () {
   static unsigned int deadzone_count;
   
   static unsigned int scaler;
-  static byte valveindex;
+  static int valveindex;
 
   switch (appstate) {
     case A_INIT:  
@@ -180,36 +182,41 @@ byte appcycle () {
                   valveindex = valvenr;
                   if (command == CMD_A_OPEN) {                    
                     Serial3.print("A: cmd open for valve ");                  
-                    Serial3.println(valveindex);                    
+                    Serial3.println(valveindex, 10);                    
                     appstate = A_OPEN1;
                     pos_change = poschangecmd;
                   }
                   else if (command == CMD_A_CLOSE) {
                     Serial3.print("A: cmd close for valve ");                  
-                    Serial3.println(valveindex);                                        
+                    Serial3.println(valveindex, 10);                                        
                     appstate = A_CLOSE1;  
                     pos_change = poschangecmd;
                   }
                   else if (command == CMD_A_OPEN_END) {                    
                     Serial3.print("A: cmd open to endstop for valve ");                  
-                    Serial3.println(valveindex);                    
+                    Serial3.println(valveindex, 10);                    
                     appstate = A_OPEN1;
                     pos_change = 255;
                   }
                   else if (command == CMD_A_CLOSE_END) {                    
                     Serial3.print("A: cmd close to endstop for valve ");                  
-                    Serial3.println(valveindex);                    
+                    Serial3.println(valveindex, 10);                    
                     appstate = A_CLOSE1;
                     pos_change = 255;
                   }
                   else if (command == CMD_A_LEARN) {                    
                     Serial3.print("A: cmd learn for valve ");                  
-                    Serial3.println(valveindex);                    
+                    Serial3.println(valveindex, 10);                    
                     appstate = A_LEARN1;  
                   }
                   else {
                     appstate = A_IDLE;  
                   }           
+
+                  // decrement learning counter
+                  if(appstate == A_OPEN1 || appstate == A_CLOSE1) {
+                    if(myvalves[valveindex].learn_movements) myvalves[valveindex].learn_movements--;
+                  }
 
                   command = '\0';       // clear command for next loop call, prevents reevaluating
                   break;
@@ -233,7 +240,7 @@ byte appcycle () {
                   break;
   
     case A_OPEN2:  // wait for finish opening
-                  temp = motorcycle (0, 0);
+                  temp = motorcycle (valveindex, 0);
                   if (temp == M_RES_STOP) {
                     Serial3.println("A: opened valve");                  
                     appstate = A_IDLE;
@@ -275,7 +282,7 @@ byte appcycle () {
                   break;
 
     case A_CLOSE2: // wait for finish closing
-                  temp = motorcycle (0, 0);
+                  temp = motorcycle (valveindex, 0);
                   if (temp == M_RES_STOP) {
                     Serial3.println("A: closed valve");
                     appstate = A_IDLE;
@@ -391,7 +398,35 @@ byte appcycle () {
 }
 
 
-byte motorcycle (byte valvenr, byte cmd) {
+
+byte app_10s_loop () {
+
+  unsigned int x = 0;
+
+  // walk through valves and evaluate learning values
+  for (x=0; x< ACTUATOR_COUNT; x++)
+  { 
+    // learning times
+    if(myvalves[x].learn_time <= 10) {
+      myvalves[x].learn_time = LEARN_AFTER_TIME_DEFAULT;
+      myvalves[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
+      Serial3.print("Valve "); Serial3.print(x, 10); Serial3.println(" will be learned soon");
+    }
+    else myvalves[x].learn_time -= 10;    
+
+    // learning movements
+    if(myvalves[x].learn_movements == 0) {
+      myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
+      myvalves[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
+      Serial3.print("Valve "); Serial3.print(x, 10); Serial3.println(" will be learned soon");
+    }    
+  }
+
+return 0;
+}
+
+
+byte motorcycle (int mvalvenr, byte cmd) {
   #define M_INIT      0
   #define M_IDLE      1
   #define M_OPEN      2
@@ -418,9 +453,9 @@ byte motorcycle (byte valvenr, byte cmd) {
   // quickpass for isr state switching
   if(cmd==CMD_M_STOP_ISR) {
     motorstate = M_STOP_ISR;
-    result = M_RES_STOP_ISR;
+    //result = M_RES_STOP_ISR;
   }
-  else {
+  //else {
     switch (motorstate) {
       case M_INIT:  MUX_OFF();         // relay MUX off
                     ena_motor(0, 0);
@@ -455,7 +490,7 @@ byte motorcycle (byte valvenr, byte cmd) {
                     }
   
                     // correct motor nr?
-                    if (motorstate != M_IDLE && valvenr > ACTUATOR_COUNT) {
+                    if (motorstate != M_IDLE && mvalvenr > (int) ACTUATOR_COUNT) {
                       motorstate = M_IDLE;
                       result = M_RES_IDLE;
                     }
@@ -466,12 +501,12 @@ byte motorcycle (byte valvenr, byte cmd) {
       
       case M_OPEN:  
                     Serial3.println("M: state open");                                  
-                    set_motor(valvenr, DIR_OPEN);
+                    set_motor(mvalvenr, DIR_OPEN);
                     delay(50);    // wait for relay
                     //ena_motor(valvenr, 1);                  
   
                     motorstate = M_TURNON;
-                    isr_valvenr = valvenr;
+                    isr_valvenr = mvalvenr;
                     isr_counter=0;
                     cyclecnt = 0;
                     debouncecnt = 0;                  
@@ -482,11 +517,12 @@ byte motorcycle (byte valvenr, byte cmd) {
                     
       case M_CLOSE:
                     Serial3.println("M: state close");                                 
-                    set_motor(valvenr, DIR_CLOSE);
+                    set_motor(mvalvenr, DIR_CLOSE);
                     delay(50);    // wait for relay
-                    //ena_motor(valvenr, 1);
+                    //ena_motor(mvalvenr, 1);
   
                     motorstate = M_TURNON;
+                    isr_valvenr = mvalvenr;
                     isr_counter=0;
                     cyclecnt = 0;
                     debouncecnt = 0;
@@ -526,15 +562,7 @@ byte motorcycle (byte valvenr, byte cmd) {
                     cyclecnt++;
                                 
                     if(debouncecnt<255) debouncecnt++;
-                   
-                    if (debouncecnt > 50 && cyclecnt > 50) {
-                      cyclecnt=0;
-                      Serial3.print("M: Current: "); Serial3.print(current_mA/10, 10); Serial3.println(" mA");
-                      meancurrent_mem += current_mA;
-                      meancurrent_cnt++;
-                    }
-
-                    //if (debouncecnt > 50 && cyclecnt > 5) {
+                  
                     if (debouncecnt > 7) {
 
                       current_mA = (int) (ina219.getCurrent_mA() * 10);
@@ -551,7 +579,8 @@ byte motorcycle (byte valvenr, byte cmd) {
                       if(current_mA > currentbound_high || current_mA < currentbound_low ||  
                          current_mA > 1000 || current_mA < -1000)         // safety mechanism, limit at +- 100 mA
                       {
-                        //motorstate = M_STOP;  
+                        //motorstate = M_STOP;
+                        detachInterrupt(digitalPinToInterrupt(REVINPIN)); 
                         motorstate = M_IDLE;
                         result = M_RES_ENDSTOP;
                         ena_motor(0, 0);
@@ -570,6 +599,13 @@ byte motorcycle (byte valvenr, byte cmd) {
                         //Serial3.print("M: Current: "); Serial3.print(current_mA/10, 10); Serial3.println(" mA");
                       }
                       //cyclecnt=0;
+                    }
+
+                    if (debouncecnt > 50 && cyclecnt > 50) {
+                      cyclecnt=0;
+                      Serial3.print("M: Current: "); Serial3.print(current_mA/10, 10); Serial3.println(" mA");
+                      meancurrent_mem += current_mA;
+                      meancurrent_cnt++;
                     }
                     break;
                       
@@ -613,15 +649,15 @@ byte motorcycle (byte valvenr, byte cmd) {
                     break;
     }  
 
-  }
+  //}
   return result;
 }
 
 
 // sets direction and mux relay
-void set_motor (unsigned char valvenr, unsigned char dir) {
+void set_motor (int smvalvenr, int dir) {
 
-  if (valvenr % 2) { MUX_OFF(); }
+  if (smvalvenr % 2) { MUX_OFF(); }
   else { MUX_ON(); }
   
   if (dir == DIR_OPEN) { DIR_OFF(); } 
@@ -630,18 +666,18 @@ void set_motor (unsigned char valvenr, unsigned char dir) {
 
 
 // enables motor 
-void ena_motor (unsigned char valvenr, unsigned char state) {
+void ena_motor (int emvalvenr, int state) {
 
   if (state == 0) { 
     ENA0_OFF(); ENA1_OFF(); ENA2_OFF(); ENA3_OFF(); ENA4_OFF(); ENA5_OFF(); 
   }
   else {
-    if (valvenr == 0 || valvenr == 1) { ENA0_ON(); }
-    else if (valvenr == 2 || valvenr == 3) { ENA1_ON(); }
-    else if (valvenr == 4 || valvenr == 5) { ENA2_ON(); }
-    else if (valvenr == 6 || valvenr == 7) { ENA3_ON(); }
-    else if (valvenr == 8 || valvenr == 9) { ENA4_ON(); }
-    else if (valvenr == 10 || valvenr == 11) { ENA5_ON(); }
+    if (emvalvenr == 0 || emvalvenr == 1) { ENA0_ON(); }
+    else if (emvalvenr == 2 || emvalvenr == 3) { ENA1_ON(); }
+    else if (emvalvenr == 4 || emvalvenr == 5) { ENA2_ON(); }
+    else if (emvalvenr == 6 || emvalvenr == 7) { ENA3_ON(); }
+    else if (emvalvenr == 8 || emvalvenr == 9) { ENA4_ON(); }
+    else if (emvalvenr == 10 || emvalvenr == 11) { ENA5_ON(); }
   }
 }
 
@@ -656,11 +692,10 @@ void isr_count () {
 // call from isr to stop motor immediately
 void callback_motorstop () {
   detachInterrupt(digitalPinToInterrupt(REVINPIN));
-  ena_motor(0, 0);
   isr_turning = 0;
+  ena_motor(0, 0);  
   motorcycle(0, CMD_M_STOP_ISR);  
 }
-
 
 
 // returns state of application  state machine
@@ -669,11 +704,10 @@ enum ASTATE appgetstate () {
 }
 
 
-
-int16_t appsetaction(char cmd, byte valveindex, byte posdelta) {
+int16_t appsetaction(char cmd, unsigned int valveindex, byte posdelta) {
 
   if(appstate == A_IDLE) {
-    valvenr = valveindex;
+    valvenr = (int) valveindex;
     command = cmd;
     poschangecmd = posdelta;
     return 0;
@@ -681,7 +715,6 @@ int16_t appsetaction(char cmd, byte valveindex, byte posdelta) {
   else return -1;
 
 }
-
 
 
 void TimerHandler0()
