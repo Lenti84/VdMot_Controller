@@ -44,9 +44,15 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 - optional: 1-wire via DS2482-100
 - optional: I2C display
 - supply voltage 10...24V
-- housing for 35mm DIN rail
+- housing for 35mm DIN rail (apra Rail DB 449-370-55)
+- future
+  - new C-sample hardware with integrated components INA219, STM32, LM2596, ESP8266, ....
 
 PCB 3D: ![-](./hardware/b-sample_pcb_3D.PNG "b-sample pcb 3D")
+
+B-sample integration: ![-](./hardware/b-sample_1.png "b-sample integration")
+
+housing: ![-](./hardware/housing.png "housing")
 
 ## Software
 - written in C / C++
@@ -70,3 +76,5 @@ PCB 3D: ![-](./hardware/b-sample_pcb_3D.PNG "b-sample pcb 3D")
     - flash STM32
 
 
+
+This project is licensed under the terms of the GNU General Public License v3.0 license.
