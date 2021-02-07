@@ -48,6 +48,8 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 - future
   - new C-sample hardware with integrated components INA219, STM32, LM2596, ESP8266, ....
 
+You can find the b-sample schematic here: [schematic_b-sample_V02.pdf](./hardware/schematic_b-sample_V02.pdf)
+
 PCB 3D: ![-](./hardware/b-sample_pcb_3D.PNG "b-sample pcb 3D")
 
 B-sample integration: ![-](./hardware/b-sample_1.png "b-sample integration")
