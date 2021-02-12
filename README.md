@@ -32,6 +32,7 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
     - /VdMotFBH/valve/x/temperature --> get temperature of linked 1-wire sensor (1/10 °C)
     - x = valve number
 - first productive test planned for the next weeks
+- tests of 2 actuators done, see [system/actuators.md](./system/actuators.md)
 
 ## Hardware
 - uC STM32F103C8 on BluePill board
@@ -78,5 +79,5 @@ housing: ![-](./hardware/housing.png "housing")
     - flash STM32
 
 
-
+## License
 This project is licensed under the terms of the GNU General Public License v3.0 license.
