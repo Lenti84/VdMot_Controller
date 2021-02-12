@@ -7,6 +7,7 @@
 #include "motor.h"
 #include "hardware.h"
 #include "STM32TimerInterrupt.h"
+#include "terminal.h"
 
 
 #define DIR_CLOSE      (int)  1
@@ -251,6 +252,7 @@ byte appcycle () {
                   else if (temp == M_RES_NOCURRENT) {
                     Serial3.println("A: undercurrent");
                     myvalves[valveindex].status = VLV_STATE_OPENCIR;
+                    myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
                     appstate = A_IDLE;
                     isr_counter=0;
                   } 
@@ -293,6 +295,7 @@ byte appcycle () {
                   else if (temp == M_RES_NOCURRENT) {
                     Serial3.println("A: undercurrent");
                     myvalves[valveindex].status = VLV_STATE_OPENCIR;
+                    myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
                     appstate = A_IDLE;
                     isr_counter=0;
                   } 
@@ -331,6 +334,7 @@ byte appcycle () {
                   else if (temp == M_RES_NOCURRENT) {
                     Serial3.println("A: undercurrent");
                     myvalves[valveindex].status = VLV_STATE_OPENCIR;
+                    myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
                     appstate = A_IDLE;
                     isr_counter=0;
                   }               
@@ -338,7 +342,8 @@ byte appcycle () {
                   
     case A_LEARN3:  // learning opening way
                   // waiting for opened valve
-                  if (motorcycle (valveindex, 0) == M_RES_ENDSTOP) {
+                  temp = motorcycle (valveindex, 0);
+                  if (temp == M_RES_ENDSTOP) {
                     Serial3.println("A: opened valve for learning, now closing again");                  
                     opening_count = isr_counter;   
                     if(m_meancurrent > 0) {
@@ -352,12 +357,20 @@ byte appcycle () {
                     isr_target = 65535;       // max value to disable stopping
                     m_meancurrent = 20;
                     appstate = A_LEARN4;
-                  }                  
+                  }          
+                  else if (temp == M_RES_NOCURRENT) {
+                    Serial3.println("A: undercurrent");
+                    myvalves[valveindex].status = VLV_STATE_OPENCIR;
+                    myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
+                    appstate = A_IDLE;
+                    isr_counter=0;
+                  }                       
                   break;
                   
     case A_LEARN4:  // learning closing way
                   // waiting for closed valve again
-                  if (motorcycle (valveindex, 0) == M_RES_ENDSTOP) {  
+                  temp = motorcycle (valveindex, 0);
+                  if (temp == M_RES_ENDSTOP) {  
                     Serial3.println("A: closed valve for learning");                  
                     closing_count = isr_counter;  
 
@@ -385,7 +398,14 @@ byte appcycle () {
                     valveindex = 255;
                                                                                 
                     appstate = A_IDLE;
-                  }                  
+                  }    
+                  else if (temp == M_RES_NOCURRENT) {
+                    Serial3.println("A: undercurrent");
+                    myvalves[valveindex].status = VLV_STATE_OPENCIR;
+                    myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
+                    appstate = A_IDLE;
+                    isr_counter=0;
+                  }                
                   break;
 
                   
@@ -599,6 +619,13 @@ byte motorcycle (int mvalvenr, byte cmd) {
                         //Serial3.print("M: Current: "); Serial3.print(current_mA/10, 10); Serial3.println(" mA");
                       }
                       //cyclecnt=0;
+
+                      // testmode
+                      // output position and current
+                      if(testmode) {
+                        Serial3.print("tm;"); Serial3.print(current_mA,10); Serial3.print(";"); Serial3.println(isr_counter);
+
+                      }
                     }
 
                     if (debouncecnt > 50 && cyclecnt > 50) {

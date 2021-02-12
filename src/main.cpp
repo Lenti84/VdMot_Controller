@@ -93,7 +93,7 @@ void loop() {
               Serial3.print("M: target pos changed for valve "); Serial3.println(x, 10);
               
               // check if valve was learned before
-              if(myvalves[x].status == VLV_STATE_UNKNOWN) 
+              if(myvalves[x].status == VLV_STATE_UNKNOWN || myvalves[x].status == VLV_STATE_OPENCIR) 
               {
                 Serial3.print("M: learning started for valve "); Serial3.println(x, 10);
                 appsetaction(CMD_A_LEARN,x,0);    

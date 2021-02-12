@@ -19,6 +19,8 @@ extern void callback_app(char cmd, byte valveindex, byte pos);
 
 HardwareSerial Serial3(USART3);
 
+int testmode = 0;							// flag for testmode
+
 #define COMM_DBG				Serial3		// serial port for debugging
 
 #define TERM_MAX_CMD_LEN		15			// max length of a command without arguments
@@ -31,6 +33,8 @@ int16_t Terminal_Init (void) {
 	Serial3.begin(115200);
 	while(!Serial3);
 	Serial3.println("VdMot Controller"); Serial3.flush();
+
+	testmode = 0;
 
 	return 0;
 }
@@ -263,12 +267,22 @@ static char buffer[300];
 			}
 		}
 
+		// set test mode
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp("stm",&cmd[0],3) == 0) {
+			x = atoi(arg0ptr);
+			if(argcnt == 1) {
+				if(x==0) { testmode = 0; COMM_DBG.println("testmode off"); }
+				else {testmode = 1; COMM_DBG.println("testmode on"); }
+			}
+		}
+
 		// unknown command
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else {
 			//sprintf(&PrtBuf[0],"unknown command: %s\r",&cmdbuf[0]);
 			//USART1_PutStr(&PrtBuf[0]);
-			Serial3.print("unknown command: ");
+			COMM_DBG.println("unknown command");
 			return CMD_NONE;
 		}
 

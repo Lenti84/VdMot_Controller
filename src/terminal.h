@@ -18,6 +18,8 @@ extern int16_t Terminal_Serve (void);
 
 extern HardwareSerial Serial3;
 
+extern int testmode;
+
 #endif //_TERMINAL_H
 
 

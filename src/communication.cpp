@@ -124,6 +124,7 @@ int16_t communication_loop (void) {
 				if (y >= 0 && y <= 100 && x < ACTUATOR_COUNT) 
 				{
 					myvalves[x].target_position = (byte) y;
+					COMM_SER.println(APP_PRE_SETTARGETPOS);
 				}
 			}
 			else COMM_DBG.println("to few arguments");
@@ -137,7 +138,7 @@ int16_t communication_loop (void) {
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1) {				
-				COMM_DBG.println("comm: get valve data");
+				//COMM_DBG.println("comm: get valve data");
 				//if(0) 
 				if (x < ACTUATOR_COUNT) 
 				{
@@ -172,7 +173,7 @@ int16_t communication_loop (void) {
 					strcat(sendbuffer, " ");
                     
 					COMM_SER.println(sendbuffer);
-					COMM_DBG.println(sendbuffer);		// debug				
+					//COMM_DBG.println(sendbuffer);		// debug				
 				}
 			}
 			else COMM_SER.println("to few arguments");
@@ -209,7 +210,7 @@ int16_t communication_loop (void) {
 		else if(memcmp("ESP",&cmd[0],3) == 0) {	
 			COMM_DBG.println("received ESPalive 22");		
 			if (buflen >= 8 && memcmp("ESPalive",cmd,8) == 0) {
-				COMM_DBG.println("received ESPalive");
+				//COMM_DBG.println("received ESPalive");
 			}			 
 		}
 
