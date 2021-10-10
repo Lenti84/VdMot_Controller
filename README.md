@@ -51,6 +51,8 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 
 You can find the b-sample schematic here: [schematic_b-sample_V02.pdf](./hardware/schematic_b-sample_V02.pdf)
 
+BOM: [b-sample BOM](https://htmlpreview.github.io/?https://github.com/Lenti84/VdMot_Controller/blob/master/hardware/bom.htm)
+
 PCB 3D: ![-](./hardware/b-sample_pcb_3D.PNG "b-sample pcb 3D")
 
 B-sample integration: ![-](./hardware/b-sample_1.png "b-sample integration")
