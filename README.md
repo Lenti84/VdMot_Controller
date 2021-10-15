@@ -22,6 +22,7 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
   
 ## Status
 - b-sample hardware is working with original HmIP-VdMot actuator
+- c-sample hardware in development (see hardware section)
 - valve learning, opening and closing is working
 - connection to [FHEM](https://fhem.de/) established via MQTT
   - topics:
@@ -31,33 +32,16 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
     - /VdMotFBH/valve/x/meancur     --> get mean current of valve (mA)
     - /VdMotFBH/valve/x/temperature --> get temperature of linked 1-wire sensor (1/10 °C)
     - x = valve number
-- first productive test planned for the next weeks
+- first productive test still pending
 - tests of 2 actuators done, see [system/actuators.md](./system/actuators.md)
+- one wire sensors working
+  - each sensor temperature can be coupled to a valve
+  - therefore the sensor adresses are stored and assigned at startup
+- eeprom working
+- programming of STM32 by ESP32 first tests successfully performed
 
 ## Hardware
-- uC STM32F103C8 on BluePill board
-- INA219 current sensor
-- L293D for motorcontrol
-- back EMF circuit to identify a single commutator switch
-  - many thanks to Yi Yao for his inspiration: [DC Motor Controller and Tachometer](http://yyao.ca/projects/motor_controller_tachometer/)
-- interfaces: CAN bus, RS485
-- optional: wifi via ESP8266
-- optional: 1-wire via DS2482-100
-- optional: I2C display
-- supply voltage 10...24V
-- housing for 35mm DIN rail (apra Rail DB 449-370-55)
-- future
-  - new C-sample hardware with integrated components INA219, STM32, LM2596, ESP8266, ....
-
-You can find the b-sample schematic here: [schematic_b-sample_V02.pdf](./hardware/schematic_b-sample_V02.pdf)
-
-BOM: [b-sample BOM](https://htmlpreview.github.io/?https://github.com/Lenti84/VdMot_Controller/blob/master/hardware/bom.htm)
-
-PCB 3D: ![-](./hardware/b-sample_pcb_3D.PNG "b-sample pcb 3D")
-
-B-sample integration: ![-](./hardware/b-sample_1.png "b-sample integration")
-
-housing: ![-](./hardware/housing.png "housing")
+- find description of hardware here [hardware/hardware.md](./hardware/hardware.md)
 
 ## Software
 - written in C / C++
