@@ -14,7 +14,7 @@
 - LM2596 step-down converter integrated
 - power savings: all three L293 can be switched off by software 
 
-PCB 3D: ![-](./c-sample_pcb_3D.PNG "c-sample pcb 3D teaser")
+PCB 3D: ![-](./c-sample_pcb_3D.png "c-sample pcb 3D teaser")
 
 ## B-sample
 - uC STM32F103C8 on BluePill board
