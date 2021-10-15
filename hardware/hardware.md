@@ -14,7 +14,7 @@
 - LM2596 step-down converter integrated
 - power savings: all three L293 can be switched off by software 
 
-PCB 3D: ![-](./hardware/c-sample_pcb_3D.PNG "c-sample pcb 3D teaser")
+PCB 3D: ![-](./c-sample_pcb_3D.PNG "c-sample pcb 3D teaser")
 
 ## B-sample
 - uC STM32F103C8 on BluePill board
@@ -28,13 +28,13 @@ PCB 3D: ![-](./hardware/c-sample_pcb_3D.PNG "c-sample pcb 3D teaser")
 - optional: I2C display
 - supply voltage 10...24V
 
-You can find the b-sample schematic here: [schematic_b-sample_V02.pdf](./hardware/schematic_b-sample_V02.pdf)
+You can find the b-sample schematic here: [schematic_b-sample_V02.pdf](./schematic_b-sample_V02.pdf)
 
 BOM: [b-sample BOM](https://htmlpreview.github.io/?https://github.com/Lenti84/VdMot_Controller/blob/master/hardware/bom.htm)
 
-PCB 3D: ![-](./hardware/b-sample_pcb_3D.PNG "b-sample pcb 3D")
+PCB 3D: ![-](./b-sample_pcb_3D.PNG "b-sample pcb 3D")
 
-B-sample integration: ![-](./hardware/b-sample_1.png "b-sample integration")
+B-sample integration: ![-](./b-sample_1.png "b-sample integration")
 
 
 ## housing
@@ -42,4 +42,4 @@ B-sample integration: ![-](./hardware/b-sample_1.png "b-sample integration")
 - housing for 35mm DIN rail
 - only small rework needed, 2 mm cutback for RJ11 needed
 
-housing: ![-](./hardware/housing.png "housing")
+housing: ![-](./housing.png "housing")
