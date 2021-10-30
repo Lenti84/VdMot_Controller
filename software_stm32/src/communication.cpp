@@ -4,7 +4,7 @@
   * @author  
   * @version V1.0
   * @date    
-  * @brief   communication module to ESP8266
+  * @brief   communication module to ESP32
   ******************************************************************************
   *
   */
@@ -15,22 +15,24 @@
 #include "communication.h"
 #include "temperature.h"
 
-#define COMM_SER				Serial		// serial port to ESP8266
-#define COMM_DBG				Serial3		// serial port for debugging
+#define COMM_SER				Serial1		// serial port to ESP32
+//#define COMM_DBG				Serial3		// serial port for debugging
+#define COMM_DBG				Serial6		// serial port for debugging
 
 #define COMM_MAX_CMD_LEN		15			// max length of a command without arguments
 #define COMM_ARG_CNT			 2			// number of allowed command arguments
 #define COMM_MAX_ARG_LEN		20			// max length of one command argument
-
+#define SEND_BUFFER_LEN			800
 
 
 void communication_setup (void) {
 	
-	// UART to ESP8266
-	Serial.begin(115200);
-	while(!Serial);
-	//Serial.println("alive");Serial.flush();
-
+	// UART to ESP32
+	COMM_SER.setRx(PA10);			//STM32F401 blackpill USART1 RX PA10
+	COMM_SER.setTx(PA9);			//STM32F401 blackpill USART1 TX PA9
+	COMM_SER.begin(115200);
+	while(!COMM_SER);
+	//COMM_SER.println("alive");COMM_SER.flush();
 }
 
 
@@ -60,6 +62,8 @@ int16_t communication_loop (void) {
 	char sendbuffer[30];
     char valbuffer[10];
 
+	char sendbuf[SEND_BUFFER_LEN];
+
 	availcnt = COMM_SER.available(); 
     if(availcnt>0)
     {    
@@ -82,7 +86,7 @@ int16_t communication_loop (void) {
             {
 				if(buffer[c-1]=='\r') buffer[c-1] = '\0';
                 else buffer[c] = '\0';
-                //Serial.print("recv "); Serial.println(buffer);
+                //COMM_SER.print("recv "); COMM_SER.println(buffer);
                 found = 1;
 
                 buflen = 0;           	// reset counter
@@ -143,7 +147,7 @@ int16_t communication_loop (void) {
 				if (x < ACTUATOR_COUNT) 
 				{
 					sendbuffer[0] = '\0';
-					//Serial.println("sending new target value");
+					//COMM_SER.println("sending new target value");
                     
 					strcat(sendbuffer, APP_PRE_GETVLVDATA);
 					strcat(sendbuffer, " ");
@@ -164,9 +168,9 @@ int16_t communication_loop (void) {
 					strcat(sendbuffer, valbuffer);
 					strcat(sendbuffer, " ");
                     
-					if(myvalves[x].sensorindex<SENSORCOUNT)
+					if(myvalves[x].sensorindex<MAXSENSORCOUNT)
 					{
-						itoa(tempsensors[myvalves[x].sensorindex], valbuffer, 10);      
+						itoa(tempsensors[myvalves[x].sensorindex].temperature, valbuffer, 10);      
 						strcat(sendbuffer, valbuffer);
 					}
 					else strcat(sendbuffer, "-500");
@@ -181,7 +185,7 @@ int16_t communication_loop (void) {
 			//return CMD_LEARN;
 		}
 
-		// disable uart tx, helps flashing ESP8266 without unplugging
+		// disable uart tx, helps flashing ESP32 without unplugging
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETTXENA,&cmd[0],5) == 0) {
 			x = atoi(arg0ptr);
@@ -192,17 +196,33 @@ int16_t communication_loop (void) {
 				{					
 					COMM_DBG.println("comm: disable tx pin");
 					// set uart1 tx pin PA9 to input, no pull
-					MODIFY_REG(GPIOA->CRH, GPIO_CRH_CNF9 + GPIO_CRH_MODE9, GPIO_CRH_CNF9_0);
+					#warning fixme
+					//MODIFY_REG(GPIOA->CRH, GPIO_CRH_CNF9 + GPIO_CRH_MODE9, GPIO_CRH_CNF9_0);
 				}
 				else {
 					COMM_DBG.println("comm: enable tx pin");
 					// set uart1 tx pin PA9 to output 10 Mhz, alternate function
-					MODIFY_REG(GPIOA->CRH, GPIO_CRH_CNF9 + GPIO_CRH_MODE9, GPIO_CRH_CNF9_1 + GPIO_CRH_MODE9_0);
+					#warning fixme
+					//MODIFY_REG(GPIOA->CRH, GPIO_CRH_CNF9 + GPIO_CRH_MODE9, GPIO_CRH_CNF9_1 + GPIO_CRH_MODE9_0);
 				}
 			}
 			else COMM_DBG.println("to few arguments");
 
 			//return CMD_LEARN;
+		}
+
+		// get value of supply temperature sensor
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETSUPPLYSENS,&cmd[0],5) == 0) {
+			
+			
+		}
+
+		// get onewire sensor data - sensor count and data and adress of all connected sensors
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETONEWIREDATA,&cmd[0],5) == 0) {
+			get_sensordata(sendbuf, SEND_BUFFER_LEN);
+			COMM_DBG.println(sendbuf);
 		}
 
 		// ESPalive
@@ -212,6 +232,25 @@ int16_t communication_loop (void) {
 			if (buflen >= 8 && memcmp("ESPalive",cmd,8) == 0) {
 				//COMM_DBG.println("received ESPalive");
 			}			 
+		}
+
+		// set sensor index
+		// x - valve index
+		// y - temp sensor index
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		if(memcmp(APP_PRE_SETSENSORINDEX,&cmd[0],5) == 0) {
+			x = atoi(arg0ptr); // valve index
+			y = atoi(arg1ptr); // temp sensor index
+
+			if(argcnt == 2) {				
+				COMM_DBG.println("comm: set sensor index");
+				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
+				{
+					myvalves[x].sensorindex = (byte) y;
+					COMM_SER.println(APP_PRE_SETTARGETPOS);
+				}
+			}
+			else COMM_DBG.println("to few arguments");
 		}
 
 	}

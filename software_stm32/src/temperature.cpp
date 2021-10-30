@@ -1,33 +1,37 @@
 #include <Arduino.h>
 #include "hardware.h"
 #include <Wire.h>
-//#include "..\lib\DS2482_OneWire\OneWire.h"
-//#include "..\lib\Arduino-Temperature-Control-Library\DallasTemperature.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <ArduinoJson.h>            // library https://github.com/bblanchon/ArduinoJson
 #include "temperature.h"
 
 
-int tempsensors[SENSORCOUNT];
+tempsensor  tempsensors[MAXSENSORCOUNT];
+uint8_t     numberOfDevices;
 
-OneWire oneWire;
+OneWire     oneWire;
 DallasTemperature sensors(&oneWire);
+
+
+//#define COMM_DBG				Serial3		// serial port for debugging
+#define COMM_DBG				Serial6		// serial port for debugging
 
 
 void printAddress(DeviceAddress deviceAddress)
 {
-  Serial3.print("{");
+  COMM_DBG.print("{");
   for (uint8_t i = 0; i < 8; i++)
   {
     // zero pad the address if necessary
-    //Serial3.print("0x");
-    Serial3.print(" ");
-    if (deviceAddress[i] < 16) Serial3.print("0");
-    Serial3.print(deviceAddress[i], HEX);
-    if (i<7) Serial.print(", ");
+    //COMM_DBG.print("0x");
+    COMM_DBG.print(" ");
+    if (deviceAddress[i] < 16) COMM_DBG.print("0");
+    COMM_DBG.print(deviceAddress[i], HEX);
+    if (i<7) COMM_DBG.print(", ");
     
   }
-  Serial3.print(" }");  
+  COMM_DBG.print(" }");  
 }
 
 
@@ -37,19 +41,22 @@ void temperature_setup() {
   
     sensors.setWaitForConversion(false);
 
-    DeviceAddress currAddress;
-    uint8_t numberOfDevices = sensors.getDeviceCount();
+    //DeviceAddress currAddress;
+    //uint8_t numberOfDevices = sensors.getDeviceCount();
+    numberOfDevices = sensors.getDeviceCount();
+    COMM_DBG.print("Found "); COMM_DBG.print(numberOfDevices, 10); COMM_DBG.println(" temp sensors:");
     
     for (unsigned int i=0; i<numberOfDevices; i++)
     {
-        sensors.getAddress(currAddress, i);
-        printAddress(currAddress);
-        Serial3.println();  
+        sensors.getAddress(tempsensors[i].address, i);
+        //tempsensors[i].address = currAddress;
+        printAddress(tempsensors[i].address);
+        COMM_DBG.println();
     }
 
     // init sensor array
-    for (unsigned int i = 0; i<SENSORCOUNT; i++) {
-      tempsensors[i] = -500;
+    for (unsigned int i = 0; i<MAXSENSORCOUNT; i++) {
+      tempsensors[i].temperature = -500;
     }
 
 }
@@ -66,7 +73,7 @@ void temperature_loop() {
     
     static int tempstate = T_INIT;
 
-    static uint8_t numberOfDevices;
+    //static uint8_t numberOfDevices;
     static unsigned int timer = 0;
 
     DeviceAddress currAddress;
@@ -75,20 +82,20 @@ void temperature_loop() {
 
   switch (tempstate) {
     case T_INIT:  
-              numberOfDevices = sensors.getDeviceCount();
-              Serial3.print("Found "); Serial3.print(numberOfDevices, 10); Serial3.println(" temp sensors");
+              //numberOfDevices = sensors.getDeviceCount();
+              //COMM_DBG.print("Found "); COMM_DBG.print(numberOfDevices, 10); COMM_DBG.println(" temp sensors");
+              timer = CONV_INTERVALL / 10;                
               tempstate = T_IDLE;
               break;
 
-    case T_IDLE:  
-              timer = CONV_INTERVALL;
+    case T_IDLE:                  
               tempstate = T_REQUEST;
               break;
 
     case T_REQUEST:
               if(timer) timer--;
               else {
-                Serial3.println("Requesting temperatures...");
+                COMM_DBG.println("Requesting temperatures...");
                 sensors.requestTemperatures();
 
                 timer = 20 + (sensors.millisToWaitForConversion(sensors.getResolution()) / 10);
@@ -105,16 +112,21 @@ void temperature_loop() {
               for (int i=0; i<numberOfDevices; i++)
               {
                 temp = round(sensors.getTempCByIndex(i)*10);
-                tempsensors[i] = temp;
-                sensors.getTempCByIndex(i);
-                sensors.getAddress(currAddress, i);
-                printAddress(currAddress);
-                Serial3.print(": ");
-                Serial3.print(temp/10);
-                Serial3.print(".");
-                Serial3.print(temp%10);
-                Serial3.println();  
+                tempsensors[i].temperature = temp;
+                                
+                sensors.getTempCByIndex(i);                
+                //sensors.getAddress(currAddress, i);
+                //printAddress(currAddress);
+                COMM_DBG.print("Sensor ");
+                COMM_DBG.print(i);
+                COMM_DBG.print(": ");
+                COMM_DBG.print(temp/10);
+                COMM_DBG.print(".");
+                COMM_DBG.print(temp%10);
+                COMM_DBG.println();  
               }
+
+              //get_sensordata();
 
               tempstate = T_IDLE;
               break;
@@ -123,5 +135,67 @@ void temperature_loop() {
               break;
   }
 
-
 }
+
+
+void get_sensordata (char *buffer, int buflen) {
+
+  DynamicJsonDocument doc(1024);
+  String testjson;
+  String AddressStr;
+ 
+  doc["cnt"] = numberOfDevices;
+
+  for (int i=0; i<(int)numberOfDevices; i++)
+  {     
+    doc["sns"][i]["temp"] = tempsensors[i].temperature;
+
+    AddressStr = "";
+    for (uint8_t x = 0; x < 8; x++)
+    {
+      if (tempsensors[i].address[x] < 16) AddressStr += '0';
+      AddressStr += String(tempsensors[i].address[x], HEX);
+      if (x<7) AddressStr += ' ';
+    }
+    doc["sns"][i]["add"] = AddressStr;
+  }
+
+  serializeJson(doc, buffer, buflen);
+}
+
+
+
+// void get_sensordata (char *buffer, int buflen) {
+
+//   DynamicJsonDocument doc(1024);
+//   String testjson;
+//   uint8_t numberOfDevices;
+//   DeviceAddress currAddress;
+//   float ttemp;
+//   String AddressStr;
+
+//   numberOfDevices = sensors.getDeviceCount();
+ 
+//   doc["cnt"] = numberOfDevices;
+
+//   for (int i=0; i<(int)numberOfDevices; i++)
+//   { 
+//     ttemp = sensors.getTempCByIndex(i);
+//     doc["sns"][i]["temp"] = ttemp;
+
+//     sensors.getAddress(currAddress, i);
+//     AddressStr = "";
+//     for (uint8_t x = 0; x < 8; x++)
+//     {
+//       if (currAddress[x] < 16) AddressStr += '0';
+//       AddressStr += String(currAddress[x], HEX);
+//       if (x<7) AddressStr += ' ';
+//     }
+//     doc["sns"][i]["add"] = AddressStr;
+//   }
+
+//   //serializeJson(doc, testjson);  
+//   //COMM_DBG.print(testjson);
+
+//   serializeJson(doc, buffer, buflen);
+// }

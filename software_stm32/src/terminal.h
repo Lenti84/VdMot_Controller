@@ -16,7 +16,8 @@
 extern int16_t Terminal_Init (void);
 extern int16_t Terminal_Serve (void);
 
-extern HardwareSerial Serial3;
+//extern HardwareSerial Serial3;
+//extern HardwareSerial Serial6;
 
 extern int testmode;
 

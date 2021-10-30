@@ -1,0 +1,281 @@
+#include "eeprom.h"
+#include "hardware.h"
+#include "I2C_eeprom.h"		// freat library from https://github.com/RobTillaart/I2C_EEPROM
+#include "motor.h"
+
+//#define EEPROM_DEBUG(...)
+//#define EEPROM_DEBUG 	Serial3.print
+#define EEPROM_DEBUG 	Serial6.print
+
+
+byte buffer[256];
+long address;
+
+#define EE24LC64MAXBYTES 		64*1024/8
+#define DEVICEADDRESS 			0x50		// A0, A1, A2 = GND
+
+I2C_eeprom eeprom(DEVICEADDRESS, EE24LC64MAXBYTES);
+
+// SPIEEPROM eep(EEPROM_TYPE_16BIT, EEP_CS_PIN); // parameter is type
+//                     // type=0: 16-bits address
+//                     // type=1: 24-bits address
+//                     // type>1: defaults to type 0
+
+struct eeprom_layout eep_content;
+
+
+
+void fill_buffer()
+{
+  for (int i=0;i<256;i++)
+  {
+    buffer[i]=i;
+  }
+}
+
+
+// call from setup function in main
+int16_t eepromsetup () {
+
+    // SPI.setMOSI(EEP_MOSI_PIN);
+    // SPI.setMISO(EEP_MISO_PIN);
+    // SPI.setSCLK(EEP_CLK_PIN);
+    // eep.setup(); // setup eeprom
+
+
+    // // test
+    // fill_buffer();
+	// address = 0;
+	
+	// EEPROM_DEBUG("Starting to write on EEPROM:");
+	// EEPROM_DEBUG(millis());
+	// EEPROM_DEBUG("\r\n");
+	
+	// //eep.write(address, buffer, (sizeof(buffer)/sizeof(byte)));
+	// eeprom.writeBlock(address, buffer, (sizeof(buffer)/sizeof(byte)));
+	
+	// EEPROM_DEBUG("Finish to write:");
+	// EEPROM_DEBUG(millis());
+	// EEPROM_DEBUG("\r\n");
+	
+  return 0;
+}
+
+
+int16_t eepromloop() {
+
+    #define E_INIT      0
+    #define E_IDLE      1
+    #define E_READCFG   2
+
+    static int eepromstate = E_INIT;
+
+    int x;
+
+    switch (eepromstate) {
+        case E_INIT:
+                    // address = 0;
+                    // EEPROM_DEBUG("Test read eeprom\r\n");
+                    // for (x=0;x<30;x++) {
+                    //     EEPROM_DEBUG("Address:|");
+                    //     EEPROM_DEBUG(address);
+                    //     EEPROM_DEBUG("| - Value:|");
+                    //     //EEPROM_DEBUG(eep.readByte(address), DEC);
+					// 	EEPROM_DEBUG(eeprom.readByte(address), DEC);
+                    //     EEPROM_DEBUG("|\r\n");
+                    //     address++;
+                    //     delay(10);
+                    // }
+                    // if (address == 256)
+                    //    address = 0;    
+
+
+                    eepromstate = E_IDLE;
+                    break;
+
+        case E_IDLE:                  
+                    eepromstate = E_IDLE;
+                    break;
+
+
+        case E_READCFG:
+
+
+                    break;
+
+        default:    eepromstate = E_IDLE;
+                    break;
+    }
+
+        
+
+
+  return 0;
+}
+
+
+
+
+
+//----------------------------------------------------------------------------
+//
+// places inital eeprom layout
+void eeprom_fill (void) {
+	//u16 a;
+	unsigned char eef_buffer[4];
+
+	// mark eeprom as written
+	((*((uint32_t*)&eef_buffer[0]))) = 0x1F2F3F4F;
+  	//eep.write(EEPROM_MARK_ADD, eef_buffer, 4);
+	eeprom.writeBlock(EEPROM_MARK_ADD, eef_buffer, 4);
+
+	// version
+	((*((uint32_t*)&eef_buffer[0]))) = 11;
+  	//eep.write(EEPROM_VERS1_ADD, eef_buffer, 1);
+	eeprom.writeBlock(EEPROM_VERS1_ADD, eef_buffer, 4);
+
+	// clear reserved area
+	/*((*((u32*)&eef_buffer[0]))) = 0x00000000;
+	for(a=EEPROM_VERS+1;a<EEPROM_IP;a++) {
+    eep.write(EEPROM_VERS1_ADD+1, eef_buffer, 1);
+	} */
+
+}
+
+
+//----------------------------------------------------------------------------
+//
+// checks if the eeprom is marked
+//
+//	returns 0 if mark was found
+uint8_t eeprom_mark (void) {
+	
+	unsigned long eef_buffer;	   
+  	//eep.readByteArray(EEPROM_MARK_ADD, (uint8_t *) (&eef_buffer), 4);
+	eeprom.readBlock(EEPROM_MARK_ADD, (uint8_t *) (&eef_buffer), 4);
+
+	EEPROM_DEBUG("read mark:");
+  	EEPROM_DEBUG((unsigned int) eef_buffer, HEX);
+  	EEPROM_DEBUG("\r\n");
+
+	if ( eef_buffer == 0x1F2F3F4F) {
+		EEPROM_DEBUG("found mark in eeprom...\r\n");
+		return 0;
+	}
+	EEPROM_DEBUG("no mark found in eeprom...\r\n");
+	return 1;
+}
+
+
+
+
+//----------------------------------------------------------------------------
+//
+// writes eeprom layout to eeprom
+//
+//	returns 0 if mark was found
+int16_t eeprom_write_layout (struct eeprom_layout* lay) {
+
+	uint8_t buf[100];
+	uint16_t x, y;
+	uint16_t scnt;
+	uint16_t address;
+
+	EEPROM_DEBUG("write eeprom layout to eeprom...\r\n");
+
+	x=0;
+	address = EE_GENERALDATA_ADR;
+
+	// first write base layout
+	buf[x++] = lay->b_slave;
+	for(y=0;y<sizeof(lay->descr);y++) {
+		buf[x] = (uint8_t) (lay->descr[y]);
+		x++;
+	}
+	for(y=0;y<sizeof(lay->OneWireCfg);y++) {
+		buf[x] = (uint8_t) (lay->OneWireCfg[y]);
+		x++;
+	}
+
+  	//eep.write(address, buf, x);
+	eeprom.writeBlock(address, buf, x);
+
+	// then write sensor data
+	address = EE_GENERALDATA_ADR + x;
+	for(scnt=0;scnt<ACTUATOR_COUNT;scnt++) {
+		x = 0;
+		buf[x++] = lay->owsensors[scnt].familycode;
+		buf[x++] = lay->owsensors[scnt].romcode[5];
+		buf[x++] = lay->owsensors[scnt].romcode[4];
+		buf[x++] = lay->owsensors[scnt].romcode[3];
+		buf[x++] = lay->owsensors[scnt].romcode[2];
+		buf[x++] = lay->owsensors[scnt].romcode[1];
+		buf[x++] = lay->owsensors[scnt].romcode[0];
+		buf[x++] = lay->owsensors[scnt].crc;
+
+		//eeprom_write (address + (scnt * x), x,  buf );
+		//eep.write(address + (scnt * x), buf, x);
+		eeprom.writeBlock(address + (scnt * x), buf, x);
+	}
+
+	EEPROM_DEBUG("finished\r\n");
+
+	return 0;
+}
+
+
+//----------------------------------------------------------------------------
+//
+// reads eeprom layout from eeprom
+//
+//	returns 0 if mark was found
+int16_t eeprom_read_layout (struct eeprom_layout* lay) {
+
+	uint8_t buf[100];
+	uint16_t x, y;
+	uint16_t scnt;
+	uint16_t address;
+
+	EEPROM_DEBUG("Read eeprom layout from eeprom...");
+
+	address = EE_GENERALDATA_ADR;
+
+	// first read base layout
+	x = 1 + sizeof(lay->descr) + sizeof(lay->OneWireCfg);
+	//eep.readByteArray(address, buf, x);
+	eeprom.readBlock(address, buf, x);
+
+	x = 0;
+	lay->b_slave = buf[x++];
+	for(y=0;y<sizeof(lay->descr);y++) {
+		lay->descr[y] = (char) (buf[x]);
+		x++;
+	}
+	for(y=0;y<sizeof(lay->OneWireCfg);y++) {
+		lay->OneWireCfg[y] = buf[x];
+		x++;
+	}
+
+	// then read sensor data
+	address = EE_GENERALDATA_ADR + x;
+	for(scnt=0;scnt<ACTUATOR_COUNT;scnt++) {
+		x = 8;
+
+		//eep.readByteArray(address + (scnt * 8), buf, x);
+		//eeprom_read (address + (scnt * x), x,  buf );
+		eeprom.readBlock(address + (scnt * 8), buf, x);
+
+		lay->owsensors[scnt].familycode = buf[0];
+		lay->owsensors[scnt].romcode[5] = buf[1];
+		lay->owsensors[scnt].romcode[4] = buf[2];
+		lay->owsensors[scnt].romcode[3] = buf[3];
+		lay->owsensors[scnt].romcode[2] = buf[4];
+		lay->owsensors[scnt].romcode[1] = buf[5];
+		lay->owsensors[scnt].romcode[0] = buf[6];
+		lay->owsensors[scnt].crc = buf[7];
+	}
+
+	EEPROM_DEBUG("finished\r\n");
+
+	return 0;
+}

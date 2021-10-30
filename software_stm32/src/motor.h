@@ -1,12 +1,16 @@
 /*
  
 */
+#ifndef _MOTOR_H
+	#define _MOTOR_H
+
 
 #define LEARN_AFTER_MOVEMENTS_DEFAULT     50      // after x movements a learning cycle will be executed
 #define LEARN_AFTER_TIME_DEFAULT          3600    // after x seconds a learning cycle will be executed
 
-#define ACTUATOR_COUNT                   (unsigned int) 12      // how many valves are supported
-#define VALVE_INIT_TEMPERATURE    -2000       // init value for struct value of temperature
+#define ACTUATOR_COUNT     (unsigned int) 12      // how many valves are supported
+#define VALVE_INIT_TEMPERATURE            -2000   // init value for struct value of temperature
+#define VALVE_SENSOR_UNKNOWN              65535   // marks that no sensor slot is selected
 
 #define CMD_A_OPEN      'o'
 #define CMD_A_OPEN_END  'p'
@@ -54,3 +58,6 @@ byte appsetup ();
 byte app_10s_loop ();
 enum ASTATE appgetstate ();
 int16_t appsetaction(char cmd, unsigned int valveindex, byte pos);
+
+
+#endif     //_MOTOR_H
