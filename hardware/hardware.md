@@ -1,12 +1,13 @@
 # Hardware
 
 ## C-sample -in progress-
-- uC STM32F103C8 on BluePill board
+- uC STM32F401CCU on BlackPill board
+  - I ran out of flash on STM32F103 nor it is available as a genuine part anywhere
 - WT32-ETH01 module for Ethernet (RJ45) or wifi connection
 - current sensing by opamp circuit, optional INA219 current sensor
 - L293 for motorcontrol
 - back EMF circuit to identify a single commutator switch
-- CAN bus
+- optional CAN bus via MCP2515
 - RS485
 - 1-wire via DS2482-100
 - optional: I2C display (5V)
@@ -14,7 +15,7 @@
 - LM2596 step-down converter integrated
 - power savings: all three L293 can be switched off by software 
 
-PCB 3D: ![-](./c-sample_pcb_3D.png "c-sample pcb 3D teaser")
+PCB 3D teaser: ![-](./c-sample_pcb_3D.png "c-sample pcb 3D teaser")
 
 ## B-sample
 - uC STM32F103C8 on BluePill board
