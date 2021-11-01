@@ -37,8 +37,11 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 - one wire sensors working
   - each sensor temperature can be coupled to a valve
   - therefore the sensor adresses are stored and assigned at startup
-- eeprom working
+- eeprom working (and changed to I2C type)
 - programming of STM32 by ESP32 first tests successfully performed
+- change from STM32F103 to STM32F401 due to procurement issues
+- simple test of RS485 interface with modbus master sucessfully performed
+- simple test of CAN interface via MCP2515 sucessfully performed
 
 ## Hardware
 - find description of hardware here [hardware/hardware.md](./hardware/hardware.md)
