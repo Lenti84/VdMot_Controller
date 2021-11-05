@@ -1,3 +1,13 @@
+/*
+	Changelog :
+	5.11.2021 (Surfgargano)
+		change this
+			if (millis() > (uint32_t) 100 + timer) {
+		to 
+			if ((millis()- timer) > (uint32_t) 100) {
+		to prevent a 42 day delay in case of wrap around
+*/
+
 #include <Arduino.h>
 #include <WebOTA.h>
 #include "mqtt.h"
@@ -41,7 +51,7 @@ void loop() {
   static uint32_t timer10ms = 0;
 
   // LED / heartbeat 
-  if (millis() > (uint32_t) 1000 + timer) {
+  if ((millis()-timer) > (uint32_t) 1000) {
         timer = millis();
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
         //Serial.println("heartbeat");
@@ -52,7 +62,7 @@ void loop() {
   webota.handle();
 
 
-  if (millis() > (uint32_t) 1000 + timer10ms) {
+  if ((millis()-timer10ms) > (uint32_t) 1000 ) {
       timer10ms = millis();
        
       telnet_loop();

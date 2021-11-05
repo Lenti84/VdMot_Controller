@@ -1,3 +1,13 @@
+/*
+	Changelog :
+	5.11.2021 (Surfgargano)
+		change this
+			if (millis() > (uint32_t) 100 + timer) {
+		to 
+			if ((millis()- timer) > (uint32_t) 100) {
+		to prevent a 42 day delay in case of wrap around
+*/
+
 #include <Arduino.h>
 #include <PubSubClient.h>
 #include <ESP8266WiFi.h>
@@ -32,7 +42,7 @@ void mqtt_loop() {
     }
     mqtt_client.loop();
 
-    if (millis() > (uint32_t) 2000 + timer) {
+    if ((millis()-timer) > (uint32_t) 2000 ) {
         timer = millis();
 
         publish_valves ();

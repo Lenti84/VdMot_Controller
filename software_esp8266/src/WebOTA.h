@@ -1,3 +1,10 @@
+/*
+	Changelog :
+	5.11.2021 (Surfgargano)
+		declaration CWebOTA class
+*/
+
+
 #include <Arduino.h>
 
 #ifdef ESP8266
@@ -7,14 +14,14 @@
 #include <WebServer.h>
 #endif
 
-class WebOTA {
+class CWebOTA {
 	public:
 		unsigned int port;
 		String path = "";
 		String mdns = "";
 
-		int init(const unsigned int port, const char *path);
-		int init(const unsigned int port);
+		int init(const unsigned int thisPort, const char *thisPath);
+		int init(const unsigned int thisPort);
 		int init();
 		void delay(unsigned int ms);
 
@@ -38,4 +45,4 @@ class WebOTA {
 
 int init_wifi(const char *ssid, const char *password, const char *mdns_hostname);
 
-extern WebOTA webota;
+extern CWebOTA webota;
