@@ -1,3 +1,11 @@
+/*
+	Changelog :
+	5.11.2021 (Surfgargano)
+		declaration CWebOTA class
+*/
+
+
+
 // Arduino build process info: https://github.com/arduino/Arduino/wiki/Build-Process
 
 #define WEBOTA_VERSION "0.1.5"
@@ -23,44 +31,44 @@ WebServer OTAServer(9999);
 ESP8266WebServer OTAServer(9999);
 #endif
 
-WebOTA webota;
+CWebOTA webota;
 
 ////////////////////////////////////////////////////////////////////////////
 
-int WebOTA::init(const unsigned int port, const char *path) {
-	this->port = port;
-	this->path = path;
+int CWebOTA::init(const unsigned int thisPort, const char *thisPath) {
+	port = thisPort;
+	path = thisPath;
 
 	// Only run this once
-	if (this->init_has_run) {
+	if (init_has_run) {
 		return 0;
 	}
 
-	add_http_routes(&OTAServer, path);
+	add_http_routes(&OTAServer, thisPath);
 	OTAServer.begin(port);
 
-	Serial.printf("WebOTA url   : http://%s.local:%d%s\r\n\r\n", this->mdns.c_str(), port, path);
+	Serial.printf("WebOTA url   : http://%s.local:%d%s\r\n\r\n", mdns.c_str(), thisPort, thisPath);
 
 	// Store that init has already run
-	this->init_has_run = true;
+	init_has_run = true;
 
 	return 1;
 }
 
 // One param
-int WebOTA::init(const unsigned int port) {
-	return WebOTA::init(port, "/webota");
+int CWebOTA::init(const unsigned int thisPort) {
+	return init(port, "/webota");
 }
 
 // No params
-int WebOTA::init() {
-	return WebOTA::init(8080, "/webota");
+int CWebOTA::init() {
+	return init(8080, "/webota");
 }
 
-int WebOTA::handle() {
+int CWebOTA::handle() {
 	// If we haven't run the init yet run it
-	if (!this->init_has_run) {
-		WebOTA::init();
+	if (!init_has_run) {
+		init();
 	}
 
 	OTAServer.handleClient();
@@ -71,7 +79,7 @@ int WebOTA::handle() {
 	return 1;
 }
 
-long WebOTA::max_sketch_size() {
+long CWebOTA::max_sketch_size() {
 	long ret = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
 
 	return ret;
@@ -139,10 +147,10 @@ domReady(function() {
 
 
 #ifdef ESP8266
-int WebOTA::add_http_routes(ESP8266WebServer *server, const char *path) {
+int CWebOTA::add_http_routes(ESP8266WebServer *server, const char *path) {
 #endif
 #ifdef ESP32
-int WebOTA::add_http_routes(WebServer *server, const char *path) {
+int CWebOTA::add_http_routes(WebServer *server, const char *path) {
 #endif
 	// Index page
 	server->on("/", HTTP_GET, [server]() {
@@ -154,8 +162,8 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 	server->on(path, HTTP_GET, [server,this]() {
 		Serial.println("ota page!");
 		String html = "";
-		if (this->custom_html != NULL) {
-			html += this->custom_html;
+		if (custom_html != NULL) {
+			html += custom_html;
 		} else {
 			html += ota_version_html;
 		}
@@ -177,7 +185,7 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 			Serial.printf("Firmware update initiated: %s\r\n", upload.filename.c_str());
 
 			//uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
-			uint32_t maxSketchSpace = this->max_sketch_size();
+			uint32_t maxSketchSpace = max_sketch_size();
 
 			if (!Update.begin(maxSketchSpace)) { //start with max available size
 				Update.printError(Serial);
@@ -213,18 +221,18 @@ int WebOTA::add_http_routes(WebServer *server, const char *path) {
 
 // If the MCU is in a delay() it cannot respond to HTTP OTA requests
 // We do a "fake" looping delay and listen for incoming HTTP requests while waiting
-void WebOTA::delay(unsigned int ms) {
+void CWebOTA::delay(unsigned int ms) {
 	// Borrowed from mshoe007 @ https://github.com/scottchiefbaker/ESP-WebOTA/issues/8
 	decltype(millis()) last = millis();
 
 	while ((millis() - last) < ms) {
 		OTAServer.handleClient();
-		::delay(5);
+		delay(5);
 	}
 }
 
-void WebOTA::set_custom_html(char const * const html) {
-	this->custom_html = html;
+void CWebOTA::set_custom_html(char const * const html) {
+	custom_html = html;
 }
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////

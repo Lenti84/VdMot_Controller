@@ -1,3 +1,14 @@
+/*
+	Changelog :
+	5.11.2021 (Surfgargano)
+		change this
+			if (millis() > (uint32_t) 100 + timer) {
+		to 
+			if ((millis()- timer) > (uint32_t) 100) {
+		to prevent a 42 day delay in case of wrap around
+
+*/
+
 #include "main.h"
 #include <ArduinoJson.h>
 #include <Arduino.h>
@@ -85,7 +96,7 @@ void app_loop() {
 
 
     // 100 ms task
-    if (millis() > (uint32_t) 100 + timer) {
+	if ((millis()- timer) > (uint32_t) 100) {
         timer = millis();
 
         app_comm_machine(); 
@@ -94,7 +105,7 @@ void app_loop() {
 
 
     // 1000 ms task
-    if (millis() > (uint32_t) 1000 + timer100ms) {
+    if ((millis()-timer100ms) > (uint32_t) 1000 ) {
         timer100ms = millis();
 
         //for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {
