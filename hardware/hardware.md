@@ -9,8 +9,8 @@
 - back EMF circuit to identify a single commutator switch
 - optional CAN bus via MCP2515
 - RS485
-- 1-wire via DS2482-100
-- optional: I2C display (5V)
+- 1-wire via DS2482-100 or discrete circuit
+- optional: I2C display (5V) or other I2C slaves
 - supply voltage 10...24V
 - LM2596 step-down converter integrated
 - power savings: all three L293 can be switched off by software 
