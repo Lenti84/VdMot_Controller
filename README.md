@@ -47,6 +47,7 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 - find description of hardware here [hardware/hardware.md](./hardware/hardware.md)
 
 ## Software
+For details please see [software.md](./software.md)
 - written in C / C++
 - not pretty (yet) ... i'm more the hardware guy ;-)
 - uses great arduino libraries
