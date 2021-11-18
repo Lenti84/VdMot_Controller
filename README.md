@@ -22,7 +22,7 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
   
 ## Status
 - b-sample hardware is working with original HmIP-VdMot actuator
-- c-sample hardware in development (see hardware section)
+- c-sample hardware samples ordered (see hardware section)
 - valve learning, opening and closing is working
 - connection to [FHEM](https://fhem.de/) established via MQTT
   - topics:
@@ -37,13 +37,17 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 - one wire sensors working
   - each sensor temperature can be coupled to a valve
   - therefore the sensor adresses are stored and assigned at startup
-- eeprom working
+- eeprom working (and changed to I2C type)
 - programming of STM32 by ESP32 first tests successfully performed
+- change from STM32F103 to STM32F401 due to procurement issues
+- simple test of RS485 interface with modbus master sucessfully performed
+- simple test of CAN interface via MCP2515 sucessfully performed
 
 ## Hardware
 - find description of hardware here [hardware/hardware.md](./hardware/hardware.md)
 
 ## Software
+For details please see [software.md](./software.md)
 - written in C / C++
 - not pretty (yet) ... i'm more the hardware guy ;-)
 - uses great arduino libraries
@@ -51,12 +55,12 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 - STM32 BluePill
   - controls the valves / dc-motors
     - endstop by real current measurement
-    - counting motor revolutions by 
+    - counting motor revolutions by back-EMF
   - controlls DS2482-100 1-wire bus master ic
   - serving simple terminal for debugging purposes
   - future
     - so many things, tbd
-- ESP8266
+- ESP32
   - communication with MQTT broker
   - future
     - visualize system status
