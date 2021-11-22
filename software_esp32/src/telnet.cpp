@@ -9,7 +9,8 @@ https://www.nikolaus-lueneburg.de/2017/09/wifi-telnet-server-auf-dem-esp8266/
 /* ------------------------------------------------- */
 
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
+//#include <ESP8266WiFi.h>
+#include "WiFi.h"
 #include <WiFiUdp.h>
 #include "app.h"
 

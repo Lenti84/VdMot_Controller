@@ -1,19 +1,10 @@
-/*
-	Changelog :
-	5.11.2021 (Surfgargano)
-		change this
-			if (millis() > (uint32_t) 100 + timer) {
-		to 
-			if ((millis()- timer) > (uint32_t) 100) {
-		to prevent a 42 day delay in case of wrap around
-*/
-
 #include <Arduino.h>
 #include <PubSubClient.h>
-#include <ESP8266WiFi.h>
+//#include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include <Syslog.h>
 #include "mqtt.h"
-#include "main.h"
+#include "globals.h"
 #include "app.h"
 
 
@@ -23,6 +14,8 @@ void publish_valves ();
 
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
+
+const char* MQTT_BROKER = MQTT_BROKER_IP;
 
 
 void mqtt_setup() {
@@ -42,7 +35,7 @@ void mqtt_loop() {
     }
     mqtt_client.loop();
 
-    if ((millis()-timer) > (uint32_t) 2000 ) {
+    if (millis() > (uint32_t) 2000 + timer) {
         timer = millis();
 
         publish_valves ();
@@ -54,7 +47,7 @@ void mqtt_loop() {
 
 
 void reconnect() {
-    char topicstr[sizeof(mqtt_maintopic)+20];
+    char topicstr[MAINTOPIC_LEN+20];
     char nrstr[3];
 
     while (!mqtt_client.connected()) {
@@ -176,7 +169,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
 void publish_valves () {
 
-    char topicstr[sizeof(mqtt_maintopic)+20];
+    char topicstr[MAINTOPIC_LEN+20];
     char nrstr[3];
     char valstr[10];
     unsigned char len;

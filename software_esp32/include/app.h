@@ -26,11 +26,19 @@ typedef struct  {
 
 #define COMM_ALIVE_CYCLE            30          // send "Alive" cycle in 100 ms cycles
 
+#define MAINTOPIC_LEN               30
+
+
 void app_setup();
 void app_loop();
 void app_cmd(int command);
 
 extern Syslog syslog;
+
+extern char mqtt_maintopic[];
+extern actuator_str actuators[];
+
+extern uint8_t     stm32alive;
 
 
 #endif // #ifndef 
