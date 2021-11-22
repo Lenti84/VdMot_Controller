@@ -6,14 +6,18 @@
 - WT32-ETH01 module for Ethernet (RJ45) or wifi connection
 - current sensing by opamp circuit, optional INA219 current sensor
 - L293 for motorcontrol
-- back EMF circuit to identify a single commutator switch
+- back EMF circuit to identify a single commutator switch for counting motor revolutions
 - optional CAN bus via MCP2515
 - RS485
-- 1-wire via DS2482-100 or discrete circuit
+- 1-wire via discrete circuit with 3k3 pull-up
+  - optional via DS2482-100
 - optional: I2C display (5V) or other I2C slaves
 - supply voltage 10...24V
 - LM2596 step-down converter integrated
 - power savings: all three L293 can be switched off by software 
+  - with only STM32 running approx. 300 mW 
+
+You can find the c-sample schematic here: [schematic_b-sample_V02.pdf](./schematic_c-sample_V02.pdf)
 
 PCB 3D teaser: ![-](./c-sample_pcb_3D.png "c-sample pcb 3D teaser")
 
