@@ -13,7 +13,7 @@ tbd
 
 ## part list for THT parts
 Following the part list for the missing components.
-|Quantity|Designator|Description|Value|Reichelt|
+|Quantity|Designator|Description|Value|Reichelt order number|
 | --- | --- | --- | --- | --- |
 |1|C1|capacitor THT RM5 10MM|330µF/35V|NHG-A 330U 35|
 |2|C33, C39|capacitor THT RM2 6MM|100µF/25V|NHG-A 100U 25|
@@ -33,3 +33,5 @@ Following the part list for the missing components.
 |2|for BlackPill board|female header 20 pin||BL 1X20G8 2,54|
 |2|for WT32-ETH01 board|female header 20 pin -> cut to 13 pins||BL 1X20G8 2,54|
 |1||DIN rail housing|apra Rail DB 449-370-55|APRA DB9 GBK|
+|1|B1|BlackPill STM32F401CCU6||-|
+|1|B2|WT32-ETH01||-|
