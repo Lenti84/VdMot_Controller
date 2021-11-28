@@ -1,2 +1,4 @@
-const char* ssid     = "KabelWLAN3";
-const char* password = "steuerung98";
+#pragma once
+
+const char* ssid     = "DuSoTec7270";
+const char* password = "pskhomedusotec99";

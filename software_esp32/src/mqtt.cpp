@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <PubSubClient.h>
-//#include <ESP8266WiFi.h>
 #include <WiFi.h>
 #include <Syslog.h>
 #include "mqtt.h"
@@ -18,8 +17,8 @@ PubSubClient mqtt_client(espClient);
 const char* MQTT_BROKER = MQTT_BROKER_IP;
 
 
-void mqtt_setup() {
-    mqtt_client.setServer(MQTT_BROKER, 1883);
+void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort) {
+    mqtt_client.setServer(brokerIP, brokerPort);
     mqtt_client.setCallback(callback);
 
     strcpy(mqtt_maintopic, DEFAULT_MAINTOPIC);
@@ -35,7 +34,7 @@ void mqtt_loop() {
     }
     mqtt_client.loop();
 
-    if (millis() > (uint32_t) 2000 + timer) {
+    if ((millis()-timer) > (uint32_t) 2000) {
         timer = millis();
 
         publish_valves ();

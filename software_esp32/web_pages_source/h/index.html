@@ -1,0 +1,471 @@
+
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+	body {
+	  font-family: sans-serif;
+	  margin:0;
+	}
+	/* Add a black background color to the top navigation */
+	.topNav {
+		background-color: #333;
+		overflow: hidden;
+	}
+
+	/* Style the links inside the navigation bar */
+	.topNav a {
+		float: left;
+		display: block;
+		color: #f2f2f2;
+		text-align: center;
+		padding: 14px 16px;
+		text-decoration: none;
+		font-size: 17px;
+	}
+
+	/* Change the color of links on hover */
+	.topNav a:hover {
+		background-color: #ddd;
+		color: black;
+	}
+
+	/* Hide the link that should open and close the topNav on small screens */
+	.topNav .icon {
+		display: none;
+	}
+
+	/* When the screen is less than 600 pixels wide, hide all links, except for the first one ("Home"). Show the link that contains should open and close the topNav (.icon) */
+	@media screen and (max-width: 600px) {
+	  .topNav a:not(:first-child) {display: none;}
+	  .topNav a.icon {
+		float: right;
+		display: block;
+	  }
+	}
+
+	/* The "responsive" class is added to the topNav with JavaScript when the user clicks on the icon. This class makes the topNav look good on small screens (display the links vertically instead of horizontally) */
+	@media screen and (max-width: 600px) {
+	  .topNav.responsive {position: relative;}
+	  .topNav.responsive a.icon {
+		position: absolute;
+		right: 0;
+		top: 0;
+	  }
+	  .topNav.responsive a {
+		float: none;
+		display: block;
+		text-align: left;
+	  }
+	}
+	
+	/* Style the tab content (and add height:100% for full page content) */
+	.tabContent {
+	  color: white;
+	  display: none;
+	  padding: 10px 20px;
+	//  height: 100%;
+	 
+	}
+
+	table.tabTable td {
+		padding-left: 12px;
+	}
+	
+	/* Style tab links */
+	.tabLink {
+	  background-color: #555;
+	  color: white;
+	  float: left;
+	  border: none;
+	  outline: none;
+	  cursor: pointer;
+	  padding: 14px 16px;
+	  font-size: 17px;
+	  width: 15%;
+	}
+
+	.tabLink:hover {
+	  background-color: #777;
+	}
+	
+	.tabframe {
+	  border: white 2px solid;
+	  padding: 5px;
+	  border-radius: 5px;
+	}
+	
+	.form-input{
+		width: 100px;
+	}
+	
+	.rtabframe {
+		width: 25%;
+		display: inline-block;
+	//	background-color: green;
+		border: white 2px solid;
+		padding: 5px;
+		border-radius: 5px;
+	}
+
+	.hideDiv {
+		display: none;
+	}
+	
+	@media screen and (max-width: 500px) {
+
+		.rtabframe,
+		.rtabframe,
+		.rtabframe,
+		.rtabframe,
+		.rtabframe {
+			width: 70%;
+		}
+	}
+	
+	#Home {background-color: gray;}
+	#Status {background-color: gray;}
+	#Network {background-color: gray;}
+	#Config {background-color: gray;}
+
+</style>
+
+</head>
+<body>
+
+	<div class="topNav" id="mytopNav">
+	  <a href="#home" class="tabLink" id="defaultOpen" onclick="openPage('Home', this, 'red')">Home</a>
+	  <a href="#status" class="tabLink" onclick="openPage('Status', this, 'green')">Status</a>
+	  <a href="#network" class="tabLink" onclick="openPage('Network', this, 'blue')">Network</a>
+	  <a href="#config" class="tabLink" onclick="openPage('Config', this, 'gray')">Config</a>
+	  <a href="javascript:void(0);" class="icon" onclick="resptopNav()">&#9776;</a>
+	</div>
+
+	<div id="Home" class="tabContent">
+		<div class="tabframe" style="width: 250px;">
+		<h3>VDMot Controller</h3>
+		<p>Home is where the heart is..</p>
+		<table id="homeInfo" class="tabTable">
+			<tr>
+				<th>Wt32 Version</th>
+				<td id="sysWt32-Version"></td>
+			</tr>
+		</table>
+		</div>
+	</div>
+
+	<div id="Status" class="tabContent">
+		<div class="tabframe" style="width: 170px;">  
+		<h3>Valves</h3>
+		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		</table>
+		</div>
+	</div>
+
+	<div id="Network" class="tabContent">
+		<div class="tabframe" style="width: 250px;"> 
+		<h3>Network</h3>
+		<table id="netInfo" class="tabTable">
+			<tr>
+				<th>Eth/Wifi</th>
+				<td id="net-EthWifi"></td>
+			</tr>
+			<tr>
+				<th>DHCP</th>
+				<td id="net-dhcp"></td>
+			</tr>
+			<tr>
+				<th>IP</th>
+				<td id="net-ip"></td>
+			</tr>
+			<tr>
+				<th>MAC</th>
+				<td id="net-MAC"></td>
+			</tr>
+			<tr>
+				<th>Subnet Mask</th>
+				<td id="net-mask"></td>
+			</tr>
+			<tr>
+				<th>Gateway</th>
+				<td id="net-gw"></td>
+			</tr>
+			<tr>
+				<th>DNS</th>
+				<td id="net-dns"></td>
+			</tr>
+		</table>
+		</div>
+	</div>
+	
+	<div id="Config" class="tabContent">
+		<div class="rtabframe" style="width: 250px;">
+		<h3>Network</h3>
+		<table id="netConfig" class="tabTable">
+			<tr>
+				<th>Eth/Wifi</th>
+				<td>
+				<select id="netcfg-EthWifi" style="width: 50px;">
+                    <option>Eth</option>
+                    <option>Wifi</option>
+				</select>
+				</td>
+            </tr>  
+			<tr>
+				<th>DHCP</th>
+				<td>
+				<select id="netcfg-dhcp" style="width: 50px;">
+                    <option>OFF</option>
+                    <option>ON</option>
+				</select>
+				</td>
+            </tr>                    
+			<tr>
+				<th>IP</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-ip" name="netcfg-ip" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Subnet Mask</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-mask" name="netcfg-mask" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Gateway</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-gw" name="netcfg-gw" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>DNS</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-dns" name="netcfg-dns" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+		</table>
+		</div>
+				
+		<div class="rtabframe" style="width: 250px;">
+		<h3>Protocol</h3>
+
+		<table id="protConfig" class="tabTable">		
+			<tr>
+				<th>Data protocol</th>
+				<td>
+				<select id="protcfg-dataProt"  onclick ="showMqttIP()">
+                    <option>none</option>
+                    <option>MQTT</option>
+				</select>
+				</td>
+            </tr> 
+		</table>
+		<table   id="protcfg-mqtt" style="display:none;" class="tabTable">
+				<tr>
+				<th>Broker IP</th>
+				<td>
+				<input type="text" class="form-input" id="protcfg-mqttIp" name="protcfg-mqttIp" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Broker Port</th>
+				<td>
+				<input type="text" class="form-input" id="protcfg-mqttPort" name="protcfg-mqttPort" placeholder="xxxx"/>
+				</td>
+			</tr>
+
+			</table>
+		</div>
+		
+		<div class="rtabframe" style="width: 250px;">
+		<h3>System</h3>
+		<table id="sysConfig" class="tabTable">
+			
+		</table>
+		</div>
+		
+		<div class="rtabframe" style="width: 250px;">
+		<h3>Valves</h3>
+		<table id="valvesConfig" class="tabTable">
+			
+		</table>
+		</div>
+		
+		<div class="rtabframe" style="width: 250px;">
+		<h3>Temperature sensor</h3>
+		<table id="tSensorConfig" class="tabTable">
+			
+		</table>
+		</div>
+	</div>
+	
+ 
+	<script>		
+				
+		/* Toggle between adding and removing the "responsive" class to topNav when the user clicks on the icon */
+		function resptopNav() {
+			var x = document.getElementById("mytopNav");
+			if (x.className === "topNav") {
+				x.className += " responsive";
+			} else {
+				x.className = "topNav";
+			}
+		}
+		function openPage(pageName,elmnt,color) {
+		  var i, tabContent, tabLinks;
+		  tabContent = document.getElementsByClassName("tabContent");
+		  for (i = 0; i < tabContent.length; i++) {
+			tabContent[i].style.display = "none";
+		  }
+		  tabLinks = document.getElementsByClassName("tabLink");
+		  for (i = 0; i < tabLinks.length; i++) {
+			tabLinks[i].style.backgroundColor = "";
+		  }
+		  document.getElementById(pageName).style.display = "block";
+		  elmnt.style.backgroundColor = color;
+		}
+				
+		// Get the element with id="defaultOpen" and click on it
+		document.getElementById("defaultOpen").click();
+		
+		var id = function(elid) {
+					var ret = document.getElementById(elid);
+                    if(!ret){
+                        console.log('No element found with id ' + elid);
+                    }
+                    return ret;
+                };
+				
+		function ValidateIPaddress(inputText) {
+			var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+			if (inputText.value.match(ipformat)) {
+			  document.form1.text1.focus();
+			  return true;
+			} else {
+			  alert("You have entered an invalid IP address!");
+			  document.form1.text1.focus();
+			  return false;
+			}
+		}
+		
+		function makeValvesTable() {
+			var ValvesTable = document.getElementById('valvesTable');	  
+			for (var row=0; row<13; row++) { 
+				const thisRow = valvesTable.insertRow(0);
+				for (var i = 0; i < 4; i++) {
+					cell = thisRow.insertCell();
+					cell.innerHTML = '--';	
+				}
+			}
+			for (row=1;row<13;row++) valvesTable.rows[row].cells[0].innerHTML = row;
+			valvesTable.rows[0].cells[0].textContent = 'No';
+			valvesTable.rows[0].cells[1].textContent = '%';
+			valvesTable.rows[0].cells[2].textContent = 'mA';
+			valvesTable.rows[0].cells[3].textContent = '°C';
+		}
+		
+		function showMqttIP(){
+			var x = id("protcfg-mqtt");
+			var select = id("protcfg-dataProt").selectedIndex;
+			if (select === 0) {
+				x.style.display = "none";
+			} else {
+				x.style.display = "block";
+			}
+		}
+			
+		OnStart();
+				
+		function OnStart() {
+			makeValvesTable();
+			getSystemInfo();
+			getNetInfo();
+			getNetConfig();
+			getProtConfig();
+		//	getValvesStatus();
+			
+			//var getStatusInterval = window.setInterval(getStatus, 1000);
+		}
+		
+		
+		var tj =[{"pos":100,"meanCur": 23,"temp": 2.3},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0},{"pos":0,"meanCur": 0,"temp": 0.0}]
+		
+		function fillValvesTable (valvesJson) {
+			var ValvesTable = document.getElementById('valvesTable');
+			console.log(ValvesTable);
+			
+			for (var row = 0; row<12; row++) {	
+				ValvesTable.rows[row+1].cells[1].textContent = valvesJson[row].pos;
+				ValvesTable.rows[row+1].cells[2].textContent = valvesJson[row].meanCur;
+				ValvesTable.rows[row+1].cells[3].textContent = valvesJson[row].temp;
+			}
+		}
+			
+			fillValvesTable(tj);
+		
+		async function getSystemInfo() {
+			var dataSystemInfo=await getJson("sysinfo");
+			if (dataSystemInfo) {
+				id("sysWt32-Version").textContent = dataSystemInfo["wt32version"];
+			}
+		}
+		
+		async function getNetInfo() {
+			var dataNet=await getJson("netinfo");
+			if (dataNet) {
+				id("net-EthWifi").textContent = dataNet["ethWifi"] ? "Wifi" : "Eth";
+				id("net-dhcp").textContent = dataNet["dhcp"] ? "On" : "Off";
+				id("net-ip").textContent = dataNet["ip"];
+				id("net-MAC").textContent = dataNet["mac"];
+				id("net-mask").textContent = dataNet["mask"];
+				id("net-gw").textContent = dataNet["gw"];
+				id("net-dns").textContent = dataNet["dns"];
+			}
+		}
+		
+		async function getNetConfig() {
+			var dataNetConfig=await getJson("netconfig");
+			if (dataNetConfig) {
+				id("netcfg-EthWifi").selectedIndex = dataNetConfig["ethWifi"];
+				id("netcfg-dhcp").selectedIndex = dataNetConfig["dhcp"];
+				id("netcfg-ip").value = dataNetConfig["ip"];
+				id("netcfg-mask").value = dataNetConfig["mask"];
+				id("netcfg-gw").value = dataNetConfig["gw"];
+				id("netcfg-dns").value = dataNetConfig["dns"];	
+			}
+		}
+		
+		async function getProtConfig() {
+			var dataProtConfig=await getJson("protconfig");
+			if (dataProtConfig) {
+				id("protcfg-dataProt").selectedIndex = dataProtConfig["prot"];
+			}
+		}
+		
+		async function getValvesStatus() {
+			var dataValvesStatus=await getJson("valves");
+			if (dataValvesStatus) fillValvesTable(dataValvesStatus);
+		}
+				
+		async function getJson(link){
+			let data = await (await (fetch('http:/'+link)
+			.then(res => {
+			  return res.json()
+			})
+			.catch(err => {
+			  console.log('Error: ', err)
+			})
+		  ))
+		  return data
+		}
+		
+
+	</script>
+
+</body>
+</html>
+

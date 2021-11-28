@@ -1,3 +1,4 @@
+
 #include "globals.h"
 #include "web.h"
 #include "stm32.h"
@@ -5,9 +6,9 @@
 #include "app.h"
 #include <SPIFFS.h>
 #include <FS.h>
-#include <WebServer.h>
 #include "TypedQueue.h"
-
+#include "VdmNet.h"
+#include "VdmConfig.h"
 
 
 uint8_t binread[256];
@@ -21,7 +22,7 @@ bool initflag = 0;
 bool Runflag = 0;
 
 File fsUploadFile;
-WebServer server(80);
+
 
 //const char* serverIndex = "<h1>Upload STM32 BinFile</h1><h2><br><br><form method='POST' action='/upload' enctype='multipart/form-data'><input type='file' name='update'><input type='submit' value='Upload'></form></h2>";
 
@@ -137,245 +138,84 @@ const char on_log[] PROGMEM = ""
 "</body>\n"
 ;
 
-
-void webserver_loop() {
-    server.handleClient();
+String ip2String (IPAddress ipv4addr)
+{
+  return ipv4addr.toString();
 }
 
-
-
-void webserver_setup() {
-
-    // server.on("/up", []() {
-    //   server.send(200, "text/html", makePage("Select file", serverIndex));
-    // });
-
-    // server.on("/inline", []() {
-    //   server.send(200, "text/plain", "this works as well");
-    // });
-
-    // server.on("/list", handleListFiles);
-
-    // server.on("/programm", handleFlash);
-
-    // server.on("/run", []() {
-    //   String Runstate = "STM32 Restart and runing!<br><br> you can reflash MCU (click 1.FlashMode before return Home) <br><br> Or close Browser";
-    //   // stm32Run();
-    //   if (Runflag == 0) {
-    //     RunMode();
-    //     Runflag = 1;
-    //     UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL);
-    //     while(UART_STM32.available()) UART_STM32.read();
-    //   }
-    //   else {
-    //     FlashMode();
-    //     STM32ota_begin();
-    //     while(UART_STM32.available()) UART_STM32.read();
-    //     delay(100);
-    //     initflag = 0;
-    //     Runflag = 0;
-    //   }
-    //   server.send(200, "text/html", makePage("Run", "<h2>" + Runstate + "<br><br><a style=\"color:white\" href=\"/run\">1.FlashMode </a><br><br><a style=\"color:white\" href=\"/\">2.Home </a></h2>"));
-    // });
-
-    // server.on("/erase", []() {
-    //   if (stm32Erase() == STM32ACK)
-    //     stringtmp = "<h1>Erase OK</h1><h2><a style=\"color:white\" href=\"/list\">Return </a></h2>";
-    //   else if (stm32Erasen() == STM32ACK)
-    //     stringtmp = "<h1>Erase OK</h1><h2><a style=\"color:white\" href=\"/list\">Return </a></h2>";
-    //   else
-    //     stringtmp = "<h1>Erase failure</h1><h2><a style=\"color:white\" href=\"/list\">Return </a></h2>";
-    //   server.send(200, "text/html", makePage("Erase page", stringtmp));
-    // });
-
-    // server.on("/flash", []() {
-    //   stringtmp = "<h1>FLASH MENU</h1><h2><a style=\"color:white\" href=\"/programm\">Flash STM32</a><br><br><a style=\"color:white\" href=\"/erase\">Erase STM32</a><br><br><a style=\"color:white\" href=\"/run\">Run STM32</a><br><br><a style=\"color:white\" href=\"/list\">Return </a></h2>";
-    //   server.send(200, "text/html", makePage("Flash page", stringtmp));
-    // });
-
-    // server.on("/delete", handleFileDelete);
-
-    // server.onFileUpload(handleFileUpload);
-
-    // server.on("/upload", []() {
-    //   server.send(200, "text/html", makePage("FileList", "<h1> Uploaded OK </h1><br><br><h2><a style=\"color:white\" href=\"/list\">Return </a></h2>"));
-    // });
-
-    // server.on("/stm32", []() {
-    //   STM32ota_begin();
-    //   if (Runflag == 1) {        
-    //     FlashMode();
-    //     STM32ota_begin();
-    //     //while(UART_STM32.available()) UART_STM32.read();
-    //     delay(100);
-    //     Runflag = 0;
-    //   }
-    //   //if (initflag == 0)
-    //   //{
-    //     delay(100);
-    //     UART_STM32.write(STM32INIT);
-    //     delay(10);
-    //     if (UART_STM32.available() > 0);
-    //     rdtmp = UART_STM32.read();
-    //     if (rdtmp == STM32ACK )   {
-    //       //initflag = 1;
-    //       stringtmp = STM32_CHIPNAME[stm32GetId()];
-    //     }
-    //     else if (rdtmp == STM32NACK) {
-    //       UART_STM32.write(STM32INIT);
-    //       delay(10);
-    //       if (UART_STM32.available() > 0);
-    //       rdtmp = UART_STM32.read();
-    //       if (rdtmp == STM32ACK)   {
-    //         //initflag = 1;
-    //         stringtmp = STM32_CHIPNAME[stm32GetId()];
-    //       }
-    //     }
-    //     else
-    //       stringtmp = "Error";
-
-
-    //   //You have to keep below code "<h2>Version 1.0 by <a style=\"color:white\" href=\"https://github.com/csnol/1CHIP-Programmers\">CSNOL" in your sketch.
-    //   String starthtml = "<h1>STM32-OTA</h1><h2>Version 1.0 by <a style=\"color:white\" href=\"https://github.com/csnol/1CHIP-Programmers\">CSNOL<br><br><a style=\"color:white\" href=\"/up\">Upload STM32 BinFile </a><br><br><a style=\"color:white\" href=\"/list\">List STM32 BinFile</a></h2>";
-    //   server.send(200, "text/html", makePage("Start Page", starthtml + "- Init MCU -<br> " + stringtmp));
-    // });
-
-    server.on("/status", []() {
-      String result;
-      result += GetTop();
-      result += GetNavigation();
-      result += F("<br>");
-      result += GetValveStatus();
-      result += GetBottom(); 
-
-      server.send(200, "text/html", result);
-    });
-
-
-    server.on("/log", []() {
-      String result;
-      result += GetTop();
-      result += GetNavigation();
-      result += F("<br>");
-      result += FPSTR(on_log);
-      result += GetBottom(); 
-
-      server.send(200, "text/html", result);
-    });
-
-    server.on("/getLogData", []() {
-      String data = "";
-      if (1) {
-        while (logger.Available()) {
-          data += logger.Pop() + "\n";
-        }
-      }
-      else {
-        data += F("SYS: ***CLEARLOG***\n");
-        data += F("DATA:Logger is disabled\n");
-        data += F("SYS:Logger is disabled\n");
-      }
-
-      server.send(200, "text/html", data);
-    });
-
-    server.on("/command", []() {
-      //if (m_commandCallback != NULL) {
-        String command = server.arg("cmd");
-        logger.println("Command from frontend: '" + command + "'");
-        //m_commandCallback(command);
-        server.send(200, "text/html", "OK");
-      //}
-    });
-
-    server.on("/credits", []() {
-
-      String result;
-      result += GetTop();
-      result += GetNavigation();
-      result += F("<br>");            
-      result += "VdMot Controller was created with help and by borrowings from:<br><ul>";
-      result += "<li>parts of WebFrontend: https://wiki.fhem.de/wiki/LaCrosseGateway_V1.x</li>";
-      result += "<li>ideas for STM32 flash support: https://github.com/csnol/1CHIP-Programmers</li>";
-      result += "</ul>";
-      result += GetBottom();
-
-      server.send(200, "text/html", makePage("VdMot Controller Credits Page", result));
-    });
-
-    server.on("/", []() {
-      
-      String starthtml = "<h1>VdMot Controller</h1><h2>Version ";
-      starthtml += MAJORVERSION "." MINORVERSION;
-      starthtml += "</h2><br>";
-      starthtml += GetNavigation();
-      server.send(200, "text/html", makePage("VdMot Controller Start Page", starthtml));
-    });
-    
-
-    Serial.println("Setup webserver finished");
-
-    server.begin();
-}
-
-String makePage(String title, String contents) {
-  Serial.println("Make Page");
-  String s = "<!DOCTYPE html><html><head>";
-  s += "<meta name=\"viewport\" content=\"width=device-width,user-scalable=0\">";
-  s += "<title >";
-  s += title;
-  s += "</title></head><body text=#ffffff bgcolor=#0DCBDB align=\"center\">";
-  s += contents;
-  s += "</body></html>";
-  return s;
-}
-
-
-String GetTop() {
-  String result;
-  result += F("<!DOCTYPE HTML><html>");
-  result += F("<meta charset='utf-8'/>");
-  result += "<head><title>";
-  result += "VdMot Controller";
-  result += "</title></head><body text=#ffffff bgcolor=#0DCBDB align=\"center\">";
-  result += F("<p>VdMot Controller");
-  result += "&nbsp;&nbsp;&nbsp;";
-  result += F("</p>");
+String int2String (uint8_t x, uint8_t l)
+{
+  char result[10];
+  memset (result,0,sizeof(result));
+  itoa(x,result,l);
   return result;
 }
 
-String GetBottom() {
-  String result;
-  result += F("</body></html>");
-  return result;
+String int2_OnOFF (uint8_t x)
+{
+  return (x ? "On" : "Off"); 
+}
+
+String getNetConfig (VDM_NETWORK_CONFIG netConfig)
+{
+  String result = "{\"ethWifi\":"+int2String(netConfig.netConfigFlags.eth_wifi,2)+","+
+                  "\"dhcp\":"+int2String(netConfig.netConfigFlags.dhcpEnabled,2)+","+
+                  "\"ip\":\""+ip2String(netConfig.staticIp)+"\","+
+                  "\"mask\":\""+ip2String(netConfig.mask)+"\","+
+                  "\"gw\":\""+ip2String(netConfig.gateway)+"\","+
+                  "\"dns\":\""+ip2String(netConfig.dnsIp)+"\"}";  
+  return result;  
+}
+
+String getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig)
+{
+  String result = "{\"ethWifi\":"+int2String(netConfig.netConfigFlags.eth_wifi,2)+","+
+                  "\"dhcp\":\""+int2String(netConfig.netConfigFlags.dhcpEnabled,2)+"\","+
+                  "\"ip\":\""+ETH.localIP().toString()+"\","+
+                  "\"mac\":\""+ETH.macAddress()+"\","+
+                  "\"mask\":\""+ETH.subnetMask().toString()+"\","+
+                  "\"gw\":\""+ETH.gatewayIP().toString()+"\","+
+                  "\"dns\":\""+ETH.dnsIP().toString()+"\"}";
+  return result;  
+}
+
+String getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
+{
+  String result = "{\"prot\":"+int2String(protConfig.dataProtocol,2)+
+                    "\"mqttIp\":\""+ip2String(protConfig.brokerIp)+"\""+
+                    "\"mqttPort\":\""+int2String(protConfig.brokerPort,4)+"\"}";  
+  return result;  
 }
 
 
-String GetNavigation() {
-  String result = "";
-  result += F("<a href='/'>Home</a>&nbsp;&nbsp;");
-  result += F("<a href='status'>Status</a>&nbsp;&nbsp;");
-  result += F("<a href='log'>Log</a>&nbsp;&nbsp;");
-  result += F("<a href='credits'>Credits</a>&nbsp;&nbsp;");
-  result += F("<br>");
-  
-  return result;
+String getSysInfo()
+{
+  String result = "{\"wt32version\":\""+String(MAJORVERSION)+"."+String(MINORVERSION)+"\"}";
+  return result;  
 }
 
-String GetValveStatus() {
-  String result = "";
+
+void postValvePos () 
+{
+
+}
+
+String getValveStatus() 
+{
+  String result = "[";
   uint8_t x;
   int temperature;
 
   for (x=0;x<ACTUATOR_COUNT;x++) {
-    result += "Valve " + String(x + 1) + ": ";
-    result += "pos: " + String(actuators[x].actual_position) + " %; ";
-    result += "mean cur: " + String(actuators[x].meancurrent) + " mA; ";
+    result += "{";
+    result += "\"pos\":"+String(actuators[x].actual_position) + ",";
+    result += "\"meanCur\": " + String(actuators[x].meancurrent) + ",";
     temperature = actuators[x].temperature;
-    result += "temperature: " + String(temperature/10) + "." + String(temperature%10) + " °C";
-    result += "<br>";
+    result += "\"temp\": " + String(temperature/10) + "." + String(temperature%10);
+    result += "}";
+    if (x<ACTUATOR_COUNT-1) result += ",";
   }  
-  
+  result += "]";
   return result;
 }
 

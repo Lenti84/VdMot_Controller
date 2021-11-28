@@ -15,11 +15,13 @@
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+
 #include "globals.h"
 #include <SPIFFS.h>
 #include <WiFi.h>
 #include <WiFiClient.h>
-#include <WebServer.h>
+//#include <WebServer.h>
 #include <FS.h>
 //#include "stm32.h"
 //#include "stm32ota.h"
@@ -27,15 +29,18 @@
 #include "mqtt.h"
 #include "app.h"
 #include "telnet.h"
-#include "web.h"
-#include "credentials.h"
+//#include "web.h"
 #include <WiFiUdp.h>
 #include "espota.h"
 #include "Logger.h"
 
+#include "VdmConfig.h"
+#include "VdmNet.h"
 
-//#include <WebServer_WT32_ETH01.h>
+
+
 //const char* host = "stm32ota";
+
 
 Logger logger;      // web service logger
 
@@ -51,48 +56,29 @@ void setup(void)
   }
   UART_DBG.println("SPIFFS booted");
 
+  // init config, read from flash, init network
+  VdmConfig.init();
+  VdmNet.init();
+
   //STM32ota_setup();
 
-  WiFi.mode(WIFI_STA);
-
-  WiFi.begin(ssid, password);
-
+ 
   //RunMode();
 
-  for ( int i = 0; i < 3; i++) {
-    //digitalWrite(LED, !digitalRead(LED));
-    delay(100);
-  }
 
   while(UART_STM32.available()) UART_STM32.read();
 
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    UART_DBG.print(".");
-  }
-  UART_DBG.println(WiFi.localIP());
-
+  
   if (MDNS.begin("esp32")) {
     UART_DBG.println("MDNS responder started");
   }
 
-  if (WiFi.waitForConnectResult() == WL_CONNECTED)
-  {
-    //MDNS.begin(host);
-   
-    webserver_setup();   
-       
-    //MDNS.addService("http", "tcp", 80);
-  }
-
-  mqtt_setup();
     
-  telnet_setup();
+  //telnet_setup();
 
-  app_setup();
+  //app_setup();
 
-  ESPota_setup();
+  //ESPota_setup();
 
 }
 
@@ -101,7 +87,12 @@ void loop(void) {
   static uint32_t timer10ms = 0;
   static uint32_t timer1000ms = 0;
 
-  webserver_loop();
+  if (VdmNet.serverIsStarted) {
+    VdmNet.webServerLoop();
+  } else {
+    // check if net is connected
+    VdmNet.setup();
+  }
 
   // 10 ms task
   if ((millis()-timer10ms) > (uint32_t) 10 ) {
@@ -113,16 +104,16 @@ void loop(void) {
       timer1000ms = millis();       
       //logger.println("Logger test");      // logs data to webservice 
       //logger.println("Logger data test", Logger::DATA);  // logs data to webservice 
-      telnet_loop();
+      //telnet_loop();
   }
 
-  mqtt_loop();
+ // mqtt_loop();
 
-  app_loop();
+  //app_loop();
 
-  ESPota_loop();
+  //ESPota_loop();
 
-  yield();
+  //yield();
   //delay(1);
 }
 
