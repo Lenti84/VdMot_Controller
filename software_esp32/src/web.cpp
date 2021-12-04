@@ -1,3 +1,28 @@
+/**HEADER*******************************************************************
+  project : VdMot Controller
+
+  author : SurfGargano
+
+  Comments:
+
+
+***************************************************************************
+*
+* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL FREESCALE OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THE POSSIBILITY OF SUCH DAMAGE.
+*
+**************************************************************************
+
+*END************************************************************************/
 
 #include "globals.h"
 #include "web.h"
@@ -143,34 +168,27 @@ String ip2String (IPAddress ipv4addr)
   return ipv4addr.toString();
 }
 
-String int2String (uint8_t x, uint8_t l)
-{
-  char result[10];
-  memset (result,0,sizeof(result));
-  itoa(x,result,l);
-  return result;
-}
-
-String int2_OnOFF (uint8_t x)
-{
-  return (x ? "On" : "Off"); 
-}
-
 String getNetConfig (VDM_NETWORK_CONFIG netConfig)
 {
-  String result = "{\"ethWifi\":"+int2String(netConfig.netConfigFlags.eth_wifi,2)+","+
-                  "\"dhcp\":"+int2String(netConfig.netConfigFlags.dhcpEnabled,2)+","+
+  String result = "{\"ethWifi\":"+String(netConfig.eth_wifi)+","+
+                  "\"dhcp\":"+String(netConfig.dhcpEnabled)+","+
                   "\"ip\":\""+ip2String(netConfig.staticIp)+"\","+
                   "\"mask\":\""+ip2String(netConfig.mask)+"\","+
                   "\"gw\":\""+ip2String(netConfig.gateway)+"\","+
-                  "\"dns\":\""+ip2String(netConfig.dnsIp)+"\"}";  
+                  "\"dns\":\""+ip2String(netConfig.dnsIp)+"\","+
+                  "\"userName\":\""+String(netConfig.userName)+"\","+
+                  "\"ssid\":\""+String(netConfig.ssid)+"\","+
+                  "\"timeServer\":\""+String(netConfig.timeServer)+"\","+
+                  "\"timeOffset\":"+String(netConfig.timeOffset)+","+
+                  "\"timeDST\":"+String(netConfig.daylightOffset)+
+                  "}";  
   return result;  
 }
 
 String getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig)
 {
-  String result = "{\"ethWifi\":"+int2String(netConfig.netConfigFlags.eth_wifi,2)+","+
-                  "\"dhcp\":\""+int2String(netConfig.netConfigFlags.dhcpEnabled,2)+"\","+
+  String result = "{\"ethWifi\":"+String(netConfig.eth_wifi)+","+
+                  "\"dhcp\":\""+String(netConfig.dhcpEnabled)+"\","+
                   "\"ip\":\""+ETH.localIP().toString()+"\","+
                   "\"mac\":\""+ETH.macAddress()+"\","+
                   "\"mask\":\""+ETH.subnetMask().toString()+"\","+
@@ -181,38 +199,86 @@ String getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig)
 
 String getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
 {
-  String result = "{\"prot\":"+int2String(protConfig.dataProtocol,2)+
-                    "\"mqttIp\":\""+ip2String(protConfig.brokerIp)+"\""+
-                    "\"mqttPort\":\""+int2String(protConfig.brokerPort,4)+"\"}";  
+  String result = "{\"prot\":"+String(protConfig.dataProtocol)+","+
+                    "\"mqttIp\":\""+ip2String(protConfig.brokerIp)+"\","+
+                    "\"mqttPort\":"+String(protConfig.brokerPort)+"}";  
+  return result;  
+}
+
+String getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
+{
+  String result = "{\"calib\":{\"dayOfCalib\":"+String(valvesConfig.dayOfCalib) + "," +
+                  "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib) + "},\"valves\":[" ;
+
+  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
+    result += "{\"name\":\""+String(valvesConfig.valveConfig[x].name) + "\"," +
+              "\"active\":"+String(valvesConfig.valveConfig[x].active) + "}";
+    if (x<ACTUATOR_COUNT-1) result += ",";
+  }  
+  result += "]}"; 
+  return result;  
+}
+
+String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig)
+{
+  String result = "[";
+  
+  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
+    result += "{\"name\":\""+String(tempsConfig.tempConfig[x].name) + "\"," +
+              "\"active\":"+String(tempsConfig.tempConfig[x].active) + "," +
+              "\"offset\":"+String(((float)tempsConfig.tempConfig[x].offset)/10,1) + "}";
+    if (x<ACTUATOR_COUNT-1) result += ",";
+  }  
+  result += "]"; 
   return result;  
 }
 
 
 String getSysInfo()
 {
-  String result = "{\"wt32version\":\""+String(MAJORVERSION)+"."+String(MINORVERSION)+"\"}";
+  struct tm timeinfo;
+  char buf[50];
+  String time;
+ 
+  if(!getLocalTime(&timeinfo)){
+    time = "Failed to obtain time";
+  } else {
+    strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
+    time = String(buf);
+  }
+  String result = "{\"wt32version\":\""+String(MAJORVERSION)+"."+String(MINORVERSION)+"\","+
+                  "\"locTime\":\""+time+"\"}";
   return result;  
 }
 
 
-void postValvePos () 
+void postValvesPos () 
 {
 
 }
 
-String getValveStatus() 
+String getValvesStatus() 
 {
   String result = "[";
-  uint8_t x;
-  int temperature;
+  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
+    
+    result += "{\"pos\":"+String(actuators[x].actual_position) + ","+
+              "\"meanCur\":" + String(actuators[x].meancurrent)+"}";
+            
+    if (x<ACTUATOR_COUNT-1) result += ",";
+  }  
+  result += "]";
+  return result;
+}
 
-  for (x=0;x<ACTUATOR_COUNT;x++) {
-    result += "{";
-    result += "\"pos\":"+String(actuators[x].actual_position) + ",";
-    result += "\"meanCur\": " + String(actuators[x].meancurrent) + ",";
-    temperature = actuators[x].temperature;
-    result += "\"temp\": " + String(temperature/10) + "." + String(temperature%10);
-    result += "}";
+
+String getTempsStatus(VDM_TEMPS_CONFIG tempsConfig) 
+{
+  String result = "[";
+  int temperature;
+  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
+    temperature = actuators[x].temperature+tempsConfig.tempConfig[x].offset;
+    result += "{\"temp\":" + String(((float)temperature)/10,1)+"}";
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
   result += "]";

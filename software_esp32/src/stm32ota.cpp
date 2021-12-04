@@ -124,7 +124,7 @@ char stm32Version() {     // Tested
     else Serial.println("Error GetVersion: no data");
     delay(20);
   }
-  
+  return STM32ERR;
 }
 
 unsigned char stm32GetId() {     // Tested
@@ -172,7 +172,7 @@ unsigned char stm32GetId() {     // Tested
     else Serial.println("Error GetId: no data");
     delay(20);
   }
-  
+  return 0;
 }
 
 unsigned char getChecksum( unsigned char * data, unsigned char datalen) {    // Tested

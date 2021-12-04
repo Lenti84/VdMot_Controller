@@ -6,7 +6,24 @@
   Comments:
 
 
+***************************************************************************
+*
+* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL FREESCALE OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THE POSSIBILITY OF SUCH DAMAGE.
+*
+**************************************************************************
+
 *END************************************************************************/
+
 
 #define USING_CORE_ESP32_CORE_V200_PLUS     false
 // Debug Level from 0 to 4
@@ -31,6 +48,7 @@
 #include <WebServer_WT32_ETH01.h>
 #include "web.h"
 // Web page
+#include "time.h"
 #include "tfs_data.c"
 
 WebServer server(80);
@@ -50,18 +68,41 @@ IPAddress myDNS(8, 8, 8, 8);
 #define tp  "text/plain"
 #define gz  "Content-Encoding : gzip"
 
+
 // server handles --------------------------------------------------
+/*
+  snprintf(global_response_header_buffer, sizeof(global_response_header_buffer), "HTTP/1.0 200 OK\r\nContent-Type: %s\r\nContent-Length: %i\r\nCache-Control: public, max-age=%i\r\n%s\r\n", content_type, fsize, cache_time_in_seconds, content_encoding);
+ */
 
-void handleRoot () {
- // server.send_P(200, "text/html", (const char*) tfs____web_pages_h_index_html , sizeof(tfs____web_pages_h_index_html)); 
- server.send_P(200, gz, (const char*) tfs____web_pages_h_index_html , sizeof(tfs____web_pages_h_index_html)); 
+void send_P(int code, PGM_P content_type, PGM_P content, size_t contentLength) 
+{
+    String header;
+    header = "HTTP/1.0 200 OK";
+    /*\r\nContent-Type:"+String(content_type)+"\r\nContent-Length:"+
+             String (contentLength) +"\r\nCache-Control: public\r\n"; // +
+        //     "Content-Encoding: gzip\r\n";*/
+
+    //server.sendHeader(header,"",true);
+    
+    server.sendHeader(String(F("HTTP/1.0 200 OK")), String(FPSTR(content_type)), true);
+    server.sendHeader(String(F("Content-Type")), String(FPSTR(content_type)), true);
+    server.sendHeader(String(F("Content-Length")), String(FPSTR(contentLength)), true);
+ 
+    server.sendHeader(String(F("Connection")), String(F("close")));
+    server.sendContent_P(content, contentLength);
 }
 
-void handlePlain () {
-  UART_DBG.println(server.arg("plain"));
-  server.send(200);
+
+void valvesCalib()
+{
+  // todo
 }
 
+
+
+void handleRoot() {
+  server.send_P(200, "text/html", (const char*) tfs____web_pages_h_index_html , sizeof(tfs____web_pages_h_index_html)); 
+}
 
 void handleNotFound()
 {
@@ -85,14 +126,19 @@ void handleNotFound()
 
 void handleValves()
 {
-  if (server.method() == HTTP_GET) server.send(200,aj,getValveStatus());
+  if (server.method() == HTTP_GET) server.send(200,aj,getValvesStatus());
   if (server.method() == HTTP_POST) {
-    postValvePos();
+    postValvesPos();
+    server.send(200,tp,"ok");
   }
 }
 
+void handleTemps()
+{
+  if (server.method() == HTTP_GET) server.send(200,aj,getTempsStatus(VdmConfig.configFlash.tempsConfig));
+}
 
-void handleNetInfo () 
+void handleNetInfo() 
 { 
   server.send(200,aj,getNetInfo(ETH,VdmConfig.configFlash.netConfig));
 }
@@ -101,7 +147,8 @@ void handleNetConfig()
 {
   if (server.method() == HTTP_GET) server.send(200,aj,getNetConfig(VdmConfig.configFlash.netConfig));
   if (server.method() == HTTP_POST) {
-    
+      VdmConfig.postNetCfg (server.arg("plain"));
+      server.send(200,tp,"ok");
   }
 }
 
@@ -109,26 +156,85 @@ void handleProtConfig()
 {
   if (server.method() == HTTP_GET) server.send(200,aj,getProtConfig(VdmConfig.configFlash.protConfig));
   if (server.method() == HTTP_POST) {
-    
+      VdmConfig.postProtCfg (server.arg("plain"));
+      server.send(200,tp,"ok");  
+  }
+}
+void handleValvesConfig()
+{
+  if (server.method() == HTTP_GET) server.send(200,aj,getValvesConfig (VdmConfig.configFlash.valvesConfig));
+  if (server.method() == HTTP_POST) {
+      VdmConfig.postValvesCfg (server.arg("plain"));
+      server.send(200,tp,"ok");
   }
 }
 
-void handleSysInfo () 
+void handleTempsConfig()
+{
+  if (server.method() == HTTP_GET) server.send(200,aj,getTempsConfig (VdmConfig.configFlash.tempsConfig));
+  if (server.method() == HTTP_POST) {
+      VdmConfig.postTempsCfg (server.arg("plain"));
+      server.send(200,tp,"ok");
+  }
+}
+
+void handleSysInfo() 
 { 
   server.send(200,aj,getSysInfo());
 }
+
+void handleCmd() 
+{ 
+  if (server.method() == HTTP_POST) {
+    String payload = server.arg("plain");
+
+    const size_t capacity = JSON_ARRAY_SIZE(5) + 5 * JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 200;
+    DynamicJsonDocument doc(capacity);
+    deserializeJson(doc, payload);
+    UART_DBG.println(payload);
+
+    if (doc["vcalib"]==1) {
+      valvesCalib();
+    }
+    if (doc["reboot"]==1) {
+      
+      ESP.restart();
+    }
+    if (doc["savecfg"]==1) {
+      VdmConfig.writeConfig();
+      VdmConfig.readConfig();
+     // ESP.restart(); Todo
+    }
+    if (doc["resetcfg"]==1) {
+      VdmConfig.clearConfig();  
+      VdmConfig.writeConfig();
+      ESP.restart();
+    }
+    if (doc["restorecfg"]==1) {
+      VdmConfig.init();  
+      VdmConfig.writeConfig(); 
+      ESP.restart();
+    }
+    doc.clear();
+  }
+  
+  server.send(200,tp,"ok");
+}
+
+
 
 
 CVdmNet::CVdmNet()
 {
 }
 
+
 void CVdmNet::init()
 {
   serverIsStarted = false;
   dataBrokerIsStarted = false;
   ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
-
+// todo
   // Static IP, leave without this line to get IP via DHCP
   //bool config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1 = 0, IPAddress dns2 = 0);
   //ETH.config(myIP, myGW, mySN, myDNS);
@@ -136,8 +242,11 @@ void CVdmNet::init()
   WT32_ETH01_onEvent();
 }
 
+
+
 void CVdmNet::setup() {
-  if (VdmConfig.configFlash.netConfig.netConfigFlags.eth_wifi==0) {
+  setupEth();/* todo :
+  if (VdmConfig.configFlash.netConfig.eth_wifi==0) {
       setupEth();
   } else {
       setupWifi();
@@ -145,7 +254,9 @@ void CVdmNet::setup() {
   if (VdmConfig.configFlash.protConfig.dataProtocol==mqttProtocol) 
   {
     mqtt_setup(VdmConfig.configFlash.protConfig.brokerIp,VdmConfig.configFlash.protConfig.brokerPort);
+    dataBrokerIsStarted=true;
   }
+  */
 }
 
 void CVdmNet::setupWifi() {
@@ -160,7 +271,7 @@ void CVdmNet::setupWifi() {
 
   if (WiFi.waitForConnectResult() == WL_CONNECTED)
   {
-
+// todo
    
   //  webserver_setup();   
        
@@ -168,6 +279,12 @@ void CVdmNet::setupWifi() {
   }
 }
 
+void CVdmNet::setupNtp() {
+  // Init and get the time
+  configTime(VdmConfig.configFlash.netConfig.timeOffset, 
+             VdmConfig.configFlash.netConfig.daylightOffset, 
+             VdmConfig.configFlash.netConfig.timeServer);
+}
 
 void CVdmNet::setupEth() {
   if (WT32_ETH01_isConnected()) {
@@ -177,6 +294,7 @@ void CVdmNet::setupEth() {
       UART_DBG.print(F("HTTP EthernetWebServer is @ IP : "));
       UART_DBG.println(ETH.localIP()); 
       serverIsStarted=true; 
+      setupNtp();
     } else {
       server.handleClient();
     }
@@ -184,28 +302,48 @@ void CVdmNet::setupEth() {
 }
 
 void  CVdmNet::initServer() {
-    // define on events
+  // define on events
   server.on(F("/"), handleRoot);
   server.onNotFound(handleNotFound);
-  server.on(F("/plain"),handlePlain);
-
   server.on(F("/valves"),handleValves);
+  server.on(F("/temps"),handleTemps);
   server.on(F("/netinfo"),handleNetInfo);
   server.on(F("/netconfig"),handleNetConfig);
   server.on(F("/protconfig"),handleProtConfig);
+  server.on(F("/valvesconfig"),handleValvesConfig);
+  server.on(F("/tempsconfig"),handleTempsConfig);
   server.on(F("/sysinfo"),handleSysInfo);
+  server.on(F("/cmd"),handleCmd);
+  
 
   server.begin();
 }
 
-void CVdmNet::webServerLoop() 
+void CVdmNet::netLoop() 
 {
   if (serverIsStarted) {
     server.handleClient();
   }
+  if (dataBrokerIsStarted) {
+    switch (VdmConfig.configFlash.protConfig.dataProtocol) {
+      case mqttProtocol:
+      {
+       // todo : mqtt_loop();
+        break;
+      }
+    }
+  }
 }
 
-
+void CVdmNet::checkNet() 
+{
+  if (VdmNet.serverIsStarted) {
+    VdmNet.netLoop();
+  } else {
+    // check if net is connected
+    VdmNet.setup();
+  }
+}
 
 
 /*
