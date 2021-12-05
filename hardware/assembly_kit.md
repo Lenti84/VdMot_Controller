@@ -18,7 +18,8 @@ This is what a assembled PCB can look like. The ESP32 WT32-ETH01 and STM32 Black
 ![-](./assembly_done.jpg "assembled pcb")
 
 ## assembly drawings
-tbd
+Assembly drawing for the THT parts.
+![-](./tht_assembly.png "tht assembly drawing")
 
 ## part list for THT parts
 Following the part list for the missing components.
