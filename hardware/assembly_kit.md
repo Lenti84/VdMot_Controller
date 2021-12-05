@@ -8,6 +8,15 @@ This site will fill with more and more infos soon...
 ## schematic
 You can find the c-sample schematic here: [schematic_b-sample_V02.pdf](./schematic_c-sample_V02.pdf)
 
+
+## pre assembled PCB
+You will get a preassembled PCB with all SMT parts assembled.
+![-](./assembly_kit_pcb.jpg "pre assembled pcb")
+
+## finished PCB
+This is what a assembled PCB can look like. The ESP32 WT32-ETH01 and STM32 BlackPill board are mounted via female connectors. 
+![-](./assembly_done.jpg "assembled pcb")
+
 ## assembly drawings
 tbd
 
