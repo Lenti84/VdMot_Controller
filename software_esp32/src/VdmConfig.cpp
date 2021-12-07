@@ -1,9 +1,13 @@
 /**HEADER*******************************************************************
   project : VdMot Controller
 
-  author : SurfGargano
+  author : SurfGargano, Lenti84
 
   Comments:
+
+  Version :
+
+  Modifcations :
 
 
 ***************************************************************************
@@ -11,7 +15,7 @@
 * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
 * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL FREESCALE OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
 * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -21,6 +25,15 @@
 * THE POSSIBILITY OF SUCH DAMAGE.
 *
 **************************************************************************
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
 
 *END************************************************************************/
 
@@ -167,70 +180,46 @@ uint32_t CVdmConfig::doc2IPAddress(String id)
   return (uint32_t) c1 ;
 }
 
-void CVdmConfig::postNetCfg (String payload)
+void CVdmConfig::postNetCfg (JsonObject doc)
 {
   UART_DBG.println("post net cfg");
-  UART_DBG.println(payload);
-  const size_t capacity = JSON_ARRAY_SIZE(20) + 1000;
-  DynamicJsonDocument doc(capacity);
-  deserializeJson(doc, payload);
-  configFlash.netConfig.eth_wifi=doc["ethWifi"];
-  configFlash.netConfig.dhcpEnabled=doc["dhcp"];
-  configFlash.netConfig.staticIp=doc2IPAddress(doc["ip"]);
-  configFlash.netConfig.mask=doc2IPAddress(doc["mask"]);
-  configFlash.netConfig.gateway=doc2IPAddress(doc["gw"]);
-  configFlash.netConfig.dnsIp=doc2IPAddress(doc["dns"]);
-  strncpy(configFlash.netConfig.ssid,doc["ssid"].as<const char*>(),sizeof(configFlash.netConfig.ssid));
-  strncpy(configFlash.netConfig.userName,doc["userName"].as<const char*>(),sizeof(configFlash.netConfig.userName));
-  strncpy(configFlash.netConfig.timeServer,doc["timeServer"].as<const char*>(),sizeof(configFlash.netConfig.timeServer));
-  configFlash.netConfig.timeOffset = doc["timeOffset"];
-  configFlash.netConfig.daylightOffset = doc["timeDST"];
-  doc.clear();
-  
+  if (doc["ethWifi"]) configFlash.netConfig.eth_wifi=doc["ethWifi"];
+  if (doc["dhcp"]) configFlash.netConfig.dhcpEnabled=doc["dhcp"];
+  if (doc["ip"]) configFlash.netConfig.staticIp=doc2IPAddress(doc["ip"]);
+  if (doc["mask"]) configFlash.netConfig.mask=doc2IPAddress(doc["mask"]);
+  if (doc["gw"]) configFlash.netConfig.gateway=doc2IPAddress(doc["gw"]);
+  if (doc["dns"]) configFlash.netConfig.dnsIp=doc2IPAddress(doc["dns"]);
+  if (doc["ssid"]) strncpy(configFlash.netConfig.ssid,doc["ssid"].as<const char*>(),sizeof(configFlash.netConfig.ssid));
+  if (doc["userName"]) strncpy(configFlash.netConfig.userName,doc["userName"].as<const char*>(),sizeof(configFlash.netConfig.userName));
+  if (doc["timeServer"]) strncpy(configFlash.netConfig.timeServer,doc["timeServer"].as<const char*>(),sizeof(configFlash.netConfig.timeServer));
+  if (doc["timeOffset"]) configFlash.netConfig.timeOffset = doc["timeOffset"];
+  if (doc["timeDST"]) configFlash.netConfig.daylightOffset = doc["timeDST"];
 }
 
-void CVdmConfig::postProtCfg (String payload)
+void CVdmConfig::postProtCfg (JsonObject doc)
 {
-  UART_DBG.println("post prot cfg");
-  UART_DBG.println(payload);
-  const size_t capacity = JSON_ARRAY_SIZE(10) + 500;
-  DynamicJsonDocument doc(capacity);
-  deserializeJson(doc, payload);
-  configFlash.protConfig.dataProtocol = doc["prot"];
-  configFlash.protConfig.brokerIp = doc2IPAddress(doc["mqttIp"]);
-  configFlash.protConfig.brokerPort = doc["mqttPort"];
-  doc.clear(); 
+  if (doc["prot"]) configFlash.protConfig.dataProtocol = doc["prot"];
+  if (doc["mqttIp"]) configFlash.protConfig.brokerIp = doc2IPAddress(doc["mqttIp"]);
+  if (doc["mqttPort"]) configFlash.protConfig.brokerPort = doc["mqttPort"];
 }
 
-void CVdmConfig::postValvesCfg (String payload)
+void CVdmConfig::postValvesCfg (JsonObject doc)
 {
   UART_DBG.println("post valves cfg");
-  UART_DBG.println(payload);
-  const size_t capacity = JSON_ARRAY_SIZE(50) + 2000;
-  DynamicJsonDocument doc(capacity);
-  deserializeJson(doc, payload);
-  //doc["vlv"][x]["tar"]
-  //configFlash.tempsConfig.tempConfig[i].name = doc["name"][i];
-  configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
-  configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
+  if (doc["calib"]["dayOfCalib"]) configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
+  if (doc["calib"]["hourOfCalib"]) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
-    strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][i]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
-    configFlash.valvesConfig.valveConfig[i].active=doc["valves"][i]["active"];
+    if (doc["valves"][i]["name"]) strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][i]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
+    if (doc["valves"][i]["active"]) configFlash.valvesConfig.valveConfig[i].active=doc["valves"][i]["active"];
   }
-  doc.clear();
 }
 
-void CVdmConfig::postTempsCfg (String payload)
+void CVdmConfig::postTempsCfg (JsonObject doc)
 {
   UART_DBG.println("post temps cfg");
-  UART_DBG.println(payload);
-  const size_t capacity = JSON_ARRAY_SIZE(50) + 2000;
-  DynamicJsonDocument doc(capacity);
-  deserializeJson(doc, payload);
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
-    strncpy(configFlash.tempsConfig.tempConfig[i].name,doc[i]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
-    configFlash.tempsConfig.tempConfig[i].active=doc[i]["active"];
-    configFlash.tempsConfig.tempConfig[i].offset=10*(doc[i]["offset"].as<float>()) ;
+    if (doc["temps"][i]["name"]) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][i]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
+    if (doc["temps"][i]["active"]) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][i]["active"];
+    if (doc["temps"][i]["offset"]) configFlash.tempsConfig.tempConfig[i].offset=10*(doc["temps"][i]["offset"].as<float>()) ;
   }
-  doc.clear();
 }

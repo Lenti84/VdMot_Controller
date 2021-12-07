@@ -73,8 +73,10 @@
 	}
 
 	table.tabTable td {
-		padding-left: 12px;
+		padding-left: 10px;
+		height:21px;
 	}
+	
 	
 	/* Style tab links */
 	.tabLink {
@@ -162,6 +164,7 @@
 	#Status {background-color: gray;}
 	#Network {background-color: gray;}
 	#Config {background-color: gray;}
+	#About {background-color: gray;}
 
 </style>
 
@@ -173,6 +176,7 @@
 	  <a href="#status" class="tabLink" onclick="openPage('Status', this, 'green')">Status</a>
 	  <a href="#network" class="tabLink" onclick="openPage('Network', this, 'blue')">Network</a>
 	  <a href="#config" class="tabLink" onclick="openPage('Config', this, 'gray')">Config</a>
+	  <a href="#config" class="tabLink" onclick="openPage('About', this, 'darkgray')">About</a>
 	  <a href="javascript:void(0);" class="icon" onclick="resptopNav()">&#9776;</a>
 	</div>
 
@@ -193,12 +197,13 @@
 	</div>
 
 	<div id="Status" class="tabContent">
-		<div class="rtabframe" style="width: 200px;">  
-		<h3>Valves</h3>
+		<div class="rtabframe" style="width: 330px;height:420px">  
+		<h3>Valves</h3>	
 		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
-		<div class="rtabframe" style="width: 150px;">  
+		
+		<div class="rtabframe" style="width: 150px;height:420px">  
 		<h3>Temperature</h3>
 		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
@@ -448,7 +453,44 @@
 		
 	</div>
 	
- 
+	<div id="About" class="tabContent">
+		<div class="tabframe" style="width: 450px;">
+		<h3>About this VDMot controller</h3>
+		<table id="aboutInfo" class="tabTable">
+		<p> 
+		THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+		IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+		IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+		INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+		(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+		SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+		HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+		STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+		IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+		THE POSSIBILITY OF SUCH DAMAGE. 
+		</p>
+		<p> 	
+		This program is free software: you can redistribute it and/or modify
+		it under the terms of the GNU General Public License as published by
+		the Free Software Foundation, either version 3 of the License.
+		</p>
+		<p> 
+		See the GNU General Public License for more details.
+
+		You should have received a copy of the GNU General Public License
+		along with this program.  If not, see http://www.gnu.org/licenses/.
+		</p>
+		<p>
+		Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+		</p>	
+		<p>
+		Contributor : SurfGargano
+		</p>
+		</table>
+		</div>
+	</div>
+
 	<script>		
 				
 		/* Toggle between adding and removing the "responsive" class to topNav when the user clicks on the icon */
@@ -524,22 +566,52 @@
 			var ValvesTable = document.getElementById('valvesTable');	  
 			for (var row=0; row<13; row++) { 
 				const thisRow = valvesTable.insertRow(0);
-				for (var i = 0; i < 4; i++) {
+				for (var i = 0; i < 6; i++) {
 					cell = thisRow.insertCell();
-					cell.innerHTML = '--';	
+					//cell.innerHTML = '--';	
 				}
 			}
-			for (row=1;row<13;row++) valvesTable.rows[row].cells[0].innerHTML = row;
+			for (row=1;row<13;row++) {
+				var thiscell = ValvesTable.rows[row].cells[4];
+				var el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'setValveP' + row);
+				el.setAttribute('id', 'setValveP' + row);
+				el.setAttribute('size', '3');
+				el.setAttribute('maxlength' , '3');
+				el.setAttribute('min' , '0');
+				el.setAttribute('max' , '100');
+				el.setAttribute('style','height:15px');
+				el.setAttribute('readonly','true');
+				thiscell.appendChild(el);
+				var thiscell = ValvesTable.rows[row].cells[5];
+				var el = document.createElement('input');
+				el.setAttribute('type', 'button');
+				el.setAttribute('name', 'setValveButton' + row);
+				el.setAttribute('id', 'setValveButton' + row);
+				el.setAttribute('style','height:20px;width:35px;visibility:hidden;');
+				el.setAttribute('value', 'Set');
+				thiscell.appendChild(el);
+				valvesTable.rows[row].cells[0].innerHTML = row;
+			}
 			valvesTable.rows[0].cells[0].textContent = 'No';
 			valvesTable.rows[0].cells[1].textContent = 'Name';
 			valvesTable.rows[0].cells[2].textContent = '%';
 			valvesTable.rows[0].cells[3].textContent = 'mA';
+			var thiscell = ValvesTable.rows[0].cells[4];
+			var el = document.createElement('input');
+			el.setAttribute('type', 'checkbox');
+			el.setAttribute('name', 'activeSetValves');
+			el.setAttribute('id', 'activeSetValves');
+			valvesTable.rows[0].cells[4].innerHTML = 'Target %';
+			thiscell.appendChild(el);
 		}
 		
 		function makeTempsTable() {
 			var tempsTable = document.getElementById('tempsTable');	  
 			for (var row=0; row<13; row++) { 
 				const thisRow = tempsTable.insertRow(0);
+				
 				for (var i = 0; i < 3; i++) {
 					cell = thisRow.insertCell();
 					cell.innerHTML = '--';	
@@ -575,6 +647,7 @@
 				elc.setAttribute('name', 'cfgVActive' + row);
 				elc.setAttribute('id', 'cfgVActive' + row);
 				thiscell.appendChild(elc);
+				
 			}
 			cfgValvesTable.rows[0].cells[0].textContent = 'No';
 			cfgValvesTable.rows[0].cells[1].textContent = 'Name';
@@ -662,6 +735,33 @@
 			id("saveConfig").onclick = function(){
 				saveConfig();
 			};
+			id("activeSetValves").onclick = function(){
+				activateSetValves();
+			};
+			
+			
+			for (var i=1; i<13;i++) { 
+				generateOnValveClick(i);
+			}
+		}
+		
+		function generateOnValveClick (nr) {
+			var el = id("setValveButton" + nr);
+				el.onclick = function () {
+					setValve(nr);
+				}
+		}
+		
+		function activateSetValves(){
+			var checked=id("activeSetValves").checked ;
+			console.log (checked);
+			for (i=1; i<13;i++){
+				id('setValveP'+i).readOnly=!checked;
+				if (checked) 
+					id('setValveButton'+i).style.visibility="visible"
+				else
+					id('setValveButton'+i).style.visibility="hidden";
+			}
 		}
 		
 		function valvesStartCalib(){
@@ -744,7 +844,7 @@
 				
 		async function postTempsCfg() {
 			var cfgTempsTable = id('cfgTSensorTable');
-			var tempsCfg = [];
+			var tempsItemsCfg = [];
 			for (var row = 1; row<13; row++) {
 				var tempValues={};
 				tempValues.name = id('cfgTName'+row).value; 
@@ -753,13 +853,25 @@
 				f  = f.replace(/,/g, '.');
 				f = parseFloat(f).toFixed(1)
 				tempValues.offset = parseFloat(f);
-				tempsCfg.push(tempValues);
+				tempsItemsCfg.push(tempValues);
 			}
+			var tempsCfg={};
+			tempsCfg.temps=tempsItemsCfg;
 			await postJson("tempsconfig",JSON.stringify(tempsCfg));
 		}
 		
 		async function postCmd (cmd) {
 			await postJson("cmd",cmd);
+		}
+		
+		async function setValve(valveNo){
+			var value = id('setValveP'+valveNo).value;
+			if (value){
+				var setThisValve = {};
+				setThisValve.valve = valveNo;
+				setThisValve.value = value;
+				await postJson("setValve",JSON.stringify(setThisValve));
+			}
 		}
 				
 		function getStatus() {
@@ -773,6 +885,9 @@
 			for (var row = 1; row<13; row++) {	
 				ValvesTable.rows[row].cells[2].textContent = valvesJson[row-1].pos;	
 				ValvesTable.rows[row].cells[3].textContent = valvesJson[row-1].meanCur;
+				if (!(id('activeSetValves').checked)) {
+					id('setValveP'+row).value=valvesJson[row-1].targetPos;
+				}
 			}
 		}
 		

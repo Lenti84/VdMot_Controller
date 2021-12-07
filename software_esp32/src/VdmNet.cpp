@@ -1,9 +1,13 @@
 /**HEADER*******************************************************************
   project : VdMot Controller
 
-  author : SurfGargano
+  author : SurfGargano, Lenti84
 
   Comments:
+
+  Version :
+
+  Modifcations :
 
 
 ***************************************************************************
@@ -11,7 +15,7 @@
 * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
 * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-* IN NO EVENT SHALL FREESCALE OR ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
 * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
 * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
 * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -21,6 +25,15 @@
 * THE POSSIBILITY OF SUCH DAMAGE.
 *
 **************************************************************************
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
 
 *END************************************************************************/
 
@@ -45,13 +58,20 @@
 #include "globals.h"
 #include "credentials.h"
 #include "mqtt.h"
-#include <WebServer_WT32_ETH01.h>
+#include <AsyncWebServer_WT32_ETH01.h>
 #include "web.h"
-// Web page
-#include "time.h"
-#include "tfs_data.c"
+#include "tfs.h"
 
-WebServer server(80);
+#include "time.h"
+
+extern "C" {
+  #include "tfs_data.h"
+}
+
+#include <AsyncJson.h>
+#include <ArduinoJson.h>
+
+AsyncWebServer server(80);
 
 CVdmNet VdmNet;
 
@@ -69,156 +89,149 @@ IPAddress myDNS(8, 8, 8, 8);
 #define gz  "Content-Encoding : gzip"
 
 
+
 // server handles --------------------------------------------------
-/*
-  snprintf(global_response_header_buffer, sizeof(global_response_header_buffer), "HTTP/1.0 200 OK\r\nContent-Type: %s\r\nContent-Length: %i\r\nCache-Control: public, max-age=%i\r\n%s\r\n", content_type, fsize, cache_time_in_seconds, content_encoding);
- */
 
-void send_P(int code, PGM_P content_type, PGM_P content, size_t contentLength) 
+void CVdmNet::postSetValve (JsonObject doc)
 {
-    String header;
-    header = "HTTP/1.0 200 OK";
-    /*\r\nContent-Type:"+String(content_type)+"\r\nContent-Length:"+
-             String (contentLength) +"\r\nCache-Control: public\r\n"; // +
-        //     "Content-Encoding: gzip\r\n";*/
-
-    //server.sendHeader(header,"",true);
-    
-    server.sendHeader(String(F("HTTP/1.0 200 OK")), String(FPSTR(content_type)), true);
-    server.sendHeader(String(F("Content-Type")), String(FPSTR(content_type)), true);
-    server.sendHeader(String(F("Content-Length")), String(FPSTR(contentLength)), true);
- 
-    server.sendHeader(String(F("Connection")), String(F("close")));
-    server.sendContent_P(content, contentLength);
+  UART_DBG.println("postSetValue");
+  uint8_t index;
+  if (doc["valve"]) {
+    index=(doc["valve"].as<uint8_t>())-1;
+    if (doc["value"]) actuators[index].target_position = doc["value"];
+  }
 }
-
 
 void valvesCalib()
 {
   // todo
 }
 
-
-
-void handleRoot() {
-  server.send_P(200, "text/html", (const char*) tfs____web_pages_h_index_html , sizeof(tfs____web_pages_h_index_html)); 
-}
-
-void handleNotFound()
+int8_t checkEntry (String url) 
 {
-  String message = F("File Not Found\n\n");
-  
-  message += F("URI: ");
-  message += server.uri();
-  message += F("\nMethod: ");
-  message += (server.method() == HTTP_GET) ? F("GET") : F("POST");
-  message += F("\nArguments: ");
-  message += server.args();
-  message += F("\n");
-  
-  for (uint8_t i = 0; i < server.args(); i++)
+  int8_t i = 0;
+  TFS_DIR_ENTRY *entry = (TFS_DIR_ENTRY*) tfs_data;
+  String thisUrl=url;
+  if (url=="/") thisUrl = "/index.html";
+ 
+  while (entry->NAME != NULL)
   {
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+      if (thisUrl == String(entry->NAME))
+      {
+        return(i);
+      }
+      entry++;
+      i++;
   }
   
-  server.send(404, F(tp), message);
+  return(-1);
 }
 
-void handleValves()
+void handleRoot(AsyncWebServerRequest *request) 
 {
-  if (server.method() == HTTP_GET) server.send(200,aj,getValvesStatus());
-  if (server.method() == HTTP_POST) {
-    postValvesPos();
-    server.send(200,tp,"ok");
-  }
-}
-
-void handleTemps()
-{
-  if (server.method() == HTTP_GET) server.send(200,aj,getTempsStatus(VdmConfig.configFlash.tempsConfig));
-}
-
-void handleNetInfo() 
-{ 
-  server.send(200,aj,getNetInfo(ETH,VdmConfig.configFlash.netConfig));
-}
-
-void handleNetConfig()
-{
-  if (server.method() == HTTP_GET) server.send(200,aj,getNetConfig(VdmConfig.configFlash.netConfig));
-  if (server.method() == HTTP_POST) {
-      VdmConfig.postNetCfg (server.arg("plain"));
-      server.send(200,tp,"ok");
-  }
-}
-
-void handleProtConfig()
-{
-  if (server.method() == HTTP_GET) server.send(200,aj,getProtConfig(VdmConfig.configFlash.protConfig));
-  if (server.method() == HTTP_POST) {
-      VdmConfig.postProtCfg (server.arg("plain"));
-      server.send(200,tp,"ok");  
-  }
-}
-void handleValvesConfig()
-{
-  if (server.method() == HTTP_GET) server.send(200,aj,getValvesConfig (VdmConfig.configFlash.valvesConfig));
-  if (server.method() == HTTP_POST) {
-      VdmConfig.postValvesCfg (server.arg("plain"));
-      server.send(200,tp,"ok");
-  }
-}
-
-void handleTempsConfig()
-{
-  if (server.method() == HTTP_GET) server.send(200,aj,getTempsConfig (VdmConfig.configFlash.tempsConfig));
-  if (server.method() == HTTP_POST) {
-      VdmConfig.postTempsCfg (server.arg("plain"));
-      server.send(200,tp,"ok");
-  }
-}
-
-void handleSysInfo() 
-{ 
-  server.send(200,aj,getSysInfo());
-}
-
-void handleCmd() 
-{ 
-  if (server.method() == HTTP_POST) {
-    String payload = server.arg("plain");
-
-    const size_t capacity = JSON_ARRAY_SIZE(5) + 5 * JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 200;
-    DynamicJsonDocument doc(capacity);
-    deserializeJson(doc, payload);
-    UART_DBG.println(payload);
-
-    if (doc["vcalib"]==1) {
-      valvesCalib();
-    }
-    if (doc["reboot"]==1) {
-      
-      ESP.restart();
-    }
-    if (doc["savecfg"]==1) {
-      VdmConfig.writeConfig();
-      VdmConfig.readConfig();
-     // ESP.restart(); Todo
-    }
-    if (doc["resetcfg"]==1) {
-      VdmConfig.clearConfig();  
-      VdmConfig.writeConfig();
-      ESP.restart();
-    }
-    if (doc["restorecfg"]==1) {
-      VdmConfig.init();  
-      VdmConfig.writeConfig(); 
-      ESP.restart();
-    }
-    doc.clear();
-  }
+  int8_t index;
   
-  server.send(200,tp,"ok");
+  index=checkEntry(request->url());
+  if (index>=0) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", 
+                                      tfs_data[index].DATA, tfs_data[index].SIZE);
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  } else {
+    String message = "File "+request->url()+" Not Found\n\n"; 
+    request->send(404, "text/plain", message);
+  }
+}
+
+void handleNotFound(AsyncWebServerRequest *request)
+{
+  if (checkEntry(request->url())>=0) {
+    handleRoot(request); 
+  } else {
+
+    String message = "File Not Found\n\n";
+
+    message += "URI: ";
+    //message += server.uri();
+    message += request->url();
+    message += "\nMethod: ";
+    message += (request->method() == HTTP_GET) ? "GET" : "POST";
+    message += "\nArguments: ";
+    message += request->args();
+    message += "\n";
+
+    for (uint8_t i = 0; i < request->args(); i++)
+    {
+      message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
+    }
+
+    request->send(404, "text/plain", message);
+  }
+}
+
+void handleValves(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,getValvesStatus());
+}
+
+void handleTemps(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,getTempsStatus(VdmConfig.configFlash.tempsConfig));
+}
+
+void handleNetInfo(AsyncWebServerRequest *request) 
+{ 
+  request->send(200,aj,getNetInfo(ETH,VdmConfig.configFlash.netConfig));
+}
+
+void handleNetConfig(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,getNetConfig(VdmConfig.configFlash.netConfig));
+}
+
+void handleProtConfig(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,getProtConfig(VdmConfig.configFlash.protConfig));
+}
+void handleValvesConfig(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,getValvesConfig (VdmConfig.configFlash.valvesConfig));
+}
+
+void handleTempsConfig(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,getTempsConfig (VdmConfig.configFlash.tempsConfig));
+}
+
+void handleSysInfo(AsyncWebServerRequest *request) 
+{ 
+  request->send(200,aj,getSysInfo());
+}
+
+void handleCmd(JsonObject doc) 
+{ 
+  if (doc["vcalib"]==1) {
+    valvesCalib();
+  }
+  if (doc["reboot"]==1) {
+    
+    ESP.restart();
+  }
+  if (doc["savecfg"]==1) {
+    VdmConfig.writeConfig();
+    VdmConfig.readConfig();
+    // ESP.restart(); Todo
+  }
+  if (doc["resetcfg"]==1) {
+    VdmConfig.clearConfig();  
+    VdmConfig.writeConfig();
+    ESP.restart();
+  }
+  if (doc["restorecfg"]==1) {
+    VdmConfig.init();  
+    VdmConfig.writeConfig(); 
+    ESP.restart();
+  }
 }
 
 
@@ -296,25 +309,77 @@ void CVdmNet::setupEth() {
       serverIsStarted=true; 
       setupNtp();
     } else {
-      server.handleClient();
+    //  server->handleClient();
     }
   }  
 }
 
 void  CVdmNet::initServer() {
   // define on events
-  server.on(F("/"), handleRoot);
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {handleRoot(request);});
   server.onNotFound(handleNotFound);
-  server.on(F("/valves"),handleValves);
-  server.on(F("/temps"),handleTemps);
-  server.on(F("/netinfo"),handleNetInfo);
-  server.on(F("/netconfig"),handleNetConfig);
-  server.on(F("/protconfig"),handleProtConfig);
-  server.on(F("/valvesconfig"),handleValvesConfig);
-  server.on(F("/tempsconfig"),handleTempsConfig);
-  server.on(F("/sysinfo"),handleSysInfo);
-  server.on(F("/cmd"),handleCmd);
+  server.on("/valves",HTTP_GET,[](AsyncWebServerRequest * request) {handleValves(request);});
+  server.on("/temps",HTTP_GET,[](AsyncWebServerRequest * request) {handleTemps(request);});
+  server.on("/netinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleNetInfo(request);});
+  server.on("/netconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleNetConfig(request);});
+  server.on("/protconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleProtConfig(request);});
+  server.on("/valvesconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesConfig(request);});
+  server.on("/tempsconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleTempsConfig(request);});
+  server.on("/sysinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysInfo(request);});
+ 
+  AsyncCallbackJsonWebHandler* setValveHandler = new AsyncCallbackJsonWebHandler("/setValve", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmNet.postSetValve (jsonObj);
+      request->send(200, "text/plain", "ok");
+    } else request->send(400, "text/plain", "Not an object");
+  });
+  server.addHandler(setValveHandler);
+
+  AsyncCallbackJsonWebHandler* netCfgHandler = new AsyncCallbackJsonWebHandler("/netconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postNetCfg (jsonObj);
+      request->send(200, "text/plain", "ok");
+    } else request->send(400, "text/plain", "Not an object");
+  });
+  server.addHandler(netCfgHandler);
   
+  AsyncCallbackJsonWebHandler* protCfgHandler = new AsyncCallbackJsonWebHandler("/protconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postProtCfg (jsonObj);
+      request->send(200, "text/plain", "ok");
+    } else request->send(400, "text/plain", "Not an object");
+  });
+  server.addHandler(protCfgHandler);
+
+  AsyncCallbackJsonWebHandler* valvesCfgHandler = new AsyncCallbackJsonWebHandler("/valvesconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postValvesCfg (jsonObj);
+      request->send(200, "text/plain", "ok");
+    } else request->send(400, "text/plain", "Not an object");
+  });
+  server.addHandler(valvesCfgHandler);
+  
+  AsyncCallbackJsonWebHandler* tempsCfgHandler = new AsyncCallbackJsonWebHandler("/tempsconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postTempsCfg (jsonObj);
+      request->send(200, "text/plain", "ok");
+    } else request->send(400, "text/plain", "Not an object");
+  });
+  server.addHandler(tempsCfgHandler);
+
+  AsyncCallbackJsonWebHandler* cmdHandler = new AsyncCallbackJsonWebHandler("/cmd", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      handleCmd (jsonObj);
+      request->send(200, "text/plain", "ok");
+    } else request->send(400, "text/plain", "Not an object");
+  });
+  server.addHandler(cmdHandler);
 
   server.begin();
 }
@@ -322,7 +387,7 @@ void  CVdmNet::initServer() {
 void CVdmNet::netLoop() 
 {
   if (serverIsStarted) {
-    server.handleClient();
+   // server.handleClient();
   }
   if (dataBrokerIsStarted) {
     switch (VdmConfig.configFlash.protConfig.dataProtocol) {
