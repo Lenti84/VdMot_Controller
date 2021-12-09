@@ -176,41 +176,43 @@ uint32_t CVdmConfig::doc2IPAddress(String id)
   IPAddress c1;
   bool b;
   b=c1.fromString(id) ; 
- // if (b) UART_DBG.println("b = true"); else UART_DBG.println("b = false");
-  return (uint32_t) c1 ;
+  if (b) return (uint32_t) c1; else return 0;
 }
 
 void CVdmConfig::postNetCfg (JsonObject doc)
 {
   UART_DBG.println("post net cfg");
-  if (doc["ethWifi"]) configFlash.netConfig.eth_wifi=doc["ethWifi"];
-  if (doc["dhcp"]) configFlash.netConfig.dhcpEnabled=doc["dhcp"];
-  if (doc["ip"]) configFlash.netConfig.staticIp=doc2IPAddress(doc["ip"]);
-  if (doc["mask"]) configFlash.netConfig.mask=doc2IPAddress(doc["mask"]);
-  if (doc["gw"]) configFlash.netConfig.gateway=doc2IPAddress(doc["gw"]);
-  if (doc["dns"]) configFlash.netConfig.dnsIp=doc2IPAddress(doc["dns"]);
-  if (doc["ssid"]) strncpy(configFlash.netConfig.ssid,doc["ssid"].as<const char*>(),sizeof(configFlash.netConfig.ssid));
-  if (doc["userName"]) strncpy(configFlash.netConfig.userName,doc["userName"].as<const char*>(),sizeof(configFlash.netConfig.userName));
-  if (doc["timeServer"]) strncpy(configFlash.netConfig.timeServer,doc["timeServer"].as<const char*>(),sizeof(configFlash.netConfig.timeServer));
-  if (doc["timeOffset"]) configFlash.netConfig.timeOffset = doc["timeOffset"];
-  if (doc["timeDST"]) configFlash.netConfig.daylightOffset = doc["timeDST"];
+  if (!doc["ethWifi"].isNull()) configFlash.netConfig.eth_wifi=doc["ethWifi"];
+  if (!doc["dhcp"].isNull()) configFlash.netConfig.dhcpEnabled=doc["dhcp"];
+  if (!doc["ip"].isNull()) configFlash.netConfig.staticIp=doc2IPAddress(doc["ip"]);
+  if (!doc["mask"].isNull()) configFlash.netConfig.mask=doc2IPAddress(doc["mask"]);
+  if (!doc["gw"].isNull()) configFlash.netConfig.gateway=doc2IPAddress(doc["gw"]);
+  if (!doc["dns"].isNull()) configFlash.netConfig.dnsIp=doc2IPAddress(doc["dns"]);
+  if (!doc["ssid"].isNull()) strncpy(configFlash.netConfig.ssid,doc["ssid"].as<const char*>(),sizeof(configFlash.netConfig.ssid));
+  if (!doc["pwd"].isNull()) strncpy(configFlash.netConfig.pwd,doc["pwd"].as<const char*>(),sizeof(configFlash.netConfig.pwd));
+  if (!doc["userName"].isNull()) strncpy(configFlash.netConfig.userName,doc["userName"].as<const char*>(),sizeof(configFlash.netConfig.userName));
+  if (!doc["userPwd"].isNull()) strncpy(configFlash.netConfig.userPwd,doc["userPwd"].as<const char*>(),sizeof(configFlash.netConfig.userPwd));
+  if (!doc["timeServer"].isNull()) strncpy(configFlash.netConfig.timeServer,doc["timeServer"].as<const char*>(),sizeof(configFlash.netConfig.timeServer));
+  if (!doc["timeOffset"].isNull()) configFlash.netConfig.timeOffset = doc["timeOffset"];
+  if (!doc["timeDST"].isNull()) configFlash.netConfig.daylightOffset = doc["timeDST"];
 }
 
 void CVdmConfig::postProtCfg (JsonObject doc)
 {
-  if (doc["prot"]) configFlash.protConfig.dataProtocol = doc["prot"];
-  if (doc["mqttIp"]) configFlash.protConfig.brokerIp = doc2IPAddress(doc["mqttIp"]);
-  if (doc["mqttPort"]) configFlash.protConfig.brokerPort = doc["mqttPort"];
+  UART_DBG.println("post prot cfg");
+  if (!doc["prot"].isNull()) configFlash.protConfig.dataProtocol = doc["prot"];
+  if (!doc["mqttIp"].isNull()) configFlash.protConfig.brokerIp = doc2IPAddress(doc["mqttIp"]);
+  if (!doc["mqttPort"].isNull()) configFlash.protConfig.brokerPort = doc["mqttPort"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
 {
   UART_DBG.println("post valves cfg");
-  if (doc["calib"]["dayOfCalib"]) configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
-  if (doc["calib"]["hourOfCalib"]) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
+  if (!doc["calib"]["dayOfCalib"].isNull()) configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
+  if (!doc["calib"]["hourOfCalib"].isNull()) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
-    if (doc["valves"][i]["name"]) strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][i]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
-    if (doc["valves"][i]["active"]) configFlash.valvesConfig.valveConfig[i].active=doc["valves"][i]["active"];
+    if (!doc["valves"][i]["name"].isNull()) strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][i]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
+    if (!doc["valves"][i]["active"].isNull()) configFlash.valvesConfig.valveConfig[i].active=doc["valves"][i]["active"];
   }
 }
 
@@ -218,8 +220,8 @@ void CVdmConfig::postTempsCfg (JsonObject doc)
 {
   UART_DBG.println("post temps cfg");
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
-    if (doc["temps"][i]["name"]) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][i]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
-    if (doc["temps"][i]["active"]) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][i]["active"];
-    if (doc["temps"][i]["offset"]) configFlash.tempsConfig.tempConfig[i].offset=10*(doc["temps"][i]["offset"].as<float>()) ;
+    if (!doc["temps"][i]["name"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][i]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
+    if (!doc["temps"][i]["active"].isNull()) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][i]["active"];
+    if (!doc["temps"][i]["offset"].isNull()) configFlash.tempsConfig.tempConfig[i].offset=10*(doc["temps"][i]["offset"].as<float>()) ;
   }
 }

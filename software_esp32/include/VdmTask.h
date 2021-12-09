@@ -44,13 +44,20 @@
 #include <TaskManagerIO.h>
 #include "globals.h"
 #include "VdmNet.h" 
+#include "app.h"
 
 class CVdmTask
 {
 public:
   CVdmTask();
   void init();
-  int taskIdCheckNet;
+  void deleteTask(taskid_t taskId);
+  void startMqtt();
+  void startApp();
+
+  taskid_t taskIdCheckNet;
+  taskid_t taskIdMqtt;
+  taskid_t taskIdApp;
 };
 
 extern CVdmTask VdmTask;

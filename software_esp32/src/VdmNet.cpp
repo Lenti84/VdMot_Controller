@@ -38,7 +38,7 @@
 *END************************************************************************/
 
 
-#define USING_CORE_ESP32_CORE_V200_PLUS     false
+#define USING_CORE_ESP32_CORE_V200_PLUS     true
 // Debug Level from 0 to 4
 #define _ETHERNET_WEBSERVER_LOGLEVEL_       3
 
@@ -67,6 +67,7 @@
 extern "C" {
   #include "tfs_data.h"
 }
+#include "VdmTask.h"
 
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
@@ -245,50 +246,112 @@ CVdmNet::CVdmNet()
 void CVdmNet::init()
 {
   serverIsStarted = false;
+  wifiState = wifiIdle;
+  ethState = ethIdle;
   dataBrokerIsStarted = false;
-  ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
-// todo
-  // Static IP, leave without this line to get IP via DHCP
-  //bool config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1 = 0, IPAddress dns2 = 0);
-  //ETH.config(myIP, myGW, mySN, myDNS);
-
-  WT32_ETH01_onEvent();
 }
 
 
 
 void CVdmNet::setup() {
-  setupEth();/* todo :
-  if (VdmConfig.configFlash.netConfig.eth_wifi==0) {
-      setupEth();
-  } else {
-      setupWifi();
+  #ifdef netDebug
+    UART_DBG.print("Interface type ");
+    UART_DBG.println(VdmConfig.configFlash.netConfig.eth_wifi);
+  #endif
+ 
+  VdmConfig.configFlash.netConfig.eth_wifi=0;
+  switch (VdmConfig.configFlash.netConfig.eth_wifi) {
+    case interfaceAuto :
+      {
+        setupEth();
+        setupWifi();
+        break;
+      }
+      case interfaceEth :
+      {
+        setupEth();
+        break;
+      }
+      case interfaceWifi :
+      {
+        setupWifi();
+        break;
+      }
   }
-  if (VdmConfig.configFlash.protConfig.dataProtocol==mqttProtocol) 
-  {
-    mqtt_setup(VdmConfig.configFlash.protConfig.brokerIp,VdmConfig.configFlash.protConfig.brokerPort);
-    dataBrokerIsStarted=true;
-  }
-  */
 }
 
-void CVdmNet::setupWifi() {
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    UART_DBG.print(".");
-  }
-  UART_DBG.println(WiFi.localIP());
+void CVdmNet::setupEth() {
+  #ifdef netDebug
+    UART_DBG.print("Setup Eth ");
+    UART_DBG.println (ethState);
+    UART_DBG.print("Server started ");
+    UART_DBG.println (serverIsStarted);
+  #endif
+  if (!serverIsStarted) {
+    switch (ethState) {
+      case wifiIdle :
+      {  
+        ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
+        // todo
+        // Static IP, leave without this line to get IP via DHCP
+        //bool config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1 = 0, IPAddress dns2 = 0);
+        //ETH.config(myIP, myGW, mySN, myDNS);
 
-  if (WiFi.waitForConnectResult() == WL_CONNECTED)
-  {
-// todo
-   
-  //  webserver_setup();   
-       
-  
+        WT32_ETH01_onEvent();
+        ethState=ethIsStarting;
+        break;
+      }
+      case ethIsStarting :
+      {
+        if (WT32_ETH01_isConnected()) {
+          initServer();
+          setupNtp();
+          UART_DBG.println(ETH.localIP());
+          serverIsStarted=true; 
+          ethState=ethConnected;
+          interfaceType=currentInterfaceIsEth;
+          wifiState=wifiDisabled; 
+          WiFi.disconnect(); 
+        }
+        break;
+      }
+      case ethConnected : break;
+      case ethDisabled : break;
+    }
+  }  
+}
+
+
+void CVdmNet::setupWifi() {
+  #ifdef netDebug
+  UART_DBG.print("Setup Wifi ");
+  UART_DBG.println (wifiState);
+  #endif
+
+  if (!serverIsStarted) {
+    switch (wifiState) {
+      case wifiIdle :
+      {
+        WiFi.mode(WIFI_AP_STA);
+        WiFi.begin(VdmConfig.configFlash.netConfig.ssid, VdmConfig.configFlash.netConfig.pwd);
+        wifiState=wifiIsStarting;
+        break;
+      }
+      case wifiIsStarting :
+      {
+        if (WiFi.status() == WL_CONNECTED) {
+          initServer();
+          setupNtp();
+          UART_DBG.println(WiFi.localIP());
+          serverIsStarted=true; 
+          wifiState=wifiConnected;
+          interfaceType=currentInterfaceIsWifi;
+        }
+        break;
+      }
+      case wifiConnected : break;
+      case wifiDisabled : break;
+    }
   }
 }
 
@@ -297,21 +360,6 @@ void CVdmNet::setupNtp() {
   configTime(VdmConfig.configFlash.netConfig.timeOffset, 
              VdmConfig.configFlash.netConfig.daylightOffset, 
              VdmConfig.configFlash.netConfig.timeServer);
-}
-
-void CVdmNet::setupEth() {
-  if (WT32_ETH01_isConnected()) {
-    if (!serverIsStarted) {
-      UART_DBG.println(" server is started ");
-      initServer();
-      UART_DBG.print(F("HTTP EthernetWebServer is @ IP : "));
-      UART_DBG.println(ETH.localIP()); 
-      serverIsStarted=true; 
-      setupNtp();
-    } else {
-    //  server->handleClient();
-    }
-  }  
 }
 
 void  CVdmNet::initServer() {
@@ -384,26 +432,33 @@ void  CVdmNet::initServer() {
   server.begin();
 }
 
-void CVdmNet::netLoop() 
+void CVdmNet::startBroker()
 {
-  if (serverIsStarted) {
-   // server.handleClient();
-  }
-  if (dataBrokerIsStarted) {
-    switch (VdmConfig.configFlash.protConfig.dataProtocol) {
-      case mqttProtocol:
-      {
-       // todo : mqtt_loop();
-        break;
-      }
+  switch (VdmConfig.configFlash.protConfig.dataProtocol) {
+    case mqttProtocol:
+    {
+      mqtt_setup(VdmConfig.configFlash.protConfig.brokerIp,VdmConfig.configFlash.protConfig.brokerPort);
+      VdmTask.startMqtt();
+      dataBrokerIsStarted=true;
+      break;
     }
   }
 }
 
+void CVdmNet::mqttBroker()
+{
+   mqtt_loop();
+}
+
 void CVdmNet::checkNet() 
 {
-  if (VdmNet.serverIsStarted) {
-    VdmNet.netLoop();
+  if (serverIsStarted) {
+    VdmTask.deleteTask(VdmTask.taskIdCheckNet);
+    if (VdmConfig.configFlash.protConfig.dataProtocol!=noneProtocol)
+    {
+      startBroker();
+    }
+    VdmTask.startApp();
   } else {
     // check if net is connected
     VdmNet.setup();

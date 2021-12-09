@@ -47,6 +47,18 @@
 #define noneProtocol 0
 #define mqttProtocol 1
 
+#define interfaceAuto 0
+#define interfaceEth  1
+#define interfaceWifi 2
+
+#define currentInterfaceIsEth  0
+#define currentInterfaceIsWifi 1
+
+
+
+enum TWifiState {wifiIdle,wifiIsStarting,wifiConnected,wifiDisabled};
+enum TEthState  {ethIdle,ethIsStarting,ethConnected,ethDisabled};
+
 class CVdmNet
 {
 public:
@@ -57,15 +69,18 @@ public:
   void setupWifi();
   void initServer();
   void setupNtp();
-  void netLoop();
   void valvesCalib();
   void checkNet();
+  void startBroker();
+  void mqttBroker();
   
 
   void postSetValve (JsonObject doc);
- 
+  TWifiState wifiState;
+  TEthState ethState;
   bool serverIsStarted;
   bool dataBrokerIsStarted;
+  uint8_t interfaceType;
 };
 
 extern CVdmNet VdmNet;

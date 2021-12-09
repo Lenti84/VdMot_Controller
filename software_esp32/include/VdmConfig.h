@@ -51,7 +51,7 @@ enum protType  {protTypeNone=0,protTypeMqtt=1};
 //#pragma pack(1)     // set alignment to 1 byte boundary
 
 typedef struct {
-  bool eth_wifi;
+  uint8_t eth_wifi;
   bool dhcpEnabled;
   uint32_t staticIp;
   uint32_t mask;

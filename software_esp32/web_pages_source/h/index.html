@@ -259,7 +259,13 @@
 			<tr>
 				<th>User password</th>
 				<td>
-				<input type="password" maxlength="64" class="form-input" id="netcfg-UserPW" name="netcfg-UserPW"/>
+				<input type="password" maxlength="64" class="form-input" id="netcfg-UserPwd" name="netcfg-UserPwd"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Re-type user password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="netcfg-UserPwd2" name="netcfg-UserPwd2"/>
 				</td>
 			</tr>
 			<tr>
@@ -300,6 +306,7 @@
 				<th>Eth/Wifi</th>
 				<td>
 				<select id="netcfg-EthWifi" style="width: 50px;">
+					<option>Auto</option>
                     <option>Eth</option>
                     <option>Wifi</option>
 				</select>
@@ -317,10 +324,15 @@
 			<tr>
 				<th>Wifi password</th>
 				<td>
-				<input type="password" maxlength="64" class="form-input" id="netcfg-WifiPW" name="netcfg-WifiPW"/>
+				<input type="password" maxlength="64" class="form-input" id="netcfg-WifiPwd" name="netcfg-WifiPwd"/>
 				</td>
 			</tr>
-			
+			<tr>
+				<th>Re-type wifi password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="netcfg-WifiPwd2" name="netcfg-WifiPwd2"/>
+				</td>
+			</tr>
 		</table>
 		<tr><th></th></tr>
 		<div class="tabiframe" style="width: 240px;"> 
@@ -410,7 +422,7 @@
 			</tr>
 			<tr>
 				<td>
-                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start calibration of all valves" />
+                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start manual calibration" title="Start manual calibration of all valves" />
                 </td>
 			</tr>
 		</table>
@@ -493,6 +505,9 @@
 
 	<script>		
 				
+		var WifiPwdHasChanged=false;
+		var UserPwdHasChanged=false;			
+				
 		/* Toggle between adding and removing the "responsive" class to topNav when the user clicks on the icon */
 		function resptopNav() {
 			var x = document.getElementById("mytopNav");
@@ -546,8 +561,6 @@
 			getTempsStatus();
 			var getStatusInterval = window.setInterval(getStatus, 5000);
 			generateOnClick();
-			showWifi();
-			showMqttIP();
 		}		
 				
 		function ValidateIPaddress(inputText) {
@@ -706,7 +719,7 @@
 		function showWifi(){
 			var x = id("netcfg-wifi");
 			var select = id("netcfg-EthWifi").selectedIndex;
-			if (select === 0) {
+			if (select === 1) {
 				x.style.display = "none";
 			} else {
 				x.style.display = "block";
@@ -735,6 +748,10 @@
 			id("saveConfig").onclick = function(){
 				saveConfig();
 			};
+			id("netcfg-WifiPwd").onchange = function(){
+				WifiPwdHasChanged=true;
+			};
+			
 			id("activeSetValves").onclick = function(){
 				activateSetValves();
 			};
@@ -795,6 +812,8 @@
 				await postValvesCfg();
 				await postTempsCfg();
 				await postCmd('{"savecfg":1}');
+				WifiPwdHasChanged=false;
+				UserPwdHasChanged=false;
 			}
 		}
 		
@@ -807,7 +826,21 @@
 			netCfg.gw =	id("netcfg-gw").value;
 			netCfg.dns = id("netcfg-dns").value;
 			netCfg.ssid = id("netcfg-WifiSSID").value;
+			if (WifiPwdHasChanged===true) {
+				netCfg.pwd = id("netcfg-WifiPW").value;
+				if (id("netcfg-WifiPwd").value!=id("netcfg-WifiPwd2").value) {
+					alert ("Wifi password does not compare ! Please re-type");
+					return;
+				}
+			}
 			netCfg.userName = id("netcfg-UserName").value;
+			if (UserPwdHasChanged===true) {
+				netCfg.Userpwd = id("netcfg-UserPwd").value;
+				if (id("netcfg-UserPwd").value!=id("netcfg-UserPwd2").value) {
+					alert ("User password does not compare ! Please re-type");
+					return;
+				}
+			}
 			netCfg.timeServer = id("netcfg-TimeServer").value;
 			netCfg.timeOffset =	parseInt(id("netcfg-timeOffset").value);
 			netCfg.timeDST = parseInt(id("netcfg-daySTOffset").value);
@@ -939,7 +972,6 @@
 				id("net-mask").textContent = dataNet["mask"];
 				id("net-gw").textContent = dataNet["gw"];
 				id("net-dns").textContent = dataNet["dns"];
-				
 			}
 		}
 		
@@ -957,6 +989,7 @@
 				id("netcfg-TimeServer").value = dataNetConfig["timeServer"];
 				id("netcfg-timeOffset").value = dataNetConfig["timeOffset"];
 				id("netcfg-daySTOffset").value = dataNetConfig["timeDST"];
+				showWifi();
 			}
 		}
 		
@@ -966,6 +999,7 @@
 				id("protcfg-dataProt").selectedIndex = dataProtConfig["prot"];
 				id("protcfg-mqttIp").value = dataProtConfig["mqttIp"];
 				id("protcfg-mqttPort").value = dataProtConfig["mqttPort"];
+				showMqttIP();
 			}
 		}
 		

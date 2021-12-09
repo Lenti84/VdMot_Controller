@@ -202,7 +202,7 @@ String getNetConfig (VDM_NETWORK_CONFIG netConfig)
 
 String getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig)
 {
-  String result = "{\"ethWifi\":"+String(netConfig.eth_wifi)+","+
+  String result = "{\"ethWifi\":"+String(VdmNet.interfaceType)+","+
                   "\"dhcp\":\""+String(netConfig.dhcpEnabled)+"\","+
                   "\"ip\":\""+ETH.localIP().toString()+"\","+
                   "\"mac\":\""+ETH.macAddress()+"\","+

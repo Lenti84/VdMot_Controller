@@ -68,20 +68,20 @@ void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort) {
 
 void mqtt_loop() {
 
-    static unsigned long timer = millis();
+  //  static unsigned long timer = millis();
     
     if (!mqtt_client.connected()) {
         reconnect();        
     }
     mqtt_client.loop();
 
-    if ((millis()-timer) > (uint32_t) 2000) {
+ /*   if ((millis()-timer) > (uint32_t) 2000) {
         timer = millis();
-
+*/
         publish_valves ();
 
         //Serial.println("mqtt publish valves");
-    }    
+//    }    
 
 }
 
@@ -92,7 +92,7 @@ void reconnect() {
 
     while (!mqtt_client.connected()) {
         Serial.println("Reconnecting MQTT...");
-        if (!mqtt_client.connect("ESP8266Client")) {
+        if (!mqtt_client.connect("VdMot")) {
             Serial.print("failed, rc=");
             Serial.print(mqtt_client.state());
             Serial.println(" retrying in 5 seconds");

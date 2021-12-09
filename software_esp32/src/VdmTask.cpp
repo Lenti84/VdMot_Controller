@@ -49,7 +49,27 @@ CVdmTask::CVdmTask()
 
 void CVdmTask::init()
 {
-    taskIdCheckNet = taskManager.scheduleFixedRate(100, [] {
+    taskIdCheckNet = taskManager.scheduleFixedRate(1000, [] {
         VdmNet.checkNet();
     });
+}
+
+void CVdmTask::startMqtt()
+{
+    taskIdMqtt = taskManager.scheduleFixedRate(10000, [] {
+        VdmNet.mqttBroker();
+    });
+}
+
+void CVdmTask::startApp()
+{
+    app_setup();
+    taskIdApp = taskManager.scheduleFixedRate(5000, [] {
+        app_loop();
+    });
+}
+
+void CVdmTask::deleteTask (taskid_t taskId)
+{
+  taskManager.cancelTask (taskId);
 }
