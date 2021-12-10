@@ -28,6 +28,21 @@ This page will document the software part of the VdMot_Controller.
   ![-](./software_esp32/media/logger_page.png "logger page")
 
 
+
+# command list
+## STM32 supports following commands
+|command|description|answer|units|
+|---|---|---|---|
+|stgtp x y|set target position of valve *x* to *y* %|-|x=0...11, y=0...100%|
+|gvlvd x|get data of valve *x*|gvlvd *position meancurrent status 1st_temperature 2nd_temperature*|*% mA - 1/10°C 1/10°C*|
+|gonec|get count of 1-wire devices|gonec *count*|*-*|
+|goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *6ByteHexAddress temperature*|*0x 0x 0x 0x 0x 0x 1/10°C*|
+|gvlon x|get 1-wire settings for valve *x*|gvlon *6ByteHexAddressFirstSensor* - *6ByteHexAddressFirstSensor*|*0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x*|
+|stsnx x y|set first 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35|
+|stsny x y|set second 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35|
+|staop|set all valves open|-|-|
+
+
 # OTA update of ESP32 and STM32
 ## STM32 OTA
 - STM32 can be reset via ESP32 pin
