@@ -44,7 +44,7 @@
 #include "app.h"
 
 #define MAJORVERSION        "0"
-#define MINORVERSION        "01"   
+#define MINORVERSION        "02"   
 
 #define ACTUATOR_COUNT  (unsigned int) 12
 

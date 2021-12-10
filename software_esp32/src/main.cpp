@@ -50,7 +50,7 @@
 #include "app.h"
 #include "telnet.h"
 #include <WiFiUdp.h>
-#include "espota.h"
+//#include "espota.h"
 #include "Logger.h"
 #include "TaskManagerIO.h"
 

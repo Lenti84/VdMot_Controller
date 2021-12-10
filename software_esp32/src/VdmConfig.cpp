@@ -181,7 +181,9 @@ uint32_t CVdmConfig::doc2IPAddress(String id)
 
 void CVdmConfig::postNetCfg (JsonObject doc)
 {
-  UART_DBG.println("post net cfg");
+  #ifdef netDebug
+    UART_DBG.println("post net cfg");
+  #endif
   if (!doc["ethWifi"].isNull()) configFlash.netConfig.eth_wifi=doc["ethWifi"];
   if (!doc["dhcp"].isNull()) configFlash.netConfig.dhcpEnabled=doc["dhcp"];
   if (!doc["ip"].isNull()) configFlash.netConfig.staticIp=doc2IPAddress(doc["ip"]);
@@ -199,7 +201,9 @@ void CVdmConfig::postNetCfg (JsonObject doc)
 
 void CVdmConfig::postProtCfg (JsonObject doc)
 {
-  UART_DBG.println("post prot cfg");
+  #ifdef netDebug
+    UART_DBG.println("post prot cfg");
+  #endif
   if (!doc["prot"].isNull()) configFlash.protConfig.dataProtocol = doc["prot"];
   if (!doc["mqttIp"].isNull()) configFlash.protConfig.brokerIp = doc2IPAddress(doc["mqttIp"]);
   if (!doc["mqttPort"].isNull()) configFlash.protConfig.brokerPort = doc["mqttPort"];
@@ -207,7 +211,9 @@ void CVdmConfig::postProtCfg (JsonObject doc)
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
 {
-  UART_DBG.println("post valves cfg");
+  #ifdef netDebug
+    UART_DBG.println("post valves cfg");
+  #endif
   if (!doc["calib"]["dayOfCalib"].isNull()) configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
   if (!doc["calib"]["hourOfCalib"].isNull()) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
@@ -218,7 +224,9 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
 
 void CVdmConfig::postTempsCfg (JsonObject doc)
 {
-  UART_DBG.println("post temps cfg");
+  #ifdef netDebug
+    UART_DBG.println("post temps cfg");
+  #endif
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     if (!doc["temps"][i]["name"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][i]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
     if (!doc["temps"][i]["active"].isNull()) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][i]["active"];

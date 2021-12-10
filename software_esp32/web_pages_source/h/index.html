@@ -459,7 +459,13 @@
 				<td>
                 <input type="button" class="buttonclass" id="resetConfig" value="Reset config" title="Reset config excluding network settings." />
                 </td>
-			</tr>			
+			</tr>	
+			<tr>
+				<td>
+                <input type="button" class="buttonclass" id="update-WT32" value="Update WT32" title="Update WT32" />
+                </td>
+			</tr>
+			
 		</table>
 		</div>
 		
@@ -748,6 +754,10 @@
 			id("saveConfig").onclick = function(){
 				saveConfig();
 			};
+			id("update-WT32").onclick = function(){
+				updateWT32();
+			};
+			
 			id("netcfg-WifiPwd").onchange = function(){
 				WifiPwdHasChanged=true;
 			};
@@ -1022,6 +1032,23 @@
 			var dataTempsStatus=await getJson("temps");
 			if (dataTempsStatus) fillTempsTable(dataTempsStatus);
 		}
+			
+		async function updateWT32() {
+		console.log(document.location);
+		location.assign('http:/update');
+		location.replace('http:/update');
+		window.reload()
+		
+			//return await (await fetch('http:/update')).text();
+			/*fetch('http:/update')
+			.then(function() {
+
+			})
+			.catch(function() {
+				console.log('Error: ','update: '+err)
+			});*/
+
+		}	
 			
 		async function postJson(link,postData){
 			let data = await (await (fetch('http:/'+link,

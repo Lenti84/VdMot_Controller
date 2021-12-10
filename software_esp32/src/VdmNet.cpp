@@ -59,6 +59,8 @@
 #include "credentials.h"
 #include "mqtt.h"
 #include <AsyncWebServer_WT32_ETH01.h>
+#include <WT32AsyncElegantOTA.h>
+
 #include "web.h"
 #include "tfs.h"
 
@@ -76,15 +78,6 @@ AsyncWebServer server(80);
 
 CVdmNet VdmNet;
 
-// Select the IP address according to your local network
-IPAddress myIP(192, 168, 2, 232);
-IPAddress myGW(192, 168, 2, 1);
-IPAddress mySN(255, 255, 255, 0);
-
-// Google DNS Server IP
-IPAddress myDNS(8, 8, 8, 8);
-
-
 #define aj  "application/json"
 #define tp  "text/plain"
 #define gz  "Content-Encoding : gzip"
@@ -95,7 +88,10 @@ IPAddress myDNS(8, 8, 8, 8);
 
 void CVdmNet::postSetValve (JsonObject doc)
 {
+  #ifdef netDebug
   UART_DBG.println("postSetValue");
+  #endif
+
   uint8_t index;
   if (doc["valve"]) {
     index=(doc["valve"].as<uint8_t>())-1;
@@ -106,6 +102,15 @@ void CVdmNet::postSetValve (JsonObject doc)
 void valvesCalib()
 {
   // todo
+}
+
+String getContentType(String filename) { // convert the file extension to the MIME type
+  if (filename.endsWith(".html")) return "text/html";
+  else if (filename.endsWith(".css")) return "text/css";
+  else if (filename.endsWith(".js")) return "application/javascript";
+  else if (filename.endsWith(".ico")) return "image/x-icon";
+  else if (filename.endsWith(".gz")) return "application/x-gzip";
+  return "text/plain";
 }
 
 int8_t checkEntry (String url) 
@@ -134,7 +139,7 @@ void handleRoot(AsyncWebServerRequest *request)
   
   index=checkEntry(request->url());
   if (index>=0) {
-    AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", 
+    AsyncWebServerResponse *response = request->beginResponse_P(200, getContentType (tfs_data[index].NAME), 
                                       tfs_data[index].DATA, tfs_data[index].SIZE);
     response->addHeader("Content-Encoding", "gzip");
     request->send(response);
@@ -292,11 +297,12 @@ void CVdmNet::setupEth() {
       case wifiIdle :
       {  
         ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
-        // todo
-        // Static IP, leave without this line to get IP via DHCP
-        //bool config(IPAddress local_ip, IPAddress gateway, IPAddress subnet, IPAddress dns1 = 0, IPAddress dns2 = 0);
-        //ETH.config(myIP, myGW, mySN, myDNS);
-
+        if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) 
+        {
+          ETH.config(VdmConfig.configFlash.netConfig.staticIp, 
+          VdmConfig.configFlash.netConfig.gateway, 
+          VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
+        }
         WT32_ETH01_onEvent();
         ethState=ethIsStarting;
         break;
@@ -333,6 +339,12 @@ void CVdmNet::setupWifi() {
       case wifiIdle :
       {
         WiFi.mode(WIFI_AP_STA);
+        if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) 
+        {
+          WiFi.config(VdmConfig.configFlash.netConfig.staticIp, 
+          VdmConfig.configFlash.netConfig.gateway, 
+          VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
+        }
         WiFi.begin(VdmConfig.configFlash.netConfig.ssid, VdmConfig.configFlash.netConfig.pwd);
         wifiState=wifiIsStarting;
         break;
@@ -428,7 +440,7 @@ void  CVdmNet::initServer() {
     } else request->send(400, "text/plain", "Not an object");
   });
   server.addHandler(cmdHandler);
-
+  AsyncElegantOTA.begin(&server);    // Start ElegantOTA
   server.begin();
 }
 
@@ -465,88 +477,3 @@ void CVdmNet::checkNet()
   }
 }
 
-
-/*
-void webserver_setup() {
-
-  
-
-    VdmNet.server.on("/status", []() {
-      String result;
-      result += GetTop();
-      result += GetNavigation();
-      result += F("<br>");
-      result += GetValveStatus();
-      result += GetBottom(); 
-
-      VdmNet.server.send(200, "text/html", result);
-    });
-
-
-    VdmNet.server.on("/log", []() {
-      String result;
-      result += GetTop();
-      result += GetNavigation();
-      result += F("<br>");
-      result += FPSTR(on_log);
-      result += GetBottom(); 
-
-      VdmNet.server.send(200, "text/html", result);
-    });
-
-    VdmNet.server.on("/getLogData", []() {
-      String data = "";
-      if (1) {
-        while (logger.Available()) {
-          data += logger.Pop() + "\n";
-        }
-      }
-      else {
-        data += F("SYS: ***CLEARLOG***\n");
-        data += F("DATA:Logger is disabled\n");
-        data += F("SYS:Logger is disabled\n");
-      }
-
-      VdmNet.server.send(200, "text/html", data);
-    });
-
-    VdmNet.server.on("/command", []() {
-      
-        String command = VdmNet.server.arg("cmd");
-        logger.println("Command from frontend: '" + command + "'");
-        
-        VdmNet.server.send(200, "text/html", "OK");
-     
-    });
-
-    VdmNet.server.on("/credits", []() {
-
-      String result;
-      result += GetTop();
-      result += GetNavigation();
-      result += F("<br>");            
-      result += "VdMot Controller was created with help and by borrowings from:<br><ul>";
-      result += "<li>parts of WebFrontend: https://wiki.fhem.de/wiki/LaCrosseGateway_V1.x</li>";
-      result += "<li>ideas for STM32 flash support: https://github.com/csnol/1CHIP-Programmers</li>";
-      result += "</ul>";
-      result += GetBottom();
-
-      VdmNet.server.send(200, "text/html", makePage("VdMot Controller Credits Page", result));
-    });
-
-    VdmNet.server.on("/", []() {
-      
-      String starthtml = "<h1>VdMot Controller</h1><h2>Version ";
-      starthtml += MAJORVERSION "." MINORVERSION;
-      starthtml += "</h2><br>";
-      starthtml += GetNavigation();
-      VdmNet.server.send(200, "text/html", makePage("VdMot Controller Start Page", starthtml));
-    });
-    
-
-    Serial.println("Setup webserver finished");
-
-    
-}
-
-*/
