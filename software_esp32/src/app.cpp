@@ -17,7 +17,7 @@ actuator_str    actuators[ACTUATOR_COUNT];
 
 char mqtt_maintopic[MAINTOPIC_LEN];
 
-int  cmd_buffer = APP_CMD_NONE;
+String cmd_buffer = "";
 
 unsigned char target_position_mirror[ACTUATOR_COUNT];
 
@@ -37,11 +37,11 @@ void app_check_data();
 void app_cmd(int command);
 void app_comm_machine();
 void app_alive_check();
+void app_web_cmd_check();
 
 void app_setup() {
 
     UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL);
-
 
     for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {
         actuators[x].actual_position = 100;
@@ -71,6 +71,7 @@ void app_loop() {
 
     DynamicJsonDocument doc(1024);
     String testjson;
+    static uint32_t timer10ms = 0;
     static uint32_t timer100ms = 0;
     static uint32_t timer1000ms = 0;
     //char sendbuffer[30];
@@ -92,6 +93,14 @@ void app_loop() {
 //    doc.clear();
 //    testjson.clear();
 
+    // 10 ms task
+    if ((millis()-timer10ms) > (uint32_t) 10 ) {
+        timer10ms = millis();
+
+
+        
+    }
+
 
     // 100 ms task
     if ((millis()-timer100ms) > (uint32_t) 100 ) {
@@ -100,6 +109,8 @@ void app_loop() {
         app_comm_machine(); 
         
         app_alive_check();
+
+        app_web_cmd_check();
         
     }
 
@@ -126,24 +137,14 @@ void app_loop() {
             UART_DBG.println("App loop");
             syslog.log(LOG_DEBUG, "App loop");
             logger.print("App loop");
-        }       
-        
-        // switch (cmd_buffer) {
-        //         case APP_CMD_SETTARGET:
-        //                     UART_STM32.println(APP_PRE_SETTARGET + testjson);
-        //                     break;
-        //         case APP_CMD_GETACTUAL:
-
-        //                     break;
-
-        //         default:    break;
-        // }            
+        }               
+      
     }
-    cmd_buffer = APP_CMD_NONE;
+    
 }
 
 
-void app_cmd(int command) {
+void app_cmd(String command) {    
     cmd_buffer = command;
 }
 
@@ -164,7 +165,7 @@ char calc_checksum (char *dataptr) {
 
 void app_check_data() {
 
-    static char buffer[300];
+    static char buffer[1200];
     static char *bufptr = buffer;
     static unsigned int buflen = 0;
     int availcnt;
@@ -173,7 +174,7 @@ void app_check_data() {
     char*       cmdptr;
     char*	    cmdptrend;
     char        cmd[10];
-    char		arg0[20];	
+    char		arg0[1200];	
     char        arg1[20];		
     char        arg2[20];
     char        arg3[20];
@@ -332,6 +333,16 @@ void app_check_data() {
                 }
             }
 
+            
+        }
+
+        // get onewire data answer
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
+            logger.print("got one wire data packet");
+            if(argcnt == 1) {
+                logger.print(arg0ptr);
+            }
             
         }
 
@@ -505,4 +516,32 @@ void app_alive_check() {
         }
         oldalivestate = 0;
     }
+}
+
+
+void app_web_cmd_check(){
+    
+    if(cmd_buffer.length() >= 5) {
+        if(cmd_buffer.startsWith(APP_PRE_SETALLVLVOPEN)) {	
+            UART_DBG.println("send open all valves request to STM32");		
+            UART_STM32.println(APP_PRE_SETALLVLVOPEN);	 
+        }
+
+        else if(cmd_buffer.startsWith(APP_PRE_SETALLVLVOPEN)) {	
+            UART_DBG.println("send target position request to STM32");		
+            UART_STM32.println(cmd_buffer);	 
+        }
+
+        else if(cmd_buffer.startsWith(APP_PRE_GETONEWIREDATA)) {	
+            UART_DBG.println("send onewire data request to STM32");		
+            UART_STM32.println(cmd_buffer);
+        }
+
+        else {
+            UART_DBG.println("unknown command for STM32 from webinterface");
+            logger.print("unknown command for STM32");
+        }   
+    }  
+
+    cmd_buffer = "";    
 }

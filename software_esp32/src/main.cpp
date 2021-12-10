@@ -94,18 +94,31 @@ void setup(void)
 
   ESPota_setup();
 
+  //pinMode(NRST, OUTPUT);
+
+  //STM32ota_setup();
+
 }
 
 
 void loop(void) {
   static uint32_t timer10ms = 0;
+  static uint32_t timer100ms = 0;
   static uint32_t timer1000ms = 0;
 
   webserver_loop();
 
   // 10 ms task
   if ((millis()-timer10ms) > (uint32_t) 10 ) {
-      timer10ms = millis();             
+      timer10ms = millis();  
+
+      //STM32ota_loop();           
+  }
+
+  // 100 ms task
+  if ((millis()-timer100ms) > (uint32_t) 100 ) {
+      timer100ms = millis();  
+      
   }
 
   // 1000 ms task
@@ -118,7 +131,7 @@ void loop(void) {
 
   mqtt_loop();
 
-  app_loop();
+  //app_loop();
 
   ESPota_loop();
 
