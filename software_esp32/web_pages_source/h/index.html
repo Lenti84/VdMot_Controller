@@ -73,7 +73,7 @@
 	}
 
 	table.tabTable td {
-		padding-left: 10px;
+		padding-left: 5px;
 		height:21px;
 	}
 	
@@ -105,7 +105,6 @@
 	.tabiframe {
 	  border-top: white 1px solid;
 	  padding: 5px;
-	  //border-radius: 5px;
 	  text-align: center;
 	}
 	
@@ -116,7 +115,6 @@
 	.rtabframe {
 		width: 25%;
 		display: inline-block;
-	//	background-color: green;
 		border: white 2px solid;
 		padding: 5px;
 		border-radius: 5px;
@@ -392,12 +390,12 @@
 		</table>
 		</div>
 
-		<div class="rtabframe" style="width: 250px;">
+		<div class="rtabframe" style="width: 220px;">
 		<h3>Valves</h3>
 		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		
-		<div class="tabiframe" style="width: 240px;">	
+		<div class="tabiframe" style="width: 210px;">	
 		<table id="cfgValvesTable1" class="tabTable"
 			<tr><th>Calibration</th></tr>
 			<tr>
@@ -420,12 +418,14 @@
 				<input type="number" max="24" min="0" maxlength="2" size="2" id="vCfg-hCalib" name="vCfg-hCalib"/>
 				</td>
 			</tr>
+			</table>
+			<table id="cfgValvesTable2" class="tabTable"
 			<tr>
 				<td>
-                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start manual calibration" title="Start manual calibration of all valves" />
+                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start manual calibration of all valves" />
                 </td>
 			</tr>
-		</table>
+			</table>
 		</div>
 		</div>
 		
