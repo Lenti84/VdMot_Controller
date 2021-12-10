@@ -16,18 +16,21 @@
 #define LED         PC13
 
 // button
-#define BUTTON		PB0
+#define BUTTON		PB2
+
+// valve MUX relay
+#define POWER_ENA   PB9
 
 // valve MUX relay
 #define CTRL_MUX    PB1
 
 // L293 enable pins
-#define CTRL_ENA0   PA1
-#define CTRL_ENA1   PA5
-#define CTRL_ENA2   PA6
-#define CTRL_ENA3   PA7
-#define CTRL_ENA4   PB3
-#define CTRL_ENA5   PA15
+#define CTRL_ENA0   PA5
+#define CTRL_ENA1   PA6
+#define CTRL_ENA2   PA7
+#define CTRL_ENA3   PB0
+#define CTRL_ENA4   PA15
+#define CTRL_ENA5   PB3
 
 // L293 direction pin
 #define CTRL_DIRECTION PA8
@@ -41,6 +44,13 @@
 // analog input motor current
 #define ANINCURRENT		PA0
 
+// analog frontend for current measurement
+#define SHUNT_RES		3900				// shunt resistance in milliohm
+#define SHUNT_OPGAIN	1500				// gain of opamp stage for current measurement in milli
+#define ADC_REF_VOLT	3300				// adc reference voltage in mV	
+//#define ANINCURRENTGAIN    (int32_t) (((ADC_REF_VOLT*1e9)/SHUNT_RES)/SHUNT_OPGAIN)/4096     // µA/digit - gain analog input valve current 
+#define ANINCURRENTGAIN    (int32_t) 138     // µA/digit - gain analog input valve current 
+
 // SPI bus
 #define SPI_CS_PIN      PB12
 #define SPI_MOSI_PIN    PB15
@@ -50,6 +60,9 @@
 // I2C
 #define I2C_SCL_PIN		PB6
 #define I2C_SDA_PIN		PB7
+
+// 1-wire
+#define ONEW_PIN		PB10
 
 // CAN INT
 #define CAN_INT_PIN		PB8
@@ -75,11 +88,14 @@
 #define ENA5_OFF()    digitalWrite(CTRL_ENA5, LOW)
 
 
-#define DIR_ON()    digitalWrite(CTRL_DIRECTION, HIGH)
+#define DIR_ON()     digitalWrite(CTRL_DIRECTION, HIGH)
 #define DIR_OFF()    digitalWrite(CTRL_DIRECTION, LOW)
 
-#define MUX_ON()    digitalWrite(CTRL_MUX, HIGH)
+#define MUX_ON()     digitalWrite(CTRL_MUX, HIGH)
 #define MUX_OFF()    digitalWrite(CTRL_MUX, LOW)
+
+#define PSU_ON()     digitalWrite(POWER_ENA, LOW);   // enable PSU for valves   
+#define PSU_OFF()    digitalWrite(POWER_ENA, HIGH);   // disable PSU for valves   
 
 
 

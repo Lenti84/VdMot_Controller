@@ -34,6 +34,10 @@ void setup() {
   // delay(1000);
   // }
 
+  // power enable for valves
+  pinMode(POWER_ENA, OUTPUT_OPEN_DRAIN);
+  digitalWrite(POWER_ENA, 1);   // high to disable valve PSU
+
   // status led
   pinMode(LED, OUTPUT);
 
@@ -43,7 +47,7 @@ void setup() {
   // analog inputs
   analogReadResolution(12);
   pinMode(ANINCURRENT, INPUT_ANALOG);
-  //pinMode(ANINREFHALF, INPUT_ANALOG);
+  pinMode(ANINREFHALF, INPUT_ANALOG);
 
   // terminal for debug
   Terminal_Init();
@@ -104,7 +108,7 @@ void loop() {
     }
     else time10s++;
     
-    digitalWrite(LED, !digitalRead(LED));   // turn the LED on (HIGH is the voltage level)
+    digitalWrite(LED, !digitalRead(LED));   // toggle LED
     
     // button test
     if (digitalRead(BUTTON) > 0 && buttontest == 0) 
@@ -112,7 +116,8 @@ void loop() {
       buttontest = 1;
       COMM_DBG.println("Button pressed");
     }
-    if (!digitalRead(BUTTON)) buttontest = 0;
+    else buttontest = 0;
+    //if (!digitalRead(BUTTON)) buttontest = 0;
 
     // analog test
     //COMM_DBG.print("A0 current ");
@@ -123,12 +128,18 @@ void loop() {
     //Serial.println("help");
     //Serial.println("gactp 0 14 ");
 
-    Serial.println("STMalive");   // send alive to ESP32   
+    Serial.println("STMalive ");   // send alive to ESP32   
+    //Serial.println("help ");   // send alive to ESP32  
   }
 
   // 100 ms loop
   if (millis() > (uint32_t) 100 + loop_100ms ) {
     loop_100ms = millis();  
+
+    // COMM_DBG.print(analogRead(ANINCURRENT));
+    // COMM_DBG.print(" ");
+    // COMM_DBG.print(analogRead(ANINREFHALF));
+    // COMM_DBG.println("");
 
     // if application is idle search for new tasks
     if(appgetstate() == A_IDLE) {
@@ -202,4 +213,3 @@ void loop() {
 
   }
 }
-

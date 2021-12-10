@@ -78,7 +78,7 @@ int16_t communication_loop (void) {
     }
 
 	// if there is a little in the buffer
-    if(buflen > 5) 
+    if(buflen >= 5) 
     {
         for (unsigned int c = 0; c < buflen; c++)
         {           
@@ -102,13 +102,13 @@ int16_t communication_loop (void) {
 		// ****************************************
 		cmdptr = buffer;
 
-		for(unsigned int x=0;x<3;x++){
+		for(unsigned int xx=0;xx<3;xx++){
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
-				if(x==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
-				else if(x==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
-				else if(x==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
+				if(xx==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
+				else if(xx==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
+				else if(xx==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -222,7 +222,9 @@ int16_t communication_loop (void) {
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIREDATA,&cmd[0],5) == 0) {
 			get_sensordata(sendbuf, SEND_BUFFER_LEN);
-			COMM_DBG.println(sendbuf);
+			COMM_SER.print(APP_PRE_GETONEWIREDATA);
+			COMM_SER.print(" ");			
+			COMM_SER.println(sendbuf);
 		}
 
 		// ESPalive
@@ -230,7 +232,7 @@ int16_t communication_loop (void) {
 		else if(memcmp("ESP",&cmd[0],3) == 0) {	
 			COMM_DBG.println("received ESPalive 22");		
 			if (buflen >= 8 && memcmp("ESPalive",cmd,8) == 0) {
-				//COMM_DBG.println("received ESPalive");
+				COMM_DBG.println("received ESPalive");
 			}			 
 		}
 
@@ -238,7 +240,7 @@ int16_t communication_loop (void) {
 		// x - valve index
 		// y - temp sensor index
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		if(memcmp(APP_PRE_SETSENSORINDEX,&cmd[0],5) == 0) {
+		else if(memcmp(APP_PRE_SETSENSORINDEX,&cmd[0],5) == 0) {
 			x = atoi(arg0ptr); // valve index
 			y = atoi(arg1ptr); // temp sensor index
 
@@ -251,6 +253,21 @@ int16_t communication_loop (void) {
 				}
 			}
 			else COMM_DBG.println("to few arguments");
+		}
+
+		// open all valves request
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETALLVLVOPEN,&cmd[0],5) == 0) {
+			COMM_DBG.println("got open all valves request");
+			for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+				myvalves[xx].target_position = 100;
+			}
+		}
+
+		// unknown command
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else {
+			//COMM_DBG.println("unknown command received from ESP");
 		}
 
 	}

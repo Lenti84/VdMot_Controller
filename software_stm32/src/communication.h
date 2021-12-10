@@ -19,6 +19,7 @@ extern int16_t communication_loop (void);
 #define APP_PRE_GETSUPPLYSENS		"gspst"
 #define APP_PRE_GETONEWIREDATA		"goned"
 #define APP_PRE_SETSENSORINDEX		"stsnx"
+#define APP_PRE_SETALLVLVOPEN		"staop"
 
 #endif //_COMMUNICATION_H
 

@@ -10,7 +10,9 @@
 tempsensor  tempsensors[MAXSENSORCOUNT];
 uint8_t     numberOfDevices;
 
-OneWire     oneWire;
+//OneWire     oneWire;
+OneWire     oneWire(ONEW_PIN);
+
 DallasTemperature sensors(&oneWire);
 
 
@@ -37,9 +39,13 @@ void printAddress(DeviceAddress deviceAddress)
 
 void temperature_setup() {
 
+    COMM_DBG.print("starting 1-wire setup"); 
+
     sensors.begin();
   
     sensors.setWaitForConversion(false);
+
+    COMM_DBG.print("search for devices"); 
 
     //DeviceAddress currAddress;
     //uint8_t numberOfDevices = sensors.getDeviceCount();
@@ -90,6 +96,7 @@ void temperature_loop() {
 
     case T_IDLE:                  
               tempstate = T_REQUEST;
+              #warning fixme
               break;
 
     case T_REQUEST:
@@ -140,7 +147,7 @@ void temperature_loop() {
 
 void get_sensordata (char *buffer, int buflen) {
 
-  DynamicJsonDocument doc(1024);
+  DynamicJsonDocument doc(1024);      // buffer size should be enough for about 22 sensors
   String testjson;
   String AddressStr;
  
