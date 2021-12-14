@@ -41,15 +41,15 @@
 #pragma once
 
 #include <Arduino.h>
-#include "app.h"
+#include "stmApp.h"
 
 #define MAJORVERSION        "0"
-#define MINORVERSION        "02"   
+#define MINORVERSION        "03"   
 
 #define ACTUATOR_COUNT  (unsigned int) 12
 
 // debug mode
-#define VISMODE_DEFAULT     VISMODE_DETAIL               
+#define VISMODE_DEFAULT     VISMODE_ATOMIC               
 #define VISMODE_OFF         0               // no messages at all
 #define VISMODE_ON          1               // minimum debug messages
 #define VISMODE_DETAIL      2               // detailed debug messages

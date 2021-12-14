@@ -59,12 +59,22 @@
 #include "credentials.h"
 #include "mqtt.h"
 #include <AsyncWebServer_WT32_ETH01.h>
-#include <WT32AsyncElegantOTA.h>
+#include "WT32AsyncOTA.h"
 
 #include "web.h"
 #include "tfs.h"
 
 #include "time.h"
+
+#include "stm32.h"
+#include "stm32ota.h"
+#include <ESPmDNS.h>
+#include "telnet.h"
+#include <WiFiUdp.h>
+#include <SPIFFS.h>
+#include <FS.h>
+
+#include "Logger.h"
 
 extern "C" {
   #include "tfs_data.h"
@@ -81,8 +91,6 @@ CVdmNet VdmNet;
 #define aj  "application/json"
 #define tp  "text/plain"
 #define gz  "Content-Encoding : gzip"
-
-
 
 // server handles --------------------------------------------------
 
@@ -177,41 +185,41 @@ void handleNotFound(AsyncWebServerRequest *request)
 
 void handleValves(AsyncWebServerRequest *request)
 {
-  request->send(200,aj,getValvesStatus());
+  request->send(200,aj,Web.getValvesStatus());
 }
 
 void handleTemps(AsyncWebServerRequest *request)
 {
-  request->send(200,aj,getTempsStatus(VdmConfig.configFlash.tempsConfig));
+  request->send(200,aj,Web.getTempsStatus(VdmConfig.configFlash.tempsConfig));
 }
 
 void handleNetInfo(AsyncWebServerRequest *request) 
 { 
-  request->send(200,aj,getNetInfo(ETH,VdmConfig.configFlash.netConfig));
+  request->send(200,aj,Web.getNetInfo(ETH,VdmConfig.configFlash.netConfig));
 }
 
 void handleNetConfig(AsyncWebServerRequest *request)
 {
-  request->send(200,aj,getNetConfig(VdmConfig.configFlash.netConfig));
+  request->send(200,aj,Web.getNetConfig(VdmConfig.configFlash.netConfig));
 }
 
 void handleProtConfig(AsyncWebServerRequest *request)
 {
-  request->send(200,aj,getProtConfig(VdmConfig.configFlash.protConfig));
+  request->send(200,aj,Web.getProtConfig(VdmConfig.configFlash.protConfig));
 }
 void handleValvesConfig(AsyncWebServerRequest *request)
 {
-  request->send(200,aj,getValvesConfig (VdmConfig.configFlash.valvesConfig));
+  request->send(200,aj,Web.getValvesConfig (VdmConfig.configFlash.valvesConfig));
 }
 
 void handleTempsConfig(AsyncWebServerRequest *request)
 {
-  request->send(200,aj,getTempsConfig (VdmConfig.configFlash.tempsConfig));
+  request->send(200,aj,Web.getTempsConfig (VdmConfig.configFlash.tempsConfig));
 }
 
 void handleSysInfo(AsyncWebServerRequest *request) 
 { 
-  request->send(200,aj,getSysInfo());
+  request->send(200,aj,Web.getSysInfo());
 }
 
 void handleCmd(JsonObject doc) 
@@ -240,13 +248,105 @@ void handleCmd(JsonObject doc)
   }
 }
 
+void handleUploadSTM32(AsyncWebServerRequest *request, const String& filename, size_t index, 
+            uint8_t *data, size_t len, bool final)
+{
+ /* if(!index){
+    Serial.printf("UploadStart: %s\n", filename.c_str());
+  }
+  for(size_t i=0; i<len; i++){
+    Serial.write(data[i]);
+  }
+  if(final){
+    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index+len);
+  }*/
 
+  if(!index){
+   // logOutput((String)"UploadStart: " + filename);
+    // open the file on first call and store the file handle in the request object
+    request->_tempFile = SPIFFS.open(filename, "w");
+  }
+  if(len) {
+    // stream the incoming chunk to the opened file
+    request->_tempFile.write(data,len);
+  }
+  if(final){
+   // logOutput((String)"UploadEnd: " + filename + "," + index+len);
+    // close the file handle as the upload is now done
+    request->_tempFile.close();
+    request->send(200, "text/plain", "File Uploaded !");
+  }
+}
+ 
 
+void handleGetLogData (AsyncWebServerRequest *request) 
+{
+  String data = "";
+  if (1) {
+    while (logger.Available()) {
+      data += logger.Pop() + "\n";
+    }
+  }
+  else {
+    data += F("SYS: ***CLEARLOG***\n");
+    data += F("DATA:Logger is disabled\n");
+    data += F("SYS:Logger is disabled\n");
+  }
+  request->send(200, "text/html", data);
+}
 
 CVdmNet::CVdmNet()
 {
 }
 
+void CVdmNet::UpdateSTM32(String updateFileName)
+{
+  //FlashMode();
+  //STM32_begin();  // contains STM32ota_begin and clear STM32 buffer
+      
+  if (stm32Erase() == STM32ACK) {
+  } else {
+    return;
+  }
+
+  uint8_t cflag;
+  File fsUploadFile;
+  int lastbuf = 0;
+  int bini = 0;
+  String flashwr;
+  uint8_t binread[256];
+
+  fsUploadFile = SPIFFS.open(updateFileName, "r");
+  if (fsUploadFile) {
+     bini = fsUploadFile.size() / 256;
+     lastbuf = fsUploadFile.size() % 256;
+     flashwr = String(bini) + "-" + String(lastbuf) + "<br>";
+     for (int i = 0; i < bini; i++) {
+       fsUploadFile.read(binread, 256);
+       stm32SendCommand(STM32WR);
+       while (!UART_STM32.available()) ;
+       cflag = UART_STM32.read();
+       if (cflag == STM32ACK)
+         if (stm32Address(STM32STADDR + (256 * i)) == STM32ACK) {
+           if (stm32SendData(binread, 255) == STM32ACK)
+             flashwr += ".";
+           else flashwr = "Error";
+         }
+     }
+     fsUploadFile.read(binread, lastbuf);
+     stm32SendCommand(STM32WR);
+     //todo ; handle in task
+     while (!UART_STM32.available()) ;
+     cflag = UART_STM32.read();
+     if (cflag == STM32ACK)
+       if (stm32Address(STM32STADDR + (256 * bini)) == STM32ACK) {
+         if (stm32SendData(binread, lastbuf) == STM32ACK)
+           flashwr += "<br>Finished<br>";
+         else flashwr = "Error";
+       }
+     fsUploadFile.close();
+ }
+}
 
 void CVdmNet::init()
 {
@@ -254,6 +354,12 @@ void CVdmNet::init()
   wifiState = wifiIdle;
   ethState = ethIdle;
   dataBrokerIsStarted = false;
+  if (!SPIFFS.begin(true)) {
+    UART_DBG.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+  UART_DBG.println("SPIFFS booted");
+
 }
 
 
@@ -386,7 +492,12 @@ void  CVdmNet::initServer() {
   server.on("/valvesconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesConfig(request);});
   server.on("/tempsconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleTempsConfig(request);});
   server.on("/sysinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysInfo(request);});
- 
+  server.on("/logData",HTTP_GET,[](AsyncWebServerRequest * request) {handleGetLogData(request);});
+  server.on("/uploadSTM32", HTTP_POST, [](AsyncWebServerRequest *request) {},
+      [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
+                    size_t len, bool final) {handleUploadSTM32(request, filename, index, data, len, final);}
+  );
+
   AsyncCallbackJsonWebHandler* setValveHandler = new AsyncCallbackJsonWebHandler("/setValve", [](AsyncWebServerRequest *request, JsonVariant &json) {
     if (json.is<JsonObject>()) {
       JsonObject&& jsonObj = json.as<JsonObject>();
@@ -440,7 +551,7 @@ void  CVdmNet::initServer() {
     } else request->send(400, "text/plain", "Not an object");
   });
   server.addHandler(cmdHandler);
-  AsyncElegantOTA.begin(&server);    // Start ElegantOTA
+  WT32AsyncOTA.begin(&server);    // Start WT32OTA
   server.begin();
 }
 
@@ -470,6 +581,15 @@ void CVdmNet::checkNet()
     {
       startBroker();
     }
+    // todo STM32_Start();
+
+    if (MDNS.begin("esp32")) {
+      UART_DBG.println("MDNS responder started");
+    }
+
+    // todo   
+    //telnet_setup();
+
     VdmTask.startApp();
   } else {
     // check if net is connected

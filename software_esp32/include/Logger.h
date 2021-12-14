@@ -44,20 +44,20 @@
 #include "Arduino.h"
 #include "TypedQueue.h"
 
-class Logger {
- private:
+class CLogger {
+  private:
    TypedQueue<String> m_queue;
    bool m_enabled;
    String m_currentLine;
    byte m_bufferSize;
- public:
+  public:
    enum LogType {
      SYS = 0,
      DATA = 1,
      PCA301 = 2,
      ONLYSYS = 3
    };
-   Logger(byte bufferSize=20);
+  CLogger(byte bufferSize=20);
   void print(String data, LogType type = LogType::SYS);
   void print(uint32_t data, LogType type = LogType::SYS);
   void println(String data, LogType type = LogType::SYS);
@@ -74,6 +74,6 @@ class Logger {
    
 };
 
-extern Logger logger;
+extern CLogger logger;
 
 

@@ -64,7 +64,7 @@ void CVdmTask::startMqtt()
 void CVdmTask::startApp()
 {
     app_setup();
-    taskIdApp = taskManager.scheduleFixedRate(5000, [] {
+    taskIdApp = taskManager.scheduleFixedRate(100, [] {
         app_loop();
     });
 }

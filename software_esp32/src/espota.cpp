@@ -38,7 +38,6 @@
 *END************************************************************************/
 
 
-
 #include "globals.h"
 #include "espota.h"
 #include <ArduinoOTA.h>

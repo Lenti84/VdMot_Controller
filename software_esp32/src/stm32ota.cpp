@@ -38,10 +38,9 @@
 *END************************************************************************/
 
 
-
 #include "stm32ota.h"
 
-const String STM32_CHIPNAME[8] = {
+const String STM32_CHIPNAME[9] = {
   "Unknown Chip",
   "STM32F03xx4/6",
   "STM32F030x8/05x",
@@ -49,7 +48,8 @@ const String STM32_CHIPNAME[8] = {
   "STM32F103x4/6",
   "STM32F103x8/B",
   "STM32F103xC/D/E",
-  "STM32F105/107"
+  "STM32F105/107",
+  "STM32F401xB/C"
 };
 
 void stm32SendCommand(unsigned char commd) {    // Tested
@@ -164,7 +164,7 @@ char stm32Version() {     // Tested
     else Serial.println("Error GetVersion: no data");
     delay(20);
   }
-  return STM32ERR;
+  
 }
 
 unsigned char stm32GetId() {     // Tested
@@ -203,6 +203,8 @@ unsigned char stm32GetId() {     // Tested
           return 6;
         if (getid == 0x418)
           return 7;
+        if (getid == 0x423)
+          return 8;  
       }
       else {
         Serial.println("Error GetId: wrong answer");
@@ -212,7 +214,7 @@ unsigned char stm32GetId() {     // Tested
     else Serial.println("Error GetId: no data");
     delay(20);
   }
-  return 0;
+  
 }
 
 unsigned char getChecksum( unsigned char * data, unsigned char datalen) {    // Tested

@@ -36,55 +36,53 @@
   Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
 
 *END************************************************************************/
+/*
+    derived from  AsyncElegantOTA using WT32-ETH
+    https://github.com/ayushsharma82/AsyncElegantOTA
 
+*/
 
 #pragma once
 
-#include <stdint.h>
-#include <ArduinoJson.h>
-#include "VdmConfig.h"
+#include "Arduino.h"
+#include "stdlib_noniso.h"
 
-#define noneProtocol 0
-#define mqttProtocol 1
+#if defined(ESP8266)
+    #include "ESP8266WiFi.h"
+    #include "ESPAsyncTCP.h"
+    #include "flash_hal.h"
+    #include "FS.h"
+#elif defined(ESP32)
+    #include "WiFi.h"
+    #include "AsyncTCP.h"
+    #include "Update.h"
+    #include "esp_int_wdt.h"
+    #include "esp_task_wdt.h"
+#endif
 
-#define interfaceAuto 0
-#define interfaceEth  1
-#define interfaceWifi 2
+#include "Hash.h"
+#include <AsyncWebServer_WT32_ETH01.h>
+#include "FS.h"
 
-#define currentInterfaceIsEth  0
-#define currentInterfaceIsWifi 1
-
+#include "WT32UpdateWebpage.h"
 
 
-enum TWifiState {wifiIdle,wifiIsStarting,wifiConnected,wifiDisabled};
-enum TEthState  {ethIdle,ethIsStarting,ethConnected,ethDisabled};
-
-class CVdmNet
+class CWT32AsyncOTA
 {
-public:
-  CVdmNet();
-  void init();
-  void setup();
-  void setupEth();
-  void setupWifi();
-  void initServer();
-  void setupNtp();
-  void valvesCalib();
-  void checkNet();
-  void startBroker();
-  void mqttBroker();
-  void UpdateSTM32(String updateFileName);
-  
+    public:
+    CWT32AsyncOTA();
+    void setID(const char* id);
+    void begin(AsyncWebServer *server, const char* userName="", const char* pwd="");    
+    void restart();
 
-  void postSetValve (JsonObject doc);
-  TWifiState wifiState;
-  TEthState ethState;
-  bool serverIsStarted;
-  bool dataBrokerIsStarted;
-  uint8_t interfaceType;
+    private:
+    AsyncWebServer *_server;
+    String getID();
+    String _id;
+    String _userName;
+    String _pwd;
+    bool _authRequired;
 };
 
-extern CVdmNet VdmNet;
-
-
+extern CWT32AsyncOTA WT32AsyncOTA;
 

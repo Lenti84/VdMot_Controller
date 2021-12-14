@@ -38,10 +38,12 @@
 *END************************************************************************/
 
 
+
+
 #include "globals.h"
 #include <ArduinoJson.h>
 #include <Arduino.h>
-#include "app.h"
+#include "stmApp.h"
 #include "telnet.h"
 #include <WiFi.h>
 #include <Syslog.h>
@@ -51,13 +53,11 @@
 #define     MAX_CMD_LEN     10
 #define     MAX_ARG_LEN     120
 
-
-
 actuator_str    actuators[ACTUATOR_COUNT];
 
 char mqtt_maintopic[MAINTOPIC_LEN];
 
-int  cmd_buffer = APP_CMD_NONE;
+String cmd_buffer = "";
 
 unsigned char target_position_mirror[ACTUATOR_COUNT];
 
@@ -69,7 +69,7 @@ uint8_t     stm32alive = 0;           // 0 - not alive, >0 - alive
 WiFiUDP udpClient;
 
 // Create a new empty syslog instance
-Syslog syslog(udpClient, SYSLOG_PROTO_IETF);
+// todo Syslog syslog(udpClient, SYSLOG_PROTO_IETF);
 
 
 char calc_checksum (char *dataptr);
@@ -77,10 +77,13 @@ void app_check_data();
 void app_cmd(int command);
 void app_comm_machine();
 void app_alive_check();
+void app_web_cmd_check();
 
 void app_setup() {
 
     UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL);
+    //#warning fixme
+    //UART_STM32.begin(9600, SERIAL_8E1, STM32_RX, STM32_TX, false, 20000UL);
 
 
     for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {
@@ -98,21 +101,20 @@ void app_setup() {
 
     // prepare syslog configuration here (can be anywhere before first call of 
     // log/logf method)
+    /* todo
     syslog.server(SYSLOG_SERVER, SYSLOG_PORT);
     syslog.deviceHostname(DEVICE_HOSTNAME);
     syslog.appName(APP_NAME);
     syslog.defaultPriority(LOG_KERN);
-
+*/
     UART_DBG.println("application setup finished");
 }
 
 
 void app_loop() {
-
     DynamicJsonDocument doc(1024);
     String testjson;
-    static uint32_t timer100ms = 0;
-    static uint32_t timer1000ms = 0;
+    
     //char sendbuffer[30];
     //char valbuffer[10];
 
@@ -132,18 +134,15 @@ void app_loop() {
 //    doc.clear();
 //    testjson.clear();
 
+    app_comm_machine(); 
+    
+    app_alive_check();
 
-    // 100 ms task
-    if ((millis()-timer100ms) > (uint32_t) 100 ) {
-        timer100ms = millis();
+    app_web_cmd_check();
+    
+  
 
-        app_comm_machine(); 
-        
-        app_alive_check();
-        
-    }
-
-
+/*
     // 1000 ms task
     if ((millis()-timer1000ms) > (uint32_t) 1000 ) {
         timer1000ms = millis();
@@ -159,31 +158,21 @@ void app_loop() {
         //UART_DBG.println(testjson);
 
         
-        syslog.log(LOG_INFO, testjson);
+        // todo syslog.log(LOG_INFO, testjson);
 
         // generate debug messages
         if (vismode > VISMODE_DETAIL) {
             UART_DBG.println("App loop");
-            syslog.log(LOG_DEBUG, "App loop");
+            // todo syslog.log(LOG_DEBUG, "App loop");
             logger.print("App loop");
-        }       
-        
-        // switch (cmd_buffer) {
-        //         case APP_CMD_SETTARGET:
-        //                     UART_STM32.println(APP_PRE_SETTARGET + testjson);
-        //                     break;
-        //         case APP_CMD_GETACTUAL:
-
-        //                     break;
-
-        //         default:    break;
-        // }            
+        }               
+      
     }
-    cmd_buffer = APP_CMD_NONE;
+   */ 
 }
 
 
-void app_cmd(int command) {
+void app_cmd(String command) {    
     cmd_buffer = command;
 }
 
@@ -204,7 +193,7 @@ char calc_checksum (char *dataptr) {
 
 void app_check_data() {
 
-    static char buffer[300];
+    static char buffer[1200];
     static char *bufptr = buffer;
     static unsigned int buflen = 0;
     int availcnt;
@@ -213,7 +202,7 @@ void app_check_data() {
     char*       cmdptr;
     char*	    cmdptrend;
     char        cmd[10];
-    char		arg0[20];	
+    char		arg0[1200];	
     char        arg1[20];		
     char        arg2[20];
     char        arg3[20];
@@ -226,7 +215,7 @@ void app_check_data() {
 	uint8_t		argcnt = 0;
 
     availcnt = UART_STM32.available(); 
-    if(availcnt>0)
+    if (availcnt>0)
     {    
         for (int c = 0; c < availcnt; c++)
         {           
@@ -236,9 +225,9 @@ void app_check_data() {
         if (buflen>=sizeof(buffer)) {
             buffer[sizeof(buffer)-1] = '\r';
         }
-    }
+    } else return;
 
-
+   
     if(buflen > 4) 
     {
         for (unsigned int c = 0; c < buflen; c++)
@@ -246,7 +235,7 @@ void app_check_data() {
             if(buffer[c] == '\r') 
             {
                 buffer[c] = '\0';
-                //UART_DBG.print("recv "); UART_DBG.println(buffer);
+               // UART_DBG.print("recv "); UART_DBG.println(buffer);
                 found = 1;
 
                 buflen = 0;           // reset counter
@@ -292,7 +281,7 @@ void app_check_data() {
 			//UART_DBG.println("Help:");
 			//UART_DBG.println("*********************");
 			telnet_msg("help command received");
-            UART_DBG.println("help command received");
+            //UART_DBG.println("help command received");
 			//return CMD_HELP;
 		}
 
@@ -304,10 +293,10 @@ void app_check_data() {
             //app_cmd(APP_CMD_GETACTUAL);
             
             if(argcnt == 2) {
-                //UART_DBG.println("argcnt 2");
-                //UART_DBG.print("argcnt "); UART_DBG.println(argcnt);
-                //UART_DBG.print("arg0 "); UART_DBG.println(atoi(arg0ptr));
-                //UART_DBG.print("arg1 "); UART_DBG.println(atoi(arg1ptr));
+                UART_DBG.println("argcnt 2");
+                UART_DBG.print("argcnt "); UART_DBG.println(argcnt);
+                UART_DBG.print("arg0 "); UART_DBG.println(atoi(arg0ptr));
+                UART_DBG.print("arg1 "); UART_DBG.println(atoi(arg1ptr));
                 actuators[atoi(arg0ptr)].actual_position = atoi(arg1ptr);
             }
         }
@@ -361,17 +350,27 @@ void app_check_data() {
                 actuators[atoi(arg0ptr)].state = atoi(arg3ptr);
                 actuators[atoi(arg0ptr)].temperature = atoi(arg4ptr);
 
-                logger.print("new data package: ", Logger::DATA); 
-                logger.println(buffer, Logger::DATA); 
+            // todo   logger.print("new data package: ", logger.DATA); 
+            //     logger.println(buffer, logger.DATA); 
 
                 // create some debug messages
                 if (vismode > VISMODE_DETAIL) {
                     UART_DBG.println("got full vlv data packet");
-                    syslog.log(LOG_DEBUG, "got full vlv data packet");
+                    // todo syslog.log(LOG_DEBUG, "got full vlv data packet");
                     logger.print("got full vlv data packet");
                 }
             }
 
+            
+        }
+
+        // get onewire data answer
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
+            logger.print("got one wire data packet");
+            if(argcnt == 1) {
+                logger.print(arg0ptr);
+            }
             
         }
 
@@ -380,8 +379,6 @@ void app_check_data() {
     }
 
 }
-
-
 
 void app_comm_machine(){
     #define COMM_IDLE           0
@@ -399,7 +396,7 @@ void app_comm_machine(){
         
     static unsigned int timeout = 0;
     static unsigned int retry = 0;
-
+   
     switch(commstate) {
 
         case COMM_IDLE: 
@@ -410,7 +407,7 @@ void app_comm_machine(){
                 if (cnt_alive) {
                     cnt_alive = COMM_ALIVE_CYCLE;
                     UART_STM32.println("ESPalive");
-                    syslog.log(LOG_INFO, "ESPalive");
+                    // todo syslog.log(LOG_INFO, "ESPalive");
                 }
                 else cnt_alive--;
 
@@ -447,8 +444,8 @@ void app_comm_machine(){
                         // generate debug messages
                         if (vismode == VISMODE_DETAIL) {
                             UART_DBG.println(sendbuffer);
-                            syslog.log(LOG_DEBUG, sendbuffer);
-                            logger.print(sendbuffer, Logger::DATA);
+                            // todo syslog.log(LOG_DEBUG, sendbuffer);
+                            logger.print(sendbuffer, logger.DATA);
                         }
 
                         // break loop, next valve will be served in next cycle
@@ -510,8 +507,8 @@ void app_comm_machine(){
                 // generate debug messages
                 if (vismode == VISMODE_DETAIL) {
                     UART_DBG.println(sendbuffer);
-                    syslog.log(LOG_DEBUG, sendbuffer);
-                    logger.print(sendbuffer, Logger::DATA);
+                    // todo syslog.log(LOG_DEBUG, sendbuffer);
+                    logger.print(sendbuffer, logger.DATA);
                 }
                         
                 break;
@@ -531,7 +528,7 @@ void app_alive_check() {
         // generate debug messages
         if ((vismode > VISMODE_OFF) && (oldalivestate == 0)) {
             UART_DBG.println("connection to STM32 established");
-            syslog.log(LOG_DEBUG, "connection to STM32 established");
+            // todo syslog.log(LOG_DEBUG, "connection to STM32 established");
             logger.print("connection to STM32 established");
         }
         oldalivestate = 1;
@@ -540,9 +537,37 @@ void app_alive_check() {
         // generate debug messages
         if ((vismode > VISMODE_OFF) && (oldalivestate == 1)) {
             UART_DBG.println("connection to STM32 lost");
-            syslog.log(LOG_DEBUG, "connection to STM32 lost");
+            // todo syslog.log(LOG_DEBUG, "connection to STM32 lost");
             logger.print("connection to STM32 lost");
         }
         oldalivestate = 0;
     }
+}
+
+
+void app_web_cmd_check(){
+    
+    if(cmd_buffer.length() >= 5) {
+        if(cmd_buffer.startsWith(APP_PRE_SETALLVLVOPEN)) {	
+            UART_DBG.println("send open all valves request to STM32");		
+            UART_STM32.println(APP_PRE_SETALLVLVOPEN);	 
+        }
+
+        else if(cmd_buffer.startsWith(APP_PRE_SETALLVLVOPEN)) {	
+            UART_DBG.println("send target position request to STM32");		
+            UART_STM32.println(cmd_buffer);	 
+        }
+
+        else if(cmd_buffer.startsWith(APP_PRE_GETONEWIREDATA)) {	
+            UART_DBG.println("send onewire data request to STM32");		
+            UART_STM32.println(cmd_buffer);
+        }
+
+        else {
+            UART_DBG.println("unknown command for STM32 from webinterface");
+            logger.print("unknown command for STM32");
+        }   
+    }  
+
+    cmd_buffer = "";    
 }

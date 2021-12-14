@@ -39,96 +39,33 @@
 
 
 #include "globals.h"
-#include <SPIFFS.h>
-#include <WiFi.h>
-#include <WiFiClient.h>
-#include <FS.h>
-//#include "stm32.h"
-//#include "stm32ota.h"
-#include <ESPmDNS.h>
-#include "mqtt.h"
-#include "app.h"
-#include "telnet.h"
-#include <WiFiUdp.h>
-//#include "espota.h"
-#include "Logger.h"
-#include "TaskManagerIO.h"
 
 #include "VdmConfig.h"
 #include "VdmNet.h"
 #include "VdmTask.h"
 
-
-
-//const char* host = "stm32ota";
-
-
-Logger logger;      // web service logger
-
 uint8_t vismode = VISMODE_ON;    // visualisation mode for debug messages
-
 
 
 void setup(void)
 {
   UART_DBG.begin(115200);
-  if (!SPIFFS.begin(true)) {
-    UART_DBG.println("An Error has occurred while mounting SPIFFS");
-    return;
-  }
-  UART_DBG.println("SPIFFS booted");
-
+  
   // init config, read from flash, init network
   VdmConfig.init();
   VdmNet.init();
   VdmTask.init();
-
-  
-  //STM32ota_setup();
-
- 
-  //RunMode();
-
-
-  while(UART_STM32.available()) UART_STM32.read();
-
-  
-  if (MDNS.begin("esp32")) {
-    UART_DBG.println("MDNS responder started");
-  }
-
-    
-  //telnet_setup();
-
-  //app_setup();
-
-  //ESPota_setup();
-
 }
 
 
 void loop(void) {
- /*
-  static uint32_t timer1000ms = 0;
 
-  // 1000 ms task
-  if ((millis()-timer1000ms) > (uint32_t) 1000 ) {
-      timer1000ms = millis();       
-      //logger.println("Logger test");      // logs data to webservice 
-      //logger.println("Logger data test", Logger::DATA);  // logs data to webservice 
-      //telnet_loop();
-  }
+/* todo :
+telnet
+logger
+stm32ota
 */
- // mqtt_loop();
-
-  //app_loop();
-
-  //ESPota_loop();
-
-  //yield();
-  //delay(1);
-
-
+  
   taskManager.runLoop();
 }
 

@@ -465,7 +465,8 @@
                 <input type="button" class="buttonclass" id="update-WT32" value="Update WT32" title="Update WT32" />
                 </td>
 			</tr>
-			
+		<form method="POST" action="/uploadSTM32" enctype="multipart/form-data"><input type="file" name="data"/><input type="submit" name="upload" value="UploadSTM32" title="Upload file for STM32"></form>
+
 		</table>
 		</div>
 		
@@ -1034,20 +1035,9 @@
 		}
 			
 		async function updateWT32() {
-		console.log(document.location);
-		location.assign('http:/update');
-		location.replace('http:/update');
-		window.reload()
-		
-			//return await (await fetch('http:/update')).text();
-			/*fetch('http:/update')
-			.then(function() {
-
-			})
-			.catch(function() {
-				console.log('Error: ','update: '+err)
-			});*/
-
+			location.assign('http:/update');
+			location.replace('http:/update');
+			window.reload();
 		}	
 			
 		async function postJson(link,postData){

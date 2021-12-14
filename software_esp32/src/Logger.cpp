@@ -38,56 +38,57 @@
 *END************************************************************************/
 
 
-
 #include "Logger.h"
 
-Logger::Logger(byte bufferSize) {
+CLogger logger;      // web service logger
+
+CLogger::CLogger(byte bufferSize) {
   m_enabled = true;
   m_bufferSize = bufferSize;
 }
 
-void Logger::Clear() {
+void CLogger::Clear() {
   while (Available()) {
     Pop();
   }
 }
 
-void Logger::SetBufferSize(byte size) {
+void CLogger::SetBufferSize(byte size) {
   m_bufferSize = size;
 }
 
-void Logger::Disable() {
+void CLogger::Disable() {
   m_enabled = false;
   Clear();
 }
 
-void Logger::Enable() {
+void CLogger::Enable() {
   m_enabled = true;
 }
 
-bool Logger::IsEnabled() {
+bool CLogger::IsEnabled() {
   return m_enabled;
 }
 
-void Logger::println(LogType type) {
+void CLogger::println(LogType type) {
   println("", type);
 }
 
-void Logger::print(uint32_t data, LogType type) {
+void CLogger::print(uint32_t data, LogType type) {
   print(String(data), type);
 }
-void Logger::println(uint32_t data, LogType type) {
+void CLogger::println(uint32_t data, LogType type) {
   println(String(data), type);
 }
 
 
-void Logger::logData(String data, LogType type) {
+void CLogger::logData(String data, LogType type) {
   if (m_enabled &&  m_queue.Count() <= m_bufferSize) {
     m_queue.Push("DATA:" + data);
   }
 }
 
-void Logger::print(String data, LogType type) {
+void CLogger::print(String data, LogType type) {
   if (m_enabled && type != LogType::ONLYSYS) {
     Serial.print(data);
   }
@@ -96,20 +97,20 @@ void Logger::print(String data, LogType type) {
   }
 }
 
-void Logger::println(String data, LogType type) {
+void CLogger::println(String data, LogType type) {
   if (m_enabled && type != LogType::ONLYSYS) {
     Serial.println(data);
   }
   String line = m_currentLine + data;
   if (m_enabled &&  m_queue.Count() <= m_bufferSize) {
     switch (type) {
-      case Logger::SYS:
+      case logger.SYS:
         line = "SYS: " + line;
         break;
-      case Logger::DATA:
+      case logger.DATA:
         line = "DATA: " + line;
         break;
-      case Logger::PCA301:
+      case logger.PCA301:
         line = "PCA301: " + line;
         break;
       default:
@@ -120,10 +121,10 @@ void Logger::println(String data, LogType type) {
   m_currentLine = "";
 }
 
-int Logger::Available()  {
+int CLogger::Available()  {
   return m_queue.Count();
 }
 
-String Logger::Pop() {
+String CLogger::Pop() {
   return m_queue.Pop();
 }

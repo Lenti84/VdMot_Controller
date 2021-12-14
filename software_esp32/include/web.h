@@ -38,9 +38,7 @@
 *END************************************************************************/
 
 
-
-#ifndef _WEB_H_
-#define _WEB_H_
+#pragma once
 
 #include <Arduino.h>
 #include "Logger.h"
@@ -48,27 +46,26 @@
 #include "VdmConfig.h"
 #include "globals.h"
 
-//#include <FS.h>
+class CWeb
+{
+public:
+  CWeb();
+  void handleFileUpload();
+  void handleFlash();
+  void handleFileDelete();
+  void handleListFiles();
+  String makePage(String title, String contents);
+  void postValvesPos();
+  String getValvesStatus();
+  String getTempsStatus(VDM_TEMPS_CONFIG tempsConfig);
+  String getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig); 
+  String getNetConfig (VDM_NETWORK_CONFIG netConfig);
+  String getProtConfig (VDM_PROTOCOL_CONFIG protConfig);
+  String getValvesConfig (VDM_VALVES_CONFIG valvesConfig);
+  String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig);
+  String getSysInfo();
+  String ip2String (IPAddress ipv4addr);
+};
 
-//extern File fsUploadFile;
+extern CWeb Web;
 
-extern Logger logger;
-
-
-void handleFileUpload();
-void handleFlash();
-void handleFileDelete();
-void handleListFiles();
-String makePage(String title, String contents);
-void postValvesPos();
-String getValvesStatus();
-String getTempsStatus(VDM_TEMPS_CONFIG tempsConfig);
-String getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig); 
-String getNetConfig (VDM_NETWORK_CONFIG netConfig);
-String getProtConfig (VDM_PROTOCOL_CONFIG protConfig);
-String getValvesConfig (VDM_VALVES_CONFIG valvesConfig);
-String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig);
-String getSysInfo();
-String ip2String (IPAddress ipv4addr);
-
-#endif

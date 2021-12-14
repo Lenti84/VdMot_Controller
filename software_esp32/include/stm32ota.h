@@ -37,7 +37,6 @@
 
 *END************************************************************************/
 
-
 #pragma once
 
 #include <Arduino.h>
@@ -67,18 +66,7 @@
 #define STM32STADDR  	0x8000000     // STM32 codes start address, you can change to other address if use custom bootloader like 0x8002000
 #define STM32ERR  		0
 
-//String STM32_CHIPNAME[8] = { 
-//  "Unknown Chip",
-//  "STM32F03xx4/6",
-//  "STM32F030x8/05x",
-//  "STM32F030xC",
-//  "STM32F103x4/6",
-//  "STM32F103x8/B", 
-//  "STM32F103xC/D/E",
-//  "STM32F105/107"  
-//};
-
-extern const String STM32_CHIPNAME[];
+extern const String STM32_CHIPNAME[9];
 
 void stm32SendCommand(unsigned char commd);
 unsigned char stm32Erase();
@@ -89,3 +77,5 @@ unsigned char stm32SendData(unsigned char * data, unsigned char wrlen);
 unsigned char getChecksum( unsigned char * data, unsigned char datalen);
 unsigned char stm32GetId();
 char stm32Version();
+void STM32ota_loop();
+void STM32ota_start();

@@ -45,7 +45,7 @@
 #include <Syslog.h>
 #include "mqtt.h"
 #include "globals.h"
-#include "app.h"
+#include "stmApp.h"
 
 
 void reconnect();
@@ -186,14 +186,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
         //Serial.println(&topic[found]);
         if (0 == strcmp(&topic[found],"target")) {
             //Serial.println("found target");
-            syslog.log(LOG_INFO, "MQTT: found target topic");
+            // todo syslog.log(LOG_INFO, "MQTT: found target topic");
             actuators[value-1].target_position = atoi(msg);
         }
         else {            
             found = 0;
         }
     }
-    else syslog.log(LOG_ERR, "MQTT: cant eval data");
+    //else // todo syslog.log(LOG_ERR, "MQTT: cant eval data");
 
 
     // if(strcmp(msg,"on")==0){

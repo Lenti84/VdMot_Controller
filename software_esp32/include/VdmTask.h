@@ -44,7 +44,7 @@
 #include <TaskManagerIO.h>
 #include "globals.h"
 #include "VdmNet.h" 
-#include "app.h"
+#include "stmApp.h"
 
 class CVdmTask
 {

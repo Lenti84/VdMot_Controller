@@ -41,21 +41,22 @@
 
 #include "globals.h"
 #include "web.h"
-#include "stm32.h"
-#include "stm32ota.h"
-#include "app.h"
-#include <SPIFFS.h>
-#include <FS.h>
-#include "TypedQueue.h"
+#include "stmApp.h"
 #include "VdmNet.h"
 #include "VdmConfig.h"
 
-String ip2String (IPAddress ipv4addr)
+CWeb Web;
+
+CWeb::CWeb()
+{
+}
+
+String CWeb::ip2String (IPAddress ipv4addr)
 {
   return ipv4addr.toString();
 }
 
-String getNetConfig (VDM_NETWORK_CONFIG netConfig)
+String CWeb::getNetConfig (VDM_NETWORK_CONFIG netConfig)
 {
   String result = "{\"ethWifi\":"+String(netConfig.eth_wifi)+","+
                   "\"dhcp\":"+String(netConfig.dhcpEnabled)+","+
@@ -72,7 +73,7 @@ String getNetConfig (VDM_NETWORK_CONFIG netConfig)
   return result;  
 }
 
-String getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig)
+String CWeb::getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig)
 {
   String result = "{\"ethWifi\":"+String(VdmNet.interfaceType)+","+
                   "\"dhcp\":\""+String(netConfig.dhcpEnabled)+"\","+
@@ -84,7 +85,7 @@ String getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig)
   return result;  
 }
 
-String getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
+String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
 {
   String result = "{\"prot\":"+String(protConfig.dataProtocol)+","+
                     "\"mqttIp\":\""+ip2String(protConfig.brokerIp)+"\","+
@@ -92,7 +93,7 @@ String getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
   return result;  
 }
 
-String getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
+String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
 {
   String result = "{\"calib\":{\"dayOfCalib\":"+String(valvesConfig.dayOfCalib) + "," +
                   "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib) + "},\"valves\":[" ;
@@ -106,7 +107,7 @@ String getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
   return result;  
 }
 
-String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig)
+String CWeb::getTempsConfig (VDM_TEMPS_CONFIG tempsConfig)
 {
   String result = "[";
   
@@ -121,7 +122,7 @@ String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig)
 }
 
 
-String getSysInfo()
+String CWeb::getSysInfo()
 {
   struct tm timeinfo;
   char buf[50];
@@ -138,7 +139,7 @@ String getSysInfo()
   return result;  
 }
 
-String getValvesStatus() 
+String CWeb::getValvesStatus() 
 {
   String result = "[";
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
@@ -153,7 +154,7 @@ String getValvesStatus()
 }
 
 
-String getTempsStatus(VDM_TEMPS_CONFIG tempsConfig) 
+String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig) 
 {
   String result = "[";
   int temperature;

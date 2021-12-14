@@ -51,7 +51,7 @@ https://www.nikolaus-lueneburg.de/2017/09/wifi-telnet-server-auf-dem-esp8266/
 #include <Arduino.h>
 #include "WiFi.h"
 #include <WiFiUdp.h>
-#include "app.h"
+#include "stmApp.h"
 
 uint8_t i;
 bool ConnectionEstablished; // Flag for successfully handled connection
@@ -160,12 +160,12 @@ void telnet_loop()
         if (clientCommand == "stgt") {              
           TelnetClient[i].println("set target send");
           Serial.println("set target send");
-          app_cmd(APP_CMD_SETTARGETPOS);
+          //app_cmd(APP_CMD_SETTARGETPOS);
         }
         else if (clientCommand == "gact") {              
           TelnetClient[i].println("get actual values send");
           Serial.println("get actual values send");
-          app_cmd(APP_CMD_GETACTUALPOS);
+          //app_cmd(APP_CMD_GETACTUALPOS);
         }
       }
       else
