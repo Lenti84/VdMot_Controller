@@ -45,6 +45,7 @@
 #include "globals.h"
 #include "VdmNet.h" 
 #include "stmApp.h"
+#include "Services.h"
 
 class CVdmTask
 {
@@ -54,10 +55,12 @@ public:
   void deleteTask(taskid_t taskId);
   void startMqtt();
   void startApp();
+  void startServices();
 
   taskid_t taskIdCheckNet;
   taskid_t taskIdMqtt;
   taskid_t taskIdApp;
+  taskid_t taskIdServices;
 };
 
 extern CVdmTask VdmTask;

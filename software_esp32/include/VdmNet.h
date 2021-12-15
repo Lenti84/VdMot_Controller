@@ -43,6 +43,7 @@
 #include <stdint.h>
 #include <ArduinoJson.h>
 #include "VdmConfig.h"
+#include <Syslog.h>
 
 #define noneProtocol 0
 #define mqttProtocol 1
@@ -58,6 +59,19 @@
 
 enum TWifiState {wifiIdle,wifiIsStarting,wifiConnected,wifiDisabled};
 enum TEthState  {ethIdle,ethIsStarting,ethConnected,ethDisabled};
+
+
+typedef struct {
+  uint8_t interfaceType;
+  bool dhcpEnabled;
+  IPAddress ip;
+  IPAddress mask;
+  IPAddress gateway;
+  IPAddress dnsIp; 
+  String mac;       
+} VDM_NETWORK_INFO;
+
+
 
 class CVdmNet
 {
@@ -79,12 +93,12 @@ public:
   void postSetValve (JsonObject doc);
   TWifiState wifiState;
   TEthState ethState;
+  VDM_NETWORK_INFO networkInfo;
   bool serverIsStarted;
   bool dataBrokerIsStarted;
-  uint8_t interfaceType;
 };
 
 extern CVdmNet VdmNet;
 
-
+extern Syslog syslog;
 

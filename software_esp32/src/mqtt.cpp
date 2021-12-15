@@ -55,9 +55,6 @@ void publish_valves ();
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
 
-const char* MQTT_BROKER = MQTT_BROKER_IP;
-
-
 void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort) {
     mqtt_client.setServer(brokerIP, brokerPort);
     mqtt_client.setCallback(callback);

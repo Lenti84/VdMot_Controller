@@ -42,8 +42,6 @@
 
 #pragma once
 
-#include <Syslog.h>
-
 typedef struct  {
 	unsigned char actual_position;      // from controller
     unsigned char target_position;      // to controller
@@ -80,8 +78,6 @@ typedef struct  {
 void app_setup();
 void app_loop();
 void app_cmd(String command);
-
-extern Syslog syslog;
 
 extern char mqtt_maintopic[];
 extern actuator_str actuators[];

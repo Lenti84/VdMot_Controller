@@ -69,6 +69,13 @@ void CVdmTask::startApp()
     });
 }
 
+void CVdmTask::startServices()
+{
+    taskIdServices = taskManager.scheduleFixedRate(60*1000, [] {
+        Services.ServicesLoop();
+    });
+}
+
 void CVdmTask::deleteTask (taskid_t taskId)
 {
   taskManager.cancelTask (taskId);

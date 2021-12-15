@@ -44,11 +44,26 @@
 #include "stmApp.h"
 #include "VdmNet.h"
 #include "VdmConfig.h"
+#include "VdmSystem.h"
+#include "WiFi.h"
 
 CWeb Web;
 
 CWeb::CWeb()
 {
+}
+
+String CWeb::ConvBinUnits(size_t bytes, byte resolution) {
+  if      (bytes < 1024)                 {
+    return String(bytes) + " B";
+  }
+  else if (bytes < 1024 * 1024)          {
+    return String(bytes / 1024.0, resolution) + " KB";
+  }
+  else if (bytes < (1024 * 1024 * 1024)) {
+    return String(bytes / 1024.0 / 1024.0, resolution) + " MB";
+  }
+  else return "";
 }
 
 String CWeb::ip2String (IPAddress ipv4addr)
@@ -68,20 +83,23 @@ String CWeb::getNetConfig (VDM_NETWORK_CONFIG netConfig)
                   "\"ssid\":\""+String(netConfig.ssid)+"\","+
                   "\"timeServer\":\""+String(netConfig.timeServer)+"\","+
                   "\"timeOffset\":"+String(netConfig.timeOffset)+","+
-                  "\"timeDST\":"+String(netConfig.daylightOffset)+
+                  "\"timeDST\":"+String(netConfig.daylightOffset)+","+
+                  "\"syslogEnable\":"+String(netConfig.syslogEnable)+","+
+                  "\"syslogIp\":\""+ip2String(netConfig.syslogIp)+"\","+
+                  "\"syslogPort\":"+String(netConfig.syslogPort)+  
                   "}";  
   return result;  
 }
 
-String CWeb::getNetInfo(ETHClass ETH,VDM_NETWORK_CONFIG netConfig)
+String CWeb::getNetInfo(VDM_NETWORK_INFO networkInfo)
 {
-  String result = "{\"ethWifi\":"+String(VdmNet.interfaceType)+","+
-                  "\"dhcp\":\""+String(netConfig.dhcpEnabled)+"\","+
-                  "\"ip\":\""+ETH.localIP().toString()+"\","+
-                  "\"mac\":\""+ETH.macAddress()+"\","+
-                  "\"mask\":\""+ETH.subnetMask().toString()+"\","+
-                  "\"gw\":\""+ETH.gatewayIP().toString()+"\","+
-                  "\"dns\":\""+ETH.dnsIP().toString()+"\"}";
+  String result = "{\"ethWifi\":"+String(networkInfo.interfaceType)+","+
+                  "\"dhcp\":"+String(networkInfo.dhcpEnabled)+","+
+                   "\"ip\":\""+networkInfo.ip.toString()+"\","+
+                  "\"mac\":\""+networkInfo.mac+"\","+
+                  "\"mask\":\""+networkInfo.mask.toString()+"\","+
+                  "\"gw\":\""+networkInfo.gateway.toString()+"\","+
+                  "\"dns\":\""+networkInfo.dnsIp.toString()+"\"}";
   return result;  
 }
 
@@ -124,6 +142,15 @@ String CWeb::getTempsConfig (VDM_TEMPS_CONFIG tempsConfig)
 
 String CWeb::getSysInfo()
 {
+  String result = "{\"wt32version\":\""+String(MAJORVERSION)+"."+String(MINORVERSION)+"\","+
+                  "\"wt32cores\":"+VdmSystem.chip_info.cores+ "," +
+                  "\"wt32coreRev\":"+VdmSystem.chip_info.revision+
+                  "}";
+  return result;  
+}
+
+String CWeb::getSysDynInfo()
+{
   struct tm timeinfo;
   char buf[50];
   String time;
@@ -134,10 +161,15 @@ String CWeb::getSysInfo()
     strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
     time = String(buf);
   }
-  String result = "{\"wt32version\":\""+String(MAJORVERSION)+"."+String(MINORVERSION)+"\","+
-                  "\"locTime\":\""+time+"\"}";
+  String result = "{\"locTime\":\""+time+"\"," +
+                  "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
+                  "\"wifirssi\":"+WiFi.RSSI()+ "," +
+                  "\"wifich\":"+WiFi.channel()+
+                  "}";
   return result;  
 }
+
+
 
 String CWeb::getValvesStatus() 
 {

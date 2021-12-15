@@ -87,6 +87,9 @@ void CVdmConfig::clearConfig()
   configFlash.valvesConfig.hourOfCalib=0;
   memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
   strncpy(configFlash.netConfig.timeServer,"pool.ntp.org",sizeof(configFlash.netConfig.timeServer));
+  configFlash.netConfig.syslogEnable=false;
+  configFlash.netConfig.syslogIp=0;
+  configFlash.netConfig.syslogPort=0;
 }
 
 
@@ -111,6 +114,9 @@ void CVdmConfig::readConfig()
   }
   configFlash.netConfig.timeOffset=prefs.getLong(nvsNetTimeOffset,3600);
   configFlash.netConfig.daylightOffset=prefs.getInt(nvsNetDayLightOffset,3600);
+  configFlash.netConfig.syslogEnable=prefs.getUChar(nvsNetSysLogEnable);
+  configFlash.netConfig.syslogIp=prefs.getULong(nvsNetSysLogIp);
+  configFlash.netConfig.syslogPort=prefs.getUShort(nvsNetSysLogPort);
   prefs.end();
 
   prefs.begin(nvsProtCfg,false);
@@ -147,6 +153,9 @@ void CVdmConfig::writeConfig()
   prefs.putString(nvsNetTimeServer,configFlash.netConfig.timeServer);
   prefs.putLong(nvsNetTimeOffset,configFlash.netConfig.timeOffset);
   prefs.putInt(nvsNetDayLightOffset,configFlash.netConfig.daylightOffset);
+  prefs.putUChar(nvsNetSysLogEnable,configFlash.netConfig.syslogEnable);
+  prefs.putLong(nvsNetSysLogIp,configFlash.netConfig.syslogIp);
+  prefs.putUShort(nvsNetSysLogPort,configFlash.netConfig.syslogPort);
   prefs.end();
 
   prefs.begin(nvsProtCfg,false);
@@ -197,6 +206,9 @@ void CVdmConfig::postNetCfg (JsonObject doc)
   if (!doc["timeServer"].isNull()) strncpy(configFlash.netConfig.timeServer,doc["timeServer"].as<const char*>(),sizeof(configFlash.netConfig.timeServer));
   if (!doc["timeOffset"].isNull()) configFlash.netConfig.timeOffset = doc["timeOffset"];
   if (!doc["timeDST"].isNull()) configFlash.netConfig.daylightOffset = doc["timeDST"];
+  if (!doc["syslogEnable"].isNull()) configFlash.netConfig.syslogEnable=doc["syslogEnable"];
+  if (!doc["syslogIp"].isNull()) configFlash.netConfig.syslogIp=doc2IPAddress(doc["syslogIp"]);
+  if (!doc["syslogPort"].isNull()) configFlash.netConfig.syslogPort=doc["syslogPort"];
 }
 
 void CVdmConfig::postProtCfg (JsonObject doc)

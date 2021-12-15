@@ -64,6 +64,9 @@ typedef struct {
   char timeServer[65];
   long timeOffset;
   int daylightOffset; 
+  bool syslogEnable;
+  uint32_t syslogIp;
+  uint32_t syslogPort;
 
 } VDM_NETWORK_CONFIG;
 
@@ -118,6 +121,9 @@ typedef struct
 #define nvsNetTimeServer  "timeServer"
 #define nvsNetTimeOffset  "timeOffset"
 #define nvsNetDayLightOffset "dstOffset"
+#define nvsNetSysLogEnable  "syslogEnable"
+#define nvsNetSysLogIp      "sysLogIp"
+#define nvsNetSysLogPort    "sysLogPort"
 
 #define nvsProtCfg        "protCfg"
 #define nvsProtDataProt   "dataProt"

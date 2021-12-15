@@ -38,36 +38,15 @@
 *END************************************************************************/
 
 
-#pragma once
+#include "Services.h"
 
-#include <Arduino.h>
-#include "Logger.h"
-#include "VdmNet.h"
-#include "VdmConfig.h"
-#include "globals.h"
+CServices Services;
 
-class CWeb
+CServices::CServices()
 {
-public:
-  CWeb();
-  void handleFileUpload();
-  void handleFlash();
-  void handleFileDelete();
-  void handleListFiles();
-  String makePage(String title, String contents);
-  void postValvesPos();
-  String getValvesStatus();
-  String getTempsStatus(VDM_TEMPS_CONFIG tempsConfig);
-  String getNetInfo(VDM_NETWORK_INFO networkInfo); 
-  String getNetConfig (VDM_NETWORK_CONFIG netConfig);
-  String getProtConfig (VDM_PROTOCOL_CONFIG protConfig);
-  String getValvesConfig (VDM_VALVES_CONFIG valvesConfig);
-  String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig);
-  String getSysDynInfo();
-  String getSysInfo();
-  String ip2String (IPAddress ipv4addr);
-  String ConvBinUnits(size_t bytes, byte resolution);
-};
+}
 
-extern CWeb Web;
-
+void CServices::ServicesLoop()
+{
+    
+}

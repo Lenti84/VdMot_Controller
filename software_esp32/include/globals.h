@@ -61,8 +61,8 @@ extern uint8_t vismode;
 #define SYSLOG_PORT         514
 
 // This device info
-#define DEVICE_HOSTNAME     "my-device"
-#define APP_NAME            "my-app"
+#define DEVICE_HOSTNAME     "VDMot"
+#define APP_NAME            "SysLog"
 #define ANOTHER_APP_NAME    "my-another-app"
 
 // hardware
@@ -79,4 +79,4 @@ extern uint8_t vismode;
 
 // MQTT settings
 #define DEFAULT_MAINTOPIC   "/VdMotFBH/valve/"           //  /VdMotFBH/valve/1/actual
-#define MQTT_BROKER_IP      "192.168.4.201"
+

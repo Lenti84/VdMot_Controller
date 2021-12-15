@@ -49,6 +49,7 @@
 #include <Syslog.h>
 #include <WiFiUdp.h>
 #include "Logger.h"
+#include "VdmNet.h"
 
 #define     MAX_CMD_LEN     10
 #define     MAX_ARG_LEN     120
@@ -64,13 +65,6 @@ unsigned char target_position_mirror[ACTUATOR_COUNT];
 int settarget_check = 0;
 
 uint8_t     stm32alive = 0;           // 0 - not alive, >0 - alive 
-
-// A UDP instance to let us send and receive packets over UDP
-WiFiUDP udpClient;
-
-// Create a new empty syslog instance
-// todo Syslog syslog(udpClient, SYSLOG_PROTO_IETF);
-
 
 char calc_checksum (char *dataptr);
 void app_check_data();
@@ -99,84 +93,21 @@ void app_setup() {
         target_position_mirror[x] = actuators[x].target_position;
     }
 
-    // prepare syslog configuration here (can be anywhere before first call of 
-    // log/logf method)
-    /* todo
-    syslog.server(SYSLOG_SERVER, SYSLOG_PORT);
-    syslog.deviceHostname(DEVICE_HOSTNAME);
-    syslog.appName(APP_NAME);
-    syslog.defaultPriority(LOG_KERN);
-*/
+    
     UART_DBG.println("application setup finished");
 }
 
 
 void app_loop() {
-    DynamicJsonDocument doc(1024);
-    String testjson;
-    
-    //char sendbuffer[30];
-    //char valbuffer[10];
-
     app_check_data();
-//char checksum;
-
-// doc["sensor"] = "gps";
-// doc["time"]   = 1351824120;
-// doc["data"][0] = 48.756080;
-// doc["data"][1] = 2.302038;
-
-// serializeJson(doc, testjson);
-
-// UART_DBG.println("JSON");
-// UART_DBG.println(testjson);
-    
-//    doc.clear();
-//    testjson.clear();
-
     app_comm_machine(); 
-    
     app_alive_check();
-
-    app_web_cmd_check();
-    
-  
-
-/*
-    // 1000 ms task
-    if ((millis()-timer1000ms) > (uint32_t) 1000 ) {
-        timer1000ms = millis();
-
-        //for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {
-        for (unsigned int x = 0;x<4;x++) {
-            doc["vlv"][x]["tar"] = actuators[x].target_position;
-            doc["vlv"][x]["act"] = actuators[x].actual_position;
-            doc["vlv"][x]["mean"] = actuators[x].meancurrent;
-            doc["vlv"][x]["st"] = actuators[x].state;
-        }
-        serializeJson(doc, testjson);
-        //UART_DBG.println(testjson);
-
-        
-        // todo syslog.log(LOG_INFO, testjson);
-
-        // generate debug messages
-        if (vismode > VISMODE_DETAIL) {
-            UART_DBG.println("App loop");
-            // todo syslog.log(LOG_DEBUG, "App loop");
-            logger.print("App loop");
-        }               
-      
-    }
-   */ 
+    app_web_cmd_check();  
 }
-
 
 void app_cmd(String command) {    
     cmd_buffer = command;
 }
-
-
 
 char calc_checksum (char *dataptr) {
 
@@ -188,8 +119,6 @@ char calc_checksum (char *dataptr) {
 
     return result;
 }
-
-
 
 void app_check_data() {
 
@@ -356,7 +285,7 @@ void app_check_data() {
                 // create some debug messages
                 if (vismode > VISMODE_DETAIL) {
                     UART_DBG.println("got full vlv data packet");
-                    // todo syslog.log(LOG_DEBUG, "got full vlv data packet");
+                    //  syslog.log(LOG_DEBUG, "got full vlv data packet");
                     logger.print("got full vlv data packet");
                 }
             }

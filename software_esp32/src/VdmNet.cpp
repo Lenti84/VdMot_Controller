@@ -80,11 +80,14 @@ extern "C" {
   #include "tfs_data.h"
 }
 #include "VdmTask.h"
+#include "VdmSystem.h"
 
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 
 AsyncWebServer server(80);
+// A UDP instance to let us send and receive packets over UDP
+WiFiUDP udpClient;
 
 CVdmNet VdmNet;
 
@@ -195,7 +198,7 @@ void handleTemps(AsyncWebServerRequest *request)
 
 void handleNetInfo(AsyncWebServerRequest *request) 
 { 
-  request->send(200,aj,Web.getNetInfo(ETH,VdmConfig.configFlash.netConfig));
+  request->send(200,aj,Web.getNetInfo(VdmNet.networkInfo));
 }
 
 void handleNetConfig(AsyncWebServerRequest *request)
@@ -221,6 +224,12 @@ void handleSysInfo(AsyncWebServerRequest *request)
 { 
   request->send(200,aj,Web.getSysInfo());
 }
+
+void handleSysDynInfo(AsyncWebServerRequest *request) 
+{ 
+  request->send(200,aj,Web.getSysDynInfo());
+}
+
 
 void handleCmd(JsonObject doc) 
 { 
@@ -421,7 +430,13 @@ void CVdmNet::setupEth() {
           UART_DBG.println(ETH.localIP());
           serverIsStarted=true; 
           ethState=ethConnected;
-          interfaceType=currentInterfaceIsEth;
+          networkInfo.interfaceType=currentInterfaceIsEth;
+          networkInfo.dhcpEnabled=VdmConfig.configFlash.netConfig.dhcpEnabled;
+          networkInfo.ip=ETH.localIP();
+          networkInfo.gateway=ETH.gatewayIP();
+          networkInfo.dnsIp=ETH.dnsIP();
+          networkInfo.mask=ETH.subnetMask();
+          networkInfo.mac=ETH.macAddress();
           wifiState=wifiDisabled; 
           WiFi.disconnect(); 
         }
@@ -463,7 +478,13 @@ void CVdmNet::setupWifi() {
           UART_DBG.println(WiFi.localIP());
           serverIsStarted=true; 
           wifiState=wifiConnected;
-          interfaceType=currentInterfaceIsWifi;
+          networkInfo.interfaceType=currentInterfaceIsWifi;
+          networkInfo.dhcpEnabled=VdmConfig.configFlash.netConfig.dhcpEnabled;
+          networkInfo.ip=WiFi.localIP();
+          networkInfo.gateway=WiFi.gatewayIP();
+          networkInfo.dnsIp=WiFi.dnsIP();
+          networkInfo.mask=WiFi.subnetMask();
+          networkInfo.mac=WiFi.macAddress();
         }
         break;
       }
@@ -492,8 +513,9 @@ void  CVdmNet::initServer() {
   server.on("/valvesconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesConfig(request);});
   server.on("/tempsconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleTempsConfig(request);});
   server.on("/sysinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysInfo(request);});
-  server.on("/logData",HTTP_GET,[](AsyncWebServerRequest * request) {handleGetLogData(request);});
-  server.on("/uploadSTM32", HTTP_POST, [](AsyncWebServerRequest *request) {},
+  server.on("/sysdyninfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysDynInfo(request);});
+  server.on("/logdata",HTTP_GET,[](AsyncWebServerRequest * request) {handleGetLogData(request);});
+  server.on("/uploadstm", HTTP_POST, [](AsyncWebServerRequest *request) {},
       [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
                     size_t len, bool final) {handleUploadSTM32(request, filename, index, data, len, final);}
   );
@@ -577,6 +599,8 @@ void CVdmNet::checkNet()
 {
   if (serverIsStarted) {
     VdmTask.deleteTask(VdmTask.taskIdCheckNet);
+
+    VdmSystem.getSystemInfo();
     if (VdmConfig.configFlash.protConfig.dataProtocol!=noneProtocol)
     {
       startBroker();
@@ -590,7 +614,22 @@ void CVdmNet::checkNet()
     // todo   
     //telnet_setup();
 
+    // prepare syslog configuration here (can be anywhere before first call of 
+    // log/logf method)
+    if (VdmConfig.configFlash.netConfig.syslogEnable)
+    {
+      // Create a new empty syslog instance
+      Syslog syslog(udpClient, SYSLOG_PROTO_IETF);
+      syslog.server(IPAddress(VdmConfig.configFlash.netConfig.syslogIp), VdmConfig.configFlash.netConfig.syslogPort);
+      syslog.deviceHostname(DEVICE_HOSTNAME);
+      syslog.appName(APP_NAME);
+      syslog.defaultPriority(LOG_KERN);
+    }
+
+
+
     VdmTask.startApp();
+    VdmTask.startServices();
   } else {
     // check if net is connected
     VdmNet.setup();

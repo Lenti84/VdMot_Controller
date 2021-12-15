@@ -88,7 +88,7 @@
 	  cursor: pointer;
 	  padding: 14px 16px;
 	  font-size: 17px;
-	  width: 15%;
+	  width: 10%;
 	}
 
 	.tabLink:hover {
@@ -120,9 +120,15 @@
 		border-radius: 5px;
 		text-align: center;
 	}
-
-	.hideDiv {
+	
+	.hide {
 		display: none;
+	}
+	
+	.show {
+		display: block;
+		text-align: center;
+		padding-left: 5px;
 	}
 	
    .buttonclass:hover {
@@ -148,7 +154,6 @@
 
 	
 	@media screen and (max-width: 500px) {
-
 		.rtabframe,
 		.rtabframe,
 		.rtabframe,
@@ -162,6 +167,7 @@
 	#Status {background-color: gray;}
 	#Network {background-color: gray;}
 	#Config {background-color: gray;}
+	#Update {background-color: gray;}
 	#About {background-color: gray;}
 
 </style>
@@ -174,21 +180,44 @@
 	  <a href="#status" class="tabLink" onclick="openPage('Status', this, 'green')">Status</a>
 	  <a href="#network" class="tabLink" onclick="openPage('Network', this, 'blue')">Network</a>
 	  <a href="#config" class="tabLink" onclick="openPage('Config', this, 'gray')">Config</a>
-	  <a href="#config" class="tabLink" onclick="openPage('About', this, 'darkgray')">About</a>
+	  <a href="#update" class="tabLink" onclick="openPage('Update', this, 'cyan')">Update</a>
+	  <a href="#about" class="tabLink" onclick="openPage('About', this, 'darkgray')">About</a>
 	  <a href="javascript:void(0);" class="icon" onclick="resptopNav()">&#9776;</a>
 	</div>
 
 	<div id="Home" class="tabContent">
-		<div class="tabframe" style="width: 250px;">
+		<div class="rtabframe" style="width: 250px;">
 		<h3>VDMot Controller</h3>
 		<table id="homeInfo" class="tabTable">
 			<tr>
-				<th>Wt32 Version</th>
+				<th>Time</th>
+				<td id="locTime"></td>
+			</tr>
+		</table>
+		</div>
+		<div class="rtabframe" style="width: 250px;">
+		<h3>WT32 Controller</h3>
+		<table id="homeInfo" class="tabTable">
+			<tr>
+				<th>Version</th>
 				<td id="sysWt32-Version"></td>
 			</tr>
 			<tr>
-				<th>Time</th>
-				<td id="locTime"></td>
+				<th>Heap</th>
+				<td id="heap"></td>
+			</tr>	
+			<tr id="tr-rssi" class="hide">
+				<th>RSSI</th>
+				<td id="rssi"></td>
+			</tr>
+		</table>
+		</div>
+		<div class="rtabframe" style="width: 250px;">
+		<h3>STM32 Controller</h3>
+		<table id="homeInfo" class="tabTable">
+			<tr>
+				<th>Version</th>
+				<td id="sysSTM32-Version"></td>
 			</tr>
 		</table>
 		</div>
@@ -357,6 +386,36 @@
 			</tr>
 		</table>
 		</div>
+		
+		<div class="tabiframe" style="width: 240px;"> 
+		<table id="netcfg-syslog" class="tabTable">		
+			<tr>
+				<th>Syslog server</th>
+				<td>
+				<select id="netcfg-syslog-select">
+                    <option>Off</option>
+                    <option>On</option>
+				</select>
+				</td>
+            </tr> 
+		</table>
+		<table id="netcfg-syslog-ip" style="display:none;" class="tabTable">
+				<tr>
+				<th>Client IP</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-syslog-ip" name="netcfg-syslog-ip" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Port</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-syslog-port" name="netcfg-syslog-port" placeholder="xxxx"/>
+				</td>
+			</tr>
+
+		</table>
+		</div>
+		
 		</div>
 				
 		<div class="rtabframe" style="width: 250px;">
@@ -460,16 +519,27 @@
                 <input type="button" class="buttonclass" id="resetConfig" value="Reset config" title="Reset config excluding network settings." />
                 </td>
 			</tr>	
+		</table>
+		</div>
+		
+	</div>
+	
+	<div id="Update" class="tabContent">
+		<div class="rtabframe" style="width: 250px;">
+		<h3>Update</h3>
+		<table id="sysUpdate" class="tabTable">
 			<tr>
 				<td>
                 <input type="button" class="buttonclass" id="update-WT32" value="Update WT32" title="Update WT32" />
                 </td>
 			</tr>
-		<form method="POST" action="/uploadSTM32" enctype="multipart/form-data"><input type="file" name="data"/><input type="submit" name="upload" value="UploadSTM32" title="Upload file for STM32"></form>
-
+			<tr>
+				<td>
+                <input type="button" class="buttonclass" id="update-STM32" value="Update STM32" title="Update WT32" />
+                </td>
+			</tr>
 		</table>
 		</div>
-		
 	</div>
 	
 	<div id="About" class="tabContent">
@@ -559,6 +629,7 @@
 			makeCfgValvesTable();
 			makeCfgTempTable();
 			getSystemInfo();
+			getSystemDynInfo();
 			getNetInfo();
 			getNetConfig();
 			getProtConfig();
@@ -725,17 +796,34 @@
 		
 		function showWifi(){
 			var x = id("netcfg-wifi");
+			var e = id("tr-rssi");
 			var select = id("netcfg-EthWifi").selectedIndex;
 			if (select === 1) {
+				x.style.display = "none";
+				e.style.display = "none";
+			} else {
+				x.style.display = "block";
+				e.className = 'show';
+			}
+		}
+		
+		function showSyslogIP(){
+			var x = id("netcfg-syslog-ip");
+			var select = id("netcfg-syslog-select").selectedIndex;
+			if (select === 0) {
 				x.style.display = "none";
 			} else {
 				x.style.display = "block";
 			}
 		}
+		
 			
 		function generateOnClick() {
 			id("netcfg-EthWifi").onclick = function(){
 				showWifi();
+			}
+			id("netcfg-syslog-select").onclick = function(){
+				showSyslogIP();
 			}
 			id("protcfg-dataProt").onclick = function(){
 			  showMqttIP();
@@ -838,7 +926,7 @@
 			netCfg.dns = id("netcfg-dns").value;
 			netCfg.ssid = id("netcfg-WifiSSID").value;
 			if (WifiPwdHasChanged===true) {
-				netCfg.pwd = id("netcfg-WifiPW").value;
+				netCfg.pwd = id("netcfg-WifiPwd").value;
 				if (id("netcfg-WifiPwd").value!=id("netcfg-WifiPwd2").value) {
 					alert ("Wifi password does not compare ! Please re-type");
 					return;
@@ -855,6 +943,9 @@
 			netCfg.timeServer = id("netcfg-TimeServer").value;
 			netCfg.timeOffset =	parseInt(id("netcfg-timeOffset").value);
 			netCfg.timeDST = parseInt(id("netcfg-daySTOffset").value);
+			netCfg.syslogEnable=id("netcfg-syslog-select").selectedIndex;
+			netCfg.syslogIp=id("netcfg-syslog-ip").value;
+			netCfg.syslogPort=id("netcfg-syslog-port").value;
 			await postJson("netconfig",JSON.stringify(netCfg));
 		}
 		
@@ -919,7 +1010,7 @@
 		}
 				
 		function getStatus() {
-			getSystemInfo();
+			getSystemDynInfo();
 			getValvesStatus();
 			getTempsStatus();
 		}
@@ -969,9 +1060,19 @@
 			var dataSystemInfo=await getJson("sysinfo");
 			if (dataSystemInfo) {
 				id("sysWt32-Version").textContent = dataSystemInfo["wt32version"];
-				id("locTime").textContent = dataSystemInfo["locTime"];
+				
 			}
 		}
+		
+		async function getSystemDynInfo() {
+			var dataSystemDynInfo=await getJson("sysdyninfo");
+			if (dataSystemDynInfo) {
+				id("locTime").textContent = dataSystemDynInfo["locTime"];
+				id("heap").textContent = dataSystemDynInfo["heap"];
+				id("rssi").textContent = dataSystemDynInfo["wifirssi"];
+			}
+		}
+		
 		
 		async function getNetInfo() {
 			var dataNet=await getJson("netinfo");
@@ -1000,7 +1101,11 @@
 				id("netcfg-TimeServer").value = dataNetConfig["timeServer"];
 				id("netcfg-timeOffset").value = dataNetConfig["timeOffset"];
 				id("netcfg-daySTOffset").value = dataNetConfig["timeDST"];
+				id("netcfg-syslog-select").selectedIndex=dataNetConfig.syslogEnable;
+				id("netcfg-syslog-ip").value=dataNetConfig.syslogIp;
+				id("netcfg-syslog-port").value=dataNetConfig.syslogPort;
 				showWifi();
+				showSyslogIP();
 			}
 		}
 		
