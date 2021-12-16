@@ -131,7 +131,7 @@ void loop(void) {
 
   mqtt_loop();
 
-  //app_loop();
+  app_loop();
 
   ESPota_loop();
 

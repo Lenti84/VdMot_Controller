@@ -283,6 +283,12 @@ void webserver_setup() {
       //if (m_commandCallback != NULL) {
         String command = server.arg("cmd");
         logger.println("Command from frontend: '" + command + "'");
+        if(command.startsWith("stm ")) {
+          UART_STM32.println(command.substring(4));
+          
+          UART_DBG.print("send to stm:");
+          UART_DBG.println(command.substring(4));
+        }
         //m_commandCallback(command);
         server.send(200, "text/html", "OK");
       //}

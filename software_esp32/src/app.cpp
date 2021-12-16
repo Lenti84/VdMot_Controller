@@ -168,6 +168,7 @@ void app_check_data() {
     static char buffer[1200];
     static char *bufptr = buffer;
     static unsigned int buflen = 0;
+    static unsigned int timeout = 0;
     int availcnt;
     int found = 0;
     
@@ -197,10 +198,12 @@ void app_check_data() {
         if (buflen>=sizeof(buffer)) {
             buffer[sizeof(buffer)-1] = '\r';
         }
+        timeout = 0;
     }
 
+    timeout++;
 
-    if(buflen > 4) 
+    if(buflen > 4 && timeout > 20) 
     {
         for (unsigned int c = 0; c < buflen; c++)
         {           
@@ -340,10 +343,22 @@ void app_check_data() {
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
             logger.print("got one wire data packet");
-            if(argcnt == 1) {
-                logger.print(arg0ptr);
+            if(argcnt == 2) {
+                logger.print(arg0ptr); logger.print(" ");
+                logger.print(arg1ptr); logger.print(" ");
             }
-            
+            else logger.print(" - error");            
+        }
+
+        else {
+            logger.print("unknown answer from stm:>");
+            logger.print(cmd);    logger.print(" ");       
+            if(argcnt>0) logger.print(arg0ptr); logger.print(" ");
+            if(argcnt>1) logger.print(arg1ptr); logger.print(" ");
+            if(argcnt>2) logger.print(arg2ptr); logger.print(" ");
+            if(argcnt>3) logger.print(arg3ptr); logger.print(" ");
+            if(argcnt>4) logger.print(arg4ptr); logger.print(" ");
+            logger.println("<end");
         }
 
 
