@@ -31,16 +31,18 @@ This page will document the software part of the VdMot_Controller.
 
 # command list
 ## STM32 supports following commands
-|command|description|answer|units|
-|---|---|---|---|
-|stgtp x y|set target position of valve *x* to *y* %|-|x=0...11, y=0...100%|
-|gvlvd x|get data of valve *x*|gvlvd *position meancurrent status 1st_temperature 2nd_temperature*|*% mA - 1/10°C 1/10°C*|
-|gonec|get count of 1-wire devices|gonec *count*|*-*|
-|goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *6ByteHexAddress temperature*|*0x 0x 0x 0x 0x 0x 1/10°C*|
-|gvlon x|get 1-wire settings for valve *x*|gvlon *6ByteHexAddressFirstSensor* - *6ByteHexAddressFirstSensor*|*0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x*|
-|stsnx x y|set first 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35|
-|stsny x y|set second 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35|
-|staop|set all valves open|-|-|
+|command|description|answer|units|comment|
+|---|---|---|---|---|
+|stgtp x y|set target position of valve *x* to *y* %|-|x=0...11, y=0...100%||
+|gtgtp x|get target position of valve *x*|gtgtp *target_position*|0...100%||
+|gvlvd x|get data of valve *x*|gvlvd *position meancurrent status 1st_temperature 2nd_temperature*|*% mA - 1/10°C 1/10°C*||
+|gonec|get count of 1-wire devices|gonec *count*|*-*||
+|goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *6ByteHexAddress temperature*|*0x 0x 0x 0x 0x 0x 1/10°C*||
+|gvlon x|get 1-wire settings for valve *x*|gvlon *6ByteHexAddressFirstSensor* - *6ByteHexAddressSecondSensor*|*0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x*||
+|stsnx x y|set first 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35||
+|stsny x y|set second 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35||
+|staop|set all valves open|-|-|usefull for installation, opens quickly all valves so they can be mounted|
+|gvers|get version|gvers *version_string*|tbd||
 
 
 # OTA update of ESP32 and STM32
