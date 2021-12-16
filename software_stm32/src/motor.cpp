@@ -1,15 +1,41 @@
-/*
- 
-*/
+/**HEADER*******************************************************************
+  project : VdMot Controller
+  author : Lenti84
+  Comments:
+  Version :
+  Modifcations :
+***************************************************************************
+*
+* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THE POSSIBILITY OF SUCH DAMAGE.
+*
+**************************************************************************
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License.
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+*END************************************************************************/
+
 #include <Arduino.h>
 #include <Wire.h>
-#include <Adafruit_INA219.h>
 #include "motor.h"
 #include "hardware.h"
 #include "STM32TimerInterrupt.h"      // library https://github.com/khoih-prog/STM32_TimerInterrupt
 #include "terminal.h"
-#include "eeprom.h"
-#include "temperature.h"
+#include "app.h"
+
 
 
 //#define COMM_DBG				Serial3		// serial port for debugging
@@ -27,18 +53,12 @@
 #define THRESHOLD_UNDERCURRENT  20           // threshold for detecting undercurrent in 1/10 mA
 
 
-// befehle motor statemachine
+// commands motor statemachine
 #define CMD_M_OPEN      'o'
 #define CMD_M_CLOSE     'c'
 #define CMD_M_STOP      's'
 #define CMD_M_STOP_ISR  'x'
 #define CMD_M_NOTHING   'n'
-
-// befehle app statemachine
-// #define CMD_A_OPEN      'o'
-// #define CMD_A_CLOSE     'c'
-// #define CMD_A_LEARN     'l'
-// #define CMD_A_TARGET    't'
 
 
 // return values motor cycle
@@ -62,14 +82,11 @@ byte appcycle(byte cmd, byte valvenr);
 
 void TimerHandler0();
 
-enum ASTATE appstate;
-
-Adafruit_INA219 ina219;
+enum ASTATE valvestate;
 
 // Init STM32 timer TIM1
 STM32Timer ITimer0(TIM1);
 
-//byte appstate = A_INIT;
 //int counter;
 //unsigned long time;
 int current_mA = 0;                     // current valve motor in 1/10 mA
@@ -87,7 +104,9 @@ volatile int          isr_valvenr;      // ISR var for valve nr
 volatile byte         isr_timer_go;     // ISR var for timer pwm start
 volatile byte         isr_timer_fin;    // ISR var for timer pwm finished
 
-valves myvalves[ACTUATOR_COUNT];
+
+valvemotor myvalvemots[ACTUATOR_COUNT];
+
 
 char command;
 int valvenr;
@@ -99,12 +118,7 @@ unsigned int m_meancurrent;           // mean current in mA
 //volatile uint32_t revcounter;
 
 // call from setup function in main
-byte appsetup () {
-
-  uint8_t   numberOfDevices;
-  DeviceAddress currAddress;
-  uint8_t   found;
-  uint8_t   valveindexlast;
+byte valve_setup () {
 
   // valve MUX relay
   pinMode(CTRL_MUX, OUTPUT);
@@ -123,92 +137,19 @@ byte appsetup () {
   // input for counting revs
   pinMode(REVINPIN, INPUT);
 
-
-  // Initialize the INA219
-  // if (! ina219.begin()) {
-  //   COMM_DBG.println("Failed to find INA219 chip");
-  //   while (1) { delay(10); }
-  // }
-  // ina219.setCalibration_16V_320mA();  
-
   // external interrupt for counting revs
   //attachInterrupt(digitalPinToInterrupt(REVINPIN),isr_counter,RISING);
 
 
   // init valve data
   for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {
-      myvalves[x].actual_position = 50;
-      myvalves[x].target_position = 50;
-      myvalves[x].meancurrent = 20;      // 20 mA
-      myvalves[x].scaler = 89;
-      myvalves[x].status = VLV_STATE_UNKNOWN;
-      myvalves[x].sensorindex = VALVE_SENSOR_UNKNOWN;        // marks that no slot is selected
-      myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
-      // distribute learn timing equaly over valve slots
-      myvalves[x].learn_time = (unsigned int) (((long)LEARN_AFTER_TIME_DEFAULT * ((long)x+1)) / (long)ACTUATOR_COUNT);
+    myvalvemots[x].actual_position = 50;
+    myvalvemots[x].target_position = 50;
+    myvalvemots[x].meancurrent = 20;       // 20 mA
+    myvalvemots[x].scaler = 89;
   }
 
-  // match sensor address from eeprom with found sensors and set index/slot to valve struct
-  COMM_DBG.println("Read 1-wire sensor addresses from eeprom");
-  numberOfDevices = sensors.getDeviceCount();  
-    
-  for (unsigned int owsensorindex=0; owsensorindex<numberOfDevices; owsensorindex++)
-  {
-      sensors.getAddress(currAddress, owsensorindex);
-      //tempsensors[i].address = currAddress;
-
-      //COMM_DBG.print("owsensorindex ");
-      //COMM_DBG.println(owsensorindex, DEC);
-      printAddress(currAddress);
-      //COMM_DBG.println("");
-      
-      // step through all possible valves
-      for (unsigned int valveindex = 0;valveindex<ACTUATOR_COUNT;valveindex++) {
-        valveindexlast = valveindex;
-
-        //COMM_DBG.print("valveindex ");
-        //COMM_DBG.println(valveindex, DEC);
-
-        found = 0;
-        if (eep_content.owsensors[valveindex].crc == currAddress[7]) 
-        {
-            found++;
-            for (unsigned z = 0;z<6;z++) {
-                if (eep_content.owsensors[valveindex].romcode[z] == currAddress[1+z]) {
-                    found++;
-                }
-            }           
-        }
-        if (found == 7) 
-        {          
-          valveindex = ACTUATOR_COUNT; // end for loop
-        }
-      }
-
-      if (found == 7)
-      {
-          COMM_DBG.print(" found at valve: ");
-          // COMM_DBG.print(owsensorindex, DEC);
-          COMM_DBG.println(valveindexlast, DEC);
-          myvalves[valveindexlast].sensorindex = owsensorindex;
-      }
-      else 
-      {
-           COMM_DBG.println(" not found");
-           //COMM_DBG.println(found, DEC);
-     }
-      // else 
-      // {
-      //     COMM_DBG.print("not found ");
-      //     COMM_DBG.print(owsensorindex, DEC);
-      //     COMM_DBG.println(valveindexlast, DEC);
-      //     myvalves[valveindexlast].sensorindex = VALVE_SENSOR_UNKNOWN;
-      // }
-
-  }
-
-  appstate = A_INIT;
-
+  valvestate = A_INIT;
 
   // Interval in microsecs
   if (ITimer0.attachInterruptInterval(TIMER0_INTERVAL_MS * 1000, TimerHandler0))
@@ -223,7 +164,7 @@ byte appsetup () {
 }
 
 
-byte appcycle () {
+byte valve_loop () {
   
   byte temp;
   //byte stateresult;
@@ -248,11 +189,11 @@ byte appcycle () {
 
   if(waittimer) waittimer--;
 
-  switch (appstate) {
+  switch (valvestate) {
     case A_INIT:  
                   if ( motorcycle(0, CMD_M_NOTHING) == M_RES_IDLE ) {                    
                      COMM_DBG.println("A: init ready");
-                     appstate = A_IDLE;
+                     valvestate = A_IDLE;
                      
                      //valveindex = 0;                     
                      //myvalves[valveindex].scaler = 130;
@@ -268,7 +209,7 @@ byte appcycle () {
                   if (command == CMD_A_OPEN) {                    
                     COMM_DBG.print("A: cmd open for valve ");                  
                     COMM_DBG.println(valveindex, 10);                    
-                    appstate = A_OPEN1;
+                    valvestate = A_OPEN1;
                     PSU_ON();
                     waittimer = 50;
                     pos_change = poschangecmd;
@@ -276,7 +217,7 @@ byte appcycle () {
                   else if (command == CMD_A_CLOSE) {
                     COMM_DBG.print("A: cmd close for valve ");                  
                     COMM_DBG.println(valveindex, 10);                                        
-                    appstate = A_CLOSE1;  
+                    valvestate = A_CLOSE1;  
                     PSU_ON();
                     waittimer = 50;
                     pos_change = poschangecmd;
@@ -284,7 +225,7 @@ byte appcycle () {
                   else if (command == CMD_A_OPEN_END) {                    
                     COMM_DBG.print("A: cmd open to endstop for valve ");                  
                     COMM_DBG.println(valveindex, 10);                    
-                    appstate = A_OPEN1;
+                    valvestate = A_OPEN1;
                     PSU_ON();
                     waittimer = 50;
                     pos_change = 255;
@@ -292,7 +233,7 @@ byte appcycle () {
                   else if (command == CMD_A_CLOSE_END) {                    
                     COMM_DBG.print("A: cmd close to endstop for valve ");                  
                     COMM_DBG.println(valveindex, 10);                    
-                    appstate = A_CLOSE1;
+                    valvestate = A_CLOSE1;
                     PSU_ON();
                     waittimer = 50;
                     pos_change = 255;
@@ -300,12 +241,12 @@ byte appcycle () {
                   else if (command == CMD_A_LEARN) {                    
                     COMM_DBG.print("A: cmd learn for valve ");                  
                     COMM_DBG.println(valveindex, 10);                    
-                    appstate = A_LEARN1;
+                    valvestate = A_LEARN1;
                     PSU_ON(); 
                     waittimer = 50; 
                   }
                   else {
-                    appstate = A_IDLE;
+                    valvestate = A_IDLE;
 
                     // switch off PSU after some inactive (idle) time
                     psuofftimer++;
@@ -316,7 +257,7 @@ byte appcycle () {
                   }           
 
                   // decrement learning counter
-                  if(appstate == A_OPEN1 || appstate == A_CLOSE1) {
+                  if(valvestate == A_OPEN1 || valvestate == A_CLOSE1) {
                     if(myvalves[valveindex].learn_movements) myvalves[valveindex].learn_movements--;
                   }
 
@@ -340,19 +281,19 @@ byte appcycle () {
     case A_OPEN1:  // start valve opening
                   if (!waittimer) {
                     if(pos_change==255) isr_target = 65535;
-                    else isr_target = myvalves[valveindex].scaler * pos_change;
-                    m_meancurrent = myvalves[valveindex].meancurrent;
+                    else isr_target = myvalvemots[valveindex].scaler * pos_change;
+                    m_meancurrent = myvalvemots[valveindex].meancurrent;
                     
                     if (motorcycle (valveindex, CMD_M_OPEN) == M_RES_OPENS) {
                       COMM_DBG.print("A: begin opening by ");                  
                       COMM_DBG.println(pos_change);
-                      myvalves[valveindex].status = VLV_STATE_OPENING;                                                            
-                      appstate = A_OPEN2;
+                      myvalvemots[valveindex].status = VLV_STATE_OPENING;                                                            
+                      valvestate = A_OPEN2;
                       isr_counter=0;
                     }
                     else {
                       COMM_DBG.print("A: cant open valve");                  
-                      appstate = A_IDLE;
+                      valvestate = A_IDLE;
                     }
                   }
                   break;
@@ -361,43 +302,43 @@ byte appcycle () {
                   temp = motorcycle (valveindex, 0);
                   if (temp == M_RES_STOP) {
                     COMM_DBG.println("A: opened valve");                  
-                    appstate = A_IDLE;
-                    myvalves[valveindex].actual_position += pos_change;
-                    myvalves[valveindex].status = VLV_STATE_IDLE;                    
-                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalves[valveindex].actual_position);
+                    valvestate = A_IDLE;
+                    myvalvemots[valveindex].actual_position += pos_change;
+                    myvalvemots[valveindex].status = VLV_STATE_IDLE;                    
+                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
                   }
                   else if (temp == M_RES_NOCURRENT) {
                     COMM_DBG.println("A: undercurrent");
-                    myvalves[valveindex].status = VLV_STATE_OPENCIR;
-                    myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
-                    appstate = A_IDLE;
+                    myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
+                    myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
+                    valvestate = A_IDLE;
                     isr_counter=0;
                   } 
                   else if (temp == M_RES_ENDSTOP) {
                     COMM_DBG.println("A: opened valve to end stop");
-                    appstate = A_IDLE;
-                    myvalves[valveindex].status = VLV_STATE_IDLE;
-                    myvalves[valveindex].actual_position = 100;
-                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalves[valveindex].actual_position);
+                    valvestate = A_IDLE;
+                    myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                    myvalvemots[valveindex].actual_position = 100;
+                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
                   }                  
                   break;
 
     case A_CLOSE1:  // start valve closing
                   if (!waittimer) {
                     if(pos_change==255) isr_target = 65535;
-                    else isr_target = myvalves[valveindex].scaler * pos_change;
-                    m_meancurrent = myvalves[valveindex].meancurrent;
+                    else isr_target = myvalvemots[valveindex].scaler * pos_change;
+                    m_meancurrent = myvalvemots[valveindex].meancurrent;
                     
                     if (motorcycle (valveindex, CMD_M_CLOSE) == M_RES_CLOSES) {
                       COMM_DBG.print("A: begin closing by ");                  
                       COMM_DBG.println(pos_change);       
-                      myvalves[valveindex].status = VLV_STATE_CLOSING;                                                     
-                      appstate = A_CLOSE2;
+                      myvalvemots[valveindex].status = VLV_STATE_CLOSING;                                                     
+                      valvestate = A_CLOSE2;
                       isr_counter=0;
                     }   
                     else {
                       COMM_DBG.print("A: cant close valve");                  
-                      appstate = A_IDLE;
+                      valvestate = A_IDLE;
                     }
                   }
                   break;
@@ -406,24 +347,24 @@ byte appcycle () {
                   temp = motorcycle (valveindex, 0);
                   if (temp == M_RES_STOP) {
                     COMM_DBG.println("A: closed valve");
-                    appstate = A_IDLE;
-                    myvalves[valveindex].status = VLV_STATE_IDLE;
-                    myvalves[valveindex].actual_position -= pos_change; 
-                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalves[valveindex].actual_position);                   
+                    valvestate = A_IDLE;
+                    myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                    myvalvemots[valveindex].actual_position -= pos_change; 
+                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);                   
                   }
                   else if (temp == M_RES_NOCURRENT) {
                     COMM_DBG.println("A: undercurrent");
-                    myvalves[valveindex].status = VLV_STATE_OPENCIR;
-                    myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
-                    appstate = A_IDLE;
+                    myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
+                    myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
+                    valvestate = A_IDLE;
                     isr_counter=0;
                   } 
                   else if (temp == M_RES_ENDSTOP) {
                     COMM_DBG.println("A: closed valve to end stop");
-                    appstate = A_IDLE;
-                    myvalves[valveindex].status = VLV_STATE_IDLE;
-                    myvalves[valveindex].actual_position = 0;
-                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalves[valveindex].actual_position);
+                    valvestate = A_IDLE;
+                    myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                    myvalvemots[valveindex].actual_position = 0;
+                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
                   }                  
                   break;                  
     
@@ -431,9 +372,9 @@ byte appcycle () {
                   COMM_DBG.println("A: try learning valve");                  
                   // first: closing completely
                   motorcycle (valveindex, CMD_M_CLOSE);
-                  myvalves[valveindex].status = VLV_STATE_CLOSING;
-                  appstate = A_LEARN2;
-                  m_meancurrent = myvalves[valveindex].meancurrent;
+                  myvalvemots[valveindex].status = VLV_STATE_CLOSING;
+                  valvestate = A_LEARN2;
+                  m_meancurrent = myvalvemots[valveindex].meancurrent;
                   isr_target = 65535;       // max value to disable stopping
                 
                   break;
@@ -446,18 +387,18 @@ byte appcycle () {
                       COMM_DBG.println("A: closed valve before learning, now opening");                  
                       // second: opening completely and count rotations
                       isr_counter=0;
-                      myvalves[valveindex].status = VLV_STATE_OPENING;
+                      myvalvemots[valveindex].status = VLV_STATE_OPENING;
                       motorcycle (valveindex, CMD_M_OPEN);
                       isr_target = 65535;       // max value to disable stopping
-                      appstate = A_LEARN3;
-                      m_meancurrent = myvalves[valveindex].meancurrent;
+                      valvestate = A_LEARN3;
+                      m_meancurrent = myvalvemots[valveindex].meancurrent;
                       waittimer = 10;
                     }
                     else if (temp == M_RES_NOCURRENT) {
                       COMM_DBG.println("A: undercurrent");
-                      myvalves[valveindex].status = VLV_STATE_OPENCIR;
-                      myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
-                      appstate = A_IDLE;
+                      myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
+                      myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
+                      valvestate = A_IDLE;
                       isr_counter=0;
                     }
                   }               
@@ -471,23 +412,23 @@ byte appcycle () {
                       COMM_DBG.println("A: opened valve for learning, now closing again");                  
                       opening_count = isr_counter;   
                       if(m_meancurrent > 0) {
-                        myvalves[valveindex].meancurrent = m_meancurrent;
-                        COMM_DBG.print("A: learned mean current = "); COMM_DBG.println(myvalves[valveindex].meancurrent);
+                        myvalvemots[valveindex].meancurrent = m_meancurrent;
+                        COMM_DBG.print("A: learned mean current = "); COMM_DBG.println(myvalvemots[valveindex].meancurrent);
                       }                 
                       // third: closing completely and count rotations
                       isr_counter=0;
-                      myvalves[valveindex].status = VLV_STATE_CLOSING;
+                      myvalvemots[valveindex].status = VLV_STATE_CLOSING;
                       motorcycle (valveindex, CMD_M_CLOSE);
                       isr_target = 65535;       // max value to disable stopping
                       m_meancurrent = 20;
-                      appstate = A_LEARN4;
+                      valvestate = A_LEARN4;
                       waittimer = 10;
                     }          
                     else if (temp == M_RES_NOCURRENT) {
                       COMM_DBG.println("A: undercurrent");
-                      myvalves[valveindex].status = VLV_STATE_OPENCIR;
-                      myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
-                      appstate = A_IDLE;
+                      myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
+                      myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
+                      valvestate = A_IDLE;
                       isr_counter=0;
                     }        
                   }              
@@ -503,7 +444,7 @@ byte appcycle () {
 
                       if(m_meancurrent > 0) {
                         COMM_DBG.print("A: learned mean current = "); COMM_DBG.println(m_meancurrent);
-                        myvalves[valveindex].meancurrent = (myvalves[valveindex].meancurrent + m_meancurrent) / 2;                      
+                        myvalvemots[valveindex].meancurrent = (myvalvemots[valveindex].meancurrent + m_meancurrent) / 2;                      
                       }                      
                                           
                       deadzone_count = closing_count - opening_count;
@@ -513,31 +454,31 @@ byte appcycle () {
                       COMM_DBG.print("A: learned opening_count = "); COMM_DBG.println(opening_count);
                       COMM_DBG.print("A: learned deadzone_count = "); COMM_DBG.println(deadzone_count);
                       COMM_DBG.print("A: learned scaler = "); COMM_DBG.println(scaler);
-                      COMM_DBG.print("A: learned mean current = "); COMM_DBG.println(myvalves[valveindex].meancurrent);
+                      COMM_DBG.print("A: learned mean current = "); COMM_DBG.println(myvalvemots[valveindex].meancurrent);
 
-                      myvalves[valveindex].closing_count = closing_count;
-                      myvalves[valveindex].opening_count = opening_count;
-                      myvalves[valveindex].deadzone_count = deadzone_count;
-                      myvalves[valveindex].scaler = scaler;
-                      myvalves[valveindex].actual_position = 0;    // because valve was closed completely                    
-                      myvalves[valveindex].status = VLV_STATE_IDLE;
+                      myvalvemots[valveindex].closing_count = closing_count;
+                      myvalvemots[valveindex].opening_count = opening_count;
+                      myvalvemots[valveindex].deadzone_count = deadzone_count;
+                      myvalvemots[valveindex].scaler = scaler;
+                      myvalvemots[valveindex].actual_position = 0;    // because valve was closed completely                    
+                      myvalvemots[valveindex].status = VLV_STATE_IDLE;
 
                       valveindex = 255;
                                                                                   
-                      appstate = A_IDLE;
+                      valvestate = A_IDLE;
                     }    
                     else if (temp == M_RES_NOCURRENT) {
                       COMM_DBG.println("A: undercurrent");
-                      myvalves[valveindex].status = VLV_STATE_OPENCIR;
-                      myvalves[valveindex].target_position = myvalves[valveindex].actual_position;
-                      appstate = A_IDLE;
+                      myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
+                      myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
+                      valvestate = A_IDLE;
                       isr_counter=0;
                     }     
                   }           
                   break;
 
                   
-    default:      appstate = A_IDLE;
+    default:      valvestate = A_IDLE;
                   break;  
   }
   result = 0;
@@ -547,31 +488,6 @@ byte appcycle () {
 
 
 
-byte app_10s_loop () {
-
-  unsigned int x = 0;
-
-  // walk through valves and evaluate learning values
-  for (x=0; x< ACTUATOR_COUNT; x++)
-  { 
-    // learning times
-    if(myvalves[x].learn_time <= 10) {
-      myvalves[x].learn_time = LEARN_AFTER_TIME_DEFAULT;
-      myvalves[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
-      COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
-    }
-    else myvalves[x].learn_time -= 10;    
-
-    // learning movements
-    if(myvalves[x].learn_movements == 0) {
-      myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
-      myvalves[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
-      COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
-    }    
-  }
-
-return 0;
-}
 
 
 byte motorcycle (int mvalvenr, byte cmd) {
@@ -719,11 +635,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
 
                     if (debouncecnt > 7) {
 
-                      //current_mA = (int) (ina219.getCurrent_mA() * 10);
-                      //current_mA = 0;
-
                       // calc current in 1/10 mA
-                      //analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) idlecurrent) * ANINCURRENTGAIN) / 100);
                       analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
                       // COMM_DBG.print(analog_current,DEC);
                       // COMM_DBG.print(" ");
@@ -898,14 +810,14 @@ void callback_motorstop () {
 
 
 // returns state of application  state machine
-enum ASTATE appgetstate () {
-  return appstate;
+enum ASTATE valve_getstate () {
+  return valvestate;
 }
 
 
 int16_t appsetaction(char cmd, unsigned int valveindex, byte posdelta) {
 
-  if(appstate == A_IDLE) {
+  if(valvestate == A_IDLE) {
     valvenr = (int) valveindex;
     command = cmd;
     poschangecmd = posdelta;

@@ -1,4 +1,39 @@
-#include "motor.h"
+/**HEADER*******************************************************************
+  project : VdMot Controller
+  author : Lenti84
+  Comments:
+  Version :
+  Modifcations :
+***************************************************************************
+*
+* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THE POSSIBILITY OF SUCH DAMAGE.
+*
+**************************************************************************
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License.
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+*END************************************************************************/
+
+#ifndef _HARDWARE_H
+	#define _HARDWARE_H
+
+
+//#define FIRMWARE_VERSION "0.1.0+1"
+
 
 // defines used hardware
 
@@ -11,6 +46,9 @@
 // Serial2 - RS485 - PA2/PA3
 // Serial6 - debug / terminal - PA11/PA12
 //
+
+//#define COMM_DBG				Serial3		// serial port for debugging
+#define COMM_DBG				Serial6		// serial port for debugging
 
 // status LED 
 #define LED         PC13
@@ -101,12 +139,17 @@
 
 // defines 
 
+#define ACTUATOR_COUNT      		12    	// how many valves are supported
+#define ADDITIONAL_SENSOR_COUNT		10 		// some additional sensors for x
+
 #define SYSTEM_NAME         "VdMot Controller"
 
 #define EEPROM_MARK_ADD		0		// address 4 byte mark: 0x1F2F3F4F
 #define EEPROM_VERS1_ADD	4		// address 1 byte Version 1.x.x
 #define EEPROM_VERS2_ADD	5		// address 1 byte Version x.2.x
 #define EEPROM_VERS3_ADD	6		// address 1 byte Version x.x.3
+
+//#define MAXONEWIRECNT		(ACTUATOR_COUNT*2)+10				// max count of usable 1-wire sensors
 
 
 // EEPROM layout
@@ -129,6 +172,11 @@ struct eeprom_layout {
 	uint8_t		OneWireCfg[3];		    // 3 bytes for One Wire Gateway Configuration						
 										// byte 0 - conversion interval
 
-	struct ds1820_eeprom_layout owsensors[ACTUATOR_COUNT];	// a lot of ds1820 sensors
+	struct ds1820_eeprom_layout owsensors1[ACTUATOR_COUNT];	// a lot of ds1820 sensors - first sensor of valve
+	struct ds1820_eeprom_layout owsensors2[ACTUATOR_COUNT];	// a lot of ds1820 sensors - second sensor of valve
+	struct ds1820_eeprom_layout owsensors[ADDITIONAL_SENSOR_COUNT];	// some other ds1820 sensors
 };
 
+
+
+#endif		//_HARDWARE_H

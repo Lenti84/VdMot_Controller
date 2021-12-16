@@ -1,3 +1,33 @@
+/**HEADER*******************************************************************
+  project : VdMot Controller
+  author : Lenti84
+  Comments:
+  Version :
+  Modifcations :
+***************************************************************************
+*
+* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THE POSSIBILITY OF SUCH DAMAGE.
+*
+**************************************************************************
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License.
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+*END************************************************************************/
+
 #include "eeprom.h"
 #include "hardware.h"
 #include "I2C_eeprom.h"		// freat library from https://github.com/RobTillaart/I2C_EEPROM
@@ -202,7 +232,43 @@ int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 
 	// then write sensor data
 	address = EE_GENERALDATA_ADR + x;
+	
+	// first sensors
 	for(scnt=0;scnt<ACTUATOR_COUNT;scnt++) {
+		x = 0;
+		buf[x++] = lay->owsensors1[scnt].familycode;
+		buf[x++] = lay->owsensors1[scnt].romcode[5];
+		buf[x++] = lay->owsensors1[scnt].romcode[4];
+		buf[x++] = lay->owsensors1[scnt].romcode[3];
+		buf[x++] = lay->owsensors1[scnt].romcode[2];
+		buf[x++] = lay->owsensors1[scnt].romcode[1];
+		buf[x++] = lay->owsensors1[scnt].romcode[0];
+		buf[x++] = lay->owsensors1[scnt].crc;
+
+		eeprom.writeBlock(address, buf, x);
+
+		address += x;
+	}
+
+	// second sensors
+	for(scnt=0;scnt<ACTUATOR_COUNT;scnt++) {
+		x = 0;
+		buf[x++] = lay->owsensors2[scnt].familycode;
+		buf[x++] = lay->owsensors2[scnt].romcode[5];
+		buf[x++] = lay->owsensors2[scnt].romcode[4];
+		buf[x++] = lay->owsensors2[scnt].romcode[3];
+		buf[x++] = lay->owsensors2[scnt].romcode[2];
+		buf[x++] = lay->owsensors2[scnt].romcode[1];
+		buf[x++] = lay->owsensors2[scnt].romcode[0];
+		buf[x++] = lay->owsensors2[scnt].crc;
+
+		eeprom.writeBlock(address, buf, x);
+
+		address += x;
+	}
+
+	// rest of sensors
+	for(scnt=0;scnt<ADDITIONAL_SENSOR_COUNT;scnt++) {
 		x = 0;
 		buf[x++] = lay->owsensors[scnt].familycode;
 		buf[x++] = lay->owsensors[scnt].romcode[5];
@@ -213,9 +279,9 @@ int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 		buf[x++] = lay->owsensors[scnt].romcode[0];
 		buf[x++] = lay->owsensors[scnt].crc;
 
-		//eeprom_write (address + (scnt * x), x,  buf );
-		//eep.write(address + (scnt * x), buf, x);
-		eeprom.writeBlock(address + (scnt * x), buf, x);
+		eeprom.writeBlock(address, buf, x);
+
+		address += x;
 	}
 
 	EEPROM_DEBUG("finished\r\n");
@@ -258,12 +324,49 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 
 	// then read sensor data
 	address = EE_GENERALDATA_ADR + x;
+	
+
+	// first sensors
 	for(scnt=0;scnt<ACTUATOR_COUNT;scnt++) {
 		x = 8;
 
-		//eep.readByteArray(address + (scnt * 8), buf, x);
-		//eeprom_read (address + (scnt * x), x,  buf );
-		eeprom.readBlock(address + (scnt * 8), buf, x);
+		eeprom.readBlock(address, buf, x);
+
+		lay->owsensors1[scnt].familycode = buf[0];
+		lay->owsensors1[scnt].romcode[5] = buf[1];
+		lay->owsensors1[scnt].romcode[4] = buf[2];
+		lay->owsensors1[scnt].romcode[3] = buf[3];
+		lay->owsensors1[scnt].romcode[2] = buf[4];
+		lay->owsensors1[scnt].romcode[1] = buf[5];
+		lay->owsensors1[scnt].romcode[0] = buf[6];
+		lay->owsensors1[scnt].crc = buf[7];
+
+		address += x;
+	}
+
+	// second sensors
+	for(scnt=0;scnt<ACTUATOR_COUNT;scnt++) {
+		x = 8;
+
+		eeprom.readBlock(address, buf, x);
+
+		lay->owsensors2[scnt].familycode = buf[0];
+		lay->owsensors2[scnt].romcode[5] = buf[1];
+		lay->owsensors2[scnt].romcode[4] = buf[2];
+		lay->owsensors2[scnt].romcode[3] = buf[3];
+		lay->owsensors2[scnt].romcode[2] = buf[4];
+		lay->owsensors2[scnt].romcode[1] = buf[5];
+		lay->owsensors2[scnt].romcode[0] = buf[6];
+		lay->owsensors2[scnt].crc = buf[7];
+
+		address += x;
+	}
+
+	// rest of sensors
+	for(scnt=0;scnt<ADDITIONAL_SENSOR_COUNT;scnt++) {
+		x = 8;
+
+		eeprom.readBlock(address, buf, x);
 
 		lay->owsensors[scnt].familycode = buf[0];
 		lay->owsensors[scnt].romcode[5] = buf[1];
@@ -273,6 +376,8 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 		lay->owsensors[scnt].romcode[1] = buf[5];
 		lay->owsensors[scnt].romcode[0] = buf[6];
 		lay->owsensors[scnt].crc = buf[7];
+
+		address += x;
 	}
 
 	EEPROM_DEBUG("finished\r\n");

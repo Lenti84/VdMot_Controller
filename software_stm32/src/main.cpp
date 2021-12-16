@@ -1,8 +1,39 @@
+/**HEADER*******************************************************************
+  project : VdMot Controller
+  author : Lenti84
+  Comments:
+  Version :
+  Modifcations :
+***************************************************************************
+*
+* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THE POSSIBILITY OF SUCH DAMAGE.
+*
+**************************************************************************
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License.
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+*END************************************************************************/
+
 #include <Arduino.h>
 #include "hardware.h"
 #include <Wire.h>
 //#include <LiquidCrystal_PCF8574.h>
 #include "motor.h"
+#include "app.h"
 #include "terminal.h"
 #include "communication.h"
 #include "temperature.h"
@@ -10,8 +41,7 @@
 #include "mycan.h"
 #include "rs485.h"
 
-//#define COMM_DBG				Serial3		// serial port for debugging
-#define COMM_DBG				Serial6		// serial port for debugging
+
 
 //using Matthias Hertel driver https://github.com/mathertel/LiquidCrystal_PCF8574
 //LiquidCrystal_PCF8574 lcd(0x27);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -20,9 +50,6 @@
 // changes in arduino core lib
 // .platformio\packages\framework-arduinoststm32\cores\arduino/HardwareSerial.h:44:4:
 // --> increased tx buffer size from default 64 to 1024
-
-
-unsigned char target_position_mirror[ACTUATOR_COUNT];
 
 
 void setup() {
@@ -66,7 +93,7 @@ void setup() {
   // lcd.print("Menu 4.x LCD");
   // lcd.setCursor(0, 1);
   // lcd.print("r-site.net");
-  delay(2000);
+  delay(500);
 
   // EEPROM
   eepromsetup();
@@ -75,8 +102,11 @@ void setup() {
   // setup onewire temperature sensor at DS2482
   temperature_setup();
 
+
   // valve app setup
-  appsetup();
+  app_setup();
+  valve_setup();
+  //valve_setup(myvalves);
 
   // can
   //mycan_setup();          // can hardware testcode setup
@@ -91,28 +121,40 @@ void setup() {
 void loop() {
   //static int x = 0;
   static int time10s = 0;
-
-  //unsigned char len = 0;
-
-  static uint32_t time = 0;
   static uint32_t loop_10ms = 0;
   static uint32_t loop_100ms = 0;
+  static uint32_t loop_1000ms = 0;
 
   static uint8_t buttontest = 0;
 
   int16_t recvcmd;
   
 
-  if (millis() > (uint32_t) 200 + time ) {    
-    time = millis();
+  // 1000 ms loop
+  if ((millis()-loop_1000ms) > (uint32_t) 1000 ) {  
+    loop_1000ms = millis();
 
     if(time10s>=10) {
       time10s = 0;
       app_10s_loop();
     }
     else time10s++;
-    
+
     digitalWrite(LED, !digitalRead(LED));   // toggle LED
+    
+    //Serial.println("help");
+    //Serial.println("gactp 0 14 ");
+
+    Serial.println("STMalive ");   // send alive to ESP32   
+    //Serial.println("help ");   // send alive to ESP32  
+  }
+
+
+  // 100 ms loop
+  if ((millis()-loop_100ms) > (uint32_t) 100 ) {  
+    loop_100ms = millis();  
+
+    recvcmd = Terminal_Serve();
     
     // button test
     if (digitalRead(BUTTON) > 0 && buttontest == 0) 
@@ -122,81 +164,16 @@ void loop() {
     }
     else buttontest = 0;
     //if (!digitalRead(BUTTON)) buttontest = 0;
-
-    // analog test
-    //COMM_DBG.print("A0 current ");
-    //COMM_DBG.print(analogRead(ANINCURRENT),DEC);
-    //COMM_DBG.println(" digits");
-
-
-    //Serial.println("help");
-    //Serial.println("gactp 0 14 ");
-
-    Serial.println("STMalive ");   // send alive to ESP32   
-    //Serial.println("help ");   // send alive to ESP32  
-  }
-
-  // 100 ms loop
-  if (millis() > (uint32_t) 100 + loop_100ms ) {
-    loop_100ms = millis();  
-
-    // COMM_DBG.print(analogRead(ANINCURRENT));
-    // COMM_DBG.print(" ");
-    // COMM_DBG.print(analogRead(ANINREFHALF));
-    // COMM_DBG.println("");
-
-    // if application is idle search for new tasks
-    if(appgetstate() == A_IDLE) {
-
-      // check all valves
-      for(unsigned int x=0; x<ACTUATOR_COUNT; x++)
-      {
-          // handle first found difference then break
-          //if(target_position_mirror[x] != myvalves[x].target_position)
-          if(myvalves[x].actual_position != myvalves[x].target_position)
-          {
-              COMM_DBG.print("M: target pos changed for valve "); COMM_DBG.println(x, 10);
-              
-              // check if valve was learned before
-              if(myvalves[x].status == VLV_STATE_UNKNOWN || myvalves[x].status == VLV_STATE_OPENCIR) 
-              {
-                COMM_DBG.print("M: learning started for valve "); COMM_DBG.println(x, 10);
-                appsetaction(CMD_A_LEARN,x,0);    
-                //myvalves[x].status = VLV_STATE_IDLE;   // for test
-              }
-              // check if valve is not open circuit
-              //else if(myvalves[x].status == VLV_STATE_OPENCIR) 
-              //{
-                //COMM_DBG.print("M: valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" open circuit");
-                //myvalves[x].target_position = myvalves[x].actual_position;
-              //}
-              else // valve was learned before
-              {
-                // should valve be opened
-                //if(myvalves[x].target_position > target_position_mirror[x]) {
-                if(myvalves[x].target_position > myvalves[x].actual_position) {
-                  if(myvalves[x].target_position == 100) appsetaction(CMD_A_OPEN_END,x,(byte)0);
-                  else appsetaction(CMD_A_OPEN,x,myvalves[x].target_position-myvalves[x].actual_position);
-                }
-                // valve should be closed
-                else {
-                  if(myvalves[x].target_position == 0) appsetaction(CMD_A_CLOSE_END,x,(byte)0);
-                  else appsetaction(CMD_A_CLOSE,x,myvalves[x].actual_position-myvalves[x].target_position);
-                }
-              }
-          }
-      }
-    }
-
-    recvcmd = Terminal_Serve();
   }
 
 
   // 10 ms loop
-  if (millis() > (uint32_t) 10 + loop_10ms ) {    
+  if ((millis()-loop_10ms) > (uint32_t) 10 ) {  
     loop_10ms = millis();  
     
-    appcycle();   
+    app_loop();
+
+    valve_loop();   
     
     communication_loop();
 

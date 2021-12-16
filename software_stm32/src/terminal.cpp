@@ -1,13 +1,32 @@
-/**
-  ******************************************************************************
-  * @file    terminal.c
-  * @author  
-  * @version V1.0
-  * @date    
-  * @brief   Mini-Terminal
-  ******************************************************************************
-  *
-  */
+/**HEADER*******************************************************************
+  project : VdMot Controller
+  author : Lenti84
+  Comments:
+  Version :
+  Modifcations :
+***************************************************************************
+*
+* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THE POSSIBILITY OF SUCH DAMAGE.
+*
+**************************************************************************
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License.
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+*END************************************************************************/
 
 #include <Arduino.h>
 #include "hardware.h"
@@ -205,7 +224,7 @@ int16_t Terminal_Serve (void) {
 				//if (appsetaction(CMD_A_CLOSE,x,y)!=0) COMM_DBG.println("valve machine not idle");
 				if(y<=100 && y>=0)
 				{
-					myvalves[x].target_position = y;
+					myvalvemots[x].target_position = y;
 					COMM_DBG.print("set valve "); COMM_DBG.print(x, 10); COMM_DBG.print(" to "); COMM_DBG.println(y);
 				}
 			}
@@ -214,32 +233,6 @@ int16_t Terminal_Serve (void) {
 			return CMD_CLOSE;
 		}
 
-
-		// disable uart tx, helps flashing ESP8266 without unplugging
-		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		else if(memcmp("stxen",&cmd[0],5) == 0) {
-			//x = atoi(arg0ptr);
-
-			if(argcnt == 1) {				
-				
-				if (x == 0) 
-				{					
-					COMM_DBG.println("comm: disable tx pin");
-					// set uart1 tx pin PA9 to input, no pull
-					#warning fixme
-					//MODIFY_REG(GPIOA->CRH, GPIO_CRH_CNF9 + GPIO_CRH_MODE9, GPIO_CRH_CNF9_0);
-				}
-				else {
-					COMM_DBG.println("comm: enable tx pin");
-					// set uart1 tx pin PA9 to output 10 Mhz, alternate function
-					#warning fixme
-					//MODIFY_REG(GPIOA->CRH, GPIO_CRH_CNF9 + GPIO_CRH_MODE9, GPIO_CRH_CNF9_1 + GPIO_CRH_MODE9_0);
-				}
-			}
-			else COMM_DBG.println("to few arguments");
-
-			//return CMD_LEARN;
-		}
 
 		// set muxer
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -307,7 +300,7 @@ int16_t Terminal_Serve (void) {
 		// get onewire sensor data - sensor count and data and adress of all connected sensors
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp("getone",&cmd[0],6) == 0) {
-			get_sensordata(sendbuf, SEND_BUFFER_LEN);
+			get_sensordata(0, sendbuf, SEND_BUFFER_LEN);
 			COMM_DBG.println(sendbuf);
 		}
 
@@ -325,16 +318,14 @@ int16_t Terminal_Serve (void) {
 			COMM_DBG.println("saved eeprom layout");
 		}
 
-		// set sensor index
+		// set sensor index first sensor
 		// x - valve index
 		// y - temp sensor index
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		else if(memcmp("setssi",&cmd[0],6) == 0) {
-			//x = atoi(arg0ptr); // valve index
-			//y = atoi(arg1ptr); // temp sensor index
+		else if(memcmp("setssi1",&cmd[0],7) == 0) {
 
 			if(argcnt == 2) {				
-				COMM_DBG.println("comm: set sensor index");
+				COMM_DBG.println("comm: set first sensor index");
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
 				{
 					numberOfDevices = sensors.getDeviceCount();
@@ -342,22 +333,64 @@ int16_t Terminal_Serve (void) {
 					{
 						// write sensor address code to eeprom layout mirror
 						sensors.getAddress(currAddress, y);
-						eep_content.owsensors[x].familycode = currAddress[0];
-						eep_content.owsensors[x].romcode[0] = currAddress[1];
-						eep_content.owsensors[x].romcode[1] = currAddress[2];
-						eep_content.owsensors[x].romcode[2] = currAddress[3];
-						eep_content.owsensors[x].romcode[3] = currAddress[4];
-						eep_content.owsensors[x].romcode[4] = currAddress[5];
-						eep_content.owsensors[x].romcode[5] = currAddress[6];
-						eep_content.owsensors[x].crc = currAddress[7];
+						eep_content.owsensors1[x].familycode = currAddress[0];
+						eep_content.owsensors1[x].romcode[0] = currAddress[1];
+						eep_content.owsensors1[x].romcode[1] = currAddress[2];
+						eep_content.owsensors1[x].romcode[2] = currAddress[3];
+						eep_content.owsensors1[x].romcode[3] = currAddress[4];
+						eep_content.owsensors1[x].romcode[4] = currAddress[5];
+						eep_content.owsensors1[x].romcode[5] = currAddress[6];
+						eep_content.owsensors1[x].crc = currAddress[7];
 
 						// write index to valves structure
-						myvalves[x].sensorindex = (byte) y;						
+						myvalves[x].sensorindex1 = (byte) y;						
 					}
 					 
 				}
 			}
 			else COMM_DBG.println("to few arguments");
+		}
+
+
+		// set sensor index second sensor
+		// x - valve index
+		// y - temp sensor index
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp("setssi2",&cmd[0],7) == 0) {
+
+			if(argcnt == 2) {				
+				COMM_DBG.println("comm: set second sensor index");
+				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
+				{
+					numberOfDevices = sensors.getDeviceCount();
+					if (numberOfDevices > 0) 
+					{
+						// write sensor address code to eeprom layout mirror
+						sensors.getAddress(currAddress, y);
+						eep_content.owsensors2[x].familycode = currAddress[0];
+						eep_content.owsensors2[x].romcode[0] = currAddress[1];
+						eep_content.owsensors2[x].romcode[1] = currAddress[2];
+						eep_content.owsensors2[x].romcode[2] = currAddress[3];
+						eep_content.owsensors2[x].romcode[3] = currAddress[4];
+						eep_content.owsensors2[x].romcode[4] = currAddress[5];
+						eep_content.owsensors2[x].romcode[5] = currAddress[6];
+						eep_content.owsensors2[x].crc = currAddress[7];
+
+						// write index to valves structure
+						myvalves[x].sensorindex2 = (byte) y;						
+					}
+					 
+				}
+			}
+			else COMM_DBG.println("to few arguments");
+		}
+
+
+		// get version request
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp("gvers",&cmd[0],5) == 0) {			
+			COMM_DBG.print("Version: ");			
+			COMM_DBG.println(FIRMWARE_VERSION);
 		}
 
 		// unknown command
