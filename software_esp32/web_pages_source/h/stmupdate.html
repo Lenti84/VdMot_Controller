@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<style>
+	.center {
+		display: flex;
+		justify-content: center;
+	}
+	.centerp {
+		display: flex;
+		justify-content: center;
+		padding: 30px 0;
+	}
+	.centerm {
+		display: flex;
+		justify-content: center;
+		padding: 15px 0;
+		margin:0px 40px 0 0;
+	}
+	
+	.buttonclass:hover {
+		padding: 0.6em;
+		font-weight: bold;
+		background-color: #fff;
+		color: #5db8d9;
+	}
+	.buttonclass {
+		font-weight: bold;
+		background-color: #5db8d9;
+		color: #fff;
+		margin: 2px;
+		padding: 0.6em;
+	}
+	.buttonclass:disabled {
+		font-weight: bold;
+		background-color: #d1e2eb;
+		color: #c0c0c0;
+	}
+	
+	.progress-bar {
+	  background-color: whiteSmoke;
+	  border-radius: 2px;
+	  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.25) inset;
+	  width: 250px;
+	  height: 20px;
+	  position: relative;
+	  display: block;
+	}
+}
+
+</style>
+
+<html>
+<head>
+	<link rel="icon" href="data:,">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<div>
+		<table  class="centerp">
+			<td>
+			<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAA8FBMVEUAAAAAAAAA//+AgICA//87Tk5tyP91v/9CTFVFTFNuwf9DSldyw/9zv/9wwf9xxP9DTVJGSlNvw/9DS1Rxwv9FSlNww/9ESlVxwf9DTFRwwf9xwf9ETFNES1Vxw/9ESlVxwv9FS1Ryw/9ESlVyw/9DS1Rwwv9ETFRFS1RES1Rxwf9ywv9DS1Rxw/9ES1RDTFRyw/9ES1Rxwf9FS1Rww/9DTFRywv9FS1Nxw/9xwf9ES1RES1Vxw/9ES1Rxwv9ES1Nwwv9ES1RFS1Rxwv9xwv9ES1RES1Rxwv9ES1Rxwv9ES1Rxwv9ES1RES1Rxwv////8NljMCAAAATXRSTlMAAQECAg0OGBslJSYmKCk0NTc3WFhZWVpaW1tjZWZmdXV3d3h7fX2AgoiIi4yMjpSUlZWYmJubnJyytLu+y83c3N3j5u3u7/Dx8/T7/JEdjRMAAAFFSURBVHja7c4DskNBEIXhnomTZ9u2bSNz9r+bqKs6Rlec3D/G+eaSV4MbWlqr3soAlWnwATX1QqUb+0ZdQPAd+L/d36vaVrQ0sAF8DFMdPQHzVE+/QKguAAB5QDcB5ujvwNQBmFPn3LVPC+TtRVADsmdBD8ieBT1gzlNLeRgtwOdf+lJP5pivQQfw+YZSz/JeBUzzJgOwMK0DZnnPQEYY1wFmfNIQA/xx3OgAjgHJA+oH7NyUFYA/6oAZ4MIKYC+AGR0wBxYA8B4TOsBesABA3qsAsicAbvwA7BmAKz8pAT5XHpaUAF8Dx+erARZkrwdYkL0eYEH2eoCFw99DS3UAXBcBHhB27qcuYNG5R6qj0U/n1qlkseXVVMuxvI8F7dzFnXsLlAZeXaZn+VimrxGqC7iPUZkim7upNiN5HwvaXsif159XEmSgqSYOduK5AAAAAElFTkSuQmCC">
+			</td>
+			<td>
+			<h1>STM32 Update</h1>
+			</td>
+		</table>
+	</div>
+</head>
+
+<body>
+	<table class="centerp">
+	<tr>
+	<td>
+	<form method="POST" action="/uploadstm" enctype="multipart/form-data">
+		<input type="file" name="data" accept=".bin" class="buttonclass"/>
+		<input type="submit" name="upload" value="Upload" title="Upload File" class="buttonclass">
+	</form>
+	</td>
+	</tr>
+	</table>
+	<table  class="centerp">
+	<tr>
+		<td>
+		<input type="button" class="buttonclass" id="updateSTM" value="Update STM32 now" title="Update STM32 now" onclick="app.methods.updateNow()"/>
+		</td>
+	</tr>
+	</table>
+	<table  class="centerp">
+	<tr>
+		<th>STM32 is updating</th>
+	</tr>
+	<tr>
+		<td><progress id="progressBar" min="0" max="100" value="0"></progress></td>
+	</tr>
+	<tr>
+        <td id="progressValue"></td>		
+	</tr>
+	</table>
+
+<script>	
+
+
+
+var id = function(elid) {
+		var ret = document.getElementById(elid);
+		if(!ret){
+			console.log('No element found with id ' + elid);
+		}
+		return ret;
+	};
+
+setTimeout(function() {
+
+id("progressBar").value = 33;
+id("progressValue").textContent = "33 %";
+console.log("UpdateNow ");
+
+},1000);
+
+var app = {
+	data() {
+		return {
+		  loading: true,
+		  uploading: false,
+		  progress: 0,
+		  OTAError: null,
+		  OTASuccess: false,
+			
+		  type: 'firmware',
+		  file: null,
+		  deviceData: {
+			id: null,
+			hardware: null,
+		  },
+		};
+	},
+	methods: {
+		async updateNow() {
+			console.log("UpdateNow ");
+			await this.postJson("cmd",'{"startStmUpdate":1}');
+			var getUpdateStatusInterval = window.setInterval(this.getUpdateStatus, 5000);
+		}
+	,
+		async getUpdateStatus() {
+			var stmUpdStatus=await this.getJson("stmUpdStatus");
+			if (stmUpdStatus) {
+				id("progressBar").value = stmUpdStatus.percent;
+				id("progressValue").textContent = stmUpdStatus.percent+" %";
+				if (stmUpdStatus.error) {
+					id("progressValue").textContent=stmUpdStatus.error;
+					getUpdateStatusInterval.clear;
+				}
+				if (stmUpdStatus.finished===1) {
+					getUpdateStatusInterval.clear;
+					id("progressValue").textContent = "Update finished"
+				}
+			}
+		}
+	,
+		async postJson(link,postData){
+			let data = await (await (fetch('http:/'+link,
+			{
+			 headers: {
+				'Content-Type': 'application/json'
+				},
+				method: 'POST',
+				body: postData
+			})
+			.then(res => {
+			  console.log(res);
+			  return res
+			})
+			.catch(err => {
+			  console.log('Error: ','link: '+link+' '+err)
+			})
+		  ))
+		  console.log(data);
+		  return data
+		}
+	,	
+		async getJson(link){
+			let data = await (await (fetch('http:/'+link)
+			.then(res => {
+			  return res.json()
+			})
+			.catch(err => {
+			  console.log('Error: ', 'link: '+link+' '+err)
+			})
+		  ))
+		  return data
+		}
+	}
+};
+
+</script>
+
+</body>
+</html>

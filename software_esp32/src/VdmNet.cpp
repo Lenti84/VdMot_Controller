@@ -81,6 +81,7 @@ extern "C" {
 }
 #include "VdmTask.h"
 #include "VdmSystem.h"
+#include "mqtt.h"
 
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
@@ -94,6 +95,10 @@ CVdmNet VdmNet;
 #define aj  "application/json"
 #define tp  "text/plain"
 #define gz  "Content-Encoding : gzip"
+
+
+ // Create a new empty syslog instance
+ Syslog syslog(udpClient, SYSLOG_PROTO_IETF);
 
 // server handles --------------------------------------------------
 
@@ -149,6 +154,24 @@ void handleRoot(AsyncWebServerRequest *request)
   int8_t index;
   
   index=checkEntry(request->url());
+  if (index>=0) {
+    AsyncWebServerResponse *response = request->beginResponse_P(200, getContentType (tfs_data[index].NAME), 
+                                      tfs_data[index].DATA, tfs_data[index].SIZE);
+    response->addHeader("Content-Encoding", "gzip");
+    request->send(response);
+  } else {
+    String message = "File "+request->url()+" Not Found\n\n"; 
+    request->send(404, "text/plain", message);
+  }
+}
+
+
+void handleWebPageStmUpdate(AsyncWebServerRequest *request) 
+{
+  int8_t index;
+  String thisUrl = request->url();
+  if (!thisUrl.endsWith(".html")) thisUrl+=".html";
+  index=checkEntry(thisUrl);
   if (index>=0) {
     AsyncWebServerResponse *response = request->beginResponse_P(200, getContentType (tfs_data[index].NAME), 
                                       tfs_data[index].DATA, tfs_data[index].SIZE);
@@ -225,11 +248,15 @@ void handleSysInfo(AsyncWebServerRequest *request)
   request->send(200,aj,Web.getSysInfo());
 }
 
-void handleSysDynInfo(AsyncWebServerRequest *request) 
+void handleGetFSDir(AsyncWebServerRequest *request) 
 { 
   request->send(200,aj,Web.getSysDynInfo());
 }
 
+void handleSysDynInfo(AsyncWebServerRequest *request) 
+{ 
+  request->send(200,aj,Web.getFSDir());
+}
 
 void handleCmd(JsonObject doc) 
 { 
@@ -243,7 +270,7 @@ void handleCmd(JsonObject doc)
   if (doc["savecfg"]==1) {
     VdmConfig.writeConfig();
     VdmConfig.readConfig();
-    // ESP.restart(); Todo
+    ESP.restart(); 
   }
   if (doc["resetcfg"]==1) {
     VdmConfig.clearConfig();  
@@ -255,25 +282,20 @@ void handleCmd(JsonObject doc)
     VdmConfig.writeConfig(); 
     ESP.restart();
   }
+  if (doc["startStmUpdate"]==1) {
+    // todo stmUpdate
+  }
 }
 
 void handleUploadSTM32(AsyncWebServerRequest *request, const String& filename, size_t index, 
             uint8_t *data, size_t len, bool final)
 {
- /* if(!index){
-    Serial.printf("UploadStart: %s\n", filename.c_str());
-  }
-  for(size_t i=0; i<len; i++){
-    Serial.write(data[i]);
-  }
-  if(final){
-    Serial.printf("UploadEnd: %s, %u B\n", filename.c_str(), index+len);
-  }*/
-
   if(!index){
    // logOutput((String)"UploadStart: " + filename);
     // open the file on first call and store the file handle in the request object
-    request->_tempFile = SPIFFS.open(filename, "w");
+    String thisFile = filename;
+    if (!filename.startsWith("/stm/")) thisFile = "/stm/" + filename;
+    request->_tempFile = SPIFFS.open(thisFile, "w");
   }
   if(len) {
     // stream the incoming chunk to the opened file
@@ -283,7 +305,8 @@ void handleUploadSTM32(AsyncWebServerRequest *request, const String& filename, s
    // logOutput((String)"UploadEnd: " + filename + "," + index+len);
     // close the file handle as the upload is now done
     request->_tempFile.close();
-    request->send(200, "text/plain", "File Uploaded !");
+    size_t uploadsize = request->_tempFile.size();
+    request->send(200, "text/plain", "File Uploaded !"); //redirect("/fsdir");//
   }
 }
  
@@ -312,7 +335,7 @@ void CVdmNet::UpdateSTM32(String updateFileName)
 {
   //FlashMode();
   //STM32_begin();  // contains STM32ota_begin and clear STM32 buffer
-      
+   /*   
   if (stm32Erase() == STM32ACK) {
   } else {
     return;
@@ -354,7 +377,7 @@ void CVdmNet::UpdateSTM32(String updateFileName)
          else flashwr = "Error";
        }
      fsUploadFile.close();
- }
+ }*/
 }
 
 void CVdmNet::init()
@@ -514,7 +537,10 @@ void  CVdmNet::initServer() {
   server.on("/tempsconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleTempsConfig(request);});
   server.on("/sysinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysInfo(request);});
   server.on("/sysdyninfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysDynInfo(request);});
+  server.on("/fsdir",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysDynInfo(request);});
   server.on("/logdata",HTTP_GET,[](AsyncWebServerRequest * request) {handleGetLogData(request);});
+  server.on("/stmupdate", HTTP_GET, [](AsyncWebServerRequest * request) {handleWebPageStmUpdate(request);});
+
   server.on("/uploadstm", HTTP_POST, [](AsyncWebServerRequest *request) {},
       [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
                     size_t len, bool final) {handleUploadSTM32(request, filename, index, data, len, final);}
@@ -582,7 +608,7 @@ void CVdmNet::startBroker()
   switch (VdmConfig.configFlash.protConfig.dataProtocol) {
     case mqttProtocol:
     {
-      mqtt_setup(VdmConfig.configFlash.protConfig.brokerIp,VdmConfig.configFlash.protConfig.brokerPort);
+      Mqtt.mqtt_setup(VdmConfig.configFlash.protConfig.brokerIp,VdmConfig.configFlash.protConfig.brokerPort);
       VdmTask.startMqtt();
       dataBrokerIsStarted=true;
       break;
@@ -592,7 +618,7 @@ void CVdmNet::startBroker()
 
 void CVdmNet::mqttBroker()
 {
-   mqtt_loop();
+   Mqtt.mqtt_loop();
 }
 
 void CVdmNet::checkNet() 
@@ -616,16 +642,14 @@ void CVdmNet::checkNet()
 
     // prepare syslog configuration here (can be anywhere before first call of 
     // log/logf method)
-    if (VdmConfig.configFlash.netConfig.syslogEnable)
+    if (VdmConfig.configFlash.netConfig.syslogLevel>0)
     {
-      // Create a new empty syslog instance
-      Syslog syslog(udpClient, SYSLOG_PROTO_IETF);
+     
       syslog.server(IPAddress(VdmConfig.configFlash.netConfig.syslogIp), VdmConfig.configFlash.netConfig.syslogPort);
       syslog.deviceHostname(DEVICE_HOSTNAME);
       syslog.appName(APP_NAME);
       syslog.defaultPriority(LOG_KERN);
     }
-
 
 
     VdmTask.startApp();

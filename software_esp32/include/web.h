@@ -65,8 +65,7 @@ public:
   String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig);
   String getSysDynInfo();
   String getSysInfo();
-  String ip2String (IPAddress ipv4addr);
-  String ConvBinUnits(size_t bytes, byte resolution);
+  String getFSDir();
 };
 
 extern CWeb Web;

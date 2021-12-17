@@ -46,24 +46,32 @@
 #include "mqtt.h"
 #include "globals.h"
 #include "stmApp.h"
+#include "VdmNet.h"
 
+CMqtt Mqtt;
 
-void reconnect();
-void callback(char* topic, byte* payload, unsigned int length);
-void publish_valves ();
+void mcallback(char* topic, byte* payload, unsigned int length) 
+{
+    Mqtt.callback(topic, payload, length);
+}
+
 
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
 
-void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort) {
+void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort) {
     mqtt_client.setServer(brokerIP, brokerPort);
-    mqtt_client.setCallback(callback);
+    mqtt_client.setCallback(mcallback);
 
     strcpy(mqtt_maintopic, DEFAULT_MAINTOPIC);
 }
 
+CMqtt::CMqtt()
+{
+    
+}
 
-void mqtt_loop() {
+void CMqtt::mqtt_loop() {
 
   //  static unsigned long timer = millis();
     
@@ -83,7 +91,7 @@ void mqtt_loop() {
 }
 
 
-void reconnect() {
+void CMqtt::reconnect() {
     char topicstr[MAINTOPIC_LEN+20];
     char nrstr[3];
 
@@ -120,7 +128,7 @@ void reconnect() {
 }
 
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void CMqtt::callback(char* topic, byte* payload, unsigned int length) {
     unsigned char found = 0;
     unsigned char value;
 
@@ -183,15 +191,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
         //Serial.println(&topic[found]);
         if (0 == strcmp(&topic[found],"target")) {
             //Serial.println("found target");
-            // todo syslog.log(LOG_INFO, "MQTT: found target topic");
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
+               syslog.log(LOG_INFO, "MQTT: found target topic");
+            }	
+            
             actuators[value-1].target_position = atoi(msg);
         }
         else {            
             found = 0;
         }
     }
-    //else // todo syslog.log(LOG_ERR, "MQTT: cant eval data");
-
+    else {
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
+            syslog.log(LOG_ERR, "MQTT: cant eval data");
+        }	
+    }
 
     // if(strcmp(msg,"on")==0){
     //     //digitalWrite(13, HIGH);
@@ -204,7 +218,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 
-void publish_valves () {
+void CMqtt::publish_valves () {
 
     char topicstr[MAINTOPIC_LEN+20];
     char nrstr[3];

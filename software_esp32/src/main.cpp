@@ -63,7 +63,6 @@ void loop(void) {
 /* todo :
 telnet
 logger
-stm32ota
 */
   
   taskManager.runLoop();

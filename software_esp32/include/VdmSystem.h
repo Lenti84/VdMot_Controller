@@ -44,14 +44,30 @@
 #include "globals.h"
 #include "VdmConfig.h" 
 #include "esp_system.h"
+#include "helper.h"
+
+#define  maxFiles  100
+
+typedef struct
+{
+  String filename;
+  String ftype;
+  String fsize;
+} fileinfo;
+
 
 class CVdmSystem
 {
 public:
   CVdmSystem();
   void getSystemInfo();
+  void getFSDirectory();
 
   esp_chip_info_t chip_info;
+  fileinfo Filenames[maxFiles]; // Enough for most purposes!
+  uint8_t numfiles;
+private:
+  bool spiffsStarted;
 };
 
 extern CVdmSystem VdmSystem;

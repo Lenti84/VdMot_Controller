@@ -38,40 +38,14 @@
 *END************************************************************************/
 
 
-#include "VdmSystem.h"
-#include <SPIFFS.h> 
-#include "esp_spi_flash.h" 
-#include "helper.h"
 
-CVdmSystem VdmSystem;
+#pragma once
 
-CVdmSystem::CVdmSystem()
-{
-  spiffsStarted=false;
-  numfiles  = 0;
-}
+#include "globals.h"
+#include "VdmConfig.h" 
+#include "esp_system.h"
 
-void CVdmSystem::getSystemInfo()
-{   
-    esp_chip_info(&chip_info);      
-}
 
-void CVdmSystem::getFSDirectory() {
-  if (!spiffsStarted) SPIFFS.begin(true);
-  spiffsStarted=true;
-  numfiles  = 0; // Reset number of FS files counter
-  File root = SPIFFS.open("/");
-  if (root) {
-    root.rewindDirectory();
-    File file = root.openNextFile();
-    while (file) { // Now get all the filenames, file types and sizes
-      Filenames[numfiles].filename = (String(file.name()).startsWith("/") ? String(file.name()).substring(1) : file.name());
-      Filenames[numfiles].ftype    = (file.isDirectory() ? "Dir" : "File");
-      Filenames[numfiles].fsize    = ConvBinUnits(file.size(), 1);
-      file = root.openNextFile();
-      numfiles++;
-      if (numfiles>maxFiles) break;
-    }
-    root.close();
-  }
-}
+String ip2String (IPAddress ipv4addr);
+String ConvBinUnits(size_t bytes, byte resolution);
+ 

@@ -56,9 +56,6 @@
 #define VISMODE_ATOMIC      3               // atomic debug messages
 extern uint8_t vismode;
 
-// Syslog server connection info
-#define SYSLOG_SERVER       "192.168.4.20"
-#define SYSLOG_PORT         514
 
 // This device info
 #define DEVICE_HOSTNAME     "VDMot"

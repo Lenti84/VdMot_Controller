@@ -46,29 +46,12 @@
 #include "VdmConfig.h"
 #include "VdmSystem.h"
 #include "WiFi.h"
+#include "helper.h"
 
 CWeb Web;
 
 CWeb::CWeb()
 {
-}
-
-String CWeb::ConvBinUnits(size_t bytes, byte resolution) {
-  if      (bytes < 1024)                 {
-    return String(bytes) + " B";
-  }
-  else if (bytes < 1024 * 1024)          {
-    return String(bytes / 1024.0, resolution) + " KB";
-  }
-  else if (bytes < (1024 * 1024 * 1024)) {
-    return String(bytes / 1024.0 / 1024.0, resolution) + " MB";
-  }
-  else return "";
-}
-
-String CWeb::ip2String (IPAddress ipv4addr)
-{
-  return ipv4addr.toString();
 }
 
 String CWeb::getNetConfig (VDM_NETWORK_CONFIG netConfig)
@@ -84,7 +67,7 @@ String CWeb::getNetConfig (VDM_NETWORK_CONFIG netConfig)
                   "\"timeServer\":\""+String(netConfig.timeServer)+"\","+
                   "\"timeOffset\":"+String(netConfig.timeOffset)+","+
                   "\"timeDST\":"+String(netConfig.daylightOffset)+","+
-                  "\"syslogEnable\":"+String(netConfig.syslogEnable)+","+
+                  "\"syslogLevel\":"+String(netConfig.syslogLevel)+","+
                   "\"syslogIp\":\""+ip2String(netConfig.syslogIp)+"\","+
                   "\"syslogPort\":"+String(netConfig.syslogPort)+  
                   "}";  
@@ -198,3 +181,24 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
   result += "]";
   return result;
 }
+
+String CWeb::getFSDir() 
+{
+  String result;
+  String item;
+  VdmSystem.getFSDirectory();
+  if (VdmSystem.numfiles>0) {
+    result = "[";
+    for (uint8_t x=0; x<VdmSystem.numfiles; x++) {
+      item = "{\"fName\":\"" + VdmSystem.Filenames[x].filename+"\","+
+              "\"ftype\":\"" + VdmSystem.Filenames[x].ftype+"\","+
+              "\"fsize\":\"" + VdmSystem.Filenames[x].fsize+"\""+
+              "}";
+      result+=item;
+      if (x<VdmSystem.numfiles-1) result += ",";
+    }  
+    result += "]";
+  } else result ="[]";
+  return result;
+}
+

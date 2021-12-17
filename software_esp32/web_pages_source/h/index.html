@@ -394,12 +394,14 @@
 				<td>
 				<select id="netcfg-syslog-select">
                     <option>Off</option>
-                    <option>On</option>
+                    <option>Small</option>
+					<option>Detail</option>
+                    <option>Atomic</option>
 				</select>
 				</td>
             </tr> 
 		</table>
-		<table id="netcfg-syslog-ip" style="display:none;" class="tabTable">
+		<table id="netcfg-syslog-table" style="display:none;" class="tabTable">
 				<tr>
 				<th>Client IP</th>
 				<td>
@@ -808,7 +810,7 @@
 		}
 		
 		function showSyslogIP(){
-			var x = id("netcfg-syslog-ip");
+			var x = id("netcfg-syslog-table");
 			var select = id("netcfg-syslog-select").selectedIndex;
 			if (select === 0) {
 				x.style.display = "none";
@@ -845,6 +847,9 @@
 			};
 			id("update-WT32").onclick = function(){
 				updateWT32();
+			};
+			id("update-STM32").onclick = function(){
+				updateSTM32();
 			};
 			
 			id("netcfg-WifiPwd").onchange = function(){
@@ -889,18 +894,21 @@
 		function factoryRestore(){
 			if (confirm('Are you sure you want to restore configuration to factory settings ?')) {
 				postCmd('{"restorecfg":1}');
+				setTimeout(function() {window.reload();},1000);
 			}
 		}
 		
 		function resetConfig(){
 			if (confirm('Are you sure you want to reset configuration to factory settings except network ?')) {
 				postCmd('{"resetcfg":1}');
+				setTimeout(function() {window.reload();},1000);
 			}
 		}
 		
 		function reboot(){
 			if (confirm('Are you sure you want to reboot ?')) {
 				postCmd('{"reboot":1}');
+				setTimeout(function() {window.reload();},1000);
 			}
 		}
 			
@@ -913,6 +921,7 @@
 				await postCmd('{"savecfg":1}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
+				setTimeout(function() {window.reload();},1000);
 			}
 		}
 		
@@ -943,7 +952,7 @@
 			netCfg.timeServer = id("netcfg-TimeServer").value;
 			netCfg.timeOffset =	parseInt(id("netcfg-timeOffset").value);
 			netCfg.timeDST = parseInt(id("netcfg-daySTOffset").value);
-			netCfg.syslogEnable=id("netcfg-syslog-select").selectedIndex;
+			netCfg.syslogLevel=id("netcfg-syslog-select").selectedIndex;
 			netCfg.syslogIp=id("netcfg-syslog-ip").value;
 			netCfg.syslogPort=id("netcfg-syslog-port").value;
 			await postJson("netconfig",JSON.stringify(netCfg));
@@ -1101,7 +1110,7 @@
 				id("netcfg-TimeServer").value = dataNetConfig["timeServer"];
 				id("netcfg-timeOffset").value = dataNetConfig["timeOffset"];
 				id("netcfg-daySTOffset").value = dataNetConfig["timeDST"];
-				id("netcfg-syslog-select").selectedIndex=dataNetConfig.syslogEnable;
+				id("netcfg-syslog-select").selectedIndex=dataNetConfig.syslogLevel;
 				id("netcfg-syslog-ip").value=dataNetConfig.syslogIp;
 				id("netcfg-syslog-port").value=dataNetConfig.syslogPort;
 				showWifi();
@@ -1142,6 +1151,12 @@
 		async function updateWT32() {
 			location.assign('http:/update');
 			location.replace('http:/update');
+			window.reload();
+		}	
+		
+		async function updateSTM32() {
+			location.assign('http:/stmupdate');
+			location.replace('http:/stmupdate');
 			window.reload();
 		}	
 			

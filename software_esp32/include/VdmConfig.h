@@ -64,7 +64,7 @@ typedef struct {
   char timeServer[65];
   long timeOffset;
   int daylightOffset; 
-  bool syslogEnable;
+  uint8_t syslogLevel;
   uint32_t syslogIp;
   uint32_t syslogPort;
 

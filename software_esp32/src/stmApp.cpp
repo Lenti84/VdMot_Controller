@@ -56,8 +56,6 @@
 
 actuator_str    actuators[ACTUATOR_COUNT];
 
-char mqtt_maintopic[MAINTOPIC_LEN];
-
 String cmd_buffer = "";
 
 unsigned char target_position_mirror[ACTUATOR_COUNT];
@@ -202,7 +200,7 @@ void app_check_data() {
 		if(memcmp("STMalive",cmd,8) == 0) {			
 			//telnet_msg("help command received");
             //UART_DBG.println("STMalive received");
-            stm32alive = COMM_ALIVE_CYCLE + 10;
+            stm32alive = COMM_ALIVE_CYCLE + 100;
 		}
 
         // help
@@ -279,13 +277,15 @@ void app_check_data() {
                 actuators[atoi(arg0ptr)].state = atoi(arg3ptr);
                 actuators[atoi(arg0ptr)].temperature = atoi(arg4ptr);
 
-            // todo   logger.print("new data package: ", logger.DATA); 
-            //     logger.println(buffer, logger.DATA); 
-
+                if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                   // logger.print("new data package: ", logger.DATA); 
+                   // logger.println(buffer, logger.DATA); 
+                    syslog.log(LOG_DEBUG, "got full vlv data packet");
+                }
                 // create some debug messages
                 if (vismode > VISMODE_DETAIL) {
                     UART_DBG.println("got full vlv data packet");
-                    //  syslog.log(LOG_DEBUG, "got full vlv data packet");
+                    //
                     logger.print("got full vlv data packet");
                 }
             }
@@ -336,7 +336,9 @@ void app_comm_machine(){
                 if (cnt_alive) {
                     cnt_alive = COMM_ALIVE_CYCLE;
                     UART_STM32.println("ESPalive");
-                    // todo syslog.log(LOG_INFO, "ESPalive");
+                    if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                        syslog.log(LOG_INFO, "ESPalive");
+                    }
                 }
                 else cnt_alive--;
 
@@ -348,8 +350,9 @@ void app_comm_machine(){
         // send target position values
         case COMM_SENDTARGET:
                 commstate = COMM_GETDATA;
-                
-                //syslog.log(LOG_DEBUG, "checking valve positions");
+                if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG, "checking valve positions");
+                }
                 for(unsigned int x=0; x<ACTUATOR_COUNT; x++)
                 {
                     // check if target has changed
@@ -373,7 +376,9 @@ void app_comm_machine(){
                         // generate debug messages
                         if (vismode == VISMODE_DETAIL) {
                             UART_DBG.println(sendbuffer);
-                            // todo syslog.log(LOG_DEBUG, sendbuffer);
+                            if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                                syslog.log(LOG_DEBUG, sendbuffer);
+                            }
                             logger.print(sendbuffer, logger.DATA);
                         }
 
@@ -392,8 +397,9 @@ void app_comm_machine(){
                 {
                     target_position_mirror[x] = actuators[x].target_position;
                 }
-                //syslog.log(LOG_DEBUG, "updated position mirror");
-
+                if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG, "updated position mirror");
+                }
                 break;
 
         // check correct transmission of target value
@@ -432,11 +438,13 @@ void app_comm_machine(){
                 strcat(sendbuffer, " ");   
 
                 UART_STM32.println(sendbuffer);
-
+                
+                if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG, sendbuffer);
+                }
                 // generate debug messages
                 if (vismode == VISMODE_DETAIL) {
-                    UART_DBG.println(sendbuffer);
-                    // todo syslog.log(LOG_DEBUG, sendbuffer);
+                    UART_DBG.println(sendbuffer);                
                     logger.print(sendbuffer, logger.DATA);
                 }
                         
@@ -453,21 +461,28 @@ void app_alive_check() {
 
     if(stm32alive) {
         stm32alive--;
-
-        // generate debug messages
-        if ((vismode > VISMODE_OFF) && (oldalivestate == 0)) {
-            UART_DBG.println("connection to STM32 established");
-            // todo syslog.log(LOG_DEBUG, "connection to STM32 established");
-            logger.print("connection to STM32 established");
+        if (oldalivestate == 0) {
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
+                syslog.log(LOG_DEBUG, "connection to STM32 established");
+            }
+            // generate debug messages
+            if (vismode > VISMODE_OFF) {
+                UART_DBG.println("connection to STM32 established");
+                logger.print("connection to STM32 established");
+            }
         }
         oldalivestate = 1;
     }
     else {
         // generate debug messages
-        if ((vismode > VISMODE_OFF) && (oldalivestate == 1)) {
-            UART_DBG.println("connection to STM32 lost");
-            // todo syslog.log(LOG_DEBUG, "connection to STM32 lost");
-            logger.print("connection to STM32 lost");
+        if (oldalivestate == 1) {
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
+                syslog.log(LOG_DEBUG, "connection to STM32 lost");
+            }
+            if (vismode > VISMODE_OFF) {
+                UART_DBG.println("connection to STM32 lost");
+                logger.print("connection to STM32 lost");
+            }
         }
         oldalivestate = 0;
     }
@@ -478,21 +493,33 @@ void app_web_cmd_check(){
     
     if(cmd_buffer.length() >= 5) {
         if(cmd_buffer.startsWith(APP_PRE_SETALLVLVOPEN)) {	
-            UART_DBG.println("send open all valves request to STM32");		
+            UART_DBG.println("send open all valves request to STM32");
+            if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_ATOMIC) {
+                syslog.log(LOG_DEBUG, "send open all valves request to STM32");
+            }		
             UART_STM32.println(APP_PRE_SETALLVLVOPEN);	 
         }
 
         else if(cmd_buffer.startsWith(APP_PRE_SETALLVLVOPEN)) {	
+            if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_ATOMIC) {
+                syslog.log(LOG_DEBUG, "send target position request to STM32");
+            }
             UART_DBG.println("send target position request to STM32");		
             UART_STM32.println(cmd_buffer);	 
         }
 
-        else if(cmd_buffer.startsWith(APP_PRE_GETONEWIREDATA)) {	
+        else if(cmd_buffer.startsWith(APP_PRE_GETONEWIREDATA)) {
+            if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_ATOMIC) {
+                syslog.log(LOG_DEBUG, "send onewire data request to STM32");
+            }	
             UART_DBG.println("send onewire data request to STM32");		
             UART_STM32.println(cmd_buffer);
         }
 
         else {
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
+                syslog.log(LOG_DEBUG, "unknown command for STM32 from webinterface");
+            }
             UART_DBG.println("unknown command for STM32 from webinterface");
             logger.print("unknown command for STM32");
         }   

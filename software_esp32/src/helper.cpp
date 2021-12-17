@@ -38,40 +38,22 @@
 *END************************************************************************/
 
 
-#include "VdmSystem.h"
-#include <SPIFFS.h> 
-#include "esp_spi_flash.h" 
 #include "helper.h"
 
-CVdmSystem VdmSystem;
-
-CVdmSystem::CVdmSystem()
+String ip2String (IPAddress ipv4addr)
 {
-  spiffsStarted=false;
-  numfiles  = 0;
+  return ipv4addr.toString();
 }
 
-void CVdmSystem::getSystemInfo()
-{   
-    esp_chip_info(&chip_info);      
-}
-
-void CVdmSystem::getFSDirectory() {
-  if (!spiffsStarted) SPIFFS.begin(true);
-  spiffsStarted=true;
-  numfiles  = 0; // Reset number of FS files counter
-  File root = SPIFFS.open("/");
-  if (root) {
-    root.rewindDirectory();
-    File file = root.openNextFile();
-    while (file) { // Now get all the filenames, file types and sizes
-      Filenames[numfiles].filename = (String(file.name()).startsWith("/") ? String(file.name()).substring(1) : file.name());
-      Filenames[numfiles].ftype    = (file.isDirectory() ? "Dir" : "File");
-      Filenames[numfiles].fsize    = ConvBinUnits(file.size(), 1);
-      file = root.openNextFile();
-      numfiles++;
-      if (numfiles>maxFiles) break;
-    }
-    root.close();
+String ConvBinUnits(size_t bytes, byte resolution) {
+  if      (bytes < 1024)                 {
+    return String(bytes) + " B";
   }
+  else if (bytes < 1024 * 1024)          {
+    return String(bytes / 1024.0, resolution) + " KB";
+  }
+  else if (bytes < (1024 * 1024 * 1024)) {
+    return String(bytes / 1024.0 / 1024.0, resolution) + " MB";
+  }
+  else return "";
 }

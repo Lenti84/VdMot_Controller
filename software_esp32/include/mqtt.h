@@ -40,5 +40,20 @@
 
 #pragma once
 
-void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort);
-void mqtt_loop();
+#define MAINTOPIC_LEN 30
+
+class CMqtt
+{
+  public:
+    CMqtt();
+    void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort);
+    void mqtt_loop();
+    void callback(char* topic, byte* payload, unsigned int length);
+  private:
+    void reconnect();
+    void publish_valves ();
+
+    char mqtt_maintopic[MAINTOPIC_LEN];
+};
+
+extern CMqtt Mqtt;
