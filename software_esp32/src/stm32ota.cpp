@@ -37,7 +37,15 @@
 
 *END************************************************************************/
 
+/* ------------------------------------------------- */
+/*
 
+Credits to https://github.com/csnol/1CHIP-Programmers
+
+*/
+/* ------------------------------------------------- */
+
+#include "globals.h"
 #include "stm32ota.h"
 
 const String STM32_CHIPNAME[9] = {
@@ -84,6 +92,27 @@ unsigned char stm32Erasen() {     // Tested
   return Serial2.read();
 }
 
+unsigned char stm32ErasenStart() {     // Tested
+  int x;
+
+  stm32SendCommand(STM32ERASEN);
+
+  for (x=0;x<100;x++) {
+    if (Serial2.available()>0) {    
+      if (Serial2.read() == STM32ACK)
+      {
+        Serial2.write(0xFF);
+        Serial2.write(0xFF);
+        Serial2.write(0x00);
+        return STM32OK;
+      }
+      else return STM32ERR;
+    }
+    delayMicroseconds(10);
+  }
+  return STM32ERR;
+}
+
 // No test yet
 unsigned char stm32Run()   {
   stm32SendCommand(STM32RUN);
@@ -96,20 +125,53 @@ unsigned char stm32Run()   {
     return STM32ERR;
 }
 
-// No test yet
-unsigned char stm32Read(unsigned char * rdbuf, unsigned long rdaddress, unsigned char rdlen) {
-  stm32SendCommand(STM32RD);
+// Tested
+unsigned char stm32Read(unsigned char * rdbuf, unsigned long rdaddress, unsigned int rdlen) {
+  unsigned int timer = 0;
+  size_t getlen;
+  
+  // send read request
+  //UART_DBG.println("send STM32RD");
+  stm32SendCommand(STM32RD);  
+
+  // wait for ACK
   while (!Serial2.available());
-  if (Serial2.read() == STM32ACK)
-    stm32Address(rdaddress);
+  if (Serial2.read() == STM32ACK) {
+
+    // send read address
+    // UART_DBG.println("send rdadress");
+
+    // got ACK?
+    if (stm32Address(rdaddress) == STM32ACK) {
+      // send read length
+      //UART_DBG.println("send rdlen");
+      stm32SendCommand(rdlen - 1);
+    }
+    else return STM32ERR;
+  }
   else return STM32ERR;
+
+  // wait for ACK
   while (!Serial2.available());
-  if (Serial2.read() == STM32ACK)
-    stm32SendCommand(rdlen);
-  while (!Serial2.available());
-  size_t getlen = Serial2.available();
-  Serial2.readBytes(rdbuf, getlen);
-  return STM32ACK;
+  if (Serial2.read() == STM32ACK) {
+
+    // wait for requested data
+    for (timer=0;timer<50;timer++) {
+      delay(10);
+      getlen = Serial2.available();
+      if (getlen == rdlen) {
+        //UART_DBG.print("got bytes: ");
+        //UART_DBG.println(getlen, DEC);
+        Serial2.readBytes(rdbuf, getlen);
+        return STM32ACK;
+      }
+    } 
+    //UART_DBG.print("got wrong number of bytes: ");
+    //UART_DBG.println(getlen, DEC);
+    
+  }
+  
+  return STM32ERR;
 }
 
 unsigned char stm32Address(unsigned long addr) {    // Tested
@@ -132,6 +194,7 @@ unsigned char stm32SendData(unsigned char * data, unsigned char wrlen) {     // 
   Serial2.write(wrlen);
   for (int i = 0; i <= wrlen; i++) {
     Serial2.write(data[i]);
+    delayMicroseconds(20);
   }
   Serial2.write(getChecksum(data, wrlen));
   while (!Serial2.available());
@@ -148,7 +211,6 @@ char stm32Version() {     // Tested
   
   stm32SendCommand(STM32GET);
 
-  // while (!Serial2.available());
   for (x=0;x<100;x++) {
     if (Serial2.available()>0) {  
       vsbuf[0] = Serial2.read();
@@ -162,9 +224,10 @@ char stm32Version() {     // Tested
       }
     }
     else Serial.println("Error GetVersion: no data");
-    delay(20);
+    delayMicroseconds(20);
   }
-  
+
+  return STM32ERR;  
 }
 
 unsigned char stm32GetId() {     // Tested
@@ -174,11 +237,10 @@ unsigned char stm32GetId() {     // Tested
 
   while(Serial2.available()) Serial2.read();
 
-  Serial.println("GetId");
+  Serial.print("GetId");
   
   stm32SendCommand(STM32ID);
   
-//while (!Serial2.available());
   for (x=0;x<100;x++) {
     if (Serial2.available()>0) {          
       sbuf[0] = Serial2.read();
@@ -186,7 +248,7 @@ unsigned char stm32GetId() {     // Tested
         Serial2.readBytesUntil(STM32ACK, sbuf, 4);
         getid = sbuf[1];
         getid = (getid << 8) + sbuf[2];
-        Serial.print("Id: ");
+        Serial.print("- Id: ");
         Serial.print(getid, HEX); 
         Serial.println(""); 
         if (getid == 0x444)
@@ -207,14 +269,15 @@ unsigned char stm32GetId() {     // Tested
           return 8;  
       }
       else {
-        Serial.println("Error GetId: wrong answer");
+        Serial.println("Error: wrong answer");
         return 0;
       }
-    }
-    else Serial.println("Error GetId: no data");
-    delay(20);
+    }    
+    delayMicroseconds(20);
   }
   
+  Serial.println("- Error: no data");
+  return 0;
 }
 
 unsigned char getChecksum( unsigned char * data, unsigned char datalen) {    // Tested

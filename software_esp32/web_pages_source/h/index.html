@@ -887,27 +887,27 @@
 		
 		function valvesStartCalib(){
 			if (confirm('Are you sure you want to start calibration of all valves ?')) {
-				postCmd('{"vcalib":1}');
+				postCmd('{"action":"vCalib"}');
 			}
 		}
 
 		function factoryRestore(){
 			if (confirm('Are you sure you want to restore configuration to factory settings ?')) {
-				postCmd('{"restorecfg":1}');
+				postCmd('{"action":"restoreCfg"}');
 				setTimeout(function() {window.reload();},1000);
 			}
 		}
 		
 		function resetConfig(){
 			if (confirm('Are you sure you want to reset configuration to factory settings except network ?')) {
-				postCmd('{"resetcfg":1}');
+				postCmd('{"action":"resetCfg"}');
 				setTimeout(function() {window.reload();},1000);
 			}
 		}
 		
 		function reboot(){
 			if (confirm('Are you sure you want to reboot ?')) {
-				postCmd('{"reboot":1}');
+				postCmd('{"action":"reboot"}');
 				setTimeout(function() {window.reload();},1000);
 			}
 		}
@@ -918,7 +918,7 @@
 				await postProtCfg();
 				await postValvesCfg();
 				await postTempsCfg();
-				await postCmd('{"savecfg":1}');
+				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
 				setTimeout(function() {window.reload();},1000);
@@ -1014,7 +1014,7 @@
 				var setThisValve = {};
 				setThisValve.valve = valveNo;
 				setThisValve.value = value;
-				await postJson("setValve",JSON.stringify(setThisValve));
+				await postJson("setvalve",JSON.stringify(setThisValve));
 			}
 		}
 				

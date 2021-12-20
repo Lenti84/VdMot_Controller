@@ -40,10 +40,24 @@
 
 #pragma once
 
+
+#define USING_CORE_ESP32_CORE_V200_PLUS     true
+// Debug Level from 0 to 4
+#define _ETHERNET_WEBSERVER_LOGLEVEL_       3
+
+#define ETH_ADDR        1
+#define ETH_POWER_PIN   16
+#define ETH_POWER_PIN_ALTERNATIVE 16
+#define ETH_MDC_PIN    23
+#define ETH_MDIO_PIN   18
+#define ETH_TYPE       ETH_PHY_LAN8720
+#define ETH_CLK_MODE   ETH_CLOCK_GPIO0_IN
+
 #include <stdint.h>
 #include <ArduinoJson.h>
 #include "VdmConfig.h"
 #include <Syslog.h>
+#include <AsyncWebServer_WT32_ETH01.h>
 
 #define noneProtocol 0
 #define mqttProtocol 1
@@ -81,16 +95,11 @@ public:
   void setup();
   void setupEth();
   void setupWifi();
-  void initServer();
   void setupNtp();
-  void valvesCalib();
   void checkNet();
   void startBroker();
   void mqttBroker();
-  void UpdateSTM32(String updateFileName);
-  
-
-  void postSetValve (JsonObject doc);
+ 
   TWifiState wifiState;
   TEthState ethState;
   VDM_NETWORK_INFO networkInfo;

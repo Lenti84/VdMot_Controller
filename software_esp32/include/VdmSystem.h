@@ -62,6 +62,7 @@ public:
   CVdmSystem();
   void getSystemInfo();
   void getFSDirectory();
+  void clearFS();
 
   esp_chip_info_t chip_info;
   fileinfo Filenames[maxFiles]; // Enough for most purposes!

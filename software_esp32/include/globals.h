@@ -67,7 +67,7 @@ extern uint8_t vismode;
 #define BOOT0               14              // IO14
 //#define LED               2               // not available on WT32-ETH01
 #define UART_STM32          Serial2         // serial interface connected to STM32
-#define UART_DBG			Serial		    // serial port for debugging
+#define UART_DBG			      Serial		    // serial port for debugging
 
 // on WT32-ETH01 V1.2 use for Serial2 pins: RX2 IO5 and TX2 IO17
 #define STM32_RX            5

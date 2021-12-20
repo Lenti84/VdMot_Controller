@@ -50,6 +50,7 @@
 #include <WiFiUdp.h>
 #include "Logger.h"
 #include "VdmNet.h"
+#include "stm32.h"
 
 #define     MAX_CMD_LEN     10
 #define     MAX_ARG_LEN     120
@@ -97,10 +98,18 @@ void app_setup() {
 
 
 void app_loop() {
-    app_check_data();
-    app_comm_machine(); 
-    app_alive_check();
-    app_web_cmd_check();  
+    switch (stmUpdateStatus) {
+        case updNotStarted : 
+        case updFinished :
+        case updError :
+        { 
+            app_check_data();
+            app_comm_machine(); 
+            app_alive_check();
+            app_web_cmd_check(); 
+            break; 
+        }
+    }
 }
 
 void app_cmd(String command) {    

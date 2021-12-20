@@ -47,6 +47,8 @@
 #include "VdmSystem.h"
 #include "WiFi.h"
 #include "helper.h"
+#include "stm32.h"
+
 
 CWeb Web;
 
@@ -199,6 +201,13 @@ String CWeb::getFSDir()
     }  
     result += "]";
   } else result ="[]";
+  return result;
+}
+
+String CWeb::getStmUpdStatus()
+{
+  uint8_t percent = 50;
+  String result = "{\"percent\":"+String(percent)+",\"status\":"+String(stmUpdateStatus)+"}";
   return result;
 }
 

@@ -66,6 +66,7 @@ public:
   String getSysDynInfo();
   String getSysInfo();
   String getFSDir();
+  String getStmUpdStatus();
 };
 
 extern CWeb Web;

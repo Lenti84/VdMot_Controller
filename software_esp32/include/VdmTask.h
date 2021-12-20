@@ -46,6 +46,8 @@
 #include "VdmNet.h" 
 #include "stmApp.h"
 #include "Services.h"
+#include "stm32ota.h"
+#include "stm32.h"
 
 class CVdmTask
 {
@@ -55,11 +57,13 @@ public:
   void deleteTask(taskid_t taskId);
   void startMqtt();
   void startApp();
+  void startStm32Ota(uint8_t command,String thisFileName);
   void startServices();
 
   taskid_t taskIdCheckNet;
   taskid_t taskIdMqtt;
   taskid_t taskIdApp;
+  taskid_t taskIdStm32Ota;
   taskid_t taskIdServices;
 };
 

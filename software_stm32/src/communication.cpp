@@ -1,3 +1,32 @@
+/**HEADER*******************************************************************
+  project : VdMot Controller
+  author : Lenti84
+  Comments:
+  Version :
+  Modifcations :
+***************************************************************************
+*
+* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THE POSSIBILITY OF SUCH DAMAGE.
+*
+**************************************************************************
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License.
+  See the GNU General Public License for more details.
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+*END************************************************************************/
 /**
   ******************************************************************************
   * @file    communication.c
@@ -78,7 +107,7 @@ int16_t communication_loop (void) {
     }
 
 	// if there is a little in the buffer
-    if(buflen > 5) 
+    if(buflen >= 5) 
     {
         for (unsigned int c = 0; c < buflen; c++)
         {           
@@ -102,13 +131,13 @@ int16_t communication_loop (void) {
 		// ****************************************
 		cmdptr = buffer;
 
-		for(unsigned int x=0;x<3;x++){
+		for(unsigned int xx=0;xx<3;xx++){
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
-				if(x==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
-				else if(x==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
-				else if(x==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
+				if(xx==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
+				else if(xx==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
+				else if(xx==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -222,7 +251,9 @@ int16_t communication_loop (void) {
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIREDATA,&cmd[0],5) == 0) {
 			get_sensordata(sendbuf, SEND_BUFFER_LEN);
-			COMM_DBG.println(sendbuf);
+			COMM_SER.print(APP_PRE_GETONEWIREDATA);
+			COMM_SER.print(" ");			
+			COMM_SER.println(sendbuf);
 		}
 
 		// ESPalive
@@ -230,7 +261,7 @@ int16_t communication_loop (void) {
 		else if(memcmp("ESP",&cmd[0],3) == 0) {	
 			COMM_DBG.println("received ESPalive 22");		
 			if (buflen >= 8 && memcmp("ESPalive",cmd,8) == 0) {
-				//COMM_DBG.println("received ESPalive");
+				COMM_DBG.println("received ESPalive");
 			}			 
 		}
 
@@ -238,7 +269,7 @@ int16_t communication_loop (void) {
 		// x - valve index
 		// y - temp sensor index
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		if(memcmp(APP_PRE_SETSENSORINDEX,&cmd[0],5) == 0) {
+		else if(memcmp(APP_PRE_SETSENSORINDEX,&cmd[0],5) == 0) {
 			x = atoi(arg0ptr); // valve index
 			y = atoi(arg1ptr); // temp sensor index
 
@@ -251,6 +282,21 @@ int16_t communication_loop (void) {
 				}
 			}
 			else COMM_DBG.println("to few arguments");
+		}
+
+		// open all valves request
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETALLVLVOPEN,&cmd[0],5) == 0) {
+			COMM_DBG.println("got open all valves request");
+			for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+				myvalves[xx].target_position = 100;
+			}
+		}
+
+		// unknown command
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else {
+			//COMM_DBG.println("unknown command received from ESP");
 		}
 
 	}

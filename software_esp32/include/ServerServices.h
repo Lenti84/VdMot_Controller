@@ -38,56 +38,24 @@
 *END************************************************************************/
 
 
-#include "VdmSystem.h"
-#include <SPIFFS.h> 
-#include "esp_spi_flash.h" 
-#include "helper.h"
-#include <esp_task_wdt.h>
+#pragma once
 
-CVdmSystem VdmSystem;
+#include <stdint.h>
+#include <ArduinoJson.h>
+#include "VdmConfig.h"
 
-CVdmSystem::CVdmSystem()
+class CServerServices
 {
-  spiffsStarted=false;
-  numfiles  = 0;
-}
+public:
+  CServerServices();
+  void init();
+  void initServer();
+  void valvesCalib();
+  void stmDoUpdate(JsonObject doc);
+  void postSetValve (JsonObject doc);
+  
+};
 
-void CVdmSystem::getSystemInfo()
-{   
-    esp_chip_info(&chip_info);      
-}
+extern CServerServices ServerServices;
 
-void CVdmSystem::getFSDirectory() {
-  if (!spiffsStarted) SPIFFS.begin(true);
-  spiffsStarted=true;
-  numfiles  = 0; // Reset number of FS files counter
-  File root = SPIFFS.open("/");
-  if (root) {
-    root.rewindDirectory();
-    File file = root.openNextFile();
-    while (file) { // Now get all the filenames, file types and sizes
-      Filenames[numfiles].filename = (String(file.name()).startsWith("/") ? String(file.name()).substring(1) : file.name());
-      Filenames[numfiles].ftype    = (file.isDirectory() ? "Dir" : "File");
-      Filenames[numfiles].fsize    = ConvBinUnits(file.size(), 1);
-      file = root.openNextFile();
-      numfiles++;
-      if (numfiles>maxFiles) break;
-    }
-    root.close();
-  }
-}
 
-void CVdmSystem::clearFS() {
-  if (!spiffsStarted) SPIFFS.begin(true);
-  spiffsStarted=true;
-  File root = SPIFFS.open("/");
-  if (root) {
-    root.rewindDirectory();
-    File file = root.openNextFile();
-    while (file) {
-      SPIFFS.remove(String(file.name()));
-      file = root.openNextFile();
-    }
-    root.close();
-  }
-}

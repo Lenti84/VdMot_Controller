@@ -8,7 +8,7 @@
 	.centerp {
 		display: flex;
 		justify-content: center;
-		padding: 30px 0;
+		padding: 20px 0;
 	}
 	.centerm {
 		display: flex;
@@ -16,7 +16,12 @@
 		padding: 15px 0;
 		margin:0px 40px 0 0;
 	}
-	
+	.hide {
+		display : none;
+		//display: flex;
+		//justify-content: center;
+		//padding: 20px 0;
+	}
 	.buttonclass:hover {
 		padding: 0.6em;
 		font-weight: bold;
@@ -27,8 +32,9 @@
 		font-weight: bold;
 		background-color: #5db8d9;
 		color: #fff;
-		margin: 2px;
+		margin: 10px;
 		padding: 0.6em;
+		
 	}
 	.buttonclass:disabled {
 		font-weight: bold;
@@ -70,21 +76,39 @@
 	<table class="centerp">
 	<tr>
 	<td>
-	<form method="POST" action="/uploadstm" enctype="multipart/form-data">
-		<input type="file" name="data" accept=".bin" class="buttonclass"/>
-		<input type="submit" name="upload" value="Upload" title="Upload File" class="buttonclass">
-	</form>
+	<input type="file" id="STMFiles" accept=".bin" class="buttonclass">
 	</td>
+		<td>
+		<input type="button" class="buttonclass" style="display:none;" id="uploadSTMButton" value="Upload STM32 file" title="Upload STM32 file now" onclick="app.methods.uploadNow()"/>
+		</td>
 	</tr>
 	</table>
-	<table  class="centerp">
+	<table id="selectTable" class="hide" colspan="2">
+	<tr>
+		<td>
+		<label>Please select one file:
+		<tr>
+		<td>
+		<select id="fileSelect" size="5">
+		  
+		</select>
+		</td>
+		</label>
+		<td>
+			<select id="updCommand" value="0">
+				<option value="0">Normal partition</option>
+                <option value="1">Boot partition</option> 
+			</select>
+		</td>
+		</tr>
+	</tr>
 	<tr>
 		<td>
 		<input type="button" class="buttonclass" id="updateSTM" value="Update STM32 now" title="Update STM32 now" onclick="app.methods.updateNow()"/>
 		</td>
 	</tr>
 	</table>
-	<table  class="centerp">
+	<table id="uploadTable" class="hide">
 	<tr>
 		<th>STM32 is updating</th>
 	</tr>
@@ -98,62 +122,94 @@
 
 <script>	
 
+const updStatus = ["Not started","Started","In progress","Finished","Error"];
 
-
-var id = function(elid) {
+	var id = function(elid) {
 		var ret = document.getElementById(elid);
 		if(!ret){
 			console.log('No element found with id ' + elid);
 		}
 		return ret;
 	};
+	
+	
+	const uploadFile = (file) => {
+		// add file to FormData object
+		const fd = new FormData();
+		fd.append('STMFiles', file);
+		// send `POST` request
+		fetch('/fupload?dir=stm', {
+			method: 'POST',
+			body: fd
+		})
+		.then(res => res.json())
+		.then(json => app.methods.generateFilesList (json))
+		.catch(err => console.error(err));
+	}
 
-setTimeout(function() {
+	var app = {
 
-id("progressBar").value = 33;
-id("progressValue").textContent = "33 %";
-console.log("UpdateNow ");
-
-},1000);
-
-var app = {
-	data() {
-		return {
-		  loading: true,
-		  uploading: false,
-		  progress: 0,
-		  OTAError: null,
-		  OTASuccess: false,
-			
-		  type: 'firmware',
-		  file: null,
-		  deviceData: {
-			id: null,
-			hardware: null,
-		  },
-		};
-	},
 	methods: {
+	
+		async start () {
+			// select file input
+			const input = id('STMFiles');
+			// add event listener
+			input.addEventListener('change', () => {
+				const button = id("uploadSTMButton"); 
+				button.style.display = "block";
+				});
+			var fsDir= await this.getJson("fsdir");
+			if (fsDir) this.generateFilesList (fsDir);
+		}
+	,
+		uploadNow() {
+			const input = id('STMFiles');
+			uploadFile(input.files[0]);
+		}
+	,
 		async updateNow() {
-			console.log("UpdateNow ");
-			await this.postJson("cmd",'{"startStmUpdate":1}');
-			var getUpdateStatusInterval = window.setInterval(this.getUpdateStatus, 5000);
+			let fSelect = id("fileSelect");
+			let updCmd = id("updCommand");
+			if (fSelect.value) {
+				if (!confirm('Are you sure you want to update stm32 ?')) {return}
+				await this.postJson("stmdoupdate",'{"cmd":'+updCmd.value+',"file":"'+fSelect.value+'"}');
+				var getUpdateStatusInterval = window.setInterval(this.getUpdateStatus, 2000);
+			} else alert ("Nothing selected");
 		}
 	,
 		async getUpdateStatus() {
-			var stmUpdStatus=await this.getJson("stmUpdStatus");
+			var stmUpdStatus=await app.methods.getJson("stmupdstatus");
 			if (stmUpdStatus) {
 				id("progressBar").value = stmUpdStatus.percent;
-				id("progressValue").textContent = stmUpdStatus.percent+" %";
+				
+				id("progressValue").textContent = stmUpdStatus.percent+" % " + updStatus[stmUpdStatus.status] ;
 				if (stmUpdStatus.error) {
 					id("progressValue").textContent=stmUpdStatus.error;
 					getUpdateStatusInterval.clear;
 				}
-				if (stmUpdStatus.finished===1) {
+				if (stmUpdStatus.finished) {
 					getUpdateStatusInterval.clear;
 					id("progressValue").textContent = "Update finished"
 				}
 			}
+		}
+	,
+		generateFilesList (filesList) {
+			let selectTable=id("selectTable");
+			selectTable.className = "centerp";
+			let upLoadTable=id("uploadTable");
+			upLoadTable.className = "centerp";
+			let selectBox = id("fileSelect");
+			while (selectBox.options.length > 0) {                
+				selectBox.remove(0);
+			}     
+			filesList.forEach((item) => {
+				if (item.fName.startsWith("stm/")) {
+					let newOption = new Option(item.fName,item.fName);
+					selectBox.add(newOption,undefined);
+				}
+			});
 		}
 	,
 		async postJson(link,postData){
@@ -189,7 +245,14 @@ var app = {
 		  return data
 		}
 	}
-};
+	};
+
+	window.onload = function() {
+		app.methods.start();
+	}
+	
+
+			
 
 </script>
 

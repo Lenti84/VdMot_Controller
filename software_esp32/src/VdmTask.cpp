@@ -69,6 +69,15 @@ void CVdmTask::startApp()
     });
 }
 
+void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
+{
+    STM32ota_setup();
+    STM32ota_start(command,thisFileName);
+    taskIdStm32Ota = taskManager.scheduleFixedRate(10, [] {
+        STM32ota_loop();
+    });
+}
+
 void CVdmTask::startServices()
 {
     taskIdServices = taskManager.scheduleFixedRate(60*1000, [] {
