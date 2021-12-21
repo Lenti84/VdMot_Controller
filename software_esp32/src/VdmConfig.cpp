@@ -96,44 +96,56 @@ void CVdmConfig::clearConfig()
 
 void CVdmConfig::readConfig()
 {
-  prefs.begin(nvsNetCfg,false);
+  
+  if (prefs.begin(nvsNetCfg,false)){
   configFlash.netConfig.eth_wifi=prefs.getUChar(nvsNetEthwifi);
   configFlash.netConfig.dhcpEnabled=prefs.getUChar(nvsNetDhcp,1);
   configFlash.netConfig.staticIp=prefs.getULong(nvsNetStaticIp);
   configFlash.netConfig.mask=prefs.getULong(nvsNetMask);
   configFlash.netConfig.gateway=prefs.getULong(nvsNetGW);
   configFlash.netConfig.dnsIp=prefs.getULong(nvsNetDnsIp); 
-  prefs.getString(nvsNetSsid,(char*) configFlash.netConfig.ssid,sizeof(configFlash.netConfig.ssid));
-  prefs.getString(nvsNetPwd,(char*) configFlash.netConfig.pwd,sizeof(configFlash.netConfig.pwd));
-  prefs.getString(nvsNetUserName,(char*) configFlash.netConfig.userName,sizeof(configFlash.netConfig.userName));
-  prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
-  prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
+  if (prefs.isKey(nvsNetSsid))
+    prefs.getString(nvsNetSsid,(char*) configFlash.netConfig.ssid,sizeof(configFlash.netConfig.ssid));
+  if (prefs.isKey(nvsNetPwd))
+    prefs.getString(nvsNetPwd,(char*) configFlash.netConfig.pwd,sizeof(configFlash.netConfig.pwd));
+  if (prefs.isKey(nvsNetUserName))
+    prefs.getString(nvsNetUserName,(char*) configFlash.netConfig.userName,sizeof(configFlash.netConfig.userName));
+  if (prefs.isKey(nvsNetUserPwd))
+    prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
+  if (prefs.isKey(nvsNetTimeServer))
+    prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
+  
   if (strlen(configFlash.netConfig.timeServer) == 0) {
     memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
     strncpy(configFlash.netConfig.timeServer,"pool.ntp.org",sizeof(configFlash.netConfig.timeServer));
   }
+  
   configFlash.netConfig.timeOffset=prefs.getLong(nvsNetTimeOffset,3600);
   configFlash.netConfig.daylightOffset=prefs.getInt(nvsNetDayLightOffset,3600);
   configFlash.netConfig.syslogLevel=prefs.getUChar(nvsNetSysLogEnable);
   configFlash.netConfig.syslogIp=prefs.getULong(nvsNetSysLogIp);
   configFlash.netConfig.syslogPort=prefs.getUShort(nvsNetSysLogPort);
   prefs.end();
-
-  prefs.begin(nvsProtCfg,false);
+  }
+  if (prefs.begin(nvsProtCfg,false)) {
   configFlash.protConfig.dataProtocol = prefs.getUChar(nvsProtDataProt);
   configFlash.protConfig.brokerIp = prefs.getULong(nvsProtBrokerIp);
   configFlash.protConfig.brokerPort = prefs.getUShort(nvsProtBrokerPort);
   prefs.end();
+  }
 
-  prefs.begin(nvsValvesCfg,false);
-  prefs.getBytes(nvsValves, (void *) configFlash.valvesConfig.valveConfig, sizeof(configFlash.valvesConfig.valveConfig));
+  if (prefs.begin(nvsValvesCfg,false)) {
+  if (prefs.isKey(nvsValves))
+    prefs.getBytes(nvsValves, (void *) configFlash.valvesConfig.valveConfig, sizeof(configFlash.valvesConfig.valveConfig));
   configFlash.valvesConfig.dayOfCalib=prefs.getUChar(nvsDayOfCalib);
   configFlash.valvesConfig.hourOfCalib=prefs.getUChar(nvsHourOfCalib); 
   prefs.end();
-
-  prefs.begin(nvsTempsCfg,false);
-  prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
+  }
+ if  (prefs.begin(nvsTempsCfg,false)){
+  if (prefs.isKey(nvsTemps))
+    prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
+ }
 }
 
 void CVdmConfig::writeConfig()
