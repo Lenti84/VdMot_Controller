@@ -38,21 +38,76 @@
 *END************************************************************************/
 
 
-
 #pragma once
 
-#include <Arduino.h>
 
-#define     STM32OTA_START          0x12
-#define     STM32OTA_STARTBLANK     0x45
+#define USING_CORE_ESP32_CORE_V200_PLUS     true
+// Debug Level from 0 to 4
+#define _ETHERNET_WEBSERVER_LOGLEVEL_       3
 
-void STM32ota_setup();
-void STM32ota_begin();
-void STM32ota_start(uint8_t command, String thisFileName);
-void FlashMode();
-void RunMode();
+#define ETH_ADDR        1
+#define ETH_POWER_PIN   16
+#define ETH_POWER_PIN_ALTERNATIVE 16
+#define ETH_MDC_PIN    23
+#define ETH_MDIO_PIN   18
+#define ETH_TYPE       ETH_PHY_LAN8720
+#define ETH_CLK_MODE   ETH_CLOCK_GPIO0_IN
+
+#include <stdint.h>
+#include <ArduinoJson.h>
+#include "VdmConfig.h"
+#include <Syslog.h>
+#include <AsyncWebServer_WT32_ETH01.h>
+
+#define noneProtocol 0
+#define mqttProtocol 1
+
+#define interfaceAuto 0
+#define interfaceEth  1
+#define interfaceWifi 2
+
+#define currentInterfaceIsEth  0
+#define currentInterfaceIsWifi 1
 
 
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
-extern otaUpdateStatus stmUpdateStatus;
-extern uint8_t stmUpdPercent ;
+
+enum TWifiState {wifiIdle,wifiIsStarting,wifiConnected,wifiDisabled};
+enum TEthState  {ethIdle,ethIsStarting,ethConnected,ethDisabled};
+
+
+typedef struct {
+  uint8_t interfaceType;
+  bool dhcpEnabled;
+  IPAddress ip;
+  IPAddress mask;
+  IPAddress gateway;
+  IPAddress dnsIp; 
+  String mac;       
+} VDM_NETWORK_INFO;
+
+
+
+class CVdmNet
+{
+public:
+  CVdmNet();
+  void init();
+  void setup();
+  void setupEth();
+  void setupWifi();
+  void setupNtp();
+  void checkNet();
+  void startBroker();
+  void mqttBroker();
+ 
+  TWifiState wifiState;
+  TEthState ethState;
+  VDM_NETWORK_INFO networkInfo;
+  bool serverIsStarted;
+  bool dataBrokerIsStarted;
+};
+
+extern CVdmNet VdmNet;
+
+extern Syslog syslog;
+

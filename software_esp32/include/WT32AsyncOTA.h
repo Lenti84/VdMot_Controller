@@ -36,23 +36,53 @@
   Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
 
 *END************************************************************************/
+/*
+    derived from  AsyncElegantOTA using WT32-ETH
+    https://github.com/ayushsharma82/AsyncElegantOTA
 
-
+*/
 
 #pragma once
 
-#include <Arduino.h>
+#include "Arduino.h"
+#include "stdlib_noniso.h"
 
-#define     STM32OTA_START          0x12
-#define     STM32OTA_STARTBLANK     0x45
+#if defined(ESP8266)
+    #include "ESP8266WiFi.h"
+    #include "ESPAsyncTCP.h"
+    #include "flash_hal.h"
+    #include "FS.h"
+#elif defined(ESP32)
+    #include "WiFi.h"
+    #include "AsyncTCP.h"
+    #include "Update.h"
+    #include "esp_int_wdt.h"
+    #include "esp_task_wdt.h"
+#endif
 
-void STM32ota_setup();
-void STM32ota_begin();
-void STM32ota_start(uint8_t command, String thisFileName);
-void FlashMode();
-void RunMode();
+#include "Hash.h"
+#include <AsyncWebServer_WT32_ETH01.h>
+#include "FS.h"
+
+#include "WT32UpdateWebpage.h"
 
 
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
-extern otaUpdateStatus stmUpdateStatus;
-extern uint8_t stmUpdPercent ;
+class CWT32AsyncOTA
+{
+    public:
+    CWT32AsyncOTA();
+    void setID(const char* id);
+    void begin(AsyncWebServer *server, const char* userName="", const char* pwd="");    
+    void restart();
+
+    private:
+    AsyncWebServer *_server;
+    String getID();
+    String _id;
+    String _userName;
+    String _pwd;
+    bool _authRequired;
+};
+
+extern CWT32AsyncOTA WT32AsyncOTA;
+

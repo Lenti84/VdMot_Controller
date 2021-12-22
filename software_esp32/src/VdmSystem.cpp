@@ -38,21 +38,56 @@
 *END************************************************************************/
 
 
+#include "VdmSystem.h"
+#include <SPIFFS.h> 
+#include "esp_spi_flash.h" 
+#include "helper.h"
+#include <esp_task_wdt.h>
 
-#pragma once
+CVdmSystem VdmSystem;
 
-#include <Arduino.h>
+CVdmSystem::CVdmSystem()
+{
+  spiffsStarted=false;
+  numfiles  = 0;
+}
 
-#define     STM32OTA_START          0x12
-#define     STM32OTA_STARTBLANK     0x45
+void CVdmSystem::getSystemInfo()
+{   
+    esp_chip_info(&chip_info);      
+}
 
-void STM32ota_setup();
-void STM32ota_begin();
-void STM32ota_start(uint8_t command, String thisFileName);
-void FlashMode();
-void RunMode();
+void CVdmSystem::getFSDirectory() {
+  if (!spiffsStarted) SPIFFS.begin(true);
+  spiffsStarted=true;
+  numfiles  = 0; // Reset number of FS files counter
+  File root = SPIFFS.open("/");
+  if (root) {
+    root.rewindDirectory();
+    File file = root.openNextFile();
+    while (file) { // Now get all the filenames, file types and sizes
+      Filenames[numfiles].filename = (String(file.name()).startsWith("/") ? String(file.name()).substring(1) : file.name());
+      Filenames[numfiles].ftype    = (file.isDirectory() ? "Dir" : "File");
+      Filenames[numfiles].fsize    = ConvBinUnits(file.size(), 1);
+      file = root.openNextFile();
+      numfiles++;
+      if (numfiles>maxFiles) break;
+    }
+    root.close();
+  }
+}
 
-
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
-extern otaUpdateStatus stmUpdateStatus;
-extern uint8_t stmUpdPercent ;
+void CVdmSystem::clearFS() {
+  if (!spiffsStarted) SPIFFS.begin(true);
+  spiffsStarted=true;
+  File root = SPIFFS.open("/");
+  if (root) {
+    root.rewindDirectory();
+    File file = root.openNextFile();
+    while (file) {
+      SPIFFS.remove(String(file.name()));
+      file = root.openNextFile();
+    }
+    root.close();
+  }
+}

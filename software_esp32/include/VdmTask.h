@@ -41,18 +41,41 @@
 
 #pragma once
 
-#include <Arduino.h>
+#include <TaskManagerIO.h>
+#include "globals.h"
+#include "VdmNet.h" 
+#include "stmApp.h"
+#include "Services.h"
+#include "stm32ota.h"
+#include "stm32.h"
 
-#define     STM32OTA_START          0x12
-#define     STM32OTA_STARTBLANK     0x45
+enum TsetFactoryCfgState  {idle,inProgress,action,resetCfg};
 
-void STM32ota_setup();
-void STM32ota_begin();
-void STM32ota_start(uint8_t command, String thisFileName);
-void FlashMode();
-void RunMode();
+class CVdmTask
+{
+public:
+  CVdmTask();
+  void init();
+  void deleteTask(taskid_t taskId);
+  bool taskExists (taskid_t taskId);
+  void yieldTask (uint16_t ms);
+  void startMqtt();
+  void startApp();
+  void startStm32Ota(uint8_t command,String thisFileName);
+  void startServices();
+  void handleSetFactoryCfg (pintype_t thisPin);
+  void addIntPinResetCfg();
 
+  taskid_t taskIdCheckNet;
+  taskid_t taskIdMqtt;
+  taskid_t taskIdApp;
+  taskid_t taskIdStm32Ota;
+  taskid_t taskIdServices;
+  taskid_t taskIdSetFactoryCfgTimeOut; 
+  taskid_t taskIdSetFactoryCfgInProgress;
 
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
-extern otaUpdateStatus stmUpdateStatus;
-extern uint8_t stmUpdPercent ;
+  TsetFactoryCfgState setFactoryCfgState;
+
+};
+
+extern CVdmTask VdmTask;

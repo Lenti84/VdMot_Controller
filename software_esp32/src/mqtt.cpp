@@ -1,58 +1,103 @@
+/**HEADER*******************************************************************
+  project : VdMot Controller
+
+  author : SurfGargano, Lenti84
+
+  Comments:
+
+  Version :
+
+  Modifcations :
+
+
+***************************************************************************
+*
+* THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+* INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+* STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+* IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+* THE POSSIBILITY OF SUCH DAMAGE.
+*
+**************************************************************************
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License.
+  See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+  Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+
+*END************************************************************************/
+
+
+
 #include <Arduino.h>
 #include <PubSubClient.h>
-//#include <ESP8266WiFi.h>
 #include <WiFi.h>
 #include <Syslog.h>
 #include "mqtt.h"
 #include "globals.h"
-#include "app.h"
+#include "stmApp.h"
+#include "VdmNet.h"
 
+CMqtt Mqtt;
 
-void reconnect();
-void callback(char* topic, byte* payload, unsigned int length);
-void publish_valves ();
+void mcallback(char* topic, byte* payload, unsigned int length) 
+{
+    Mqtt.callback(topic, payload, length);
+}
+
 
 WiFiClient espClient;
 PubSubClient mqtt_client(espClient);
 
-const char* MQTT_BROKER = MQTT_BROKER_IP;
-
-
-void mqtt_setup() {
-    mqtt_client.setServer(MQTT_BROKER, 1883);
-    mqtt_client.setCallback(callback);
+void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort) {
+    mqtt_client.setServer(brokerIP, brokerPort);
+    mqtt_client.setCallback(mcallback);
 
     strcpy(mqtt_maintopic, DEFAULT_MAINTOPIC);
 }
 
+CMqtt::CMqtt()
+{
+    
+}
 
-void mqtt_loop() {
+void CMqtt::mqtt_loop() {
 
-    static unsigned long timer = millis();
+  //  static unsigned long timer = millis();
     
     if (!mqtt_client.connected()) {
         reconnect();        
     }
     mqtt_client.loop();
 
-    if (millis() > (uint32_t) 2000 + timer) {
+ /*   if ((millis()-timer) > (uint32_t) 2000) {
         timer = millis();
-
+*/
         publish_valves ();
 
         //Serial.println("mqtt publish valves");
-    }    
+//    }    
 
 }
 
 
-void reconnect() {
+void CMqtt::reconnect() {
     char topicstr[MAINTOPIC_LEN+20];
     char nrstr[3];
 
     while (!mqtt_client.connected()) {
         Serial.println("Reconnecting MQTT...");
-        if (!mqtt_client.connect("ESP8266Client")) {
+        if (!mqtt_client.connect("VdMot")) {
             Serial.print("failed, rc=");
             Serial.print(mqtt_client.state());
             Serial.println(" retrying in 5 seconds");
@@ -83,7 +128,7 @@ void reconnect() {
 }
 
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void CMqtt::callback(char* topic, byte* payload, unsigned int length) {
     unsigned char found = 0;
     unsigned char value;
 
@@ -146,15 +191,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
         //Serial.println(&topic[found]);
         if (0 == strcmp(&topic[found],"target")) {
             //Serial.println("found target");
-            syslog.log(LOG_INFO, "MQTT: found target topic");
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
+               syslog.log(LOG_INFO, "MQTT: found target topic");
+            }	
+            
             actuators[value-1].target_position = atoi(msg);
         }
         else {            
             found = 0;
         }
     }
-    else syslog.log(LOG_ERR, "MQTT: cant eval data");
-
+    else {
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
+            syslog.log(LOG_ERR, "MQTT: cant eval data");
+        }	
+    }
 
     // if(strcmp(msg,"on")==0){
     //     //digitalWrite(13, HIGH);
@@ -167,7 +218,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 
-void publish_valves () {
+void CMqtt::publish_valves () {
 
     char topicstr[MAINTOPIC_LEN+20];
     char nrstr[3];

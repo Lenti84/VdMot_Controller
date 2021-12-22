@@ -38,21 +38,22 @@
 *END************************************************************************/
 
 
+#include "helper.h"
 
-#pragma once
+String ip2String (IPAddress ipv4addr)
+{
+  return ipv4addr.toString();
+}
 
-#include <Arduino.h>
-
-#define     STM32OTA_START          0x12
-#define     STM32OTA_STARTBLANK     0x45
-
-void STM32ota_setup();
-void STM32ota_begin();
-void STM32ota_start(uint8_t command, String thisFileName);
-void FlashMode();
-void RunMode();
-
-
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
-extern otaUpdateStatus stmUpdateStatus;
-extern uint8_t stmUpdPercent ;
+String ConvBinUnits(size_t bytes, byte resolution) {
+  if      (bytes < 1024)                 {
+    return String(bytes) + " B";
+  }
+  else if (bytes < 1024 * 1024)          {
+    return String(bytes / 1024.0, resolution) + " KB";
+  }
+  else if (bytes < (1024 * 1024 * 1024)) {
+    return String(bytes / 1024.0 / 1024.0, resolution) + " MB";
+  }
+  else return "";
+}

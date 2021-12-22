@@ -39,20 +39,16 @@
 
 
 
+
 #pragma once
 
-#include <Arduino.h>
+#include "stdint.h"
 
-#define     STM32OTA_START          0x12
-#define     STM32OTA_STARTBLANK     0x45
+typedef struct tfs_dir_entry
+{
+    char*      NAME;
+    uint32_t   FLAGS;
+    uint8_t*   DATA;
+    uint32_t   SIZE;
+} TFS_DIR_ENTRY;
 
-void STM32ota_setup();
-void STM32ota_begin();
-void STM32ota_start(uint8_t command, String thisFileName);
-void FlashMode();
-void RunMode();
-
-
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
-extern otaUpdateStatus stmUpdateStatus;
-extern uint8_t stmUpdPercent ;

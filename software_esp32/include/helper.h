@@ -41,18 +41,11 @@
 
 #pragma once
 
-#include <Arduino.h>
-
-#define     STM32OTA_START          0x12
-#define     STM32OTA_STARTBLANK     0x45
-
-void STM32ota_setup();
-void STM32ota_begin();
-void STM32ota_start(uint8_t command, String thisFileName);
-void FlashMode();
-void RunMode();
+#include "globals.h"
+#include "VdmConfig.h" 
+#include "esp_system.h"
 
 
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
-extern otaUpdateStatus stmUpdateStatus;
-extern uint8_t stmUpdPercent ;
+String ip2String (IPAddress ipv4addr);
+String ConvBinUnits(size_t bytes, byte resolution);
+ 

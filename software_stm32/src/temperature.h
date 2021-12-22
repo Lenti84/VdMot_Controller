@@ -55,11 +55,5 @@ extern uint8_t numberOfDevices;
 extern DallasTemperature sensors;
 
 
-
-
-
-
-
 #endif //_TEMPERATURE_H
-
 

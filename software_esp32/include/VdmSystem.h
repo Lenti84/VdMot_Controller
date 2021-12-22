@@ -41,18 +41,34 @@
 
 #pragma once
 
-#include <Arduino.h>
+#include "globals.h"
+#include "VdmConfig.h" 
+#include "esp_system.h"
+#include "helper.h"
 
-#define     STM32OTA_START          0x12
-#define     STM32OTA_STARTBLANK     0x45
+#define  maxFiles  100
 
-void STM32ota_setup();
-void STM32ota_begin();
-void STM32ota_start(uint8_t command, String thisFileName);
-void FlashMode();
-void RunMode();
+typedef struct
+{
+  String filename;
+  String ftype;
+  String fsize;
+} fileinfo;
 
 
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
-extern otaUpdateStatus stmUpdateStatus;
-extern uint8_t stmUpdPercent ;
+class CVdmSystem
+{
+public:
+  CVdmSystem();
+  void getSystemInfo();
+  void getFSDirectory();
+  void clearFS();
+
+  esp_chip_info_t chip_info;
+  fileinfo Filenames[maxFiles]; // Enough for most purposes!
+  uint8_t numfiles;
+private:
+  bool spiffsStarted;
+};
+
+extern CVdmSystem VdmSystem;
