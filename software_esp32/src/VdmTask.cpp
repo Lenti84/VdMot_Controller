@@ -40,6 +40,8 @@
 
 #include "VdmTask.h"
 #include "VdmNet.h"
+#include "ServerServices.h"
+#include <BasicInterruptAbstraction.h>
 
 CVdmTask VdmTask;
 
@@ -50,6 +52,9 @@ CVdmTask::CVdmTask()
   taskIdApp=TASKMGR_INVALIDID;
   taskIdStm32Ota=TASKMGR_INVALIDID;
   taskIdServices=TASKMGR_INVALIDID;
+  taskIdSetFactoryCfgTimeOut=TASKMGR_INVALIDID;
+  taskIdSetFactoryCfgInProgress=TASKMGR_INVALIDID;
+  setFactoryCfgState=idle;
 }
 
 void CVdmTask::init()
@@ -59,7 +64,6 @@ void CVdmTask::init()
             VdmNet.checkNet();
         });
     }
-    UART_DBG.println("task checkNet : "+String(taskIdCheckNet));
 }
 
 void CVdmTask::startMqtt()
@@ -109,16 +113,16 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
         UART_DBG.println("task stmOta exists, wait 100 ms for setting");
         delay (100);         
     }
-    
 }
 
 
 void CVdmTask::startServices()
 {
+    addIntPinResetCfg();
     taskIdServices = taskManager.scheduleFixedRate(1000, [] {
         Services.ServicesLoop();
     });
-    UART_DBG.println("task services " +String(taskIdServices)); 
+    
 }
 
 void CVdmTask::deleteTask (taskid_t taskId)
@@ -134,4 +138,46 @@ bool CVdmTask::taskExists (taskid_t taskId)
 void CVdmTask::yieldTask (uint16_t ms)
 {
     taskManager.yieldForMicros(ms*1000);
+}
+
+void interruptTask(pintype_t thisPin) 
+{
+   VdmTask.handleSetFactoryCfg (thisPin);
+}
+    
+void CVdmTask::handleSetFactoryCfg (pintype_t thisPin)
+{
+    int readPin = digitalRead(2);
+    UART_DBG.println("Interrupt triggered " + String(thisPin) + String(readPin));
+    if (readPin==0) {
+        if (setFactoryCfgState==idle) {
+            setFactoryCfgState=inProgress;
+            taskIdSetFactoryCfgTimeOut = taskManager.scheduleOnce(60*1000, [] {
+                VdmTask.setFactoryCfgState=idle;
+                UART_DBG.println("setFactoryCfgState idle");
+            });
+            taskIdSetFactoryCfgInProgress = taskManager.scheduleOnce(10*1000, [] {
+                VdmTask.setFactoryCfgState=action;
+                UART_DBG.println("setFactoryCfgState action");
+            });
+        }
+    } else {
+      if (setFactoryCfgState==action) {
+          setFactoryCfgState=resetCfg;
+          UART_DBG.println("restore Config");
+          restoreConfig();
+      }       
+    }
+}
+
+
+void CVdmTask::addIntPinResetCfg ()
+{
+    const int pinSetFactoryCfg = 2;
+    BasicArduinoInterruptAbstraction interruptAbstraction;
+
+    pinMode(pinSetFactoryCfg, INPUT_PULLUP);
+
+    taskManager.setInterruptCallback(interruptTask);
+    taskManager.addInterrupt(&interruptAbstraction, pinSetFactoryCfg, CHANGE);
 }

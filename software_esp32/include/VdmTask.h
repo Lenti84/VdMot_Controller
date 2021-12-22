@@ -49,6 +49,8 @@
 #include "stm32ota.h"
 #include "stm32.h"
 
+enum TsetFactoryCfgState  {idle,inProgress,action,resetCfg};
+
 class CVdmTask
 {
 public:
@@ -61,13 +63,19 @@ public:
   void startApp();
   void startStm32Ota(uint8_t command,String thisFileName);
   void startServices();
-
+  void handleSetFactoryCfg (pintype_t thisPin);
+  void addIntPinResetCfg();
 
   taskid_t taskIdCheckNet;
   taskid_t taskIdMqtt;
   taskid_t taskIdApp;
   taskid_t taskIdStm32Ota;
   taskid_t taskIdServices;
+  taskid_t taskIdSetFactoryCfgTimeOut; 
+  taskid_t taskIdSetFactoryCfgInProgress;
+
+  TsetFactoryCfgState setFactoryCfgState;
+
 };
 
 extern CVdmTask VdmTask;

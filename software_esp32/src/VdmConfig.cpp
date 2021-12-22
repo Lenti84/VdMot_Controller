@@ -58,7 +58,7 @@ void CVdmConfig::init()
 
 void CVdmConfig::setDefault()
 {
-  configFlash.netConfig.eth_wifi = 0;	      // 0 = eth (default)
+  configFlash.netConfig.eth_wifi = 0;	      // 0 = auto (default)
   configFlash.netConfig.dhcpEnabled = 1;    // 0 = no DHCP, 1 = use DHCP
   configFlash.netConfig.staticIp = 0;
   configFlash.netConfig.mask = 0;
@@ -82,6 +82,11 @@ void CVdmConfig::clearConfig()
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++){
     configFlash.valvesConfig.valveConfig[i].active = false;
     memset (configFlash.valvesConfig.valveConfig[i].name,0,sizeof(configFlash.valvesConfig.valveConfig[i].name));
+  }
+  for (uint8_t i=0; i<ACTUATOR_COUNT; i++){
+    configFlash.tempsConfig.tempConfig[i].active = false;
+    configFlash.tempsConfig.tempConfig[i].offset = 0;
+    memset (configFlash.tempsConfig.tempConfig[i].name,0,sizeof(configFlash.tempsConfig.tempConfig[i].name));
   }
   configFlash.valvesConfig.dayOfCalib=0;
   configFlash.valvesConfig.hourOfCalib=0;
@@ -190,6 +195,7 @@ void CVdmConfig::writeConfig()
   prefs.clear();
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
+  delay(1000);
 }
 
 uint32_t CVdmConfig::doc2IPAddress(String id)

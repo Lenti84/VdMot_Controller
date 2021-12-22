@@ -88,13 +88,11 @@ void valvesCalib()
 
 void restart ()
 {  
-  UART_DBG.println("restart ");
   ESP.restart();
 }
 
 void writeConfig ()
 {  
-  UART_DBG.println("write config ");
   VdmConfig.writeConfig();
   ESP.restart();
 }
@@ -108,14 +106,13 @@ void resetConfig ()
 
 void restoreConfig ()
 {  
-  VdmConfig.init(); 
+  VdmConfig.setDefault();
   VdmConfig.writeConfig();
   ESP.restart();
 }
 
 void clearFS ()
 {  
-  UART_DBG.println("clear fs ");
   VdmSystem.clearFS();
 }
 
