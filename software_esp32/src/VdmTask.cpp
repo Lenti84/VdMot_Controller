@@ -102,7 +102,7 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
     taskManager.setTaskEnabled (taskIdApp,false);
     UART_DBG.println("stop task stmApp");
     delay (1000);           // wait to finish task;
-    STM32ota_setup();
+    //STM32ota_setup();         // Lenti84 --> must be called at startup because of pin configuration
     UART_DBG.println("start task stmOta");
     STM32ota_start(command,thisFileName);
     if (taskIdStm32Ota==TASKMGR_INVALIDID) {

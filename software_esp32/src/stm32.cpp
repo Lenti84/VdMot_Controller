@@ -97,7 +97,11 @@ void STM32ota_setup() {
 
   // BOOT and RESET Pin of STM32  
   pinMode(BOOT0, OUTPUT);
+  digitalWrite(BOOT0, LOW); 
+
   pinMode(NRST, OUTPUT);
+  digitalWrite(NRST, LOW); 
+
   stm32ota_command = 0;
   stm32ota_state = STM32OTA_IDLE;
   stmUpdateStatus = updNotStarted;
@@ -404,7 +408,7 @@ void ResetSTM32(bool useTask) {
   digitalWrite(NRST, HIGH);  
   if (useTask) VdmTask.yieldTask(150); else delay(150);
   digitalWrite(NRST, LOW);
- if (useTask) VdmTask.yieldTask(150); else delay(150);
+  if (useTask) VdmTask.yieldTask(150); else delay(150);
 }
 
 
