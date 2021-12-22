@@ -31,12 +31,15 @@
 #include "stm32.h"
 #include "stm32ota.h"
 #include "globals.h"
+#include "VdmTask.h"
 #include <SPIFFS.h>
 #include <FS.h>
 #include <CRC32.h>
 
 
 int stm32ota_command = 0;
+
+uint8_t stmUpdPercent = 0;
 
 File dir;
 File file;
@@ -79,7 +82,7 @@ flashfile myflashfile;
 
 
 void STM32ota_begin();
-void ResetSTM32();
+void ResetSTM32(bool useTask = false);
 int PrepareFile(String FileName);
 int FlashBytes(int Block, int Bytes);
 String updateFileName;
@@ -134,8 +137,9 @@ void STM32ota_loop() {
 
         case STM32OTA_PREPARE: 
                 STM32ota_begin();
-                ResetSTM32();
-                delay(1500);            // stm32 is a little slow
+                ResetSTM32(true);
+               // delay(1500);            // stm32 is a little slow
+                VdmTask.yieldTask(1500);
                 UART_STM32.flush();     // flush garbage in rx buffer
                 while (UART_STM32.available()) {
                   UART_STM32.read();
@@ -343,11 +347,13 @@ void STM32ota_loop() {
         case STM32OTA_STARTOVER:
                 myflashfile.fsfile.close();
                 UART_DBG.println("STM32 ota: start over");
-                ResetSTM32();
+                ResetSTM32(true);
                 UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL);
-                delay(1000);
+                //delay(1000);
+                VdmTask.yieldTask(1000);
                 stm32ota_state = STM32OTA_IDLE;
                 stmUpdateStatus = updFinished;
+                Services.restartStmApp=true;
                 break;
 
 
@@ -356,6 +362,7 @@ void STM32ota_loop() {
                 UART_DBG.println("STM32 ota: error");
                 stmUpdateStatus = updError;
                 stm32ota_state = STM32OTA_IDLE;
+                Services.restartStmApp=true;
                 break;
 
         default:
@@ -391,13 +398,13 @@ void STM32ota_begin() {
 }
 
 
-void ResetSTM32() {
+void ResetSTM32(bool useTask) {
   UART_DBG.println("STM32 ota: reset STM32");
-  delay(100);
+  if (useTask) VdmTask.yieldTask(100); else delay(100); ;
   digitalWrite(NRST, HIGH);  
-  delay(150);
+  if (useTask) VdmTask.yieldTask(150); else delay(150);
   digitalWrite(NRST, LOW);
-  delay(150);
+ if (useTask) VdmTask.yieldTask(150); else delay(150);
 }
 
 

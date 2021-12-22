@@ -116,7 +116,7 @@ void CVdmNet::setup() {
   switch (VdmConfig.configFlash.netConfig.eth_wifi) {
     case interfaceAuto :
       {
-        setupEth();
+        setupEth(); 
         setupWifi();
         break;
       }
@@ -192,6 +192,12 @@ void CVdmNet::setupWifi() {
     switch (wifiState) {
       case wifiIdle :
       {
+        if ((strlen(VdmConfig.configFlash.netConfig.ssid)==0) || (strlen(VdmConfig.configFlash.netConfig.pwd)==0))
+        {
+          wifiState=wifiDisabled;
+          UART_DBG.println("wifi : no ssid or no pathword");
+          break;
+        }
         WiFi.mode(WIFI_AP_STA);
         if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) 
         {

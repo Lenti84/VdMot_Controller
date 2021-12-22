@@ -49,6 +49,7 @@ class CServices
 public:
   CServices();
   void ServicesLoop();
+  bool restartStmApp;
 };
 
 extern CServices Services;

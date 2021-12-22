@@ -98,18 +98,10 @@ void app_setup() {
 
 
 void app_loop() {
-    switch (stmUpdateStatus) {
-        case updNotStarted : 
-        case updFinished :
-        case updError :
-        { 
             app_check_data();
             app_comm_machine(); 
             app_alive_check();
             app_web_cmd_check(); 
-            break; 
-        }
-    }
 }
 
 void app_cmd(String command) {    

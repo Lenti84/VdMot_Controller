@@ -39,6 +39,8 @@
 
 
 #include "Services.h"
+#include "globals.h"
+#include "VdmTask.h"
 
 CServices Services;
 
@@ -48,5 +50,11 @@ CServices::CServices()
 
 void CServices::ServicesLoop()
 {
+  if (restartStmApp) 
+  {
     
+    VdmTask.startApp();
+    restartStmApp=false;
+  }
+   
 }

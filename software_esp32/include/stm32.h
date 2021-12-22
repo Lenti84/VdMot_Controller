@@ -55,3 +55,4 @@ void RunMode();
 
 enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
 extern otaUpdateStatus stmUpdateStatus;
+extern uint8_t stmUpdPercent ;

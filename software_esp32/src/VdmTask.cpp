@@ -45,47 +45,93 @@ CVdmTask VdmTask;
 
 CVdmTask::CVdmTask()
 {
+  taskIdCheckNet=TASKMGR_INVALIDID;
+  taskIdMqtt=TASKMGR_INVALIDID;
+  taskIdApp=TASKMGR_INVALIDID;
+  taskIdStm32Ota=TASKMGR_INVALIDID;
+  taskIdServices=TASKMGR_INVALIDID;
 }
 
 void CVdmTask::init()
 {
-    taskIdCheckNet = taskManager.scheduleFixedRate(1000, [] {
-        VdmNet.checkNet();
-    });
+    if (taskIdCheckNet==TASKMGR_INVALIDID) {
+        taskIdCheckNet = taskManager.scheduleFixedRate(1000, [] {
+            VdmNet.checkNet();
+        });
+    }
+    UART_DBG.println("task checkNet : "+String(taskIdCheckNet));
 }
 
 void CVdmTask::startMqtt()
 {
-    taskIdMqtt = taskManager.scheduleFixedRate(10000, [] {
-        VdmNet.mqttBroker();
-    });
+    if (taskIdMqtt==TASKMGR_INVALIDID) {
+        taskIdMqtt = taskManager.scheduleFixedRate(10000, [] {
+            VdmNet.mqttBroker();
+        });
+    }
 }
 
 void CVdmTask::startApp()
 {
-    app_setup();
-    taskIdApp = taskManager.scheduleFixedRate(100, [] {
-        app_loop();
-    });
+    if (taskIdStm32Ota!=TASKMGR_INVALIDID) 
+    {
+        deleteTask (taskIdStm32Ota);
+        delay (1000);       // wait to finish task; 
+        taskIdStm32Ota=TASKMGR_INVALIDID;
+        UART_DBG.println("delete task stmOta"); 
+    }
+    if (taskIdApp==TASKMGR_INVALIDID) { 
+        UART_DBG.println("start task stmApp");
+        app_setup();
+        taskIdApp = taskManager.scheduleFixedRate(100, [] {
+                app_loop();
+        });
+        UART_DBG.println("task stmApp " +String(taskIdApp)); 
+    } else {
+        taskManager.setTaskEnabled (taskIdApp,true);  
+        UART_DBG.println("restart task stmApp");  
+    }
 }
 
 void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
 {
+    taskManager.setTaskEnabled (taskIdApp,false);
+    UART_DBG.println("stop task stmApp");
+    delay (1000);           // wait to finish task;
     STM32ota_setup();
+    UART_DBG.println("start task stmOta");
     STM32ota_start(command,thisFileName);
-    taskIdStm32Ota = taskManager.scheduleFixedRate(10, [] {
-        STM32ota_loop();
-    });
+    if (taskIdStm32Ota==TASKMGR_INVALIDID) {
+        taskIdStm32Ota = taskManager.scheduleFixedRate(50, [] {
+            STM32ota_loop();
+        });
+    } else {
+        UART_DBG.println("task stmOta exists, wait 100 ms for setting");
+        delay (100);         
+    }
+    
 }
+
 
 void CVdmTask::startServices()
 {
-    taskIdServices = taskManager.scheduleFixedRate(60*1000, [] {
+    taskIdServices = taskManager.scheduleFixedRate(1000, [] {
         Services.ServicesLoop();
     });
+    UART_DBG.println("task services " +String(taskIdServices)); 
 }
 
 void CVdmTask::deleteTask (taskid_t taskId)
 {
   taskManager.cancelTask (taskId);
+}
+
+bool CVdmTask::taskExists (taskid_t taskId)
+{
+   return (taskManager.getTask(taskId)!=NULL);
+}
+
+void CVdmTask::yieldTask (uint16_t ms)
+{
+    taskManager.yieldForMicros(ms*1000);
 }

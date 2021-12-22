@@ -206,8 +206,7 @@ String CWeb::getFSDir()
 
 String CWeb::getStmUpdStatus()
 {
-  uint8_t percent = 50;
-  String result = "{\"percent\":"+String(percent)+",\"status\":"+String(stmUpdateStatus)+"}";
+  String result = "{\"percent\":"+String(stmUpdPercent)+",\"status\":"+String(stmUpdateStatus)+"}";
   return result;
 }
 

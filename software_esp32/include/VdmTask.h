@@ -55,10 +55,13 @@ public:
   CVdmTask();
   void init();
   void deleteTask(taskid_t taskId);
+  bool taskExists (taskid_t taskId);
+  void yieldTask (uint16_t ms);
   void startMqtt();
   void startApp();
   void startStm32Ota(uint8_t command,String thisFileName);
   void startServices();
+
 
   taskid_t taskIdCheckNet;
   taskid_t taskIdMqtt;
