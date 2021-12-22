@@ -65,7 +65,9 @@ int16_t Terminal_Init (void) {
 	
 	COMM_DBG.begin(115200);
 	while(!COMM_DBG);
-	COMM_DBG.println("VdMot Controller"); COMM_DBG.flush();
+	COMM_DBG.print("VdMot Controller "); 
+	COMM_DBG.println(FIRMWARE_VERSION);
+	COMM_DBG.flush();
 
 	testmode = 0;
 

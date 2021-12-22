@@ -40,7 +40,7 @@
 #include "eeprom.h"
 #include "mycan.h"
 #include "rs485.h"
-
+#include "otasupport.h"
 
 
 //using Matthias Hertel driver https://github.com/mathertel/LiquidCrystal_PCF8574
@@ -52,7 +52,32 @@
 // --> increased tx buffer size from default 64 to 1024
 
 
+void setup_system();
+void loop_system();
+
+
 void setup() {
+  BootSetup();
+}
+
+
+void loop() {
+
+  BootLoop();
+
+  if (bootstate) {
+    setup_system() ;
+
+    while(1) {
+      loop_system();
+    }
+  }
+}
+
+
+void setup_system() {
+
+  //JumpToBootloader();
 
   Wire.begin();
   Wire.setSDA(I2C_SDA_PIN); // 
@@ -118,7 +143,8 @@ void setup() {
   //myvalves[0].sensorindex = 0;
 }
 
-void loop() {
+
+void loop_system() {
   //static int x = 0;
   static int time10s = 0;
   static uint32_t loop_10ms = 0;
