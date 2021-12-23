@@ -50,6 +50,7 @@
 #include "stm32.h"
 
 enum TsetFactoryCfgState  {idle,inProgress,action,resetCfg};
+#define pinSetFactoryCfg  2
 
 class CVdmTask
 {

@@ -152,6 +152,7 @@ public:
   void postProtCfg (JsonObject doc);
   void postValvesCfg (JsonObject doc);
   void postTempsCfg (JsonObject doc);
+  String handleAuth (JsonObject doc);
   uint32_t doc2IPAddress(String id);
 
   Preferences prefs;

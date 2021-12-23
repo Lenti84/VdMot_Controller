@@ -79,6 +79,8 @@ CServerServices ServerServices;
 #define th  "text/html"
 #define gz  "Content-Encoding : gzip"
 
+#define resOk "{\"res\":\"ok\"}"
+
 // server handles --------------------------------------------------
 
 void valvesCalib()
@@ -389,7 +391,7 @@ void  CServerServices::initServer() {
     if (json.is<JsonObject>()) {
       JsonObject&& jsonObj = json.as<JsonObject>();
       ServerServices.stmDoUpdate (jsonObj);
-      request->send(200, tp, "ok");
+      request->send(200, aj, resOk);
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(stmDoUpdateHandler);
@@ -398,7 +400,7 @@ void  CServerServices::initServer() {
     if (json.is<JsonObject>()) {
       JsonObject&& jsonObj = json.as<JsonObject>();
       ServerServices.postSetValve (jsonObj);
-      request->send(200, tp, "ok");
+      request->send(200, aj, resOk);
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(setValveHandler);
@@ -407,7 +409,7 @@ void  CServerServices::initServer() {
     if (json.is<JsonObject>()) {
       JsonObject&& jsonObj = json.as<JsonObject>();
       VdmConfig.postNetCfg (jsonObj);
-      request->send(200, tp, "ok");
+      request->send(200, aj, resOk);
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(netCfgHandler);
@@ -416,7 +418,7 @@ void  CServerServices::initServer() {
     if (json.is<JsonObject>()) {
       JsonObject&& jsonObj = json.as<JsonObject>();
       VdmConfig.postProtCfg (jsonObj);
-      request->send(200, tp, "ok");
+      request->send(200, aj, resOk);
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(protCfgHandler);
@@ -425,7 +427,7 @@ void  CServerServices::initServer() {
     if (json.is<JsonObject>()) {
       JsonObject&& jsonObj = json.as<JsonObject>();
       VdmConfig.postValvesCfg (jsonObj);
-      request->send(200, tp, "ok");
+      request->send(200, aj, resOk);
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(valvesCfgHandler);
@@ -434,16 +436,25 @@ void  CServerServices::initServer() {
     if (json.is<JsonObject>()) {
       JsonObject&& jsonObj = json.as<JsonObject>();
       VdmConfig.postTempsCfg (jsonObj);
-      request->send(200, tp, "ok");
+      request->send(200, aj, resOk);
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(tempsCfgHandler);
+
+  AsyncCallbackJsonWebHandler* tempsAuthHandler = new AsyncCallbackJsonWebHandler("/auth", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      String auth=VdmConfig.handleAuth (jsonObj);
+      request->send(200, aj, auth);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(tempsAuthHandler);
 
   AsyncCallbackJsonWebHandler* cmdHandler = new AsyncCallbackJsonWebHandler("/cmd", [](AsyncWebServerRequest *request, JsonVariant &json) {
     if (json.is<JsonObject>()) {
       JsonObject&& jsonObj = json.as<JsonObject>();
       handleCmd (jsonObj);
-      request->send(200, tp, "ok");
+      request->send(200, aj, resOk);
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(cmdHandler);
