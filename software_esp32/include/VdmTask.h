@@ -60,7 +60,7 @@ public:
   void deleteTask(taskid_t taskId);
   bool taskExists (taskid_t taskId);
   void yieldTask (uint16_t ms);
-  void startMqtt();
+  void startMqtt(uint32_t interval);
   void startApp();
   void startStm32Ota(uint8_t command,String thisFileName);
   void startServices();
@@ -74,7 +74,9 @@ public:
   taskid_t taskIdServices;
   taskid_t taskIdSetFactoryCfgTimeOut; 
   taskid_t taskIdSetFactoryCfgInProgress;
-
+  taskid_t taskIdResetSystem;
+  taskid_t restartStmApp;
+  
   TsetFactoryCfgState setFactoryCfgState;
 
 };

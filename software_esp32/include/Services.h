@@ -48,8 +48,9 @@ class CServices
 {
 public:
   CServices();
-  void ServicesLoop();
-  bool restartStmApp;
+  void servicesLoop();
+  void restartSystem();
+  void restartStmApp(uint32_t ms);
 };
 
 extern CServices Services;

@@ -74,6 +74,9 @@ typedef struct {
   uint8_t  dataProtocol; // 0 = no protocol , 1 = mqtt
   uint32_t brokerIp;
   uint16_t brokerPort;
+  uint32_t brokerInterval;
+  char userName[65];
+  char userPwd[65];
 } VDM_PROTOCOL_CONFIG;
 
 typedef struct {
@@ -129,6 +132,9 @@ typedef struct
 #define nvsProtDataProt   "dataProt"
 #define nvsProtBrokerIp   "brokerIp"
 #define nvsProtBrokerPort "brokerPort"
+#define nvsProtBrokerInterval "brokerInterval"
+#define nvsProtBrokerUser "brokerUser"
+#define nvsProtBrokerPwd  "brokerPwd"
 
 #define nvsValvesCfg      "valvesCfg"
 #define nvsValves         "valves"

@@ -341,7 +341,7 @@
 		<div class="rtabframe" style="width: 250px;">
 		<h3>Network</h3>
 		<table id="netConfig" class="tabTable">
-		<tr>
+			<tr>
 				<th>User name</th>
 				<td>
 				<input type="text" maxlength="64" class="form-input" id="netcfg-UserName" name="netcfg-UserName" />
@@ -508,10 +508,33 @@
 			<tr>
 				<th>Broker Port</th>
 				<td>
-				<input type="text" class="form-input" id="protcfg-mqttPort" name="protcfg-mqttPort" placeholder="xxxx"/>
+				<input type="text" class="form-input" id="protcfg-mqttPort" name="protcfg-mqttPort" placeholder="xxxxx"/>
 				</td>
 			</tr>
-
+			<tr>
+				<th>Interval (ms)</th>
+				<td>
+				<input type="number" class="form-input" min="100" id="protcfg-Interval" name="protcfg-Interval"/>
+				</td>
+			</tr>
+			<tr>
+				<th>User name</th>
+				<td>
+				<input type="text" class="form-input" id="protcfg-User" name="protcfg-User"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="protcfg-Pwd" name="protcfg-Pwd"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Re-type password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="protcfg-Pwd2" name="protcfg-Pwd2"/>
+				</td>
+			</tr>
 		</table>
 		</div>
 
@@ -687,6 +710,7 @@
 				
 		var WifiPwdHasChanged=false;
 		var UserPwdHasChanged=false;
+		var brokerPwdHasChanged=false;
 		var showAllTabs= false;
 		var getStatusInterval;
 		
@@ -1006,6 +1030,10 @@
 				UserPwdHasChanged=true;
 			};
 			
+			id("protcfg-Pwd").onchange = function(){
+				brokerPwdHasChanged=true;
+			};
+			
 			id("activeSetValves").onclick = function(){
 				activateSetValves();
 			};
@@ -1059,46 +1087,50 @@
 			modal.style.display = "block";
 		}
 		
-		function reloadHome (timeOut) {
-			if (getStatusInterval) clearInterval(getStatusInterval);
+		function reloadDoc (path,timeOut,clear=false,reLoad=true) {
+			if ((clear===true) && getStatusInterval) clearInterval(getStatusInterval);
 			setTimeout(function() {
-					location.assign('http:/#Home');
-					location.replace('http:/#Home');
-					location.reload();					
+					console.log("assign now");
+					location.assign(path);
+					if (reLoad===true){
+						console.log("reload now");
+						location.reload(true);					
+					}
 				},timeOut);
 		}
 		
 		function factoryRestore(){
 			if (confirm('Are you sure you want to restore configuration to factory settings ?')) {
 				postCmd('{"action":"restoreCfg"}');
-				reloadHome(1000);
+				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
 		function resetConfig(){
 			if (confirm('Are you sure you want to reset configuration to factory settings except network ?')) {
 				postCmd('{"action":"resetCfg"}');
-				reloadHome(1000);
+				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
 		function reboot(){
 			if (confirm('Are you sure you want to reboot ?')) {
 				postCmd('{"action":"reboot"}');
-				reloadHome(1000);
+				reloadDoc("http:/#home",4000,true);
 			}
 		}
 			
 		async function saveConfig(){
 			if (confirm('Are you sure you want to save configuration ?')) {
-				await postNetCfg();
-				await postProtCfg();
+				if (!(await postNetCfg())) return;
+				if (!(await postProtCfg())) return;
 				await postValvesCfg();
 				await postTempsCfg();
 				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
-				reloadHome(3000);
+				mqttPwdHasChanged=false;
+				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
@@ -1115,7 +1147,7 @@
 				netCfg.pwd = id("netcfg-WifiPwd").value;
 				if (id("netcfg-WifiPwd").value!=id("netcfg-WifiPwd2").value) {
 					alert ("Wifi password does not compare ! Please re-type");
-					return;
+					return (false);
 				}
 			}
 			netCfg.userName = id("netcfg-UserName").value;
@@ -1123,7 +1155,7 @@
 				netCfg.userPwd = id("netcfg-UserPwd").value;
 				if (id("netcfg-UserPwd").value!=id("netcfg-UserPwd2").value) {
 					alert ("User password does not compare ! Please re-type");
-					return;
+					return (false);
 				}
 			}
 			netCfg.timeServer = id("netcfg-TimeServer").value;
@@ -1132,7 +1164,10 @@
 			netCfg.syslogLevel=id("netcfg-syslog-select").selectedIndex;
 			netCfg.syslogIp=id("netcfg-syslog-ip").value;
 			netCfg.syslogPort=id("netcfg-syslog-port").value;
+			WifiPwdHasChanged=false;
+			UserPwdHasChanged=false;
 			await postJson("netconfig",JSON.stringify(netCfg));
+			return (true);
 		}
 		
 		async function postProtCfg() {
@@ -1141,8 +1176,19 @@
 			if (id("protcfg-dataProt").selectedIndex==1) {
 				protCfg.mqttIp = id("protcfg-mqttIp").value;
 				protCfg.mqttPort = id("protcfg-mqttPort").value;
+				protCfg.interval = id("protcfg-Interval").value;
+				protCfg.user = id("protcfg-User").value;
 			}
+			if (brokerPwdHasChanged===true) {
+				protCfg.pwd = id("protcfg-Pwd").value;
+				if (id("protcfg-Pwd").value!=id("protcfg-Pwd2").value) {
+					alert ("Broker password does not compare ! Please re-type");
+					return (false);
+				}
+			}
+			brokerPwdHasChanged=false;
 			await postJson("protconfig",JSON.stringify(protCfg));
+			return (true);
 		}
 		
 		async function postValvesCfg() {
@@ -1304,6 +1350,8 @@
 				id("protcfg-dataProt").selectedIndex = dataProtConfig["prot"];
 				id("protcfg-mqttIp").value = dataProtConfig["mqttIp"];
 				id("protcfg-mqttPort").value = dataProtConfig["mqttPort"];
+				id("protcfg-Interval").value = dataProtConfig["interval"];
+				id("protcfg-User").value = dataProtConfig["user"];
 				showMqttIP();
 			}
 		}
@@ -1329,15 +1377,11 @@
 		}
 			
 		async function updateWT32() {
-			location.assign('http:/update');
-			location.replace('http:/update');
-			window.reload();
+			reloadDoc("http:/update",100,false,false);
 		}	
 		
 		async function updateSTM32() {
-			location.assign('http:/stmupdate');
-			location.replace('http:/stmupdate');
-			window.reload();
+			reloadDoc("http:/stmupdate",100,false,false);
 		}	
 			
 		async function postJson(link,postData){

@@ -66,8 +66,8 @@ void CVdmConfig::setDefault()
   configFlash.netConfig.dnsIp = 0;
   memset (configFlash.netConfig.ssid,0,sizeof(configFlash.netConfig.ssid));
   memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.pwd));
-  memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.userName));
-  memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.userPwd));
+  memset (configFlash.netConfig.userName,0,sizeof(configFlash.netConfig.userName));
+  memset (configFlash.netConfig.userPwd,0,sizeof(configFlash.netConfig.userPwd));
   clearConfig();
 }
 
@@ -78,6 +78,9 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.dataProtocol = 0;
   configFlash.protConfig.brokerIp = 0;
   configFlash.protConfig.brokerPort = 0;
+  configFlash.protConfig.brokerInterval = 2000;
+  memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
+  memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
 
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++){
     configFlash.valvesConfig.valveConfig[i].active = false;
@@ -136,6 +139,12 @@ void CVdmConfig::readConfig()
   configFlash.protConfig.dataProtocol = prefs.getUChar(nvsProtDataProt);
   configFlash.protConfig.brokerIp = prefs.getULong(nvsProtBrokerIp);
   configFlash.protConfig.brokerPort = prefs.getUShort(nvsProtBrokerPort);
+  configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,2000);
+  if (prefs.isKey(nvsProtBrokerUser))
+    prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName));
+  if (prefs.isKey(nvsProtBrokerPwd))
+    prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd));
+  
   prefs.end();
   }
 
@@ -181,6 +190,9 @@ void CVdmConfig::writeConfig()
   if (configFlash.protConfig.dataProtocol==protTypeMqtt) {
     prefs.putULong(nvsProtBrokerIp,configFlash.protConfig.brokerIp);
     prefs.putUShort(nvsProtBrokerPort,configFlash.protConfig.brokerPort);
+    prefs.putULong(nvsProtBrokerInterval,configFlash.protConfig.brokerInterval);
+    prefs.putString(nvsProtBrokerUser,configFlash.protConfig.userName);
+    prefs.putString(nvsProtBrokerPwd,configFlash.protConfig.userPwd);
   }
   prefs.end();
  
@@ -236,6 +248,10 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["prot"].isNull()) configFlash.protConfig.dataProtocol = doc["prot"];
   if (!doc["mqttIp"].isNull()) configFlash.protConfig.brokerIp = doc2IPAddress(doc["mqttIp"]);
   if (!doc["mqttPort"].isNull()) configFlash.protConfig.brokerPort = doc["mqttPort"];
+  if (!doc["interval"].isNull()) configFlash.protConfig.brokerInterval = doc["interval"];
+  if (!doc["user"].isNull()) strncpy(configFlash.protConfig.userName,doc["user"].as<const char*>(),sizeof(configFlash.netConfig.userName));
+  if (!doc["pwd"].isNull()) strncpy(configFlash.protConfig.userPwd,doc["pwd"].as<const char*>(),sizeof(configFlash.netConfig.userPwd));
+
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)

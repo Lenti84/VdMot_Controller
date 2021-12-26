@@ -66,10 +66,12 @@ void CVdmTask::init()
     }
 }
 
-void CVdmTask::startMqtt()
+void CVdmTask::startMqtt(uint32_t interval)
 {
+    uint32_t thisInterval = 100;
     if (taskIdMqtt==TASKMGR_INVALIDID) {
-        taskIdMqtt = taskManager.scheduleFixedRate(10000, [] {
+        if (interval >= 100) thisInterval = interval;
+        taskIdMqtt = taskManager.scheduleFixedRate(thisInterval, [] {
             VdmNet.mqttBroker();
         });
     }
@@ -120,7 +122,7 @@ void CVdmTask::startServices()
 {
     addIntPinResetCfg();
     taskIdServices = taskManager.scheduleFixedRate(1000, [] {
-        Services.ServicesLoop();
+        Services.servicesLoop();
     });
     
 }

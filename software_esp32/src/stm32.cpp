@@ -357,7 +357,7 @@ void STM32ota_loop() {
                 VdmTask.yieldTask(1000);
                 stm32ota_state = STM32OTA_IDLE;
                 stmUpdateStatus = updFinished;
-                Services.restartStmApp=true;
+                Services.restartStmApp(2000);
                 break;
 
 
@@ -366,7 +366,7 @@ void STM32ota_loop() {
                 UART_DBG.println("STM32 ota: error");
                 stmUpdateStatus = updError;
                 stm32ota_state = STM32OTA_IDLE;
-                Services.restartStmApp=true;
+                Services.restartStmApp(2000);
                 break;
 
         default:

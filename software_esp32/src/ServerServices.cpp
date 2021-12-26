@@ -61,6 +61,7 @@
 #include "ServerServices.h"
 #include "VdmSystem.h"
 #include "VdmTask.h"
+#include "Services.h"
 
 extern "C" {
   #include "tfs_data.h"
@@ -90,27 +91,27 @@ void valvesCalib()
 
 void restart ()
 {  
-  ESP.restart();
+  Services.restartSystem();
 }
 
 void writeConfig ()
 {  
   VdmConfig.writeConfig();
-  ESP.restart();
+  Services.restartSystem();
 }
 
 void resetConfig ()
 {  
   VdmConfig.clearConfig(); 
   VdmConfig.writeConfig();
-  ESP.restart();
+  Services.restartSystem();
 }
 
 void restoreConfig ()
 {  
   VdmConfig.setDefault();
   VdmConfig.writeConfig();
-  ESP.restart();
+  Services.restartSystem();
 }
 
 void clearFS ()
