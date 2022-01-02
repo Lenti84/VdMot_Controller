@@ -94,8 +94,8 @@ int current_mA = 0;                     // current valve motor in 1/10 mA
 int analog_current = 0;                 // current valve motor in 1/10 mA read by analog pin
 int analog_current_old = 0;             // filter
 
-unsigned int idlecurrent = 2048;        // idle current adc value (digits)
-unsigned int idlecurrent_old = 2048;    // filter
+// unsigned int idlecurrent = 2048;        // idle current adc value (digits)
+// unsigned int idlecurrent_old = 2048;    // filter
 
 volatile unsigned int isr_counter;      // ISR var for counting revolutions
 volatile byte         isr_turning;      // ISR var for state of motor
@@ -212,6 +212,7 @@ byte valve_loop () {
                     valvestate = A_OPEN1;
                     PSU_ON();
                     waittimer = 50;
+                    psuofftimer = 0;
                     pos_change = poschangecmd;
                   }
                   else if (command == CMD_A_CLOSE) {
@@ -220,6 +221,7 @@ byte valve_loop () {
                     valvestate = A_CLOSE1;  
                     PSU_ON();
                     waittimer = 50;
+                    psuofftimer = 0;
                     pos_change = poschangecmd;
                   }
                   else if (command == CMD_A_OPEN_END) {                    
@@ -228,6 +230,7 @@ byte valve_loop () {
                     valvestate = A_OPEN1;
                     PSU_ON();
                     waittimer = 50;
+                    psuofftimer = 0;
                     pos_change = 255;
                   }
                   else if (command == CMD_A_CLOSE_END) {                    
@@ -236,6 +239,7 @@ byte valve_loop () {
                     valvestate = A_CLOSE1;
                     PSU_ON();
                     waittimer = 50;
+                    psuofftimer = 0;
                     pos_change = 255;
                   }
                   else if (command == CMD_A_LEARN) {                    
@@ -243,6 +247,7 @@ byte valve_loop () {
                     COMM_DBG.println(valveindex, 10);                    
                     valvestate = A_LEARN1;
                     PSU_ON(); 
+                    psuofftimer = 0;
                     waittimer = 50; 
                   }
                   else {
@@ -250,9 +255,10 @@ byte valve_loop () {
 
                     // switch off PSU after some inactive (idle) time
                     psuofftimer++;
-                    if(psuofftimer > 100) {
+                    if(psuofftimer > 1500) {      // 15 s
                       psuofftimer = 0;
                       PSU_OFF();
+                      MUX_OFF();
                     }  
                   }           
 
@@ -261,19 +267,18 @@ byte valve_loop () {
                     if(myvalves[valveindex].learn_movements) myvalves[valveindex].learn_movements--;
                   }
 
-                  // measure idle current for offset (drift) compensation
-                  if (idlecurrenttimer < 10) 
-                  {
-                    idlecurrenttimer++;
-                  }
-                  else
-                  {                      
-                    idlecurrenttimer = 0;
-                    idlecurrent = (unsigned int) ((uint32_t) (analogRead(ANINREFHALF) * 200 + (uint32_t) idlecurrent_old * 800) / 1000);
-                    idlecurrent_old = idlecurrent;
-                  }
-
-                  
+                  // // measure idle current for offset (drift) compensation
+                  // if (idlecurrenttimer < 10) 
+                  // {
+                  //   idlecurrenttimer++;
+                  // }
+                  // else
+                  // {                      
+                  //   idlecurrenttimer = 0;
+                  //   idlecurrent = (unsigned int) ((uint32_t) (analogRead(ANINREFHALF) * 200 + (uint32_t) idlecurrent_old * 800) / 1000);
+                  //   idlecurrent_old = idlecurrent;
+                  // }
+                 
 
                   command = '\0';       // clear command for next loop call, prevents reevaluating
                   break;
@@ -682,7 +687,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                           result = M_RES_ENDSTOP;
                           ena_motor(0, 0);
                           isr_turning = 0;
-                          MUX_OFF();
+                          //MUX_OFF();
 
                           if (meancurrent_cnt > 0) m_meancurrent = abs(meancurrent_mem) / meancurrent_cnt / 10;
                           else m_meancurrent = 0;
@@ -725,7 +730,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     ena_motor(0, 0);
                     //digitalWrite(POWER_ENA, 1);   // disable PSU for vlaves   
                     isr_turning = 0;
-                    MUX_OFF();
+                    //MUX_OFF();
                     
                     COMM_DBG.print("M: Cnt: ");  
                     COMM_DBG.println(isr_counter, DEC);                                 
@@ -748,7 +753,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     ena_motor(0, 0);
                     //digitalWrite(POWER_ENA, 1);   // disable PSU for vlaves 
                     isr_turning = 0;
-                    MUX_OFF();
+                    //MUX_OFF();
                     
                     motorstate = M_IDLE;
                     result = M_RES_NOCURRENT;                  
