@@ -1089,13 +1089,13 @@
 		
 		function reloadDoc (path,timeOut,clear=false,reLoad=true) {
 			if ((clear===true) && getStatusInterval) clearInterval(getStatusInterval);
+			document.body.style.cursor = 'wait';
 			setTimeout(function() {
-					console.log("assign now");
 					location.assign(path);
 					if (reLoad===true){
-						console.log("reload now");
 						location.reload(true);					
 					}
+					document.body.style.cursor = 'default';
 				},timeOut);
 		}
 		
