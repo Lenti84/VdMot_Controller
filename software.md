@@ -19,6 +19,8 @@ This page will document the software part of the VdMot_Controller.
   - flash ESP32 by direct send chunks
 
 ## ESP32 user interface
+- home page  
+  ![-](./software_esp32/media/home.png "home page")
 - status page  
   ![-](./software_esp32/media/status_page.png "status page")
 - network page  
