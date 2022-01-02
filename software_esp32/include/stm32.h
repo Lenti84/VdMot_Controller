@@ -46,6 +46,8 @@
 #define     STM32OTA_START          0x12
 #define     STM32OTA_STARTBLANK     0x45
 
+#define     STM32OTA_BLOCKSIZE      256
+
 void STM32ota_setup();
 void STM32ota_begin();
 void STM32ota_start(uint8_t command, String thisFileName);

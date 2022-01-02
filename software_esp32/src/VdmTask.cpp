@@ -106,7 +106,7 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
     UART_DBG.println("start task stmOta");
     STM32ota_start(command,thisFileName);
     if (taskIdStm32Ota==TASKMGR_INVALIDID) {
-        taskIdStm32Ota = taskManager.scheduleFixedRate(50, [] {
+        taskIdStm32Ota = taskManager.scheduleFixedRate(30, [] {         // 30 ms good for 115200 baud UART speed and blocksize of 256
             STM32ota_loop();
         });
     } else {
