@@ -2,31 +2,39 @@ This page will document the software part of the VdMot_Controller.
 
 # ESP32
 ## Feature list software
-- login page
+- responsive design
+- user login
 - status page
-  - valves: index, description, position, mean current, status, assigned temperature sensor with temperature value, calibration counter
+  - valves: index, description, position, mean current, status, assigned temperature sensor with temperature value
   - temperature sensors: description, temperature, index
 - setup page
   - network interface: wifi or ethernet (RJ45)
   - wifi: user and password
   - valves: description/name, assignment of temperature sensor, calibration request
   - temperature sensors: description/name
-  - mqtt: server ip, server port, main topic
+  - mqtt: server ip, server port, user name and password
   - settings: save, recover
-- debug page
-  - log communication stm32 and esp32
-  - log internal messages
-  - test command interface
 - flash / ota page
   - flash STM32 by file upload
-  - flash ESP32 by file upload or direct communication to PlatformIO
+  - flash ESP32 by direct send chunks
 
-## Status
-- simple status page  
+## ESP32 user interface
+- home page  
+  ![-](./software_esp32/media/home.png "home page")
+- status page  
   ![-](./software_esp32/media/status_page.png "status page")
-- simple logger page  
-  ![-](./software_esp32/media/logger_page.png "logger page")
-
+- network page  
+  ![-](./software_esp32/media/network.png "network page")
+- config page  
+  ![-](./software_esp32/media/config.png "config page")
+- about page  
+  ![-](./software_esp32/media/about.png "about page")
+- update page  
+  ![-](./software_esp32/media/update.png "update page")
+- esp32 update page  
+  ![-](./software_esp32/media/wt32Update.png "update esp32 page")
+- stm32 update page  
+  ![-](./software_esp32/media/stm32Update.png "update stm32 page")
 
 
 # command list

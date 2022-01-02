@@ -92,7 +92,9 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
 {
   String result = "{\"prot\":"+String(protConfig.dataProtocol)+","+
                     "\"mqttIp\":\""+ip2String(protConfig.brokerIp)+"\","+
-                    "\"mqttPort\":"+String(protConfig.brokerPort)+"}";  
+                    "\"mqttPort\":\""+String(protConfig.brokerPort)+"\","+
+                    "\"interval\":"+String(protConfig.brokerInterval)+","+
+                    "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
 }
 

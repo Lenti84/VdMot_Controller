@@ -66,10 +66,12 @@ void CVdmTask::init()
     }
 }
 
-void CVdmTask::startMqtt()
+void CVdmTask::startMqtt(uint32_t interval)
 {
+    uint32_t thisInterval = 100;
     if (taskIdMqtt==TASKMGR_INVALIDID) {
-        taskIdMqtt = taskManager.scheduleFixedRate(10000, [] {
+        if (interval >= 100) thisInterval = interval;
+        taskIdMqtt = taskManager.scheduleFixedRate(thisInterval, [] {
             VdmNet.mqttBroker();
         });
     }
@@ -102,7 +104,7 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
     taskManager.setTaskEnabled (taskIdApp,false);
     UART_DBG.println("stop task stmApp");
     delay (1000);           // wait to finish task;
-    //STM32ota_setup();         // Lenti84 --> must be called at startup because of pin configuration
+    STM32ota_setup();
     UART_DBG.println("start task stmOta");
     STM32ota_start(command,thisFileName);
     if (taskIdStm32Ota==TASKMGR_INVALIDID) {
@@ -120,7 +122,7 @@ void CVdmTask::startServices()
 {
     addIntPinResetCfg();
     taskIdServices = taskManager.scheduleFixedRate(1000, [] {
-        Services.ServicesLoop();
+        Services.servicesLoop();
     });
     
 }
@@ -147,7 +149,7 @@ void interruptTask(pintype_t thisPin)
     
 void CVdmTask::handleSetFactoryCfg (pintype_t thisPin)
 {
-    int readPin = digitalRead(2);
+    int readPin = digitalRead(pinSetFactoryCfg);
     UART_DBG.println("Interrupt triggered " + String(thisPin) + String(readPin));
     if (readPin==0) {
         if (setFactoryCfgState==idle) {
@@ -173,7 +175,7 @@ void CVdmTask::handleSetFactoryCfg (pintype_t thisPin)
 
 void CVdmTask::addIntPinResetCfg ()
 {
-    const int pinSetFactoryCfg = 2;
+    
     BasicArduinoInterruptAbstraction interruptAbstraction;
 
     pinMode(pinSetFactoryCfg, INPUT_PULLUP);

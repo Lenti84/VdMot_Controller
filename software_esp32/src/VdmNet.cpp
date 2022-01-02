@@ -246,7 +246,7 @@ void CVdmNet::startBroker()
     case mqttProtocol:
     {
       Mqtt.mqtt_setup(VdmConfig.configFlash.protConfig.brokerIp,VdmConfig.configFlash.protConfig.brokerPort);
-      VdmTask.startMqtt();
+      VdmTask.startMqtt(VdmConfig.configFlash.protConfig.brokerInterval);
       dataBrokerIsStarted=true;
       break;
     }
