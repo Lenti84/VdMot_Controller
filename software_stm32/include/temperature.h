@@ -38,11 +38,15 @@
 extern void temperature_setup();
 extern void temperature_loop();
 extern void get_sensordata (unsigned int index, char *buffer, int buflen);
+extern void temp_command(int command);
 
 void printAddress(DeviceAddress deviceAddress);
 
 #define MAXSENSORCOUNT 		(unsigned int)	30
 #define CONV_INTERVALL		(unsigned int)	2000			// conversion intervall in ms
+
+#define TEMP_CMD_NONE         0x00
+#define TEMP_CMD_NEWSEARCH    0x01
 
 typedef struct {
   int 			temperature;

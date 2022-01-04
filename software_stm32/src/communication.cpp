@@ -286,6 +286,14 @@ int16_t communication_loop (void) {
 		}
 
 
+		// start new onewire sensor search
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETONEWIRESEARCH,&cmd[0],5) == 0) {
+			COMM_DBG.print("start new 1-wire search");
+			temp_command(TEMP_CMD_NEWSEARCH);
+		}
+		
+
 		// ESPalive
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp("ESP",&cmd[0],3) == 0) {	

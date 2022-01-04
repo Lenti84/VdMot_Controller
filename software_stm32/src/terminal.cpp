@@ -33,6 +33,7 @@
 #include "terminal.h"
 #include "motor.h"
 #include "temperature.h"
+#include "communication.h"
 #include "eeprom.h"
 
 //extern HardwareSerial Serial3;
@@ -394,6 +395,15 @@ int16_t Terminal_Serve (void) {
 			COMM_DBG.print("Version: ");			
 			COMM_DBG.println(FIRMWARE_VERSION);
 		}
+
+
+		// start new onewire sensor search
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETONEWIRESEARCH,&cmd[0],5) == 0) {
+			COMM_DBG.print("start new 1-wire search");
+			temp_command(TEMP_CMD_NEWSEARCH);
+		}
+
 
 		// unknown command
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

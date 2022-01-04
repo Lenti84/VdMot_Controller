@@ -46,7 +46,8 @@ extern int16_t communication_loop (void);
 #define APP_PRE_GETONEWIRESETT		"gvlon"			// doc
 #define APP_PRE_GETVLVDATA			"gvlvd"			// doc
 
-#define APP_PRE_GETVERSION			"gvers"
+#define APP_PRE_SETONEWIRESEARCH    "stons"			
+#define APP_PRE_GETVERSION			    "gvers"
 #define APP_PRE_GETTARGETPOS       	"gtgtp"			
 
 #define APP_PRE_GETACTUALPOS       	"gactp"
