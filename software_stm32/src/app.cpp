@@ -38,7 +38,9 @@
 
 struct valve myvalves[ACTUATOR_COUNT];
 
-unsigned char target_position_mirror[ACTUATOR_COUNT];
+//unsigned char target_position_mirror[ACTUATOR_COUNT];
+unsigned int learning_time = LEARN_AFTER_TIME_DEFAULT;
+unsigned int learning_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
 
 
 int16_t app_setup (void) { 
@@ -231,23 +233,110 @@ byte app_10s_loop () {
   unsigned int x = 0;
 
   // walk through valves and evaluate learning values
-  for (x=0; x< ACTUATOR_COUNT; x++)
-  { 
-    // learning times
-    if(myvalves[x].learn_time <= 10) {
-      myvalves[x].learn_time = LEARN_AFTER_TIME_DEFAULT;
-      myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, next set target req will do a learning cycle
-      COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
-    }
-    else myvalves[x].learn_time -= 10;    
 
-    // learning movements
-    if(myvalves[x].learn_movements == 0) {
-      myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
-      myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
-      COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
-    }    
+  // learning times
+  if (learning_time > 0) {
+    for (x=0; x< ACTUATOR_COUNT; x++) { 
+      if(myvalves[x].learn_time <= 10) {
+        myvalves[x].learn_time = learning_time;
+        myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, next set target req will do a learning cycle
+        COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
+      }
+      else myvalves[x].learn_time -= 10;    
+    }
+  }
+
+  // learning movements
+  if (learning_movements > 0) { 
+    for (x=0; x< ACTUATOR_COUNT; x++) {  
+      if(myvalves[x].learn_movements == 0) {
+        myvalves[x].learn_movements = learning_movements;
+        myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
+        COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
+      }   
+    } 
   }
 
 return 0;
+}
+
+
+// sets learning movements
+// after number of movements a learning cycle will be executed
+int16_t app_set_learnmovements(uint16_t movements) {
+
+  // update reload value
+  learning_movements = movements;
+    
+  // update all valve memories 
+  for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {          
+    myvalves[x].learn_movements = learning_movements;
+  }
+
+  return 0;
+
+}
+
+
+// sets learning time
+// after time seconds a learning cycle will be executed
+int16_t app_set_learntime(uint32_t time) {
+ 
+  // update reload value
+  learning_time = time;
+    
+  // update all valve memories 
+  for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {          
+    // distribute learn timing equaly over valve slots
+    myvalves[x].learn_time = (unsigned int) (((long)learning_time * ((long)x+1)) / (long)ACTUATOR_COUNT);
+  }
+
+  return 0;
+
+}
+
+
+// sets learning of valve 
+// a learning cycle for valve will be executed
+// if valve = 255, all valves will be learned
+int16_t app_set_valvelearning(uint16_t valve) {
+
+  if(valve < ACTUATOR_COUNT) {
+    myvalvemots[valve].actual_position = 0;     // fake some position deviation
+    myvalvemots[valve].status = VLV_STATE_UNKNOWN;
+    return 0;
+  }
+  else if (valve == 255) {
+    // update all valves
+    for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+      myvalvemots[xx].actual_position = 0;      // fake some position deviation
+      myvalvemots[xx].status = VLV_STATE_UNKNOWN;
+    }
+    return 0;
+  }
+
+  return -1;
+}
+
+
+// sets valve full open
+// valve will be opened fully
+// if valve = 255, all valves will be opened fully
+int16_t app_set_valveopen(int16_t valve) {
+
+  if(valve < ACTUATOR_COUNT) {
+    myvalvemots[valve].target_position = 100;
+		myvalvemots[valve].status = VLV_STATE_FULLOPEN;
+    return 0;
+  }
+  else if (valve == 255) {
+    // update all valves
+    for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+      myvalvemots[xx].target_position = 100;
+			myvalvemots[xx].status = VLV_STATE_FULLOPEN;
+    }
+    return 0;
+  }
+
+  return -1;
 }

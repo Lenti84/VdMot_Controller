@@ -99,6 +99,7 @@ int16_t Terminal_Serve (void) {
 
 	//int			itempval;
 	uint16_t		x;
+	uint32_t		xu32;
 	uint16_t		y;
 
 	char sendbuf[SEND_BUFFER_LEN];
@@ -402,6 +403,73 @@ int16_t Terminal_Serve (void) {
 		else if(memcmp(APP_PRE_SETONEWIRESEARCH,&cmd[0],5) == 0) {
 			COMM_DBG.print("start new 1-wire search");
 			temp_command(TEMP_CMD_NEWSEARCH);
+		}
+
+
+		// set valve learning time
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETLEARNTIME,&cmd[0],5) == 0) {
+			COMM_DBG.print("set valve learning time to ");
+			x = atoi(arg0ptr);
+
+			if(argcnt == 1 && x > 0) {
+				if( app_set_learntime(x) == 0) COMM_DBG.println(x, DEC);
+				else COMM_DBG.println("- error");
+			}
+			else {
+				COMM_DBG.println("- error");
+			}
+		}
+
+
+		// set valve learning time
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETLEARNTIME,&cmd[0],5) == 0) {
+			COMM_DBG.print("set valve learning time to ");
+			xu32 = atol(arg0ptr);
+
+			if(argcnt == 1 && xu32 >= 0) {
+				if( app_set_learntime(xu32) == 0) COMM_DBG.println(xu32, DEC);
+				else COMM_DBG.println("- error");
+			}
+			else {
+				COMM_DBG.println("- error");
+			}
+		}
+
+
+		// open all valves request
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETALLVLVOPEN,&cmd[0],5) == 0) {
+			COMM_DBG.print("got open valve request for ");
+
+			x = atoi(arg0ptr);
+
+			if(argcnt == 1 && x >= 0) {
+				if( app_set_valveopen(x) == 0) COMM_DBG.println(x, DEC);
+				else COMM_DBG.println("- error");
+			}
+			else {
+				COMM_DBG.println("- error");
+			}
+		}
+
+
+		// learn valve x request
+		// if x is 255 all valves will be learned
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETVLLEARN,&cmd[0],5) == 0) {
+			COMM_DBG.print("start learning for valve ");
+			
+			x = atoi(arg0ptr);
+
+			if(argcnt == 1 && x >= 0) {
+				if( app_set_valvelearning(x) == 0) COMM_DBG.println(x, DEC);
+				else COMM_DBG.println("- error");
+			}
+			else {
+				COMM_DBG.println("- error");
+			}
 		}
 
 

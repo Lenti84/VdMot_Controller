@@ -44,13 +44,18 @@ This page will document the software part of the VdMot_Controller.
 |stgtp x y|set target position of valve *x* to *y* %|-|x=0...11, y=0...100%||
 |gtgtp x|get target position of valve *x*|gtgtp *target_position*|0...100%||
 |gvlvd x|get data of valve *x*|gvlvd *position meancurrent status 1st_temperature 2nd_temperature*|*% mA - 1/10°C 1/10°C*||
+|stons|start new 1-wire search|-|-|get result via *gonec* and *goned*|
 |gonec|get count of 1-wire devices|gonec *count*|*-*||
 |goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *6ByteHexAddress temperature*|*0x 0x 0x 0x 0x 0x 1/10°C*||
 |gvlon x|get 1-wire settings for valve *x*|gvlon *6ByteHexAddressFirstSensor* - *6ByteHexAddressSecondSensor*|*0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x*||
 |stsnx x y|set first 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35||
 |stsny x y|set second 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35||
-|staop|set all valves open|-|-|usefull for installation, opens quickly all valves so they can be mounted|
+|staop x|set valve *x* open|-|0...11, 255|usefull for installation, opens quickly one (x) or all valves (x=255) so they can be mounted|
+|staln x|set learning for valve *x*|-|0...11, 255|performs learning cycle for one (x) or all valves (x=255)|
+|stlnm x|set learning movement counter|-|0...32000|after x movement requests to valve a new learning cycle will be perfomed|
+|stlnt x|set learning time|-|0...1000000|after x seconds a new learning cycle will be perfomed|
 |gvers|get version|gvers *version_string*|tbd||
+
 
 
 # OTA update of ESP32 and STM32
