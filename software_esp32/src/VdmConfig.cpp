@@ -66,8 +66,8 @@ void CVdmConfig::setDefault()
   configFlash.netConfig.dnsIp = 0;
   memset (configFlash.netConfig.ssid,0,sizeof(configFlash.netConfig.ssid));
   memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.pwd));
-  memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.userName));
-  memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.userPwd));
+  memset (configFlash.netConfig.userName,0,sizeof(configFlash.netConfig.userName));
+  memset (configFlash.netConfig.userPwd,0,sizeof(configFlash.netConfig.userPwd));
   clearConfig();
 }
 
@@ -78,6 +78,9 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.dataProtocol = 0;
   configFlash.protConfig.brokerIp = 0;
   configFlash.protConfig.brokerPort = 0;
+  configFlash.protConfig.brokerInterval = 2000;
+  memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
+  memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
 
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++){
     configFlash.valvesConfig.valveConfig[i].active = false;
@@ -136,6 +139,12 @@ void CVdmConfig::readConfig()
   configFlash.protConfig.dataProtocol = prefs.getUChar(nvsProtDataProt);
   configFlash.protConfig.brokerIp = prefs.getULong(nvsProtBrokerIp);
   configFlash.protConfig.brokerPort = prefs.getUShort(nvsProtBrokerPort);
+  configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,2000);
+  if (prefs.isKey(nvsProtBrokerUser))
+    prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName));
+  if (prefs.isKey(nvsProtBrokerPwd))
+    prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd));
+  
   prefs.end();
   }
 
@@ -181,6 +190,9 @@ void CVdmConfig::writeConfig()
   if (configFlash.protConfig.dataProtocol==protTypeMqtt) {
     prefs.putULong(nvsProtBrokerIp,configFlash.protConfig.brokerIp);
     prefs.putUShort(nvsProtBrokerPort,configFlash.protConfig.brokerPort);
+    prefs.putULong(nvsProtBrokerInterval,configFlash.protConfig.brokerInterval);
+    prefs.putString(nvsProtBrokerUser,configFlash.protConfig.userName);
+    prefs.putString(nvsProtBrokerPwd,configFlash.protConfig.userPwd);
   }
   prefs.end();
  
@@ -195,7 +207,6 @@ void CVdmConfig::writeConfig()
   prefs.clear();
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
-  delay(1000);
 }
 
 uint32_t CVdmConfig::doc2IPAddress(String id)
@@ -227,7 +238,6 @@ void CVdmConfig::postNetCfg (JsonObject doc)
   if (!doc["syslogLevel"].isNull()) configFlash.netConfig.syslogLevel=doc["syslogLevel"];
   if (!doc["syslogIp"].isNull()) configFlash.netConfig.syslogIp=doc2IPAddress(doc["syslogIp"]);
   if (!doc["syslogPort"].isNull()) configFlash.netConfig.syslogPort=doc["syslogPort"];
-  UART_DBG.println(configFlash.netConfig.syslogIp);
 }
 
 void CVdmConfig::postProtCfg (JsonObject doc)
@@ -238,6 +248,10 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["prot"].isNull()) configFlash.protConfig.dataProtocol = doc["prot"];
   if (!doc["mqttIp"].isNull()) configFlash.protConfig.brokerIp = doc2IPAddress(doc["mqttIp"]);
   if (!doc["mqttPort"].isNull()) configFlash.protConfig.brokerPort = doc["mqttPort"];
+  if (!doc["interval"].isNull()) configFlash.protConfig.brokerInterval = doc["interval"];
+  if (!doc["user"].isNull()) strncpy(configFlash.protConfig.userName,doc["user"].as<const char*>(),sizeof(configFlash.netConfig.userName));
+  if (!doc["pwd"].isNull()) strncpy(configFlash.protConfig.userPwd,doc["pwd"].as<const char*>(),sizeof(configFlash.netConfig.userPwd));
+
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
@@ -263,4 +277,27 @@ void CVdmConfig::postTempsCfg (JsonObject doc)
     if (!doc["temps"][i]["active"].isNull()) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][i]["active"];
     if (!doc["temps"][i]["offset"].isNull()) configFlash.tempsConfig.tempConfig[i].offset=10*(doc["temps"][i]["offset"].as<float>()) ;
   }
+}
+
+String CVdmConfig::handleAuth (JsonObject doc)
+{
+  #ifdef netDebug
+    UART_DBG.println("post auth");
+  #endif
+  bool userCheck=false;
+  bool pwdCheck=false;
+  uint8_t result=0;
+  if ((strlen(configFlash.netConfig.userName)>0) && (strlen(configFlash.netConfig.userPwd)>0))
+  {
+    if (!(doc["user"].isNull() || doc["pwd"].isNull()))
+    {
+      const char* du=doc["user"].as<const char*>();
+      const char* dp=doc["pwd"].as<const char*>();
+      userCheck=(strncmp (configFlash.netConfig.userName,du,sizeof(configFlash.netConfig.userName)))==0;
+      pwdCheck=(strncmp (configFlash.netConfig.userPwd,dp,sizeof(configFlash.netConfig.userPwd)))==0;
+    }
+    if (userCheck) result+=1;  // userName compares
+    if (pwdCheck) result+=2;  // pwdName compares
+  } else result=3;
+  return ("{\"auth\":"+String(result)+"}");
 }

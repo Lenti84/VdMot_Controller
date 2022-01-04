@@ -95,6 +95,22 @@
 	  background-color: #777;
 	}
 	
+	.tabLink {
+	  background-color: #555;
+	  color: white;
+	  float: left;
+	  border: none;
+	  outline: none;
+	  cursor: pointer;
+	  padding: 14px 16px;
+	  font-size: 17px;
+	  width: 10%;
+	}
+
+	.tabLink:hover {
+	  background-color: #777;
+	}
+	
 	.tabframe {
 	  border: white 2px solid;
 	  padding: 5px;
@@ -110,6 +126,9 @@
 	
 	.form-input{
 		width: 100px;
+	}
+	.form-input1{
+		width: 300px;
 	}
 	
 	.rtabframe {
@@ -144,12 +163,52 @@
 		color: #fff;
 		margin: 2px;
 		padding: 0.6em;
+		border-radius: 5px;
 
 	}
 		.buttonclass:disabled {
 		font-weight: bold;
 		background-color: #79B900;
 		color: #c0c0c0;
+	}
+
+	/* The Modal (background) */
+	.modal {
+	  display: none; /* Hidden by default */
+	  position: fixed; /* Stay in place */
+	  z-index: 1; /* Sit on top */
+	  padding-top: 100px; /* Location of the box */
+	  left: 0;
+	  top: 0;
+	  width: 100%; /* Full width */
+	  height: 100%; /* Full height */
+	  overflow: auto; /* Enable scroll if needed */
+	  background-color: rgb(0,0,0); /* Fallback color */
+	  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+	}
+
+	/* Modal Content */
+	.modal-content {
+	  background-color: #fefefe;
+	  margin: auto;
+	  padding: 20px;
+	  border: 1px solid #888;
+	  width: 80%;
+	}
+
+	/* The Close Button */
+	.close {
+	  color: #aaaaaa;
+	  float: right;
+	  font-size: 28px;
+	  font-weight: bold;
+	}
+
+	.close:hover,
+	.close:focus {
+	  color: #000;
+	  text-decoration: none;
+	  cursor: pointer;
 	}
 
 	
@@ -176,12 +235,12 @@
 <body>
 
 	<div class="topNav" id="mytopNav">
-	  <a href="#home" class="tabLink" id="defaultOpen" onclick="openPage('Home', this, 'red')">Home</a>
-	  <a href="#status" class="tabLink" onclick="openPage('Status', this, 'green')">Status</a>
-	  <a href="#network" class="tabLink" onclick="openPage('Network', this, 'blue')">Network</a>
-	  <a href="#config" class="tabLink" onclick="openPage('Config', this, 'gray')">Config</a>
-	  <a href="#update" class="tabLink" onclick="openPage('Update', this, 'cyan')">Update</a>
-	  <a href="#about" class="tabLink" onclick="openPage('About', this, 'darkgray')">About</a>
+	  <a href="#home" class="tabLink" id="defaultOpen" name="Home" onclick="openPage('Home', this, 'red')">Home</a>
+	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green')">Status</a>
+	  <a href="#network" class="tabLink" id="networkOpen" name="Network" style ="display:none" onclick="openPage('Network', this, 'blue')">Network</a>
+	  <a href="#config" class="tabLink" id="configOpen" name="Config" style ="display:none" onclick="openPage('Config', this, 'gray')">Config</a>
+	  <a href="#update" class="tabLink" id="updateOpen" name="Update" style ="display:none" onclick="openPage('Update', this, 'cyan')">Update</a>
+	  <a href="#about" class="tabLink" id="aboutOpen" name="About" onclick="openPage('About', this, 'darkgray')">About</a>
 	  <a href="javascript:void(0);" class="icon" onclick="resptopNav()">&#9776;</a>
 	</div>
 
@@ -192,6 +251,11 @@
 			<tr>
 				<th>Time</th>
 				<td id="locTime"></td>
+			</tr>
+			<tr>
+				<td>
+				<input type="button" class="buttonclass" id="login-button" style ="display:none" value="Login" title="Login" />
+				</td>
 			</tr>
 		</table>
 		</div>
@@ -277,7 +341,7 @@
 		<div class="rtabframe" style="width: 250px;">
 		<h3>Network</h3>
 		<table id="netConfig" class="tabTable">
-		<tr>
+			<tr>
 				<th>User name</th>
 				<td>
 				<input type="text" maxlength="64" class="form-input" id="netcfg-UserName" name="netcfg-UserName" />
@@ -444,10 +508,33 @@
 			<tr>
 				<th>Broker Port</th>
 				<td>
-				<input type="text" class="form-input" id="protcfg-mqttPort" name="protcfg-mqttPort" placeholder="xxxx"/>
+				<input type="text" class="form-input" id="protcfg-mqttPort" name="protcfg-mqttPort" placeholder="xxxxx"/>
 				</td>
 			</tr>
-
+			<tr>
+				<th>Interval (ms)</th>
+				<td>
+				<input type="number" class="form-input" min="100" id="protcfg-Interval" name="protcfg-Interval"/>
+				</td>
+			</tr>
+			<tr>
+				<th>User name</th>
+				<td>
+				<input type="text" class="form-input" id="protcfg-User" name="protcfg-User"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="protcfg-Pwd" name="protcfg-Pwd"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Re-type password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="protcfg-Pwd2" name="protcfg-Pwd2"/>
+				</td>
+			</tr>
 		</table>
 		</div>
 
@@ -582,10 +669,55 @@
 		</div>
 	</div>
 
+	<div id="pwdModal" class="modal">
+	  <div class="modal-content">
+		<span class="close">&times;</span>
+		<p>Please type user and password</p>
+		<table>
+			<th>User name</th>
+				<td colspan='10'>
+				<input type="text" maxlength="64" class="form-input1" id="dialogUserInput" name="dialogUserInput" />
+				</td>
+			</tr>
+			<tr>
+				<th>User password</th>
+				<td colspan='10'>
+				<input type="password" maxlength="64" class="form-input1" id="dialogPwdInput" name="dialogPwdInput"/>
+				</td>
+			</tr>
+			<tr>
+			<td></td><td>
+	          <input type="button" class="buttonclass" id="dialogOk" value="ok" title="Please enter user name" />
+			</td><td>
+			 <input type="button" class="buttonclass" id="dialogCancel" value="cancel" title="Please enter password" />
+			</td>
+			</tr>
+		</table>
+	  </div>
+
+	</div>
+
+
 	<script>		
 				
+		var id = function(elid) {
+					var ret = document.getElementById(elid);
+                    if(!ret){
+                        console.log('No element found with id ' + elid);
+                    }
+                    return ret;
+                };		
+				
 		var WifiPwdHasChanged=false;
-		var UserPwdHasChanged=false;			
+		var UserPwdHasChanged=false;
+		var brokerPwdHasChanged=false;
+		var showAllTabs= false;
+		var getStatusInterval;
+		
+		// Get the modal
+		var modal = id("pwdModal");
+		// Get the <span> element that closes the modal
+		var span = document.getElementsByClassName("close")[0];
 				
 		/* Toggle between adding and removing the "responsive" class to topNav when the user clicks on the icon */
 		function resptopNav() {
@@ -596,8 +728,31 @@
 				x.className = "topNav";
 			}
 		}
+		
+		
+		
+		function showThisTab(pageName)
+		{
+			let showTab = (pageName=="Home") || (pageName=="About") || showAllTabs;
+			return showTab
+		}
+		
+		function showAllTabsNow ()
+		{
+			let tabLinks = document.getElementsByClassName("tabLink");
+			for (i = 0; i < tabLinks.length; i++) {
+				if ((showThisTab(tabLinks[i].name)))
+				{
+					tabLinks[i].style.display = "block";
+				} else 
+				{
+					tabLinks[i].style.display = "none";
+				}
+			}
+		}
+		
 		function openPage(pageName,elmnt,color) {
-		  var i, tabContent, tabLinks;
+		  let i, tabContent, tabLinks;
 		  tabContent = document.getElementsByClassName("tabContent");
 		  for (i = 0; i < tabContent.length; i++) {
 			tabContent[i].style.display = "none";
@@ -606,24 +761,21 @@
 		  for (i = 0; i < tabLinks.length; i++) {
 			tabLinks[i].style.backgroundColor = "";
 		  }
-		  document.getElementById(pageName).style.display = "block";
-		  elmnt.style.backgroundColor = color;
+		  if (showThisTab(pageName)===true) {
+			  id(pageName).style.display = "block";
+			  elmnt.style.backgroundColor = color;
+		  }
+		  
 		}
-					
+		
 				
 		// Get the element with id="defaultOpen" and click on it
-		document.getElementById("defaultOpen").click();
+		id("defaultOpen").click();
+				
 		
-		var id = function(elid) {
-					var ret = document.getElementById(elid);
-                    if(!ret){
-                        console.log('No element found with id ' + elid);
-                    }
-                    return ret;
-                };
-				
-				
-		OnStart();
+		window.onload = function() {
+			OnStart();
+		}
 		
 		function OnStart() {
 			makeValvesTable();
@@ -639,9 +791,27 @@
 			getTempsConfig();
 			getValvesStatus();
 			getTempsStatus();
-			var getStatusInterval = window.setInterval(getStatus, 5000);
+			getStatusInterval = window.setInterval(getStatus, 5000);
 			generateOnClick();
+			showAllTabsNow();	
 		}		
+				
+		async function checkLogin() {
+			let login = {};
+			login.user = id("dialogUserInput").value;
+			login.pwd = id("dialogPwdInput").value;
+			res = await postJson("auth",JSON.stringify(login));
+			switch (res.auth) {
+				case 0 : alert ("User name and password wrong"); break;
+				case 1 : alert ("User name wrong"); break;
+				case 2 : alert ("Password wrong"); break;
+				case 3 : {	
+							showAllTabs= true;
+							showAllTabsNow();
+							break;
+						 }
+			}
+		}
 				
 		function ValidateIPaddress(inputText) {
 			var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -856,14 +1026,37 @@
 				WifiPwdHasChanged=true;
 			};
 			
+			id("netcfg-UserPwd").onchange = function(){
+				UserPwdHasChanged=true;
+			};
+			
+			id("protcfg-Pwd").onchange = function(){
+				brokerPwdHasChanged=true;
+			};
+			
 			id("activeSetValves").onclick = function(){
 				activateSetValves();
 			};
 			
-			
 			for (var i=1; i<13;i++) { 
 				generateOnValveClick(i);
 			}
+			
+			id("login-button").onclick = function(){
+				doLogin();
+			};
+			// When the user clicks on <span> (x), close the modal
+			span.onclick = function() {
+			  modal.style.display = "none";
+			}
+			
+			id("dialogOk").onclick = function () {
+				checkLogin();
+				modal.style.display = "none";
+			};
+			id("dialogCancel").onclick = function () {
+				modal.style.display = "none";
+			};
 		}
 		
 		function generateOnValveClick (nr) {
@@ -875,7 +1068,6 @@
 		
 		function activateSetValves(){
 			var checked=id("activeSetValves").checked ;
-			console.log (checked);
 			for (i=1; i<13;i++){
 				id('setValveP'+i).readOnly=!checked;
 				if (checked) 
@@ -891,37 +1083,54 @@
 			}
 		}
 
+		function doLogin() {
+			modal.style.display = "block";
+		}
+		
+		function reloadDoc (path,timeOut,clear=false,reLoad=true) {
+			if ((clear===true) && getStatusInterval) clearInterval(getStatusInterval);
+			document.body.style.cursor = 'wait';
+			setTimeout(function() {
+					location.assign(path);
+					if (reLoad===true){
+						location.reload(true);					
+					}
+					document.body.style.cursor = 'default';
+				},timeOut);
+		}
+		
 		function factoryRestore(){
 			if (confirm('Are you sure you want to restore configuration to factory settings ?')) {
 				postCmd('{"action":"restoreCfg"}');
-				setTimeout(function() {window.reload();},1000);
+				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
 		function resetConfig(){
 			if (confirm('Are you sure you want to reset configuration to factory settings except network ?')) {
 				postCmd('{"action":"resetCfg"}');
-				setTimeout(function() {window.reload();},1000);
+				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
 		function reboot(){
 			if (confirm('Are you sure you want to reboot ?')) {
 				postCmd('{"action":"reboot"}');
-				setTimeout(function() {window.reload();},1000);
+				reloadDoc("http:/#home",4000,true);
 			}
 		}
 			
 		async function saveConfig(){
 			if (confirm('Are you sure you want to save configuration ?')) {
-				await postNetCfg();
-				await postProtCfg();
+				if (!(await postNetCfg())) return;
+				if (!(await postProtCfg())) return;
 				await postValvesCfg();
 				await postTempsCfg();
 				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
-				setTimeout(function() {window.reload();},1000);
+				mqttPwdHasChanged=false;
+				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
@@ -938,15 +1147,15 @@
 				netCfg.pwd = id("netcfg-WifiPwd").value;
 				if (id("netcfg-WifiPwd").value!=id("netcfg-WifiPwd2").value) {
 					alert ("Wifi password does not compare ! Please re-type");
-					return;
+					return (false);
 				}
 			}
 			netCfg.userName = id("netcfg-UserName").value;
 			if (UserPwdHasChanged===true) {
-				netCfg.Userpwd = id("netcfg-UserPwd").value;
+				netCfg.userPwd = id("netcfg-UserPwd").value;
 				if (id("netcfg-UserPwd").value!=id("netcfg-UserPwd2").value) {
 					alert ("User password does not compare ! Please re-type");
-					return;
+					return (false);
 				}
 			}
 			netCfg.timeServer = id("netcfg-TimeServer").value;
@@ -955,7 +1164,10 @@
 			netCfg.syslogLevel=id("netcfg-syslog-select").selectedIndex;
 			netCfg.syslogIp=id("netcfg-syslog-ip").value;
 			netCfg.syslogPort=id("netcfg-syslog-port").value;
+			WifiPwdHasChanged=false;
+			UserPwdHasChanged=false;
 			await postJson("netconfig",JSON.stringify(netCfg));
+			return (true);
 		}
 		
 		async function postProtCfg() {
@@ -964,8 +1176,19 @@
 			if (id("protcfg-dataProt").selectedIndex==1) {
 				protCfg.mqttIp = id("protcfg-mqttIp").value;
 				protCfg.mqttPort = id("protcfg-mqttPort").value;
+				protCfg.interval = id("protcfg-Interval").value;
+				protCfg.user = id("protcfg-User").value;
 			}
+			if (brokerPwdHasChanged===true) {
+				protCfg.pwd = id("protcfg-Pwd").value;
+				if (id("protcfg-Pwd").value!=id("protcfg-Pwd2").value) {
+					alert ("Broker password does not compare ! Please re-type");
+					return (false);
+				}
+			}
+			brokerPwdHasChanged=false;
 			await postJson("protconfig",JSON.stringify(protCfg));
+			return (true);
 		}
 		
 		async function postValvesCfg() {
@@ -1082,7 +1305,6 @@
 			}
 		}
 		
-		
 		async function getNetInfo() {
 			var dataNet=await getJson("netinfo");
 			if (dataNet) {
@@ -1115,6 +1337,10 @@
 				id("netcfg-syslog-port").value=dataNetConfig.syslogPort;
 				showWifi();
 				showSyslogIP();
+				if (id("netcfg-UserName").value==="") {
+					showAllTabs=true;
+					showAllTabsNow();
+				} else id("login-button").style.display = "block";
 			}
 		}
 		
@@ -1124,6 +1350,8 @@
 				id("protcfg-dataProt").selectedIndex = dataProtConfig["prot"];
 				id("protcfg-mqttIp").value = dataProtConfig["mqttIp"];
 				id("protcfg-mqttPort").value = dataProtConfig["mqttPort"];
+				id("protcfg-Interval").value = dataProtConfig["interval"];
+				id("protcfg-User").value = dataProtConfig["user"];
 				showMqttIP();
 			}
 		}
@@ -1149,15 +1377,11 @@
 		}
 			
 		async function updateWT32() {
-			location.assign('http:/update');
-			location.replace('http:/update');
-			window.reload();
+			reloadDoc("http:/update",100,false,false);
 		}	
 		
 		async function updateSTM32() {
-			location.assign('http:/stmupdate');
-			location.replace('http:/stmupdate');
-			window.reload();
+			reloadDoc("http:/stmupdate",100,false,false);
 		}	
 			
 		async function postJson(link,postData){
@@ -1170,14 +1394,12 @@
 				body: postData
 			})
 			.then(res => {
-			  console.log(res);
-			  return res
+			  return res.json()
 			})
 			.catch(err => {
 			  console.log('Error: ','link: '+link+' '+err)
 			})
 		  ))
-		  console.log(data);
 		  return data
 		}
 			

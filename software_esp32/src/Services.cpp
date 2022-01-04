@@ -48,13 +48,19 @@ CServices::CServices()
 {
 }
 
-void CServices::ServicesLoop()
+void CServices::servicesLoop()
 {
-  if (restartStmApp) 
-  {
-    
-    VdmTask.startApp();
-    restartStmApp=false;
-  }
-   
+ 
+}
+
+void CServices::restartSystem() {
+      VdmTask.taskIdResetSystem = taskManager.scheduleOnce(1000, [] {
+                ESP.restart();
+            });
+}
+
+void CServices::restartStmApp(uint32_t ms) {
+      VdmTask.restartStmApp = taskManager.scheduleOnce(ms, [] {
+                VdmTask.startApp();
+            });
 }

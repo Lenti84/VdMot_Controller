@@ -24,14 +24,8 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 - b-sample hardware is working with original HmIP-VdMot actuator
 - c-sample hardware samples ordered (see hardware section)
 - valve learning, opening and closing is working
-- connection to [FHEM](https://fhem.de/) established via MQTT
-  - topics:
-    - /VdMotFBH/valve/x/target      --> set target position for valve (0...100 %)
-    - /VdMotFBH/valve/x/actual      --> get actual position of valve (0...100 %) 
-    - /VdMotFBH/valve/x/state       --> get actual state of valve (IDLE, OPENING, CLOSING, BLOCKING, OPENCIRCUIT, UNKNOWN)
-    - /VdMotFBH/valve/x/meancur     --> get mean current of valve (mA)
-    - /VdMotFBH/valve/x/temperature --> get temperature of linked 1-wire sensor (1/10 °C)
-    - x = valve number
+- connection to [FHEM](https://fhem.de/) or [IOBroker] established via MQTT
+- read and set values via JSON
 - first productive test still pending
 - tests of 2 actuators done, see [system/actuators.md](./system/actuators.md)
 - one wire sensors working
@@ -49,7 +43,6 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 ## Software
 For details please see [software.md](./software.md)
 - written in C / C++
-- not pretty (yet) ... i'm more the hardware guy ;-)
 - uses great arduino libraries
 - developed using PlatformIO
 - STM32 BluePill
@@ -61,12 +54,10 @@ For details please see [software.md](./software.md)
   - future
     - so many things, tbd
 - ESP32
-  - communication with MQTT broker
-  - future
-    - visualize system status
-    - json interface
-    - OTA software update
-    - flash STM32
+  - communication with MQTT broker or JSON interface
+  - visualize system status
+  - OTA software update
+  - flash STM32
 
 
 ## License
