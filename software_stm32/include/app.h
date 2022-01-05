@@ -48,6 +48,10 @@
 int16_t app_setup (void);
 int16_t app_loop (void);
 byte app_10s_loop ();
+int16_t app_set_learnmovements(uint16_t cycles);
+int16_t app_set_learntime(uint32_t time);
+int16_t app_set_valvelearning(uint16_t valve);
+int16_t app_set_valveopen(int16_t valve);
 
 
 // struct valvemotor {

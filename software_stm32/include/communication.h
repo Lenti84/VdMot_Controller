@@ -37,21 +37,25 @@
 extern void communication_setup (void);
 extern int16_t communication_loop (void);
 
-#define APP_PRE_SETTARGETPOS       	"stgtp"			// doc
-#define APP_PRE_GETONEWIRECNT		"gonec"			// doc
-#define APP_PRE_GETONEWIREDATA		"goned"			// doc
-#define APP_PRE_SET1STSENSORINDEX	"stsnx"			// doc
-#define APP_PRE_SET2NDSENSORINDEX	"stsny"			// doc
-#define APP_PRE_SETALLVLVOPEN		"staop"			// doc
-#define APP_PRE_GETONEWIRESETT		"gvlon"			// doc
-#define APP_PRE_GETVLVDATA			"gvlvd"			// doc
+#define APP_PRE_SETTARGETPOS        "stgtp"			// doc
+#define APP_PRE_GETONEWIRECNT       "gonec"			// doc
+#define APP_PRE_GETONEWIREDATA      "goned"			// doc
+#define APP_PRE_SET1STSENSORINDEX   "stsnx"			// doc
+#define APP_PRE_SET2NDSENSORINDEX   "stsny"			// doc
+#define APP_PRE_SETALLVLVOPEN       "staop"			// doc
+#define APP_PRE_GETONEWIRESETT      "gvlon"			// doc
+#define APP_PRE_GETVLVDATA          "gvlvd"			// doc
 
-#define APP_PRE_GETVERSION			"gvers"
-#define APP_PRE_GETTARGETPOS       	"gtgtp"			
+#define APP_PRE_SETONEWIRESEARCH    "stons"		  // doc
+#define APP_PRE_GETVERSION			    "gvers"     // doc
+#define APP_PRE_GETTARGETPOS       	"gtgtp"	    // doc 
+#define APP_PRE_SETLEARNTIME        "stlnt"		  // doc
+#define APP_PRE_SETLEARNMOVEM       "stlnm"     // doc
+#define APP_PRE_SETVLLEARN          "staln"		  // doc	
 
-#define APP_PRE_GETACTUALPOS       	"gactp"
-#define APP_PRE_GETMEANCURR        	"gmenc"
-#define APP_PRE_GETSTATUS          	"gstat"
+#define APP_PRE_GETACTUALPOS       	"gactp"     // not implemented
+#define APP_PRE_GETMEANCURR        	"gmenc"     // not implemented
+#define APP_PRE_GETSTATUS          	"gstat"     // not implemented
 
 
 #endif //_COMMUNICATION_H
