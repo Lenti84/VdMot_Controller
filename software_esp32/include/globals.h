@@ -43,9 +43,6 @@
 #include <Arduino.h>
 #include "stmApp.h"
 
-#define MAJORVERSION        "0"
-#define MINORVERSION        "03"   
-
 #define ACTUATOR_COUNT  (unsigned int) 12
 
 // debug mode

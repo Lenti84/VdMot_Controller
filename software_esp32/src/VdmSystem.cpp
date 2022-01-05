@@ -50,6 +50,7 @@ CVdmSystem::CVdmSystem()
 {
   spiffsStarted=false;
   numfiles  = 0;
+  stmBuild = 0;
 }
 
 void CVdmSystem::getSystemInfo()

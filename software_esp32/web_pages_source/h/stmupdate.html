@@ -118,11 +118,17 @@
 	<tr>
         <td id="progressValue"></td>		
 	</tr>
+	<tr>
+		<td>
+        <input type="button" class="buttonclass" style="display:none;" id="back" value="back" title="back" onclick="app.methods.back()"/>
+		</td>
+	</tr>
 	</table>
 
 <script>	
 
 const updStatus = ["Not started","Started","In progress","Finished","Error"];
+var getUpdateStatusInterval = null;
 
 	var id = function(elid) {
 		var ret = document.getElementById(elid);
@@ -174,25 +180,33 @@ const updStatus = ["Not started","Started","In progress","Finished","Error"];
 			if (fSelect.value) {
 				if (!confirm('Are you sure you want to update stm32 ?')) {return}
 				await this.postJson("stmdoupdate",'{"cmd":'+updCmd.value+',"file":"'+fSelect.value+'"}');
-				var getUpdateStatusInterval = window.setInterval(this.getUpdateStatus, 2000);
+				getUpdateStatusInterval = window.setInterval(this.getUpdateStatus, 2000);
 			} else alert ("Nothing selected");
 		}
 	,
 		async getUpdateStatus() {
-			var stmUpdStatus=await app.methods.getJson("stmupdstatus");
+			var	stmUpdStatus=await app.methods.getJson("stmupdstatus");
 			if (stmUpdStatus) {
 				id("progressBar").value = stmUpdStatus.percent;
 				
 				id("progressValue").textContent = stmUpdStatus.percent+" % " + updStatus[stmUpdStatus.status] ;
-				if (stmUpdStatus.error) {
-					id("progressValue").textContent=stmUpdStatus.error;
-					getUpdateStatusInterval.clear;
+				if (stmUpdStatus.status==4) {
+					id("progressValue").textContent="Error";
+					if (getUpdateStatusInterval) getUpdateStatusInterval.clear;
 				}
-				if (stmUpdStatus.finished) {
-					getUpdateStatusInterval.clear;
+				if (stmUpdStatus.status==3) {
+					if (getUpdateStatusInterval) getUpdateStatusInterval.clear;
 					id("progressValue").textContent = "Update finished"
+					const button = id("uploadSTMButton"); 
+					button.style.display = "block";
 				}
 			}
+		}
+	,
+		back() {
+			location.assign('http:/');
+			location.replace('http:/');
+			window.reload();
 		}
 	,
 		generateFilesList (filesList) {

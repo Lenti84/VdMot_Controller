@@ -50,12 +50,18 @@
 #include <WiFiUdp.h>
 #include "Logger.h"
 #include "VdmNet.h"
+#include "VdmSystem.h"
 #include "stm32.h"
 
 #define     MAX_CMD_LEN     10
 #define     MAX_ARG_LEN     120
 
 actuator_str    actuators[ACTUATOR_COUNT];
+
+TEMP_STRUC temps[24];
+uint8_t tempIndex=0;
+uint8_t tempsCount=0;
+uint8_t checkTempsCount = 0;
 
 String cmd_buffer = "";
 
@@ -67,18 +73,13 @@ uint8_t     stm32alive = 0;           // 0 - not alive, >0 - alive
 
 char calc_checksum (char *dataptr);
 void app_check_data();
-void app_cmd(int command);
+void app_cmd(String command);
 void app_comm_machine();
 void app_alive_check();
 void app_web_cmd_check();
 
 void app_setup() {
-
-    UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL);
-    //#warning fixme
-    //UART_STM32.begin(9600, SERIAL_8E1, STM32_RX, STM32_TX, false, 20000UL);
-
-
+    UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL); 
     for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {
         actuators[x].actual_position = 100;
         actuators[x].target_position = 0;
@@ -91,11 +92,8 @@ void app_setup() {
     {
         target_position_mirror[x] = actuators[x].target_position;
     }
-
-    
     UART_DBG.println("application setup finished");
 }
-
 
 void app_loop() {
             app_check_data();
@@ -105,7 +103,7 @@ void app_loop() {
 }
 
 void app_cmd(String command) {    
-    cmd_buffer = command;
+    if (cmd_buffer == "") cmd_buffer = command;
 }
 
 char calc_checksum (char *dataptr) {
@@ -179,17 +177,38 @@ void app_check_data() {
         // devide buffer into command and data
 		// ****************************************
 		cmdptr = buffer;
+        
 
 		for(int x=0;x<6;x++){
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
 				if(x==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
-				else if(x==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
-				else if(x==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
-                else if(x==3) {	strncpy(arg2,cmdptr,sizeof(arg2)-1); argcnt=3;	} 	// 3rd argument
-                else if(x==4) {	strncpy(arg3,cmdptr,sizeof(arg3)-1); argcnt=4;	} 	// 4th argument
-                else if(x==5) {	strncpy(arg4,cmdptr,sizeof(arg4)-1); argcnt=5;	} 	// 5th argument
+				else if(x==1) { 
+                    memset (arg0,0x0,sizeof(arg0));
+                    strncpy(arg0,cmdptr,sizeof(arg0)-1); 
+                    argcnt=1;	
+                } 	// 1st argument
+				else if(x==2) {	
+                    memset (arg1,0x0,sizeof(arg1));
+                    strncpy(arg1,cmdptr,sizeof(arg1)-1); 
+                    argcnt=2;	
+                } 	// 2nd argument
+                else if(x==3) {	
+                    memset (arg2,0x0,sizeof(arg2));
+                    strncpy(arg2,cmdptr,sizeof(arg2)-1); 
+                    argcnt=3;	
+                } 	// 3rd argument
+                else if(x==4) {
+                    memset (arg3,0x0,sizeof(arg3));	
+                    strncpy(arg3,cmdptr,sizeof(arg3)-1); 
+                    argcnt=4;	
+                } 	// 4th argument
+                else if(x==5) {	
+                    memset (arg4,0x0,sizeof(arg4));
+                    strncpy(arg4,cmdptr,sizeof(arg4)-1); 
+                    argcnt=5;	
+                } 	// 5th argument
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -279,35 +298,48 @@ void app_check_data() {
                 actuators[atoi(arg0ptr)].temperature = atoi(arg4ptr);
 
                 if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
-                   // logger.print("new data package: ", logger.DATA); 
-                   // logger.println(buffer, logger.DATA); 
                     syslog.log(LOG_DEBUG, "got full vlv data packet");
                 }
                 // create some debug messages
                 if (vismode > VISMODE_DETAIL) {
                     UART_DBG.println("got full vlv data packet");
-                    //
                     logger.print("got full vlv data packet");
                 }
-            }
-
-            
+            } 
         }
 
         // get onewire data answer
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
-            logger.print("got one wire data packet");
+        
+        else if(memcmp(APP_PRE_GETONEWIRECNT,cmd,5) == 0) {
             if(argcnt == 1) {
-                logger.print(arg0ptr);
+                tempsCount= atoi(arg0ptr);   
             }
-            
         }
 
+		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
+            //logger.print("got one wire data packet");
+            if(argcnt == 2) {
+                //logger.print(arg0ptr);
+                
+                memset(temps[tempIndex].id,0x0,sizeof(temps[tempIndex].id)); 
+                strncpy(temps[tempIndex].id,arg0ptr,sizeof(temps[tempIndex].id));
+                temps[tempIndex].temperature=atoi(arg1ptr)+VdmConfig.configFlash.tempsConfig.tempConfig[tempIndex].offset;
+                tempIndex++;
+                if (tempIndex>=tempsCount) tempIndex=0;
+            }
+        }
 
-    
+        else if(memcmp(APP_PRE_GETVERSION,cmd,5) == 0) {
+            if(argcnt > 0) {
+                VdmSystem.stmVersion=arg0ptr; 
+                VdmSystem.stmBuild=0;
+            }
+            if(argcnt > 1) {
+                 VdmSystem.stmBuild=atoi(arg1ptr);
+            }
+        }
     }
-
 }
 
 void app_comm_machine(){
@@ -316,6 +348,8 @@ void app_comm_machine(){
     #define COMM_SENDTARGET     2
     #define COMM_CHECKTARGET    3
     #define COMM_GETDATA        4
+    #define COMM_GETONEWIRE     5
+    #define COMM_GETONEWIRECOUNT 6
 
     static unsigned char commstate=0;
     char sendbuffer[30];
@@ -359,7 +393,7 @@ void app_comm_machine(){
                     // check if target has changed
                     if(target_position_mirror[x] != actuators[x].target_position)
                     {
-                        sendbuffer[0] = '\0';
+                        memset(sendbuffer,0x0,sizeof(sendbuffer));
                         //UART_DBG.println("sending new target value");
                         strcat(sendbuffer, APP_PRE_SETTARGETPOS);
                         strcat(sendbuffer, " ");
@@ -422,14 +456,14 @@ void app_comm_machine(){
                 break;
 
         case COMM_GETDATA:  
-                commstate = COMM_IDLE;
+                commstate =  COMM_GETONEWIRECOUNT;
                 
                 // walk through all valves, one per cycle
                 if(getindex<ACTUATOR_COUNT-1) getindex++;
                 //if(getindex<1) getindex++;
                 else getindex=0;
 
-                sendbuffer[0] = '\0';
+                memset(sendbuffer,0x0,sizeof(sendbuffer));
                 
                 strcat(sendbuffer, APP_PRE_GETVLVDATA);
                 strcat(sendbuffer, " ");
@@ -447,10 +481,39 @@ void app_comm_machine(){
                 if (vismode == VISMODE_DETAIL) {
                     UART_DBG.println(sendbuffer);                
                     logger.print(sendbuffer, logger.DATA);
-                }
-                        
+                }     
+                
                 break;
 
+        case COMM_GETONEWIRECOUNT:
+                commstate = COMM_GETONEWIRE;
+                if (checkTempsCount==0) {
+                    memset(sendbuffer,0x0,sizeof(sendbuffer));
+                    
+                    strcat(sendbuffer, APP_PRE_GETONEWIRECNT);
+                    strcat(sendbuffer, " ");
+                    UART_STM32.println(sendbuffer);
+                    checkTempsCount=20;
+                }    
+                checkTempsCount--;
+                break;
+
+        case COMM_GETONEWIRE:
+                commstate = COMM_IDLE;
+                if (tempsCount>0) {
+                    memset(sendbuffer,0x0,sizeof(sendbuffer));
+                    
+                    strcat(sendbuffer, APP_PRE_GETONEWIREDATA);
+                    strcat(sendbuffer, " ");
+
+                    itoa(tempIndex, valbuffer, 10);
+                    strcat(sendbuffer, valbuffer);
+                    strcat(sendbuffer, " ");   
+
+                    UART_STM32.println(sendbuffer);
+                    }
+                break;
+        
         default:    
                 commstate = COMM_IDLE;
                 break;
@@ -513,10 +576,12 @@ void app_web_cmd_check(){
             if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_ATOMIC) {
                 syslog.log(LOG_DEBUG, "send onewire data request to STM32");
             }	
-            UART_DBG.println("send onewire data request to STM32");		
+            UART_DBG.println("send onewire data request to STM32 : "+String(cmd_buffer));		
             UART_STM32.println(cmd_buffer);
         }
-
+        else if(cmd_buffer.startsWith(APP_PRE_GETVERSION)) {		
+            UART_STM32.println(cmd_buffer);
+        }
         else {
             if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
                 syslog.log(LOG_DEBUG, "unknown command for STM32 from webinterface");

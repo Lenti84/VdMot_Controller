@@ -129,9 +129,26 @@ String CWeb::getTempsConfig (VDM_TEMPS_CONFIG tempsConfig)
 
 String CWeb::getSysInfo()
 {
-  String result = "{\"wt32version\":\""+String(MAJORVERSION)+"."+String(MINORVERSION)+"\","+
+  time_t t = FIRMWARE_BUILD;
+  struct tm *tmp ;
+  char buf[50];
+  String wt32Build;
+  tmp = gmtime (&t);
+  strftime (buf, sizeof(buf), " Build %d.%m.%Y %H:%M", tmp);
+  wt32Build = String(buf);
+  
+  t = VdmSystem.stmBuild;
+  String stmBuild="";
+  if (t>0) {
+    tmp = gmtime (&t);
+    strftime (buf, sizeof(buf), " Build %d.%m.%Y %H:%M", tmp);
+    stmBuild = String (buf);
+  }
+
+  String result = "{\"wt32version\":\""+String(FIRMWARE_VERSION)+wt32Build+"\"," +
                   "\"wt32cores\":"+VdmSystem.chip_info.cores+ "," +
-                  "\"wt32coreRev\":"+VdmSystem.chip_info.revision+
+                  "\"wt32coreRev\":"+VdmSystem.chip_info.revision+","+
+                  "\"stm32version\":\""+VdmSystem.stmVersion+stmBuild+"\""+
                   "}";
   return result;  
 }
@@ -177,10 +194,10 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
 {
   String result = "[";
   int temperature;
-  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
-    temperature = actuators[x].temperature+tempsConfig.tempConfig[x].offset;
+  for (uint8_t x=0;x<tempsCount;x++) {
+    temperature = temps[x].temperature;
     result += "{\"temp\":" + String(((float)temperature)/10,1)+"}";
-    if (x<ACTUATOR_COUNT-1) result += ",";
+    if (x<tempsCount-1) result += ",";
   }  
   result += "]";
   return result;

@@ -67,6 +67,8 @@ public:
   esp_chip_info_t chip_info;
   fileinfo Filenames[maxFiles]; // Enough for most purposes!
   uint8_t numfiles;
+  String stmVersion;
+  time_t stmBuild;
 private:
   bool spiffsStarted;
 };

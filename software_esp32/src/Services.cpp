@@ -46,11 +46,15 @@ CServices Services;
 
 CServices::CServices()
 {
+  executeOnce=true;
 }
 
 void CServices::servicesLoop()
 {
- 
+  if (executeOnce) {
+    app_cmd(APP_PRE_GETVERSION+String(" "));
+    executeOnce=false;
+  }
 }
 
 void CServices::restartSystem() {

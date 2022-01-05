@@ -1272,9 +1272,9 @@
 		
 		function fillTempsTable (tempsJson) {
 			var tempsTable = document.getElementById('tempsTable');
-			for (var row = 1; row<13; row++) {		
-				tempsTable.rows[row].cells[2].textContent = tempsJson[row-1].temp;
-			}
+			tempsJson.forEach(function (item, index) {            
+				tempsTable.rows[index+1].cells[2].textContent = item.temp;
+            });
 		}
 		
 		function fillCfgTempsTable (cfgTempsJson) {
@@ -1292,7 +1292,7 @@
 			var dataSystemInfo=await getJson("sysinfo");
 			if (dataSystemInfo) {
 				id("sysWt32-Version").textContent = dataSystemInfo["wt32version"];
-				
+				id("sysSTM32-Version").textContent = dataSystemInfo["stm32version"];
 			}
 		}
 		

@@ -223,7 +223,7 @@ void CMqtt::publish_valves () {
         // temperature
         topicstr[len] = '\0';
         strcat(topicstr, "/temperature");
-        itoa(actuators[x-1].temperature, valstr, 10);
+        itoa(temps[x-1].temperature, valstr, 10);
         mqtt_client.publish(topicstr, valstr);
     }
 }

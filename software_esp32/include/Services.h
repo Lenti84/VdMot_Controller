@@ -51,6 +51,8 @@ public:
   void servicesLoop();
   void restartSystem();
   void restartStmApp(uint32_t ms);
+
+  bool executeOnce;
 };
 
 extern CServices Services;

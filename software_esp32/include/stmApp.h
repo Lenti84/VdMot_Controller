@@ -44,33 +44,41 @@
 
 typedef struct  {
 	unsigned char actual_position;      // from controller
-    unsigned char target_position;      // to controller
-    unsigned char state;                // from controller
-    unsigned int  meancurrent;          // from controller
-    int           temperature;          // temperature of assigned sensor
+  unsigned char target_position;      // to controller
+  unsigned char state;                // from controller
+  unsigned int  meancurrent;          // from controller
+  int           temperature;          // temperature of assigned sensor
 } actuator_str;
 
-
-// #define APP_CMD_NONE                0x00
-// #define APP_CMD_SETTARGETPOS        0x01            // ESP -> STM - set target value
-// #define APP_CMD_GETACTUALPOS        0x02            // ESP <- STM - get actual value
-// #define APP_CMD_SETALLVLVOPEN       0x03            // ESP -> STM - open all valves
-
-
-#define APP_PRE_SETTARGETPOS       	"stgtp"
-#define APP_PRE_GETACTUALPOS       	"gactp"
-#define APP_PRE_GETMEANCURR        	"gmenc"
-#define APP_PRE_GETSTATUS          	"gstat"
-#define APP_PRE_GETVLVDATA			    "gvlvd"
-#define APP_PRE_SETTXENA			      "stxen"
-#define APP_PRE_GETSUPPLYSENS		    "gspst"
-#define APP_PRE_GETONEWIREDATA		  "goned"
-#define APP_PRE_SETSENSORINDEX		  "stsnx"
-#define APP_PRE_SETALLVLVOPEN		    "staop"
+typedef struct  {
+  int16_t   temperature;          // temperature of assigned sensor
+  char id[25];
+} TEMP_STRUC;
 
 
+#define APP_PRE_SETTXENA			      "stxen"   // not used in stm
+#define APP_PRE_GETSUPPLYSENS		    "gspst"   // not used in stm
+#define APP_PRE_SETSENSORINDEX		  "stsnx"   // not used in stm
 
-#define COMM_ALIVE_CYCLE            30          // send "Alive" cycle in 100 ms cycles
+
+#define APP_PRE_SETTARGETPOS       	"stgtp"			
+#define APP_PRE_GETONEWIRECNT		    "gonec"			
+#define APP_PRE_GETONEWIREDATA		  "goned"			
+#define APP_PRE_SET1STSENSORINDEX	  "stsnx"   // not used	in stm		
+#define APP_PRE_SET2NDSENSORINDEX	  "stsny"		// not used	in stm	
+#define APP_PRE_SETALLVLVOPEN		    "staop"			
+#define APP_PRE_GETONEWIRESETT		  "gvlon"	  // not used	in stm	
+#define APP_PRE_GETVLVDATA			    "gvlvd"			
+#define APP_PRE_SETVLLEARN          "staln"   // one valve
+
+#define APP_PRE_GETVERSION			    "gvers"
+#define APP_PRE_GETTARGETPOS       	"gtgtp"			
+
+#define APP_PRE_GETACTUALPOS       	"gactp"   // not used in stm
+#define APP_PRE_GETMEANCURR        	"gmenc"   // not used in stm
+#define APP_PRE_GETSTATUS          	"gstat"   // not used in stm
+
+#define COMM_ALIVE_CYCLE            30        // send "Alive" cycle in 100 ms cycles
 
 
 void app_setup();
@@ -80,4 +88,6 @@ void app_cmd(String command);
 extern actuator_str actuators[];
 
 extern uint8_t stm32alive;
+extern TEMP_STRUC temps[];
+extern uint8_t tempsCount;
 

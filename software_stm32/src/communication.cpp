@@ -135,7 +135,8 @@ int16_t communication_loop (void) {
 
 		// evaluate data
 		// ****************************************************************************************
-
+		// clear sendbuffer, otherwise there is something from older commands
+		memset (sendbuffer,0x0,sizeof(sendbuffer));
 		
 		// set target position
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -264,12 +265,12 @@ int16_t communication_loop (void) {
 					// 8 Byte adress
 					for (uint8_t i = 0; i < 8; i++)
 					{
-					if (tempsensors[x].address[i] < 16) strcat(sendbuffer, "0");
-					itoa(tempsensors[x].address[i], valbuffer, 16);      
-					strcat(sendbuffer, valbuffer);
-					if (x<7) strcat(sendbuffer, "-");
+						if (tempsensors[x].address[i] < 16) strcat(sendbuffer, "0");
+						itoa(tempsensors[x].address[i], valbuffer, 16);      
+						strcat(sendbuffer, valbuffer);
+						if (i<7) strcat(sendbuffer, "-");
 					}
-
+					strcat(sendbuffer," ");
 					// temperature
 					itoa(tempsensors[x].temperature, valbuffer, 10);      
 					strcat(sendbuffer, valbuffer);

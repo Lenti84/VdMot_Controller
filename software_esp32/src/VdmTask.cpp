@@ -85,6 +85,7 @@ void CVdmTask::startApp()
         delay (1000);       // wait to finish task; 
         taskIdStm32Ota=TASKMGR_INVALIDID;
         UART_DBG.println("delete task stmOta"); 
+        Services.restartSystem();
     }
     if (taskIdApp==TASKMGR_INVALIDID) { 
         UART_DBG.println("start task stmApp");
@@ -124,7 +125,6 @@ void CVdmTask::startServices()
     taskIdServices = taskManager.scheduleFixedRate(1000, [] {
         Services.servicesLoop();
     });
-    
 }
 
 void CVdmTask::deleteTask (taskid_t taskId)
