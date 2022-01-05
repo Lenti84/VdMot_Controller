@@ -40,6 +40,7 @@
 
 #include "VdmTask.h"
 #include "VdmNet.h"
+#include "stmApp.h"
 #include "ServerServices.h"
 #include <BasicInterruptAbstraction.h>
 
@@ -89,9 +90,9 @@ void CVdmTask::startApp()
     }
     if (taskIdApp==TASKMGR_INVALIDID) { 
         UART_DBG.println("start task stmApp");
-        app_setup();
+        StmApp.app_setup();
         taskIdApp = taskManager.scheduleFixedRate(100, [] {
-                app_loop();
+                StmApp.app_loop();
         });
         UART_DBG.println("task stmApp " +String(taskIdApp)); 
     } else {

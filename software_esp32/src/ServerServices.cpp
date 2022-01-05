@@ -62,6 +62,7 @@
 #include "VdmSystem.h"
 #include "VdmTask.h"
 #include "Services.h"
+#include "stmApp.h"
 
 extern "C" {
   #include "tfs_data.h"
@@ -126,9 +127,9 @@ void CServerServices::postSetValve (JsonObject doc)
   #endif
 
   uint8_t index;
-  if (doc["valve"]) {
+  if (!doc["valve"].isNull()) {
     index=(doc["valve"].as<uint8_t>())-1;
-    if (doc["value"]) actuators[index].target_position = doc["value"];
+    if (!doc["value"].isNull()) StmApp.actuators[index].target_position = doc["value"];
   }
 }
 

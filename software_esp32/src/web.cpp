@@ -180,9 +180,9 @@ String CWeb::getValvesStatus()
   String result = "[";
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
     
-    result += "{\"pos\":"+String(actuators[x].actual_position) + ","+
-              "\"meanCur\":" + String(actuators[x].meancurrent) + ","+
-              "\"targetPos\":" + String(actuators[x].target_position)+"}";      
+    result += "{\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
+              "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
+              "\"targetPos\":" + String(StmApp.actuators[x].target_position)+"}";      
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
   result += "]";
@@ -193,11 +193,11 @@ String CWeb::getValvesStatus()
 String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig) 
 {
   String result = "[";
-  int temperature;
-  for (uint8_t x=0;x<tempsCount;x++) {
-    temperature = temps[x].temperature;
+  int16_t temperature;
+  for (uint8_t x=0;x<StmApp.tempsCount;x++) {
+    temperature = StmApp.temps[x].temperature;
     result += "{\"temp\":" + String(((float)temperature)/10,1)+"}";
-    if (x<tempsCount-1) result += ",";
+    if (x<StmApp.tempsCount-1) result += ",";
   }  
   result += "]";
   return result;

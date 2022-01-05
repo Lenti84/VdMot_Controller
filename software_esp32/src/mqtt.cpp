@@ -172,7 +172,7 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length) {
                syslog.log(LOG_INFO, "MQTT: found target topic");
             }	
             
-            actuators[value-1].target_position = atoi(msg);
+            StmApp.actuators[value-1].target_position = atoi(msg);
         }
         else {            
             found = 0;
@@ -205,25 +205,25 @@ void CMqtt::publish_valves () {
 
         // actual value
         strcat(topicstr, "/actual");
-        itoa(actuators[x-1].actual_position, valstr, 10);        
+        itoa(StmApp.actuators[x-1].actual_position, valstr, 10);        
         mqtt_client.publish(topicstr, valstr);
 
         // state
         topicstr[len] = '\0';
         strcat(topicstr, "/state");
-        itoa(actuators[x-1].state, valstr, 10);
+        itoa(StmApp.actuators[x-1].state, valstr, 10);
         mqtt_client.publish(topicstr, valstr);
 
         // meancurrent
         topicstr[len] = '\0';
         strcat(topicstr, "/meancur");
-        itoa(actuators[x-1].meancurrent, valstr, 10);
+        itoa(StmApp.actuators[x-1].meancurrent, valstr, 10);
         mqtt_client.publish(topicstr, valstr);
 
         // temperature
         topicstr[len] = '\0';
         strcat(topicstr, "/temperature");
-        itoa(temps[x-1].temperature, valstr, 10);
+        itoa(StmApp.temps[x-1].temperature, valstr, 10);
         mqtt_client.publish(topicstr, valstr);
     }
 }

@@ -53,34 +53,24 @@
 #include "VdmSystem.h"
 #include "stm32.h"
 
+
 #define     MAX_CMD_LEN     10
 #define     MAX_ARG_LEN     120
 
-actuator_str    actuators[ACTUATOR_COUNT];
+CStmApp StmApp;
 
-TEMP_STRUC temps[24];
-uint8_t tempIndex=0;
-uint8_t tempsCount=0;
-uint8_t checkTempsCount = 0;
+CStmApp::CStmApp() {
+    stm32alive = 0;           // 0 - not alive, >0 - alive 
+    settarget_check = 0;
+    tempIndex=0;
+    checkTempsCount = 0;
+    cmd_buffer = "";
+}
 
-String cmd_buffer = "";
-
-unsigned char target_position_mirror[ACTUATOR_COUNT];
-
-int settarget_check = 0;
-
-uint8_t     stm32alive = 0;           // 0 - not alive, >0 - alive 
-
-char calc_checksum (char *dataptr);
-void app_check_data();
-void app_cmd(String command);
-void app_comm_machine();
-void app_alive_check();
-void app_web_cmd_check();
-
-void app_setup() {
+void  CStmApp::app_setup() {
     UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL); 
-    for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {
+
+    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         actuators[x].actual_position = 100;
         actuators[x].target_position = 0;
         actuators[x].meancurrent = 342;
@@ -88,25 +78,25 @@ void app_setup() {
         actuators[x].temperature = -500;
     }
 
-    for(unsigned int x = 0; x<ACTUATOR_COUNT; x++)
+    for(uint8_t x = 0; x<ACTUATOR_COUNT; x++)
     {
         target_position_mirror[x] = actuators[x].target_position;
     }
     UART_DBG.println("application setup finished");
 }
 
-void app_loop() {
-            app_check_data();
-            app_comm_machine(); 
-            app_alive_check();
-            app_web_cmd_check(); 
+void  CStmApp::app_loop() {
+    app_check_data();
+    app_comm_machine(); 
+    app_alive_check();
+    app_web_cmd_check(); 
 }
 
-void app_cmd(String command) {    
+void  CStmApp::app_cmd(String command) {    
     if (cmd_buffer == "") cmd_buffer = command;
 }
 
-char calc_checksum (char *dataptr) {
+char  CStmApp::calc_checksum (char *dataptr) {
 
     char result = 0;
 
@@ -117,13 +107,13 @@ char calc_checksum (char *dataptr) {
     return result;
 }
 
-void app_check_data() {
+void  CStmApp::app_check_data() {
 
     static char buffer[1200];
     static char *bufptr = buffer;
-    static unsigned int buflen = 0;
+    static uint16_t buflen = 0;
     int availcnt;
-    int found = 0;
+    bool found = false;
     
     char*       cmdptr;
     char*	    cmdptrend;
@@ -162,7 +152,7 @@ void app_check_data() {
             {
                 buffer[c] = '\0';
                // UART_DBG.print("recv "); UART_DBG.println(buffer);
-                found = 1;
+                found = true;
 
                 buflen = 0;           // reset counter
                 bufptr = buffer;    // reset ptr
@@ -342,7 +332,7 @@ void app_check_data() {
     }
 }
 
-void app_comm_machine(){
+void  CStmApp::app_comm_machine(){
     #define COMM_IDLE           0
     #define COMM_ALIVE          1
     #define COMM_SENDTARGET     2
@@ -520,7 +510,7 @@ void app_comm_machine(){
     }
 }
 
-void app_alive_check() {
+void  CStmApp::app_alive_check() {
     static uint8_t oldalivestate;
 
     if(stm32alive) {
@@ -553,7 +543,7 @@ void app_alive_check() {
 }
 
 
-void app_web_cmd_check(){
+void  CStmApp::app_web_cmd_check(){
     
     if(cmd_buffer.length() >= 5) {
         if(cmd_buffer.startsWith(APP_PRE_SETALLVLVOPEN)) {	

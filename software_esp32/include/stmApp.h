@@ -38,7 +38,7 @@
 *END************************************************************************/
 
 
-
+#include "globals.h"
 
 #pragma once
 
@@ -48,7 +48,7 @@ typedef struct  {
   unsigned char state;                // from controller
   unsigned int  meancurrent;          // from controller
   int           temperature;          // temperature of assigned sensor
-} actuator_str;
+} ACTUATOR_STRUC;
 
 typedef struct  {
   int16_t   temperature;          // temperature of assigned sensor
@@ -80,14 +80,32 @@ typedef struct  {
 
 #define COMM_ALIVE_CYCLE            30        // send "Alive" cycle in 100 ms cycles
 
+class CStmApp
+{
+public:
+  CStmApp();
+  void app_setup();
+  void app_loop();
+  void app_cmd(String command);
 
-void app_setup();
-void app_loop();
-void app_cmd(String command);
+  ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
+  TEMP_STRUC temps[24];
+  uint8_t tempsCount;
+private:
+  char calc_checksum (char *dataptr);
+  void app_check_data();
+  void app_comm_machine();
+  void app_alive_check();
+  void app_web_cmd_check();
 
-extern actuator_str actuators[];
+  uint8_t stm32alive;
+  int settarget_check;
+  uint8_t target_position_mirror[ACTUATOR_COUNT];
+    
+  uint8_t tempIndex;
+  uint8_t checkTempsCount;
+  String cmd_buffer;
+};
 
-extern uint8_t stm32alive;
-extern TEMP_STRUC temps[];
-extern uint8_t tempsCount;
+extern CStmApp StmApp;
 

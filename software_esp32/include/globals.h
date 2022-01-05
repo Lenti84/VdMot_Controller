@@ -41,9 +41,9 @@
 #pragma once
 
 #include <Arduino.h>
-#include "stmApp.h"
 
-#define ACTUATOR_COUNT  (unsigned int) 12
+
+#define ACTUATOR_COUNT  (uint8_t) 12
 
 // debug mode
 #define VISMODE_DEFAULT     VISMODE_ATOMIC               

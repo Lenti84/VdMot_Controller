@@ -41,6 +41,7 @@
 #include "Services.h"
 #include "globals.h"
 #include "VdmTask.h"
+#include "stmApp.h"
 
 CServices Services;
 
@@ -52,7 +53,7 @@ CServices::CServices()
 void CServices::servicesLoop()
 {
   if (executeOnce) {
-    app_cmd(APP_PRE_GETVERSION+String(" "));
+    StmApp.app_cmd(APP_PRE_GETVERSION+String(" "));
     executeOnce=false;
   }
 }
