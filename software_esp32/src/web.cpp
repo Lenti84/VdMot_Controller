@@ -225,7 +225,7 @@ String CWeb::getFSDir()
 
 String CWeb::getStmUpdStatus()
 {
-  String result = "{\"percent\":"+String(stmUpdPercent)+",\"status\":"+String(stmUpdateStatus)+"}";
+  String result = "{\"percent\":"+String(Stm32.stmUpdPercent)+",\"status\":"+String(Stm32.stmUpdateStatus)+"}";
   return result;
 }
 

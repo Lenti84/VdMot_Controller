@@ -5,6 +5,11 @@
 		display: flex;
 		justify-content: center;
 	}
+	.centerl {
+		display: flex;
+		justify-content: center;
+		margin:0px 0px 30px 20px;
+	}
 	.centerp {
 		display: flex;
 		justify-content: center;
@@ -18,9 +23,6 @@
 	}
 	.hide {
 		display : none;
-		//display: flex;
-		//justify-content: center;
-		//padding: 20px 0;
 	}
 	.buttonclass:hover {
 		padding: 0.6em;
@@ -34,6 +36,8 @@
 		color: #fff;
 		margin: 10px;
 		padding: 0.6em;
+		display: flex;
+		justify-content: center;
 		
 	}
 	.buttonclass:disabled {
@@ -95,17 +99,24 @@
 		</td>
 		</label>
 		<td>
-			<select id="updCommand" value="0">
-				<option value="0">Normal partition</option>
-                <option value="1">Boot partition</option> 
-			</select>
+		<table>
+			<tr>
+			<td>
+				<select id="updCommand" value="0" class="centerl">
+					<option value="0">Normal partition</option>
+					<option value="1">Boot partition</option> 
+				</select>
+			</td>
+			</tr>
+			<tr>
+			<td>
+			<input type="button" class="buttonclass" id="updateSTM" value="Update STM32 now" title="Update STM32 now" onclick="app.methods.updateNow()"/>
+			</td>
+			</tr>
+		</table>
+		
 		</td>
 		</tr>
-	</tr>
-	<tr>
-		<td>
-		<input type="button" class="buttonclass" id="updateSTM" value="Update STM32 now" title="Update STM32 now" onclick="app.methods.updateNow()"/>
-		</td>
 	</tr>
 	</table>
 	<table id="uploadTable" class="hide">
@@ -120,12 +131,13 @@
 	</tr>
 	<tr>
 		<td>
-        <input type="button" class="buttonclass" style="display:none;" id="back" value="back" title="back" onclick="app.methods.back()"/>
+        <input type="button" class="buttonclass" style="display:none;" id="back" value="< Back" title="Back to home" onclick="app.methods.back()"/>
 		</td>
 	</tr>
 	</table>
 
 <script>	
+
 
 const updStatus = ["Not started","Started","In progress","Finished","Error"];
 var getUpdateStatusInterval = null;
@@ -137,7 +149,6 @@ var getUpdateStatusInterval = null;
 		}
 		return ret;
 	};
-	
 	
 	const uploadFile = (file) => {
 		// add file to FormData object
@@ -197,16 +208,18 @@ var getUpdateStatusInterval = null;
 				if (stmUpdStatus.status==3) {
 					if (getUpdateStatusInterval) getUpdateStatusInterval.clear;
 					id("progressValue").textContent = "Update finished"
-					const button = id("uploadSTMButton"); 
+					const button = id("back"); 
 					button.style.display = "block";
 				}
 			}
 		}
 	,
 		back() {
-			location.assign('http:/');
-			location.replace('http:/');
-			window.reload();
+			document.body.style.cursor = 'wait';
+			setTimeout(function() {
+				location.assign('http:/#home');
+				document.body.style.cursor = 'default';
+			},4000);	
 		}
 	,
 		generateFilesList (filesList) {
@@ -236,14 +249,12 @@ var getUpdateStatusInterval = null;
 				body: postData
 			})
 			.then(res => {
-			  console.log(res);
 			  return res
 			})
 			.catch(err => {
 			  console.log('Error: ','link: '+link+' '+err)
 			})
 		  ))
-		  console.log(data);
 		  return data
 		}
 	,	

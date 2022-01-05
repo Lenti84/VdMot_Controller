@@ -43,6 +43,7 @@
 #include "VdmConfig.h"
 #include "VdmNet.h"
 #include "VdmTask.h"
+#include "stm32.h"
 
 uint8_t vismode = VISMODE_ON;    // visualisation mode for debug messages
 
@@ -51,7 +52,7 @@ void setup(void)
 {
   UART_DBG.begin(115200);
 
-  STM32ota_setup();
+  Stm32.STM32ota_setup();
   
   // init config, read from flash, init network
   VdmConfig.init();

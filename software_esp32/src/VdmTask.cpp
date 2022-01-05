@@ -41,6 +41,8 @@
 #include "VdmTask.h"
 #include "VdmNet.h"
 #include "stmApp.h"
+#include "stm32ota.h"
+#include "stm32.h"
 #include "ServerServices.h"
 #include <BasicInterruptAbstraction.h>
 
@@ -106,12 +108,12 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
     taskManager.setTaskEnabled (taskIdApp,false);
     UART_DBG.println("stop task stmApp");
     delay (1000);           // wait to finish task;
-    STM32ota_setup();
+    Stm32.STM32ota_setup();
     UART_DBG.println("start task stmOta");
-    STM32ota_start(command,thisFileName);
+    Stm32.STM32ota_start(command,thisFileName);
     if (taskIdStm32Ota==TASKMGR_INVALIDID) {
         taskIdStm32Ota = taskManager.scheduleFixedRate(30, [] {         // 30 ms good for 115200 baud UART speed and blocksize of 256
-            STM32ota_loop();
+            Stm32.STM32ota_loop();
         });
     } else {
         UART_DBG.println("task stmOta exists, wait 100 ms for setting");
@@ -176,7 +178,6 @@ void CVdmTask::handleSetFactoryCfg (pintype_t thisPin)
 
 void CVdmTask::addIntPinResetCfg ()
 {
-    
     BasicArduinoInterruptAbstraction interruptAbstraction;
 
     pinMode(pinSetFactoryCfg, INPUT_PULLUP);

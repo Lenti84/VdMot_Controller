@@ -63,7 +63,8 @@ typedef struct  {
 
 #define APP_PRE_SETTARGETPOS       	"stgtp"			
 #define APP_PRE_GETONEWIRECNT		    "gonec"			
-#define APP_PRE_GETONEWIREDATA		  "goned"			
+#define APP_PRE_GETONEWIREDATA		  "goned"	
+#define APP_PRE_SETONEWIRESEARCH    "stons"		
 #define APP_PRE_SET1STSENSORINDEX	  "stsnx"   // not used	in stm		
 #define APP_PRE_SET2NDSENSORINDEX	  "stsny"		// not used	in stm	
 #define APP_PRE_SETALLVLVOPEN		    "staop"			
