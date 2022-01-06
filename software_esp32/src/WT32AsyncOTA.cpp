@@ -56,6 +56,7 @@
     #include "Update.h"
     #include "esp_int_wdt.h"
     #include "esp_task_wdt.h"
+    #include "Services.h"
 #endif
 
 #include "Hash.h"
@@ -183,10 +184,7 @@ void CWT32AsyncOTA::begin(AsyncWebServer *server, const char* userName, const ch
        
 void  CWT32AsyncOTA::restart() 
 {
-    yield();
-    delay(1000);
-    yield();
-    ESP.restart();
+    Services.restartSystem();
 }
 
    
