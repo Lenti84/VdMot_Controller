@@ -90,7 +90,7 @@ public:
   void app_cmd(String command);
 
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
-  TEMP_STRUC temps[24];
+  TEMP_STRUC temps[TEMP_SENSORS_COUNT];
   uint8_t tempsCount;
 private:
   char calc_checksum (char *dataptr);
@@ -98,6 +98,7 @@ private:
   void app_comm_machine();
   void app_alive_check();
   void app_web_cmd_check();
+  int8_t findTempID(char* ID);
 
   uint8_t stm32alive;
   int settarget_check;

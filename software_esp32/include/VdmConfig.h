@@ -47,9 +47,6 @@
 
 enum protType  {protTypeNone=0,protTypeMqtt=1};
 
-//#pragma pack(push)  // store current alignment
-//#pragma pack(1)     // set alignment to 1 byte boundary
-
 typedef struct {
   uint8_t eth_wifi;
   bool dhcpEnabled;
@@ -94,12 +91,12 @@ typedef struct {
   char name[11];
   bool active;
   int offset;
+  char ID[25];
 } VDM_TEMP_CONFIG;
 
 typedef struct {
-  VDM_TEMP_CONFIG tempConfig[ACTUATOR_COUNT];
+  VDM_TEMP_CONFIG tempConfig[TEMP_SENSORS_COUNT];
 } VDM_TEMPS_CONFIG;
-
 
 typedef struct 
 {
@@ -108,7 +105,7 @@ typedef struct
   VDM_VALVES_CONFIG valvesConfig;
   VDM_TEMPS_CONFIG tempsConfig;
 } CONFIG_FLASH;
-//#pragma pack(pop)   // restore alignment
+
 
 #define nvsNetCfg         "netCfg"
 #define nvsNetEthwifi     "ethwifi"

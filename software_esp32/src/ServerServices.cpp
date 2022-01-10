@@ -120,6 +120,12 @@ void clearFS ()
   VdmSystem.clearFS();
 }
 
+void scanTSensors ()
+{  
+  StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH+String(" "));
+}
+
+
 void CServerServices::postSetValve (JsonObject doc)
 {
   #ifdef netDebug
@@ -256,6 +262,11 @@ void handleTempsConfig(AsyncWebServerRequest *request)
   request->send(200,aj,Web.getTempsConfig (VdmConfig.configFlash.tempsConfig));
 }
 
+void handleTempSensorsID(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,Web.getTempSensorsID ());
+}
+
 void handleSysInfo(AsyncWebServerRequest *request) 
 { 
   request->send(200,aj,Web.getSysInfo());
@@ -280,9 +291,9 @@ void handleStmUpdStatus(AsyncWebServerRequest *request)
 void handleCmd(JsonObject doc) 
 { 
   typedef void (*fp)();
-  fp  fpList[] = {&valvesCalib,&restart,&writeConfig,&resetConfig,&restoreConfig,&clearFS} ;
+  fp  fpList[] = {&valvesCalib,&restart,&writeConfig,&resetConfig,&restoreConfig,&clearFS,&scanTSensors} ;
 
-  char const *names[]=  {"vCalib", "reboot", "saveCfg","resetCfg","restoreCfg","clearFS", NULL};
+  char const *names[]=  {"vCalib", "reboot", "saveCfg","resetCfg","restoreCfg","clearFS","scanTempSensors", NULL};
   char const **p;
 
   if (!doc["action"].isNull()) {
@@ -383,6 +394,7 @@ void  CServerServices::initServer() {
   server.on("/logdata",HTTP_GET,[](AsyncWebServerRequest * request) {handleGetLogData(request);});
   server.on("/stmupdate", HTTP_GET, [](AsyncWebServerRequest * request) {handleWebPageStmUpdate(request);});
   server.on("/stmupdstatus", HTTP_GET, [](AsyncWebServerRequest * request) {handleStmUpdStatus(request);});
+  server.on("/tempsensorsid", HTTP_GET, [](AsyncWebServerRequest * request) {handleTempSensorsID(request);});
 
   server.on("/fupload", HTTP_POST, [](AsyncWebServerRequest *request) {},
       [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,

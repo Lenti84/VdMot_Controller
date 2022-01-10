@@ -43,7 +43,8 @@
 #include <Arduino.h>
 
 
-#define ACTUATOR_COUNT  (uint8_t) 12
+#define ACTUATOR_COUNT      12
+#define TEMP_SENSORS_COUNT  34
 
 // debug mode
 #define VISMODE_DEFAULT     VISMODE_ATOMIC               
