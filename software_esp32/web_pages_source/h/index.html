@@ -68,15 +68,7 @@
 	  color: white;
 	  display: none;
 	  padding: 10px 20px;
-	//  height: 100%;
-	 
 	}
-
-	table.tabTable td {
-		padding-left: 5px;
-		height:21px;
-	}
-	
 	
 	/* Style tab links */
 	.tabLink {
@@ -93,18 +85,6 @@
 
 	.tabLink:hover {
 	  background-color: #777;
-	}
-	
-	.tabLink {
-	  background-color: #555;
-	  color: white;
-	  float: left;
-	  border: none;
-	  outline: none;
-	  cursor: pointer;
-	  padding: 14px 16px;
-	  font-size: 17px;
-	  width: 10%;
 	}
 
 	.tabLink:hover {
@@ -132,12 +112,22 @@
 	}
 	
 	.rtabframe {
-		width: 25%;
-		display: inline-block;
 		border: white 2px solid;
 		padding: 5px;
 		border-radius: 5px;
 		text-align: center;
+	}
+	.rtabframe2 {
+		border: white 2px solid;
+		padding: 5px;
+		border-radius: 5px;
+		text-align: center;
+		grid-column : span 2;
+	}
+	
+	table.tabTable td {
+		padding-left: 5px;
+		height:21px;
 	}
 	
 	.hide {
@@ -210,16 +200,26 @@
 	  text-decoration: none;
 	  cursor: pointer;
 	}
-
 	
-	@media screen and (max-width: 500px) {
-		.rtabframe,
-		.rtabframe,
-		.rtabframe,
-		.rtabframe,
-		.rtabframe {
-			width: 70%;
-		}
+   .container {  
+		display: grid;  
+		grid-gap: 2px;  
+		grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); 
+		grid-template-rows:  masonry;
+	}
+	
+	.container1 {  
+		display: grid;  
+		grid-gap: 2px;  
+		grid-template-columns: repeat(auto-fit, 300px);
+		grid-template-rows:  masonry;
+	}
+	
+	.container2 {  
+		display: grid;  
+		grid-gap: 2px;  
+		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+		grid-template-rows:  masonry;
 	}
 	
 	#Home {background-color: gray;}
@@ -245,7 +245,8 @@
 	</div>
 
 	<div id="Home" class="tabContent">
-		<div class="rtabframe" style="width: 250px;">
+	<div class="container1">
+		<div class="rtabframe">
 		<h3>VDMot Controller</h3>
 		<table id="homeInfo" class="tabTable">
 			<tr>
@@ -259,7 +260,7 @@
 			</tr>
 		</table>
 		</div>
-		<div class="rtabframe" style="width: 250px;">
+		<div class="rtabframe">
 		<h3>WT32 Controller</h3>
 		<table id="homeInfo" class="tabTable">
 			<tr>
@@ -276,7 +277,7 @@
 			</tr>
 		</table>
 		</div>
-		<div class="rtabframe" style="width: 250px;">
+		<div class="rtabframe">
 		<h3>STM32 Controller</h3>
 		<table id="homeInfo" class="tabTable">
 			<tr>
@@ -286,23 +287,26 @@
 		</table>
 		</div>
 	</div>
-
+	</div>
+	
 	<div id="Status" class="tabContent">
-		<div class="rtabframe" style="width: 330px;height:420px">  
+	<div class="container1">
+		<div class="rtabframe" style="height:430px">  
 		<h3>Valves</h3>	
 		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
 		
-		<div class="rtabframe" style="width: 150px;height:420px">  
+		<div class="rtabframe" style="height:430px;overflow-y:auto">  
 		<h3>Temperature</h3>
 		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
 	</div>
-
+	</div>
+	
 	<div id="Network" class="tabContent">
-		<div class="tabframe" style="width: 250px;"> 
+		<div class="tabframe" style="width: 300px;"> 
 		<h3>Network</h3>
 		<table id="netInfo" class="tabTable">
 			<tr>
@@ -338,7 +342,8 @@
 	</div>
 	
 	<div id="Config" class="tabContent">
-		<div class="rtabframe" style="width: 240px;">
+	<div class="container">
+		<div class="rtabframe">
 		<h3>Network</h3>
 		<table id="netConfig" class="tabTable">
 			<tr>
@@ -426,7 +431,8 @@
 			</tr>
 		</table>
 		<tr><th></th></tr>
-		<div class="tabiframe" style="width: 230px;"> 
+		
+		<div class="tabiframe"> 
 		<table id="netcfg-time" class="tabTable">
 			
 			<tr><th>Time server</th></tr>
@@ -451,7 +457,7 @@
 		</table>
 		</div>
 		
-		<div class="tabiframe" style="width: 230px;"> 
+		<div class="tabiframe"> 
 		<table id="netcfg-syslog" class="tabTable">		
 			<tr>
 				<th>Syslog server</th>
@@ -481,10 +487,9 @@
 
 		</table>
 		</div>
-		
 		</div>
-				
-		<div class="rtabframe" style="width: 220px;">
+
+		<div class="rtabframe" style="height:300px;">
 		<h3>Protocol</h3>
 
 		<table id="protConfig" class="tabTable">		
@@ -538,12 +543,12 @@
 		</table>
 		</div>
 
-		<div class="rtabframe" style="width: 205px;">
+		<div class="rtabframe" style="height:550px;">
 		<h3>Valves</h3>
 		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		
-		<div class="tabiframe" style="width: 195px;">	
+		<div class="tabiframe">	
 		<table id="cfgValvesTable1" class="tabTable"
 			<tr><th>Calibration</th></tr>
 			<tr>
@@ -577,12 +582,12 @@
 		</div>
 		</div>
 		
-		<div class="rtabframe" style="width: 480px;">
+		<div class="rtabframe2" style="height:550px; overflow-y:scroll">
 			<h3>Temperature sensor</h3>
 			<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
 			
 			</table>
-			<div class="tabiframe" style="width: 470px;">	
+			<div class="tabiframe">	
 				<table id="cfgTSensorTable1" class="tabTable">
 				<tr>
 					<td>
@@ -593,7 +598,7 @@
 			</div>
 		</div>
 		
-		<div class="rtabframe" style="width: 240px;">
+		<div class="rtabframe">
 		<h3>System</h3>
 		<table id="sysConfig" class="tabTable">
 			<tr>
@@ -619,7 +624,7 @@
 			</tr>	
 		</table>
 		</div>
-		
+		</div>
 	</div>
 	
 	<div id="Update" class="tabContent">
@@ -720,7 +725,7 @@
 		var WifiPwdHasChanged=false;
 		var UserPwdHasChanged=false;
 		var brokerPwdHasChanged=false;
-		var showAllTabs=true; //false;
+		var showAllTabs=window.location.href.startsWith('file');
 		var getStatusInterval;
 		var dataTempSensorsID=null;
 		const NoOfMaxSensors = 34;
@@ -805,8 +810,17 @@
 			getTempsStatus();
 			getStatusInterval = window.setInterval(getStatus, 5000);
 			generateOnClick();
-			showAllTabsNow();		
+			showAllTabsNow();
+			setTimeout(function() {
+				loadStmData();	
+			},5000);
 		}		
+		
+		function loadStmData() {
+			getTempSensorsID();
+			getTempsStatus();
+			getSystemInfo();
+		}
 				
 		async function checkLogin() {
 			let login = {};
@@ -900,7 +914,7 @@
 			tempsTable.rows[0].cells[0].textContent = 'No';
 			tempsTable.rows[0].cells[1].textContent = 'Name';
 			tempsTable.rows[0].cells[2].textContent = 'C';
-			divTempsTable=id('divTempsTable');
+		//	divTempsTable=id('divTempsTable');
 		//	divTempsTable.style.height=tempsTable.offsetHeight+50;
 		}
 		
@@ -949,7 +963,7 @@
 				el.setAttribute('type', 'text');
 				el.setAttribute('name', 'cfgTName' + row);
 				el.setAttribute('id', 'cfgTName' + row);
-				el.setAttribute('size', '10');
+				el.setAttribute('size', '8');
 				el.setAttribute('maxlength' , '10');
 				thiscell.appendChild(el);
 				thiscell = cfgTempTable.rows[row].cells[2];

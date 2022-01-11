@@ -115,9 +115,8 @@ int8_t CStmApp::findTempID(char* ID)
 {
     for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) 
     {
-       // UART_DBG.println("ID :"+String(ID)+" ? "+String(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID));
         if (strncmp(ID,VdmConfig.configFlash.tempsConfig.tempConfig[i].ID,sizeof(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID))==0) {
-            return (i);
+           return (i);
         }
     }
     return -1;
@@ -331,12 +330,15 @@ void  CStmApp::app_check_data()
         }
 
         else if(memcmp(APP_PRE_GETVERSION,cmd,5) == 0) {
+            UART_DBG.println("STM get Version");
             if(argcnt > 0) {
                 VdmSystem.stmVersion=arg0ptr; 
                 VdmSystem.stmBuild=0;
+                UART_DBG.println(arg0ptr);
             }
             if(argcnt > 1) {
                  VdmSystem.stmBuild=atoi(arg1ptr);
+                 UART_DBG.println(arg1ptr);
             }
         }
     }
