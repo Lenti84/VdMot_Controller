@@ -259,12 +259,15 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
 
 void CVdmConfig::postTempsCfg (JsonObject doc)
 {
-  for (uint8_t i=0; i<TEMP_SENSORS_COUNT; i++) {
-    if (!doc["temps"][i]["name"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][i]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
-    if (!doc["temps"][i]["id"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].ID,doc["temps"][i]["id"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].ID));
-    if (!doc["temps"][i]["active"].isNull()) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][i]["active"];
-    if (!doc["temps"][i]["offset"].isNull()) configFlash.tempsConfig.tempConfig[i].offset=10*(doc["temps"][i]["offset"].as<float>()) ;
-    
+  uint8_t chunkStart=doc["chunkStart"];
+  uint8_t chunkEnd=doc["chunkEnd"];
+  uint8_t idx=0;
+  for (uint8_t i=chunkStart; i<chunkEnd+1; i++) {
+    if (!doc["temps"][idx]["name"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][idx]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
+    if (!doc["temps"][idx]["id"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].ID,doc["temps"][idx]["id"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].ID));
+    if (!doc["temps"][idx]["active"].isNull()) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][idx]["active"];
+    if (!doc["temps"][idx]["offset"].isNull()) configFlash.tempsConfig.tempConfig[i].offset=10*(doc["temps"][idx]["offset"].as<float>()) ;
+    idx++;
   }
 }
 

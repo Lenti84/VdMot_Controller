@@ -894,7 +894,6 @@
 			el.setAttribute('id', 'activeSetValves');
 			valvesTable.rows[0].cells[4].innerHTML = 'Target %';
 			thiscell.appendChild(el);
-			console.log("Valvetable : "+valvesTable.offsetHeight);
 		}
 		
 		function makeTempsTable(NoOfSensors) {
@@ -963,7 +962,7 @@
 				el.setAttribute('type', 'text');
 				el.setAttribute('name', 'cfgTName' + row);
 				el.setAttribute('id', 'cfgTName' + row);
-				el.setAttribute('size', '8');
+				el.setAttribute('style','width:80px;');
 				el.setAttribute('maxlength' , '10');
 				thiscell.appendChild(el);
 				thiscell = cfgTempTable.rows[row].cells[2];
@@ -1192,7 +1191,9 @@
 				if (!(await postNetCfg())) return;
 				if (!(await postProtCfg())) return;
 				await postValvesCfg();
-				await postTempsCfg();
+				await postTempsCfg(1,11);
+				await postTempsCfg(12,23);
+				await postTempsCfg(24,34);
 				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
@@ -1276,10 +1277,10 @@
 			await postJson("valvesconfig",JSON.stringify(valvesCfg));
 		}
 				
-		async function postTempsCfg() {
+		async function postTempsCfg(chunkStart,chunkEnd) {
 			const cfgTempsTable = id('cfgTSensorTable');
 			let tempsItemsCfg = [];
-			for (let row = 1; row<NoOfMaxSensors+1; row++) {
+			for (let row = chunkStart; row<chunkEnd+1; row++) {
 				let tempValues={};
 				tempValues.name = id('cfgTName'+row).value; 
 				tempValues.id = id('cfgTID'+row).value; 
@@ -1292,6 +1293,8 @@
 			}
 			let tempsCfg={};
 			tempsCfg.temps=tempsItemsCfg;
+			tempsCfg.chunkStart=chunkStart-1;
+			tempsCfg.chunkEnd=chunkEnd-1;
 			await postJson("tempsconfig",JSON.stringify(tempsCfg));
 		}
 		
@@ -1353,7 +1356,7 @@
 		
 		function fillCfgTempsTable (cfgTempsJson) {
 			const cfgTempsTable = document.getElementById('cfgTSensorTable');
-			for (let row = 1; row<NoOfMaxSensors; row++) {				
+			for (let row = 1; row<NoOfMaxSensors+1; row++) {				
 				id('cfgTName'+row).value = cfgTempsJson[row-1].name;
 				id('cfgTActive'+row).checked = cfgTempsJson[row-1].active;
 				id('cfgTOffset'+row).value = cfgTempsJson[row-1].offset;
@@ -1362,7 +1365,7 @@
 		}
 		
 		function findID (SensorID) {
-			for (let row = 1; row<NoOfMaxSensors; row++) {	
+			for (let row = 1; row<NoOfMaxSensors+1; row++) {	
 				let selectElement=id('cfgTID'+row);
 				if (selectElement.value===SensorID) return (true);
 			}
