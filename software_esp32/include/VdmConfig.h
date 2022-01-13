@@ -150,7 +150,9 @@ public:
   void setDefault();
   void clearConfig();
   void readConfig();
-  void writeConfig();
+  void writeConfig(bool reboot=false);
+  void resetConfig (bool reboot=false);
+  void restoreConfig (bool reboot=false);
   void postNetCfg (JsonObject doc);
   void postProtCfg (JsonObject doc);
   void postValvesCfg (JsonObject doc);

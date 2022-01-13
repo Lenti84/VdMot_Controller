@@ -599,6 +599,32 @@
 		</div>
 		
 		<div class="rtabframe">
+		<h3>Files</h3>
+		<table id="filesConfig" class="tabTable">
+			<tr>
+			<td>
+			<label>Please select one file:
+			<tr>
+			<td>
+			<select id="fileSelect" size="5">
+			  
+			</select>
+			</td>
+			</label>
+			</tr>
+			</tr>
+			<tr>
+				<td>
+				<input type="button" class="buttonclass" id="fileDelete" value="Delete file" title="Delete selected file"/>
+				
+				<input type="button" class="buttonclass" id="fileAllDelete" value="Delete all files" title="Delete all files"/>
+				</td>
+
+			</tr>
+		</table>
+		</div>
+		
+		<div class="rtabframe">
 		<h3>System</h3>
 		<table id="sysConfig" class="tabTable">
 			<tr>
@@ -808,6 +834,7 @@
 			getTempsConfig();
 			getValvesStatus();
 			getTempsStatus();
+			getFSDir();
 			getStatusInterval = window.setInterval(getStatus, 5000);
 			generateOnClick();
 			showAllTabsNow();
@@ -1105,6 +1132,13 @@
 				doLogin();
 			};
 			
+			id("fileDelete").onclick = function(){
+				fileDelete();
+			};
+			
+			id("fileAllDelete").onclick = function(){
+				fileAllDelete();
+			};
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
 			  modal.style.display = "none";
@@ -1141,6 +1175,34 @@
 			if (confirm('Are you sure you want to start calibration of all valves ?')) {
 				postCmd('{"action":"vCalib"}');
 			}
+		}
+		
+		async function fileDelete() {
+			let fSelect = id("fileSelect");
+			if (fSelect.value) {
+				if (confirm('Are you sure you want to delete the file '+fSelect.value+' ?')) {
+					await postCmd('{"action":"fDelete","file":"'+fSelect.value+'"}');
+					getFSDir();
+				}
+			}
+		}
+		
+		async function fileAllDelete() {
+			if (confirm('Are you sure you want to delete all files ?')) {
+					await postCmd('{"action":"clearFS"}');
+					getFSDir();
+			}
+		}
+		
+		function generateFilesList (filesList) {
+			let selectBox = id("fileSelect");
+			while (selectBox.options.length > 0) {                
+				selectBox.remove(0);
+			}     
+			filesList.forEach((item) => {
+				let newOption = new Option(item.fName,item.fName);
+				selectBox.add(newOption,undefined);
+			});
 		}
 		
 		function scanTSensors(){
@@ -1506,11 +1568,16 @@
 		async function updateWT32() {
 			reloadDoc("http:/update",100,false,false);
 		}	
-		
+			
 		async function updateSTM32() {
 			reloadDoc("http:/stmupdate",100,false,false);
 		}	
-			
+		
+		async function getFSDir() {
+			var fsDir= await this.getJson("fsdir");
+			if (fsDir) generateFilesList (fsDir);
+		}
+		
 		async function postJson(link,postData){
 			const data = await (await (fetch('http:/'+link,
 			{

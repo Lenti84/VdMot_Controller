@@ -58,7 +58,8 @@ void CVdmSystem::getSystemInfo()
     esp_chip_info(&chip_info);      
 }
 
-void CVdmSystem::getFSDirectory() {
+void CVdmSystem::getFSDirectory() 
+{
   if (!spiffsStarted) SPIFFS.begin(true);
   spiffsStarted=true;
   numfiles  = 0; // Reset number of FS files counter
@@ -78,7 +79,8 @@ void CVdmSystem::getFSDirectory() {
   }
 }
 
-void CVdmSystem::clearFS() {
+void CVdmSystem::clearFS() 
+{
   if (!spiffsStarted) SPIFFS.begin(true);
   spiffsStarted=true;
   File root = SPIFFS.open("/");
@@ -91,4 +93,13 @@ void CVdmSystem::clearFS() {
     }
     root.close();
   }
+}
+
+void CVdmSystem::fileDelete (String fileName)
+{  
+  if (!spiffsStarted) SPIFFS.begin(true);
+  spiffsStarted=true;
+  String thisFileName=fileName;
+  if (!fileName.startsWith("/")) thisFileName="/"+fileName;
+  SPIFFS.remove(thisFileName);
 }

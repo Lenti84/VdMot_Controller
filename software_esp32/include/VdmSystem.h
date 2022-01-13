@@ -62,6 +62,7 @@ public:
   CVdmSystem();
   void getSystemInfo();
   void getFSDirectory();
+  void fileDelete(String fName);
   void clearFS();
 
   esp_chip_info_t chip_info;

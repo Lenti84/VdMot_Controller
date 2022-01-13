@@ -41,6 +41,7 @@
 #include <stdint.h>
 #include "VdmConfig.h"
 #include "web.h"
+#include "Services.h"
 
 CVdmConfig VdmConfig;
 
@@ -53,6 +54,20 @@ void CVdmConfig::init()
 {
   setDefault();
   readConfig();
+}
+
+void CVdmConfig::resetConfig (bool reboot)
+{  
+  VdmConfig.clearConfig(); 
+  VdmConfig.writeConfig();
+  if (reboot) Services.restartSystem();
+}
+
+void CVdmConfig::restoreConfig (bool reboot)
+{  
+  VdmConfig.setDefault();
+  VdmConfig.writeConfig();
+  if (reboot) Services.restartSystem();
 }
 
 void CVdmConfig::setDefault()
@@ -161,7 +176,7 @@ void CVdmConfig::readConfig()
  }
 }
 
-void CVdmConfig::writeConfig()
+void CVdmConfig::writeConfig(bool reboot)
 {
   prefs.begin(nvsNetCfg,false);
   prefs.clear();
@@ -206,6 +221,7 @@ void CVdmConfig::writeConfig()
   prefs.clear();
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
+  if (reboot) Services.restartSystem();
 }
 
 uint32_t CVdmConfig::doc2IPAddress(String id)

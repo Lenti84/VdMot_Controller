@@ -44,6 +44,7 @@
 #include "stm32ota.h"
 #include "stm32.h"
 #include "ServerServices.h"
+#include "VdmConfig.h"
 #include <BasicInterruptAbstraction.h>
 
 CVdmTask VdmTask;
@@ -159,7 +160,7 @@ void CVdmTask::handleSetFactoryCfg (pintype_t thisPin)
     } else {
       if (setFactoryCfgState==action) {
           setFactoryCfgState=resetCfg;
-          restoreConfig();
+          VdmConfig.restoreConfig(true);
       }       
     }
 }
