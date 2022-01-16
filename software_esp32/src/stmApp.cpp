@@ -115,6 +115,15 @@ void CStmApp::valvesAssembly()
     app_cmd(APP_PRE_SETALLVLVOPEN+String(" "));
 }
 
+void CStmApp::scanTemps()
+{
+    for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
+        memset(tempsId[i].id,0x0,sizeof(tempsId[i].id));
+    }
+    StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH+String(" "));
+}
+
+
 void  CStmApp::app_loop() 
 {
     app_check_data();
@@ -322,8 +331,9 @@ void  CStmApp::app_check_data()
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG,"one wire data "+String(arg0ptr)+":"+String(arg1ptr));
                 } 
+                strncpy(tempsId[tempIndex].id,arg0ptr,sizeof(tempsId[tempIndex].id));
+
                 int8_t idx=findTempID(arg0ptr);
-                
                 if (idx>=0) {
                     memset(temps[idx].id,0x0,sizeof(temps[idx].id)); 
                     strncpy(temps[idx].id,arg0ptr,sizeof(temps[idx].id));

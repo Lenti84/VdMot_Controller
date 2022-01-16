@@ -120,7 +120,7 @@ void fileDelete (JsonObject doc)
 
 void scanTSensors (JsonObject doc)
 {  
-  StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH+String(" "));
+  StmApp.scanTemps();
 }
 
 void valvesCalibration (JsonObject doc)

@@ -55,6 +55,11 @@ typedef struct  {
   char id[25];
 } TEMP_STRUC;
 
+typedef struct  {
+  char id[25];
+} TEMPID_STRUC;
+
+
 
 #define APP_PRE_SETTXENA			      "stxen"   // not used in stm
 #define APP_PRE_GETSUPPLYSENS		    "gspst"   // not used in stm
@@ -103,9 +108,11 @@ public:
   bool checkCmdIsAvailable (String thisCmd);
   void valvesCalibration();
   void valvesAssembly();
+  void scanTemps();
 
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
   TEMP_STRUC temps[TEMP_SENSORS_COUNT];
+  TEMPID_STRUC tempsId[TEMP_SENSORS_COUNT];
   uint8_t tempsCount;
 private:
   void app_check_data();
@@ -113,7 +120,7 @@ private:
   void app_alive_check();
   void app_web_cmd_check();
   int8_t findTempID(char* ID);
-
+  
   uint16_t stm32alive;
   bool settarget_check;
   uint8_t target_position_mirror[ACTUATOR_COUNT];

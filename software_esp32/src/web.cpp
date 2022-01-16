@@ -131,7 +131,7 @@ String CWeb::getTempSensorsID()
   String result = "[";
   String id="";
   for (uint8_t x=0;x<StmApp.tempsCount;x++) {
-    result += "{\"id\":\""+String(StmApp.temps[x].id) + "\"}";
+    result += "{\"id\":\""+String(StmApp.tempsId[x].id) + "\"}";
     if (x<StmApp.tempsCount-1) result += ",";
   }  
   result += "]"; 

@@ -1428,7 +1428,7 @@
 		
 		function fillValvesTable (valvesJson) {
 			const ValvesTable = id('valvesTable');
-			const States = ["idle","opens","closes","blocked","initial","no valve","full open"];
+			const States = ["idle","opens","closes","blocked","unknown","no valve","full open"];
 			valvesJson.forEach(function(item, index){
 				ValvesTable.rows[item.idx].cells[2].textContent = item.pos;	
 				ValvesTable.rows[item.idx].cells[3].textContent = item.meanCur;
