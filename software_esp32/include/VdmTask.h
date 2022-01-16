@@ -76,6 +76,7 @@ public:
   taskid_t taskIdSetFactoryCfgInProgress;
   taskid_t taskIdResetSystem;
   taskid_t restartStmApp;
+  taskid_t taskIdRunOnce;
   
   TsetFactoryCfgState setFactoryCfgState;
 

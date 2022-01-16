@@ -119,7 +119,10 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
 void CVdmTask::startServices()
 {
     addIntPinResetCfg();
-    taskIdServices = taskManager.scheduleFixedRate(1000, [] {
+    taskIdRunOnce = taskManager.scheduleOnce(1000, [] {
+                Services.runOnce();
+    });
+    taskIdServices = taskManager.scheduleFixedRate(60*1000, [] {
         Services.servicesLoop();
     });
 }

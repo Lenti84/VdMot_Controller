@@ -140,14 +140,17 @@ String CWeb::getTempSensorsID()
 
 String CWeb::getSysInfo()
 {
-  time_t t = FIRMWARE_BUILD;
+  String wt32Build="";
+  time_t t;
   struct tm *tmp ;
   char buf[50];
-  String wt32Build;
-  tmp = gmtime (&t);
-  strftime (buf, sizeof(buf), " Build %d.%m.%Y %H:%M", tmp);
-  wt32Build = String(buf);
-  
+  #ifdef FIRMWARE_BUILD
+    t = FIRMWARE_BUILD;
+    tmp = gmtime (&t);
+    strftime (buf, sizeof(buf), " Build %d.%m.%Y %H:%M", tmp);
+    wt32Build = String(buf);
+  #endif
+
   t = VdmSystem.stmBuild;
   String stmBuild="";
   if (t>0) {
@@ -190,10 +193,14 @@ String CWeb::getValvesStatus()
 {
   String result = "[";
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
-    result += "{\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
-              "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
-              "\"targetPos\":" + String(StmApp.actuators[x].target_position)+"}";      
-    if (x<ACTUATOR_COUNT-1) result += ",";
+    if (StmApp.actuators[x].state!=VLV_STATE_OPENCIR) {
+      if (x>0) result += ",";
+      result += "{\"idx\":"+String(x+1) + ","+
+                 "\"state\":"+String(StmApp.actuators[x].state) + ","+
+                 "\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
+                 "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
+                 "\"targetPos\":" + String(StmApp.actuators[x].target_position)+"}";      
+    }
   }  
   result += "]";
   return result;

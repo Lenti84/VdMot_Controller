@@ -79,7 +79,19 @@ typedef struct  {
 #define APP_PRE_GETMEANCURR        	"gmenc"   // not used in stm
 #define APP_PRE_GETSTATUS          	"gstat"   // not used in stm
 
-#define COMM_ALIVE_CYCLE            30        // send "Alive" cycle in 100 ms cycles
+#define VLV_STATE_IDLE      0x01 // nothing to do
+#define VLV_STATE_OPENING   0x02 // opens
+#define VLV_STATE_CLOSING   0x03 // closes
+#define VLV_STATE_BLOCKS    0x04 // valve is blocked
+#define VLV_STATE_UNKNOWN   0x05 // initial state
+#define VLV_STATE_OPENCIR   0x06 // open circuit detected
+#define VLV_STATE_FULLOPEN  0x07 // go directly full open
+
+#define COMM_ALIVE_CYCLE      30        // send "Alive" cycle in 100 ms cycles
+
+enum COMM_STATE {COMM_IDLE,COMM_ALIVE,COMM_SENDTARGET,COMM_CHECKTARGET,COMM_GETDATA,
+                  COMM_GETONEWIRE,COMM_GETONEWIRECOUNT,COMM_HANDLEQUEUE};
+
 
 class CStmApp
 {
@@ -88,25 +100,49 @@ public:
   void app_setup();
   void app_loop();
   void app_cmd(String command);
+  bool checkCmdIsAvailable (String thisCmd);
+  void valvesCalibration();
+  void valvesAssembly();
 
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
   TEMP_STRUC temps[TEMP_SENSORS_COUNT];
   uint8_t tempsCount;
 private:
-  char calc_checksum (char *dataptr);
   void app_check_data();
   void app_comm_machine();
   void app_alive_check();
   void app_web_cmd_check();
   int8_t findTempID(char* ID);
 
-  uint8_t stm32alive;
-  int settarget_check;
+  uint16_t stm32alive;
+  bool settarget_check;
   uint8_t target_position_mirror[ACTUATOR_COUNT];
-    
+
+  COMM_STATE commstate;    
   uint8_t tempIndex;
   uint8_t checkTempsCount;
   String cmd_buffer;
+
+  char buffer[1200];
+  char *bufptr;
+  uint16_t buflen;
+  int16_t availcnt;
+  bool found;
+  
+  char*   cmdptr;
+  char*	  cmdptrend;
+  char    cmd[50];
+  char		arg0[1200];	
+  char    arg1[20];		
+  char    arg2[20];
+  char    arg3[20];
+  char    arg4[20];
+	char*		arg0ptr;
+	char*		arg1ptr;
+  char*		arg2ptr;
+  char*		arg3ptr;
+  char*		arg4ptr;
+	uint8_t	argcnt;
 };
 
 extern CStmApp StmApp;

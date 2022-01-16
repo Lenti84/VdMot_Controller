@@ -41,22 +41,40 @@
 #include "Services.h"
 #include "globals.h"
 #include "VdmTask.h"
+#include "VdmConfig.h"
 #include "stmApp.h"
 
 CServices Services;
 
 CServices::CServices()
 {
-  executeOnce=true;
+  serviceValvesStarted=false;
+}
+
+void CServices::checkServiceValves()
+{
+  struct tm timeinfo;
+  getLocalTime(&timeinfo);
+  uint8_t i = 1<<timeinfo.tm_wday;
+
+  if ((VdmConfig.configFlash.valvesConfig.dayOfCalib & i) !=0) { // day fits
+    if (VdmConfig.configFlash.valvesConfig.hourOfCalib==timeinfo.tm_hour) { // hour fits
+        if (!serviceValvesStarted) {
+          serviceValvesStarted=true;
+          // start service valves
+          StmApp.valvesCalibration();
+        }
+    } else serviceValvesStarted=false;
+  }
 }
 
 void CServices::servicesLoop()
 {
-  if (executeOnce) {
-    UART_DBG.println("Server STM get Version");
-    StmApp.app_cmd(APP_PRE_GETVERSION+String(" "));
-    executeOnce=false;
-  }
+  checkServiceValves();  
+}
+
+void CServices::runOnce() {
+   StmApp.app_cmd(APP_PRE_GETVERSION+String(" "));
 }
 
 void CServices::restartSystem() {

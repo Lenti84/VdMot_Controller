@@ -49,10 +49,14 @@ class CServices
 public:
   CServices();
   void servicesLoop();
+  void runOnce();
   void restartSystem();
   void restartStmApp(uint32_t ms);
+  void checkServiceValves();
+  void valvesSetLearn();
 
-  bool executeOnce;
+  bool serviceValvesStarted;
+
 };
 
 extern CServices Services;

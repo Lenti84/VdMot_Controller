@@ -85,10 +85,6 @@ CServerServices ServerServices;
 
 // server handles --------------------------------------------------
 
-void valvesCalib(JsonObject doc)
-{
-  // todo
-}
 
 void restart (JsonObject doc)
 {  
@@ -126,6 +122,17 @@ void scanTSensors (JsonObject doc)
 {  
   StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH+String(" "));
 }
+
+void valvesCalibration (JsonObject doc)
+{  
+  StmApp.valvesCalibration();
+}
+
+void valvesAssembly (JsonObject doc)
+{  
+  StmApp.valvesAssembly();
+}
+
 
 void CServerServices::postSetValve (JsonObject doc)
 {
@@ -288,9 +295,11 @@ void handleStmUpdStatus(AsyncWebServerRequest *request)
 bool handleCmd(JsonObject doc) 
 { 
   typedef void (*fp)(JsonObject doc);
-  fp  fpList[] = {&valvesCalib,&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,&clearFS,&scanTSensors} ;
+  fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,
+                  &clearFS,&scanTSensors,&valvesCalibration,&valvesAssembly} ;
 
-  char const *names[]=  {"vCalib", "reboot", "saveCfg","resetCfg","restoreCfg","fDelete","clearFS","scanTempSensors", NULL};
+  char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete",
+                        "clearFS","scanTempSensors","vCalib","vAssembly", NULL};
   char const **p;
   bool found = false;
 
