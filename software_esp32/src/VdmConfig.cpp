@@ -41,6 +41,7 @@
 #include <stdint.h>
 #include "VdmConfig.h"
 #include "web.h"
+#include "Services.h"
 
 CVdmConfig VdmConfig;
 
@@ -55,6 +56,19 @@ void CVdmConfig::init()
   readConfig();
 }
 
+void CVdmConfig::resetConfig (bool reboot)
+{  
+  VdmConfig.clearConfig(); 
+  VdmConfig.writeConfig();
+  if (reboot) Services.restartSystem();
+}
+
+void CVdmConfig::restoreConfig (bool reboot)
+{  
+  VdmConfig.setDefault();
+  VdmConfig.writeConfig();
+  if (reboot) Services.restartSystem();
+}
 
 void CVdmConfig::setDefault()
 {
@@ -90,7 +104,9 @@ void CVdmConfig::clearConfig()
     configFlash.tempsConfig.tempConfig[i].active = false;
     configFlash.tempsConfig.tempConfig[i].offset = 0;
     memset (configFlash.tempsConfig.tempConfig[i].name,0,sizeof(configFlash.tempsConfig.tempConfig[i].name));
+    memset (configFlash.tempsConfig.tempConfig[i].ID,0,sizeof(configFlash.tempsConfig.tempConfig[i].ID));
   }
+
   configFlash.valvesConfig.dayOfCalib=0;
   configFlash.valvesConfig.hourOfCalib=0;
   memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
@@ -99,8 +115,6 @@ void CVdmConfig::clearConfig()
   configFlash.netConfig.syslogIp=0;
   configFlash.netConfig.syslogPort=0;
 }
-
-
 
 void CVdmConfig::readConfig()
 {
@@ -162,7 +176,7 @@ void CVdmConfig::readConfig()
  }
 }
 
-void CVdmConfig::writeConfig()
+void CVdmConfig::writeConfig(bool reboot)
 {
   prefs.begin(nvsNetCfg,false);
   prefs.clear();
@@ -207,6 +221,7 @@ void CVdmConfig::writeConfig()
   prefs.clear();
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
+  if (reboot) Services.restartSystem();
 }
 
 uint32_t CVdmConfig::doc2IPAddress(String id)
@@ -219,9 +234,6 @@ uint32_t CVdmConfig::doc2IPAddress(String id)
 
 void CVdmConfig::postNetCfg (JsonObject doc)
 {
-  #ifdef netDebug
-    UART_DBG.println("post net cfg");
-  #endif
   if (!doc["ethWifi"].isNull()) configFlash.netConfig.eth_wifi=doc["ethWifi"];
   if (!doc["dhcp"].isNull()) configFlash.netConfig.dhcpEnabled=doc["dhcp"];
   if (!doc["ip"].isNull()) configFlash.netConfig.staticIp=doc2IPAddress(doc["ip"]);
@@ -242,9 +254,6 @@ void CVdmConfig::postNetCfg (JsonObject doc)
 
 void CVdmConfig::postProtCfg (JsonObject doc)
 {
-  #ifdef netDebug
-    UART_DBG.println("post prot cfg");
-  #endif
   if (!doc["prot"].isNull()) configFlash.protConfig.dataProtocol = doc["prot"];
   if (!doc["mqttIp"].isNull()) configFlash.protConfig.brokerIp = doc2IPAddress(doc["mqttIp"]);
   if (!doc["mqttPort"].isNull()) configFlash.protConfig.brokerPort = doc["mqttPort"];
@@ -256,9 +265,6 @@ void CVdmConfig::postProtCfg (JsonObject doc)
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
 {
-  #ifdef netDebug
-    UART_DBG.println("post valves cfg");
-  #endif
   if (!doc["calib"]["dayOfCalib"].isNull()) configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
   if (!doc["calib"]["hourOfCalib"].isNull()) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
@@ -269,21 +275,20 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
 
 void CVdmConfig::postTempsCfg (JsonObject doc)
 {
-  #ifdef netDebug
-    UART_DBG.println("post temps cfg");
-  #endif
-  for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
-    if (!doc["temps"][i]["name"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][i]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
-    if (!doc["temps"][i]["active"].isNull()) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][i]["active"];
-    if (!doc["temps"][i]["offset"].isNull()) configFlash.tempsConfig.tempConfig[i].offset=10*(doc["temps"][i]["offset"].as<float>()) ;
+  uint8_t chunkStart=doc["chunkStart"];
+  uint8_t chunkEnd=doc["chunkEnd"];
+  uint8_t idx=0;
+  for (uint8_t i=chunkStart; i<chunkEnd+1; i++) {
+    if (!doc["temps"][idx]["name"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][idx]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
+    if (!doc["temps"][idx]["id"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].ID,doc["temps"][idx]["id"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].ID));
+    if (!doc["temps"][idx]["active"].isNull()) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][idx]["active"];
+    if (!doc["temps"][idx]["offset"].isNull()) configFlash.tempsConfig.tempConfig[i].offset=10*(doc["temps"][idx]["offset"].as<float>()) ;
+    idx++;
   }
 }
 
 String CVdmConfig::handleAuth (JsonObject doc)
 {
-  #ifdef netDebug
-    UART_DBG.println("post auth");
-  #endif
   bool userCheck=false;
   bool pwdCheck=false;
   uint8_t result=0;

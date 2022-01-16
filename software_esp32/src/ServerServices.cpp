@@ -85,47 +85,50 @@ CServerServices ServerServices;
 
 // server handles --------------------------------------------------
 
-void valvesCalib()
+void valvesCalib(JsonObject doc)
 {
   // todo
 }
 
-void restart ()
+void restart (JsonObject doc)
 {  
   Services.restartSystem();
 }
 
-void writeConfig ()
+void writeConfig (JsonObject doc)
 {  
-  VdmConfig.writeConfig();
-  Services.restartSystem();
+  VdmConfig.writeConfig(true);
 }
 
-void resetConfig ()
+void resetConfig (JsonObject doc)
 {  
-  VdmConfig.clearConfig(); 
-  VdmConfig.writeConfig();
-  Services.restartSystem();
+  VdmConfig.resetConfig(true);
 }
 
-void restoreConfig ()
+void restoreConfig (JsonObject doc)
 {  
-  VdmConfig.setDefault();
-  VdmConfig.writeConfig();
-  Services.restartSystem();
+  VdmConfig.restoreConfig(true);
 }
 
-void clearFS ()
+void clearFS (JsonObject doc)
 {  
   VdmSystem.clearFS();
 }
 
+void fileDelete (JsonObject doc)
+{  
+  if (!doc["file"].isNull()) {
+    VdmSystem.fileDelete(doc["file"]);
+  }
+}
+
+void scanTSensors (JsonObject doc)
+{  
+  StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH+String(" "));
+}
+
 void CServerServices::postSetValve (JsonObject doc)
 {
-  #ifdef netDebug
-  UART_DBG.println("postSetValue");
-  #endif
-
   uint8_t index;
   if (!doc["valve"].isNull()) {
     index=(doc["valve"].as<uint8_t>())-1;
@@ -256,6 +259,11 @@ void handleTempsConfig(AsyncWebServerRequest *request)
   request->send(200,aj,Web.getTempsConfig (VdmConfig.configFlash.tempsConfig));
 }
 
+void handleTempSensorsID(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,Web.getTempSensorsID ());
+}
+
 void handleSysInfo(AsyncWebServerRequest *request) 
 { 
   request->send(200,aj,Web.getSysInfo());
@@ -277,13 +285,14 @@ void handleStmUpdStatus(AsyncWebServerRequest *request)
 }
 
 
-void handleCmd(JsonObject doc) 
+bool handleCmd(JsonObject doc) 
 { 
-  typedef void (*fp)();
-  fp  fpList[] = {&valvesCalib,&restart,&writeConfig,&resetConfig,&restoreConfig,&clearFS} ;
+  typedef void (*fp)(JsonObject doc);
+  fp  fpList[] = {&valvesCalib,&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,&clearFS,&scanTSensors} ;
 
-  char const *names[]=  {"vCalib", "reboot", "saveCfg","resetCfg","restoreCfg","clearFS", NULL};
+  char const *names[]=  {"vCalib", "reboot", "saveCfg","resetCfg","restoreCfg","fDelete","clearFS","scanTempSensors", NULL};
   char const **p;
+  bool found = false;
 
   if (!doc["action"].isNull()) {
     const char* d=doc["action"].as<const char*>();
@@ -293,12 +302,14 @@ void handleCmd(JsonObject doc)
     {
       if (strcmp(d, *p)==0)
       {
-        fpList[i]();
+        fpList[i](doc);
+        found=true;
         break;
       }
       i++;
     }
   }
+  return (found);
 }
 
 void handleUploadFile(AsyncWebServerRequest *request, const String& filename, size_t index, 
@@ -383,6 +394,7 @@ void  CServerServices::initServer() {
   server.on("/logdata",HTTP_GET,[](AsyncWebServerRequest * request) {handleGetLogData(request);});
   server.on("/stmupdate", HTTP_GET, [](AsyncWebServerRequest * request) {handleWebPageStmUpdate(request);});
   server.on("/stmupdstatus", HTTP_GET, [](AsyncWebServerRequest * request) {handleStmUpdStatus(request);});
+  server.on("/tempsensorsid", HTTP_GET, [](AsyncWebServerRequest * request) {handleTempSensorsID(request);});
 
   server.on("/fupload", HTTP_POST, [](AsyncWebServerRequest *request) {},
       [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
@@ -455,11 +467,13 @@ void  CServerServices::initServer() {
   AsyncCallbackJsonWebHandler* cmdHandler = new AsyncCallbackJsonWebHandler("/cmd", [](AsyncWebServerRequest *request, JsonVariant &json) {
     if (json.is<JsonObject>()) {
       JsonObject&& jsonObj = json.as<JsonObject>();
-      handleCmd (jsonObj);
-      request->send(200, aj, resOk);
+      if (handleCmd (jsonObj))
+        request->send(200, aj, resOk);
+      else request->send(200, tp, "Cmd not found");
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(cmdHandler);
+
   WT32AsyncOTA.begin(&server);    // Start WT32OTA
   server.begin();
 }

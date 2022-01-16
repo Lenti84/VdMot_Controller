@@ -63,6 +63,7 @@ public:
   String getProtConfig (VDM_PROTOCOL_CONFIG protConfig);
   String getValvesConfig (VDM_VALVES_CONFIG valvesConfig);
   String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig);
+  String getTempSensorsID();
   String getSysDynInfo();
   String getSysInfo();
   String getFSDir();

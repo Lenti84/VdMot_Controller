@@ -63,7 +63,8 @@ typedef struct  {
 
 #define APP_PRE_SETTARGETPOS       	"stgtp"			
 #define APP_PRE_GETONEWIRECNT		    "gonec"			
-#define APP_PRE_GETONEWIREDATA		  "goned"			
+#define APP_PRE_GETONEWIREDATA		  "goned"	
+#define APP_PRE_SETONEWIRESEARCH    "stons"		
 #define APP_PRE_SET1STSENSORINDEX	  "stsnx"   // not used	in stm		
 #define APP_PRE_SET2NDSENSORINDEX	  "stsny"		// not used	in stm	
 #define APP_PRE_SETALLVLVOPEN		    "staop"			
@@ -89,7 +90,7 @@ public:
   void app_cmd(String command);
 
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
-  TEMP_STRUC temps[24];
+  TEMP_STRUC temps[TEMP_SENSORS_COUNT];
   uint8_t tempsCount;
 private:
   char calc_checksum (char *dataptr);
@@ -97,6 +98,7 @@ private:
   void app_comm_machine();
   void app_alive_check();
   void app_web_cmd_check();
+  int8_t findTempID(char* ID);
 
   uint8_t stm32alive;
   int settarget_check;

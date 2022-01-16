@@ -57,5 +57,5 @@ public:
 };
 
 extern CServerServices ServerServices;
-extern void restoreConfig ();
+
 

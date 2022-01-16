@@ -115,17 +115,28 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
 String CWeb::getTempsConfig (VDM_TEMPS_CONFIG tempsConfig)
 {
   String result = "[";
-  
-  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
+  for (uint8_t x=0;x<TEMP_SENSORS_COUNT;x++) {
     result += "{\"name\":\""+String(tempsConfig.tempConfig[x].name) + "\"," +
               "\"active\":"+String(tempsConfig.tempConfig[x].active) + "," +
+              "\"id\":\""+String(tempsConfig.tempConfig[x].ID) + "\"," +
               "\"offset\":"+String(((float)tempsConfig.tempConfig[x].offset)/10,1) + "}";
-    if (x<ACTUATOR_COUNT-1) result += ",";
+    if (x<TEMP_SENSORS_COUNT-1) result += ",";
   }  
   result += "]"; 
   return result;  
 }
 
+String CWeb::getTempSensorsID()
+{
+  String result = "[";
+  String id="";
+  for (uint8_t x=0;x<StmApp.tempsCount;x++) {
+    result += "{\"id\":\""+String(StmApp.temps[x].id) + "\"}";
+    if (x<StmApp.tempsCount-1) result += ",";
+  }  
+  result += "]"; 
+  return result;  
+}
 
 String CWeb::getSysInfo()
 {
@@ -178,8 +189,7 @@ String CWeb::getSysDynInfo()
 String CWeb::getValvesStatus() 
 {
   String result = "[";
-  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
-    
+  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
     result += "{\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
               "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
               "\"targetPos\":" + String(StmApp.actuators[x].target_position)+"}";      
@@ -194,10 +204,12 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
 {
   String result = "[";
   int16_t temperature;
-  for (uint8_t x=0;x<StmApp.tempsCount;x++) {
-    temperature = StmApp.temps[x].temperature;
-    result += "{\"temp\":" + String(((float)temperature)/10,1)+"}";
-    if (x<StmApp.tempsCount-1) result += ",";
+  for (uint8_t i=0;i<StmApp.tempsCount;i++) {
+    temperature = StmApp.temps[i].temperature;
+    result += "{\"id\":\"" + String(StmApp.temps[i].id) + "\","+
+               "\"name\":\"" + String(tempsConfig.tempConfig[i].name) + "\","+
+               "\"temp\":" + String(((float)temperature)/10,1)+"}";
+    if (i<StmApp.tempsCount-1) result += ",";
   }  
   result += "]";
   return result;
@@ -225,7 +237,7 @@ String CWeb::getFSDir()
 
 String CWeb::getStmUpdStatus()
 {
-  String result = "{\"percent\":"+String(stmUpdPercent)+",\"status\":"+String(stmUpdateStatus)+"}";
+  String result = "{\"percent\":"+String(Stm32.stmUpdPercent)+",\"status\":"+String(Stm32.stmUpdateStatus)+"}";
   return result;
 }
 

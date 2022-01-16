@@ -59,7 +59,8 @@
 
 CStmApp StmApp;
 
-CStmApp::CStmApp() {
+CStmApp::CStmApp() 
+{
     stm32alive = 0;           // 0 - not alive, >0 - alive 
     settarget_check = 0;
     tempIndex=0;
@@ -85,18 +86,21 @@ void  CStmApp::app_setup() {
     UART_DBG.println("application setup finished");
 }
 
-void  CStmApp::app_loop() {
+void  CStmApp::app_loop() 
+{
     app_check_data();
     app_comm_machine(); 
     app_alive_check();
     app_web_cmd_check(); 
 }
 
-void  CStmApp::app_cmd(String command) {    
+void  CStmApp::app_cmd(String command) 
+{    
     if (cmd_buffer == "") cmd_buffer = command;
 }
 
-char  CStmApp::calc_checksum (char *dataptr) {
+char  CStmApp::calc_checksum (char *dataptr) 
+{
 
     char result = 0;
 
@@ -107,7 +111,19 @@ char  CStmApp::calc_checksum (char *dataptr) {
     return result;
 }
 
-void  CStmApp::app_check_data() {
+int8_t CStmApp::findTempID(char* ID) 
+{
+    for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) 
+    {
+        if (strncmp(ID,VdmConfig.configFlash.tempsConfig.tempConfig[i].ID,sizeof(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID))==0) {
+           return (i);
+        }
+    }
+    return -1;
+}
+
+void  CStmApp::app_check_data() 
+{
 
     static char buffer[1200];
     static char *bufptr = buffer;
@@ -203,13 +219,11 @@ void  CStmApp::app_check_data() {
 			}
 		}
 
-        //UART_DBG.print(buffer);
-        //UART_DBG.println("");
-
         // stm32 alive packet
-		if(memcmp("STMalive",cmd,8) == 0) {			
-			//telnet_msg("help command received");
-            //UART_DBG.println("STMalive received");
+		if(memcmp("STMalive",cmd,8) == 0) {	
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {		
+                syslog.log(LOG_DEBUG,"STMalive received");
+            }
             stm32alive = COMM_ALIVE_CYCLE + 100;
 		}
 
@@ -225,15 +239,10 @@ void  CStmApp::app_check_data() {
 		// get actual values
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETACTUALPOS,cmd,5) == 0) {
-            telnet_msg("actual position answer");
-            UART_DBG.println("actual position answer");
-            //app_cmd(APP_CMD_GETACTUAL);
-            
             if(argcnt == 2) {
-                UART_DBG.println("argcnt 2");
-                UART_DBG.print("argcnt "); UART_DBG.println(argcnt);
-                UART_DBG.print("arg0 "); UART_DBG.println(atoi(arg0ptr));
-                UART_DBG.print("arg1 "); UART_DBG.println(atoi(arg1ptr));
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"actual position answer "+String(arg0ptr)+" : "+String(arg1ptr));
+                }
                 actuators[atoi(arg0ptr)].actual_position = atoi(arg1ptr);
             }
         }
@@ -241,23 +250,21 @@ void  CStmApp::app_check_data() {
         // get mean current 
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETMEANCURR,cmd,5) == 0) {
-            telnet_msg("mean current answer");
-            UART_DBG.println("mean current answer");
-            //app_cmd(APP_CMD_GETMEANCURR);
-            
             if(argcnt == 2) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"mean current answer "+String(arg0ptr)+" : "+String(arg1ptr));  
+                }
                 actuators[atoi(arg0ptr)].meancurrent = atoi(arg1ptr);
             }
         }
     
         // get status
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		else if(memcmp(APP_PRE_GETSTATUS,cmd,5) == 0) {
-            telnet_msg("status answer");
-            UART_DBG.println("status answer");
-            //app_cmd(APP_CMD_GETSTATUS);
-            
+		else if(memcmp(APP_PRE_GETSTATUS,cmd,5) == 0) { 
             if(argcnt == 2) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"status answer "+String(arg0ptr)+" : "+String(arg1ptr));
+                }
                 actuators[atoi(arg0ptr)].state = atoi(arg1ptr);
             }
         }
@@ -287,13 +294,8 @@ void  CStmApp::app_check_data() {
                 actuators[atoi(arg0ptr)].state = atoi(arg3ptr);
                 actuators[atoi(arg0ptr)].temperature = atoi(arg4ptr);
 
-                if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG, "got full vlv data packet");
-                }
-                // create some debug messages
-                if (vismode > VISMODE_DETAIL) {
-                    UART_DBG.println("got full vlv data packet");
-                    logger.print("got full vlv data packet");
                 }
             } 
         }
@@ -303,36 +305,47 @@ void  CStmApp::app_check_data() {
         
         else if(memcmp(APP_PRE_GETONEWIRECNT,cmd,5) == 0) {
             if(argcnt == 1) {
-                tempsCount= atoi(arg0ptr);   
+                tempsCount= atoi(arg0ptr); 
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"one wire count "+String(tempsCount));
+                }  
             }
         }
 
 		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
-            //logger.print("got one wire data packet");
             if(argcnt == 2) {
-                //logger.print(arg0ptr);
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"one wire data "+String(arg0ptr)+":"+String(arg1ptr));
+                } 
+                int8_t idx=findTempID(arg0ptr);
                 
-                memset(temps[tempIndex].id,0x0,sizeof(temps[tempIndex].id)); 
-                strncpy(temps[tempIndex].id,arg0ptr,sizeof(temps[tempIndex].id));
-                temps[tempIndex].temperature=atoi(arg1ptr)+VdmConfig.configFlash.tempsConfig.tempConfig[tempIndex].offset;
+                if (idx>=0) {
+                    memset(temps[idx].id,0x0,sizeof(temps[idx].id)); 
+                    strncpy(temps[idx].id,arg0ptr,sizeof(temps[idx].id));
+                    temps[idx].temperature=atoi(arg1ptr)+VdmConfig.configFlash.tempsConfig.tempConfig[idx].offset;
+                } 
                 tempIndex++;
                 if (tempIndex>=tempsCount) tempIndex=0;
             }
         }
 
         else if(memcmp(APP_PRE_GETVERSION,cmd,5) == 0) {
+            UART_DBG.println("STM get Version");
             if(argcnt > 0) {
                 VdmSystem.stmVersion=arg0ptr; 
                 VdmSystem.stmBuild=0;
+                UART_DBG.println(arg0ptr);
             }
             if(argcnt > 1) {
                  VdmSystem.stmBuild=atoi(arg1ptr);
+                 UART_DBG.println(arg1ptr);
             }
         }
     }
 }
 
-void  CStmApp::app_comm_machine(){
+void  CStmApp::app_comm_machine()
+{
     #define COMM_IDLE           0
     #define COMM_ALIVE          1
     #define COMM_SENDTARGET     2
@@ -361,7 +374,7 @@ void  CStmApp::app_comm_machine(){
                 if (cnt_alive) {
                     cnt_alive = COMM_ALIVE_CYCLE;
                     UART_STM32.println("ESPalive");
-                    if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                         syslog.log(LOG_INFO, "ESPalive");
                     }
                 }
@@ -375,7 +388,7 @@ void  CStmApp::app_comm_machine(){
         // send target position values
         case COMM_SENDTARGET:
                 commstate = COMM_GETDATA;
-                if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG, "checking valve positions");
                 }
                 for(unsigned int x=0; x<ACTUATOR_COUNT; x++)
@@ -401,7 +414,7 @@ void  CStmApp::app_comm_machine(){
                         // generate debug messages
                         if (vismode == VISMODE_DETAIL) {
                             UART_DBG.println(sendbuffer);
-                            if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                                 syslog.log(LOG_DEBUG, sendbuffer);
                             }
                             logger.print(sendbuffer, logger.DATA);
@@ -422,7 +435,7 @@ void  CStmApp::app_comm_machine(){
                 {
                     target_position_mirror[x] = actuators[x].target_position;
                 }
-                if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG, "updated position mirror");
                 }
                 break;
@@ -464,7 +477,7 @@ void  CStmApp::app_comm_machine(){
 
                 UART_STM32.println(sendbuffer);
                 
-                if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_DETAIL) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG, sendbuffer);
                 }
                 // generate debug messages
@@ -510,7 +523,8 @@ void  CStmApp::app_comm_machine(){
     }
 }
 
-void  CStmApp::app_alive_check() {
+void  CStmApp::app_alive_check() 
+{
     static uint8_t oldalivestate;
 
     if(stm32alive) {
@@ -543,7 +557,8 @@ void  CStmApp::app_alive_check() {
 }
 
 
-void  CStmApp::app_web_cmd_check(){
+void  CStmApp::app_web_cmd_check()
+{
     
     if(cmd_buffer.length() >= 5) {
         if(cmd_buffer.startsWith(APP_PRE_SETALLVLVOPEN)) {	
@@ -554,22 +569,29 @@ void  CStmApp::app_web_cmd_check(){
             UART_STM32.println(APP_PRE_SETALLVLVOPEN);	 
         }
 
-        else if(cmd_buffer.startsWith(APP_PRE_SETALLVLVOPEN)) {	
+        else if(cmd_buffer.startsWith(APP_PRE_SETTARGETPOS)) {	
             if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_ATOMIC) {
                 syslog.log(LOG_DEBUG, "send target position request to STM32");
-            }
-            UART_DBG.println("send target position request to STM32");		
+            }		
             UART_STM32.println(cmd_buffer);	 
         }
 
         else if(cmd_buffer.startsWith(APP_PRE_GETONEWIREDATA)) {
             if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_ATOMIC) {
                 syslog.log(LOG_DEBUG, "send onewire data request to STM32");
-            }	
-            UART_DBG.println("send onewire data request to STM32 : "+String(cmd_buffer));		
+            }			
             UART_STM32.println(cmd_buffer);
         }
-        else if(cmd_buffer.startsWith(APP_PRE_GETVERSION)) {		
+        else if(cmd_buffer.startsWith(APP_PRE_GETVERSION)) {
+            if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_ATOMIC) {
+                syslog.log(LOG_DEBUG, "send get version request to STM32");
+            }			
+            UART_STM32.println(cmd_buffer);
+        }
+        else if(cmd_buffer.startsWith(APP_PRE_SETONEWIRESEARCH)) {	
+            if (VdmConfig.configFlash.netConfig.syslogLevel==VISMODE_ATOMIC) {
+                syslog.log(LOG_DEBUG, "send search sensors request to STM32");
+            }	
             UART_STM32.println(cmd_buffer);
         }
         else {

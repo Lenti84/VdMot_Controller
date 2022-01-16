@@ -53,6 +53,7 @@ CServices::CServices()
 void CServices::servicesLoop()
 {
   if (executeOnce) {
+    UART_DBG.println("Server STM get Version");
     StmApp.app_cmd(APP_PRE_GETVERSION+String(" "));
     executeOnce=false;
   }

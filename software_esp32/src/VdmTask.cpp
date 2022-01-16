@@ -41,7 +41,10 @@
 #include "VdmTask.h"
 #include "VdmNet.h"
 #include "stmApp.h"
+#include "stm32ota.h"
+#include "stm32.h"
 #include "ServerServices.h"
+#include "VdmConfig.h"
 #include <BasicInterruptAbstraction.h>
 
 CVdmTask VdmTask;
@@ -84,37 +87,30 @@ void CVdmTask::startApp()
     {
         deleteTask (taskIdStm32Ota);
         delay (1000);       // wait to finish task; 
-        taskIdStm32Ota=TASKMGR_INVALIDID;
-        UART_DBG.println("delete task stmOta"); 
+        taskIdStm32Ota=TASKMGR_INVALIDID; 
         Services.restartSystem();
     }
     if (taskIdApp==TASKMGR_INVALIDID) { 
-        UART_DBG.println("start task stmApp");
         StmApp.app_setup();
         taskIdApp = taskManager.scheduleFixedRate(100, [] {
                 StmApp.app_loop();
         });
-        UART_DBG.println("task stmApp " +String(taskIdApp)); 
     } else {
-        taskManager.setTaskEnabled (taskIdApp,true);  
-        UART_DBG.println("restart task stmApp");  
+        taskManager.setTaskEnabled (taskIdApp,true);    
     }
 }
 
 void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
 {
     taskManager.setTaskEnabled (taskIdApp,false);
-    UART_DBG.println("stop task stmApp");
     delay (1000);           // wait to finish task;
-    STM32ota_setup();
-    UART_DBG.println("start task stmOta");
-    STM32ota_start(command,thisFileName);
+    Stm32.STM32ota_setup();
+    Stm32.STM32ota_start(command,thisFileName);
     if (taskIdStm32Ota==TASKMGR_INVALIDID) {
         taskIdStm32Ota = taskManager.scheduleFixedRate(30, [] {         // 30 ms good for 115200 baud UART speed and blocksize of 256
-            STM32ota_loop();
+            Stm32.STM32ota_loop();
         });
     } else {
-        UART_DBG.println("task stmOta exists, wait 100 ms for setting");
         delay (100);         
     }
 }
@@ -151,24 +147,20 @@ void interruptTask(pintype_t thisPin)
 void CVdmTask::handleSetFactoryCfg (pintype_t thisPin)
 {
     int readPin = digitalRead(pinSetFactoryCfg);
-    UART_DBG.println("Interrupt triggered " + String(thisPin) + String(readPin));
     if (readPin==0) {
         if (setFactoryCfgState==idle) {
             setFactoryCfgState=inProgress;
             taskIdSetFactoryCfgTimeOut = taskManager.scheduleOnce(60*1000, [] {
                 VdmTask.setFactoryCfgState=idle;
-                UART_DBG.println("setFactoryCfgState idle");
             });
             taskIdSetFactoryCfgInProgress = taskManager.scheduleOnce(10*1000, [] {
                 VdmTask.setFactoryCfgState=action;
-                UART_DBG.println("setFactoryCfgState action");
             });
         }
     } else {
       if (setFactoryCfgState==action) {
           setFactoryCfgState=resetCfg;
-          UART_DBG.println("restore Config");
-          restoreConfig();
+          VdmConfig.restoreConfig(true);
       }       
     }
 }
@@ -176,7 +168,6 @@ void CVdmTask::handleSetFactoryCfg (pintype_t thisPin)
 
 void CVdmTask::addIntPinResetCfg ()
 {
-    
     BasicArduinoInterruptAbstraction interruptAbstraction;
 
     pinMode(pinSetFactoryCfg, INPUT_PULLUP);

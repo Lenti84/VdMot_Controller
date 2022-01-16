@@ -64,20 +64,27 @@
 
 
 #define STM32STADDR     0x8000000     // STM32 codes start address, you can change to other address if use custom bootloader like 0x8002000
-#define STM32ERR  		0x00
+#define STM32ERR  		  0x00
 #define STM32OK         0xFF
 
-extern const String STM32_CHIPNAME[9];
 
-void stm32SendCommand(unsigned char commd);
-unsigned char stm32Erase();
-unsigned char stm32Erasen();
-unsigned char stm32ErasenStart();
-unsigned char stm32Read(unsigned char * rdbuf, unsigned long rdaddress, unsigned int rdlen);
-unsigned char stm32Address(unsigned long addr);
-unsigned char stm32SendData(unsigned char * data, unsigned char wrlen);
-unsigned char getChecksum( unsigned char * data, unsigned char datalen);
-unsigned char stm32GetId();
-char stm32Version();
-void STM32ota_loop();
-void STM32ota_start();
+class CStmOta 
+{
+public:
+  CStmOta();
+  unsigned char stm32GetId();
+  unsigned char stm32ErasenStart();
+  unsigned char getChecksum( unsigned char * data, unsigned char datalen);
+  unsigned char stm32Address(unsigned long addr);
+  void stm32SendCommand(unsigned char commd);
+  const String STM32_CHIPNAME[9];
+private:
+  char stm32Version();
+  unsigned char stm32Erase();
+  unsigned char stm32Erasen();
+  unsigned char stm32Read(unsigned char * rdbuf, unsigned long rdaddress, unsigned int rdlen);
+  unsigned char stm32SendData(unsigned char * data, unsigned char wrlen);
+  unsigned char stm32Run();
+};
+
+extern CStmOta StmOta;
