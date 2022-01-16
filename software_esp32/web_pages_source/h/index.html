@@ -156,10 +156,25 @@
 		border-radius: 5px;
 
 	}
-		.buttonclass:disabled {
+	.buttonclass:disabled {
 		font-weight: bold;
 		background-color: #79B900;
 		color: #c0c0c0;
+	}
+
+	.checkboxgroup{
+		width: 11em;
+		height : 4em;
+		overflow-y: scroll;
+		text-align: left;
+	}
+	.checkboxgroup p{
+		width: 7em;
+		text-align: left;
+	}
+	.checkboxgroup label{
+		width: 8em;
+		float: left;
 	}
 
 	/* The Modal (background) */
@@ -219,6 +234,13 @@
 		display: grid;  
 		grid-gap: 2px;  
 		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+		grid-template-rows:  masonry;
+	}
+	
+	.container3 {  
+		display: grid;  
+		grid-gap: 2px;  
+		grid-template-columns: repeat(auto-fit, 200px);
 		grid-template-rows:  masonry;
 	}
 	
@@ -290,14 +312,14 @@
 	</div>
 	
 	<div id="Status" class="tabContent">
-	<div class="container1">
-		<div class="rtabframe" style="height:430px">  
+	<div class="container3">
+		<div class="rtabframe2" style="height:430px">  
 		<h3>Valves</h3>	
 		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
 		
-		<div class="rtabframe" style="height:430px;overflow-y:auto">  
+		<div class="rtabframe" style="height:430px;overflow-y:auto" id="tempStatusTabFrame">  
 		<h3>Temperature</h3>
 		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
@@ -543,50 +565,55 @@
 		</table>
 		</div>
 
-		<div class="rtabframe" style="height:550px;">
+		<div class="rtabframe" style="height:570px;">
 		<h3>Valves</h3>
 		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		
 		<div class="tabiframe">	
-		<table id="cfgValvesTable1" class="tabTable"
-			<tr><th>Calibration</th></tr>
+			<table id="cfgValvesTable1" class="tabTable"
 			<tr>
-				<th>Day</th>
-				<td>
-				<select id="vCfg-dCalib">
-                    <option>Sunday</option>
-                    <option>Monday</option>
-					<option>Tuesday</option>
-					<option>Wednesday</option>
-					<option>Thursday</option>
-					<option>Friday</option>
-					<option>Saturday</option>
-				</select>
-				</td>
-            </tr> 
-			<tr>
-				<th>Hour</th>
+				<th>Calibration</th>
 				<td>
 				<input type="number" max="24" min="0" maxlength="2" size="2" id="vCfg-hCalib" name="vCfg-hCalib"/>
 				</td>
+				<th>h</th>
 			</tr>
 			</table>
+			<table>
+			<tr>
+			<fieldset class="checkboxgroup">
+				<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
+				<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
+				<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
+				<label><input type="checkbox" id="vCfg-d3" name="theGroup">Wednesday </label>
+				<label><input type="checkbox" id="vCfg-d4" name="theGroup">Thursday </label>
+				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
+				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
+			</fieldset>
+			</tr>
+			</table>
+			
 			<table id="cfgValvesTable2" class="tabTable"
 			<tr>
 				<td>
                 <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start manual calibration of all valves" />
+                </td>
+				<td>
+                <input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set all valves to assembly position" />
                 </td>
 			</tr>
 			</table>
 		</div>
 		</div>
 		
-		<div class="rtabframe2" style="height:550px; overflow-y:scroll">
+		<div class="rtabframe2" style="height:570px">
 			<h3>Temperature sensor</h3>
+			<div style="height:465px;overflow-y:scroll">
 			<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
 			
 			</table>
+			</div>
 			<div class="tabiframe">	
 				<table id="cfgTSensorTable1" class="tabTable">
 				<tr>
@@ -598,7 +625,7 @@
 			</div>
 		</div>
 		
-		<div class="rtabframe">
+		<div class="rtabframe" id ="fileTabFrame">
 		<h3>Files</h3>
 		<table id="filesConfig" class="tabTable">
 			<tr>
@@ -879,16 +906,15 @@
 		}
 		
 		function makeValvesTable() {
-			const ValvesTable = document.getElementById('valvesTable');	  
+			const ValvesTable = id('valvesTable');	  
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesTable.insertRow(0);
-				for (let i = 0; i < 6; i++) {
+				for (let i = 0; i < 7; i++) {
 					cell = thisRow.insertCell();
-					//cell.innerHTML = '--';	
 				}
 			}
 			for (row=1;row<13;row++) {
-				let thiscell = ValvesTable.rows[row].cells[4];
+				let thiscell = ValvesTable.rows[row].cells[5];
 				let el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'setValveP' + row);
@@ -900,7 +926,7 @@
 				el.setAttribute('style','height:15px');
 				el.setAttribute('readonly','true');
 				thiscell.appendChild(el);
-				thiscell = ValvesTable.rows[row].cells[5];
+				thiscell = ValvesTable.rows[row].cells[6];
 				el = document.createElement('input');
 				el.setAttribute('type', 'button');
 				el.setAttribute('name', 'setValveButton' + row);
@@ -914,12 +940,13 @@
 			valvesTable.rows[0].cells[1].textContent = 'Name';
 			valvesTable.rows[0].cells[2].textContent = '%';
 			valvesTable.rows[0].cells[3].textContent = 'mA';
-			thiscell = ValvesTable.rows[0].cells[4];
+			valvesTable.rows[0].cells[4].textContent = 'State';
+			thiscell = ValvesTable.rows[0].cells[5];
 			el = document.createElement('input');
 			el.setAttribute('type', 'checkbox');
 			el.setAttribute('name', 'activeSetValves');
 			el.setAttribute('id', 'activeSetValves');
-			valvesTable.rows[0].cells[4].innerHTML = 'Target %';
+			valvesTable.rows[0].cells[5].innerHTML = 'Target %';
 			thiscell.appendChild(el);
 		}
 		
@@ -940,8 +967,6 @@
 			tempsTable.rows[0].cells[0].textContent = 'No';
 			tempsTable.rows[0].cells[1].textContent = 'Name';
 			tempsTable.rows[0].cells[2].textContent = 'C';
-		//	divTempsTable=id('divTempsTable');
-		//	divTempsTable.style.height=tempsTable.offsetHeight+50;
 		}
 		
 		function makeCfgValvesTable() {
@@ -1085,6 +1110,9 @@
 			id("valvesStartCalib").onclick = function(){
 				valvesStartCalib();
 			};
+			id("valvesAssembly").onclick = function(){
+				valvesAssembly();
+			};
 			id("factoryRestore").onclick = function(){
 				factoryRestore();
 			};
@@ -1177,6 +1205,11 @@
 			}
 		}
 		
+		function valvesAssembly(){
+			if (confirm('Are you sure you want to set all valves to assembly position ?')) {
+				postCmd('{"action":"vAssembly"}');
+			}
+		}
 		async function fileDelete() {
 			let fSelect = id("fileSelect");
 			if (fSelect.value) {
@@ -1196,13 +1229,19 @@
 		
 		function generateFilesList (filesList) {
 			let selectBox = id("fileSelect");
-			while (selectBox.options.length > 0) {                
-				selectBox.remove(0);
-			}     
-			filesList.forEach((item) => {
-				let newOption = new Option(item.fName,item.fName);
-				selectBox.add(newOption,undefined);
-			});
+			let fileTabFrame=id("fileTabFrame")
+			if (filesList.length==0) {
+				fileTabFrame.style.display="none"; 
+			} else {
+				fileTabFrame.style.display="block"; 
+				while (selectBox.options.length > 0) {                
+					selectBox.remove(0);
+				}     
+				filesList.forEach((item) => {
+					let newOption = new Option(item.fName,item.fName);
+					selectBox.add(newOption,undefined);
+				});
+			}
 		}
 		
 		function scanTSensors(){
@@ -1332,8 +1371,14 @@
 			}
 			let valvesCfg={};
 			let valvesCalib={};
-			valvesCalib.dayOfCalib=id('vCfg-dCalib').selectedIndex;
+			
 			valvesCalib.hourOfCalib=id('vCfg-hCalib').value;
+			let dCalib=0;	
+			for (let i=0; i<7; i++) {
+				let x = Number(id('vCfg-d'+i).checked);
+				dCalib|=x<<i;
+			}
+			valvesCalib.dayOfCalib=dCalib;
 			valvesCfg.calib=valvesCalib;
 			valvesCfg.valves=valvesItemsCfg;
 			await postJson("valvesconfig",JSON.stringify(valvesCfg));
@@ -1382,38 +1427,51 @@
 		}
 		
 		function fillValvesTable (valvesJson) {
-			const ValvesTable = document.getElementById('valvesTable');
-			for (let row = 1; row<13; row++) {	
-				ValvesTable.rows[row].cells[2].textContent = valvesJson[row-1].pos;	
-				ValvesTable.rows[row].cells[3].textContent = valvesJson[row-1].meanCur;
+			const ValvesTable = id('valvesTable');
+			const States = ["idle","opens","closes","blocked","unknown","no valve","full open"];
+			valvesJson.forEach(function(item, index){
+				ValvesTable.rows[item.idx].cells[2].textContent = item.pos;	
+				ValvesTable.rows[item.idx].cells[3].textContent = item.meanCur;
+				ValvesTable.rows[item.idx].cells[4].textContent = States[item.state-1];
 				if (!(id('activeSetValves').checked)) {
-					id('setValveP'+row).value=valvesJson[row-1].targetPos;
+					id('setValveP'+item.idx).value=item.targetPos;
 				}
-			}
+				
+			});
 		}
 		
 		function fillCfgValvesTable (cfgValvesJson) {
-			const ValvesTable = document.getElementById('valvesTable');
-			const cfgValvesTable = document.getElementById('cfgValvesTable');
+			const ValvesTable = id('valvesTable');
+			const cfgValvesTable = id('cfgValvesTable');
 			for (let row = 1; row<13; row++) {
 				ValvesTable.rows[row].cells[1].textContent = cfgValvesJson.valves[row-1].name;
 				id('cfgVName'+row).value = cfgValvesJson.valves[row-1].name;
 				id('cfgVActive'+row).checked = cfgValvesJson.valves[row-1].active;
 			}
-			id('vCfg-dCalib').selectedIndex = cfgValvesJson.calib.dayOfCalib;
+			
 			id('vCfg-hCalib').value = cfgValvesJson.calib.hourOfCalib;
+			let dCalib=0;	
+			for (let i=0; i<7; i++) {
+				dCalib=cfgValvesJson.calib.dayOfCalib & (1<<i);
+				if (dCalib==0) id('vCfg-d'+i).checked=false; else id('vCfg-d'+i).checked=true; 
+			}
 		}
 		
 		function fillTempsTable (tempsJson) {
-			const tempsTable = document.getElementById('tempsTable');
-			
-			if (tempsJson.length!=tempsTable.rows.length-1) {
-				makeTempsTable(tempsJson.length);
+			const tempsTable = id('tempsTable');
+			const tempStatusTabFrame = id("tempStatusTabFrame")
+			if (tempsJson.length==0) {
+				tempStatusTabFrame.style.display="none";
+			} else {
+				tempStatusTabFrame.style.display="block";
+				if (tempsJson.length!=tempsTable.rows.length-1) {
+					makeTempsTable(tempsJson.length);
+				}
+				tempsJson.forEach(function (item, index) {            
+					tempsTable.rows[index+1].cells[1].textContent = item.name;
+					tempsTable.rows[index+1].cells[2].textContent = item.temp;
+				});
 			}
-			tempsJson.forEach(function (item, index) {            
-				tempsTable.rows[index+1].cells[1].textContent = item.name;
-				tempsTable.rows[index+1].cells[2].textContent = item.temp;
-            });
 		}
 		
 		function fillCfgTempsTable (cfgTempsJson) {
@@ -1423,6 +1481,28 @@
 				id('cfgTActive'+row).checked = cfgTempsJson[row-1].active;
 				id('cfgTOffset'+row).value = cfgTempsJson[row-1].offset;
 				id('cfgTID'+row).value = cfgTempsJson[row-1].id;
+			}
+		}
+		
+		function findTID(TId){
+			let retVal=false;
+			if (dataTempSensorsID) {
+				dataTempSensorsID.forEach(function(item) {
+					if (TId===item.id) {
+						retVal=true;
+						return;
+					}
+				});
+			}
+			return (retVal);
+		}
+		
+		function checkCfgTempsID (){
+			for (let row = 1; row<NoOfMaxSensors+1; row++) {
+				let TID = id('cfgTID'+row);
+				if (TID.value!="") {
+					if (!findTID(TID.value)) TID.style.backgroundColor = "red"; else TID.style.backgroundColor = "";
+				}
 			}
 		}
 		
@@ -1467,6 +1547,7 @@
 					}
 				});
 			}
+			checkCfgTempsID();
 		}
 		
 		async function getSystemInfo() {
@@ -1550,6 +1631,7 @@
 		async function getTempsConfig() {
 			const dataTempsConfig=await getJson("tempsconfig");
 			if (dataTempsConfig) fillCfgTempsTable(dataTempsConfig);
+			checkCfgTempsID();
 		}
 		
 		async function getTempSensorsID() {
