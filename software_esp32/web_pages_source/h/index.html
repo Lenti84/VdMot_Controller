@@ -164,16 +164,16 @@
 
 	.checkboxgroup{
 		width: 11em;
-		height : 4em;
+		height : 6em;
 		overflow-y: scroll;
 		text-align: left;
 	}
 	.checkboxgroup p{
-		width: 7em;
+		width: 10em;
 		text-align: left;
 	}
 	.checkboxgroup label{
-		width: 8em;
+		width: 10em;
 		float: left;
 	}
 
@@ -565,51 +565,17 @@
 		</table>
 		</div>
 
-		<div class="rtabframe" style="height:570px;">
+		<div class="rtabframe" style="height:430px;">
 		<h3>Valves</h3>
 		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		
-		<div class="tabiframe">	
-			<table id="cfgValvesTable1" class="tabTable"
-			<tr>
-				<th>Calibration</th>
-				<td>
-				<input type="number" max="24" min="0" maxlength="2" size="2" id="vCfg-hCalib" name="vCfg-hCalib"/>
-				</td>
-				<th>h</th>
-			</tr>
-			</table>
-			<table>
-			<tr>
-			<fieldset class="checkboxgroup">
-				<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
-				<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
-				<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
-				<label><input type="checkbox" id="vCfg-d3" name="theGroup">Wednesday </label>
-				<label><input type="checkbox" id="vCfg-d4" name="theGroup">Thursday </label>
-				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
-				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
-			</fieldset>
-			</tr>
-			</table>
-			
-			<table id="cfgValvesTable2" class="tabTable"
-			<tr>
-				<td>
-                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start manual calibration of all valves" />
-                </td>
-				<td>
-                <input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set all valves to assembly position" />
-                </td>
-			</tr>
-			</table>
-		</div>
+		
 		</div>
 		
-		<div class="rtabframe2" style="height:570px">
+		<div class="rtabframe2" style="height:495px">
 			<h3>Temperature sensor</h3>
-			<div style="height:465px;overflow-y:scroll">
+			<div style="height:390px;overflow-y:scroll">
 			<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
 			
 			</table>
@@ -624,6 +590,55 @@
 				</table>
 			</div>
 		</div>
+		
+		<div class="rtabframe" id ="motorTabFrame">
+			<h3>Motor</h3>
+		
+			<table id="cfgValvesTable1" class="tabTable"
+			<tr>
+				<th>Calibration</th>
+			</tr>
+			</table>
+			<table>
+			<tr>
+			<fieldset class="checkboxgroup" title="Next Calibration">
+				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
+				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour of next calibration"> h</label>
+				<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
+				<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
+				<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
+				<label><input type="checkbox" id="vCfg-d3" name="theGroup">Wednesday </label>
+				<label><input type="checkbox" id="vCfg-d4" name="theGroup">Thursday </label>
+				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
+				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
+			</fieldset>
+			</tr>
+			</table>
+			<table class="tabTable">
+			<tr>
+				<th>Max.current factor</th>
+			</tr>
+			</table>
+			<table>
+			<tr>
+			<label><input type="number" min="5" max="50" maxlength="2" style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low </label>
+			<label><input type="number" min="5" max="50" maxlength="2" style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
+			</tr>
+			<tr></tr>
+			</table>
+			
+			<table id="cfgValvesTable2" class="tabTable"
+			<tr>
+				<td>
+                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start manual calibration of all valves" />
+                </td>
+				<td>
+                <input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set all valves to assembly position" />
+                </td>
+			</tr>
+			</table>
+		</div>
+		
 		
 		<div class="rtabframe" id ="fileTabFrame">
 		<h3>Files</h3>
@@ -1371,6 +1386,7 @@
 			}
 			let valvesCfg={};
 			let valvesCalib={};
+			let motor={};
 			
 			valvesCalib.hourOfCalib=id('vCfg-hCalib').value;
 			let dCalib=0;	
@@ -1379,8 +1395,12 @@
 				dCalib|=x<<i;
 			}
 			valvesCalib.dayOfCalib=dCalib;
+			valvesCalib.cycles=id('vCfg-movCalib').value;
 			valvesCfg.calib=valvesCalib;
 			valvesCfg.valves=valvesItemsCfg;
+			motor.lowC=id("vCfg-lowC").value;
+			motor.highC=id("vCfg-highC").value;
+			valvesCfg.motor=motor;
 			await postJson("valvesconfig",JSON.stringify(valvesCfg));
 		}
 				
@@ -1455,6 +1475,10 @@
 				dCalib=cfgValvesJson.calib.dayOfCalib & (1<<i);
 				if (dCalib==0) id('vCfg-d'+i).checked=false; else id('vCfg-d'+i).checked=true; 
 			}
+			id('vCfg-movCalib').value=cfgValvesJson.calib.cycles;
+			id("vCfg-lowC").value=cfgValvesJson.motor.lowC;
+			id("vCfg-highC").value=cfgValvesJson.motor.highC;
+			valvesCfg.motor=motor;
 		}
 		
 		function fillTempsTable (tempsJson) {

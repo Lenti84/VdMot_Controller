@@ -412,6 +412,31 @@ int16_t communication_loop (void) {
 			}
 		}
 
+		// set motor characteristics
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETMOTCHARS,&cmd[0],5) == 0) {
+			COMM_DBG.print("got set motor characteristics request ");
+
+			if(argcnt == 2) {
+				currentbound_low_fac = atoi(arg0ptr);
+				currentbound_high_fac = atoi(arg1ptr);
+			}
+			else {
+				COMM_DBG.println("- error");
+			}
+		}
+
+		// get motor characteristics
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETMOTCHARS,&cmd[0],5) == 0) {
+			COMM_DBG.print("got get motor characteristics request ");
+			COMM_SER.print(APP_PRE_GETMOTCHARS);
+			COMM_SER.print(" ");			
+			COMM_SER.print(currentbound_low_fac, DEC);
+			COMM_SER.println(" ");		
+			COMM_SER.print(currentbound_high_fac, DEC);
+			COMM_SER.println(" ");			
+		} 
 
 		// get version request
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

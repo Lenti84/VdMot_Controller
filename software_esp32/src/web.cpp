@@ -98,10 +98,14 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
   return result;  
 }
 
-String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
+String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,VDM_MOTOR_CONFIG motorConfig)
 {
   String result = "{\"calib\":{\"dayOfCalib\":"+String(valvesConfig.dayOfCalib) + "," +
-                  "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib) + "},\"valves\":[" ;
+                   "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib)+ "," +
+                    "\"cycles\":"+String(valvesConfig.learnAfterMovements)+ "}," +
+                   "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
+                   "\"highC\":"+String(motorConfig.maxHighCurrent)+ "}," +
+                   "\"valves\":[" ;
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
     result += "{\"name\":\""+String(valvesConfig.valveConfig[x].name) + "\"," +

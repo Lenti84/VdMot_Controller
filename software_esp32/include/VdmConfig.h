@@ -85,6 +85,7 @@ typedef struct {
   VDM_VALVE_CONFIG valveConfig[ACTUATOR_COUNT];
   uint8_t dayOfCalib;
   uint8_t hourOfCalib;
+  uint32_t learnAfterMovements;
 } VDM_VALVES_CONFIG;
 
 typedef struct {
@@ -98,12 +99,19 @@ typedef struct {
   VDM_TEMP_CONFIG tempConfig[TEMP_SENSORS_COUNT];
 } VDM_TEMPS_CONFIG;
 
+typedef struct {
+  uint8_t maxHighCurrent;
+  uint8_t maxLowCurrent;
+} VDM_MOTOR_CONFIG;
+
+
 typedef struct 
 {
   VDM_NETWORK_CONFIG netConfig;
   VDM_PROTOCOL_CONFIG protConfig;
   VDM_VALVES_CONFIG valvesConfig;
   VDM_TEMPS_CONFIG tempsConfig;
+  VDM_MOTOR_CONFIG motorConfig;
 } CONFIG_FLASH;
 
 
@@ -140,6 +148,12 @@ typedef struct
 #define nvsTemps         "temps"
 #define nvsDayOfCalib    "dayOfCalib"
 #define nvsHourOfCalib   "hourOfCalib"
+#define nvsMovCalib      "movCalib"
+
+#define nvsMotorCfg      "motorCfg"
+#define nvsMotorMinC     "motorMinC"
+#define nvsMotorMaxC     "motorMaxC"
+
 
 
 class CVdmConfig

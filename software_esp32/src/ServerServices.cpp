@@ -258,7 +258,7 @@ void handleProtConfig(AsyncWebServerRequest *request)
 }
 void handleValvesConfig(AsyncWebServerRequest *request)
 {
-  request->send(200,aj,Web.getValvesConfig (VdmConfig.configFlash.valvesConfig));
+  request->send(200,aj,Web.getValvesConfig (VdmConfig.configFlash.valvesConfig, VdmConfig.configFlash.motorConfig));
 }
 
 void handleTempsConfig(AsyncWebServerRequest *request)

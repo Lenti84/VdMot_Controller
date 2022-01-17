@@ -80,6 +80,9 @@ typedef struct  {
 #define APP_PRE_GETVERSION			    "gvers"
 #define APP_PRE_GETTARGETPOS       	"gtgtp"			
 
+#define APP_PRE_SETMOTCHARS         "smotc"
+#define APP_PRE_GETMOTCHARS         "gmotc"
+
 #define APP_PRE_GETACTUALPOS       	"gactp"   // not used in stm
 #define APP_PRE_GETMEANCURR        	"gmenc"   // not used in stm
 #define APP_PRE_GETSTATUS          	"gstat"   // not used in stm
@@ -104,7 +107,7 @@ public:
   CStmApp();
   void app_setup();
   void app_loop();
-  void app_cmd(String command);
+  void app_cmd(String command, String args="");
   bool checkCmdIsAvailable (String thisCmd);
   void valvesCalibration();
   void valvesAssembly();

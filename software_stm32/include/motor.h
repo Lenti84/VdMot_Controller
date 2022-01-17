@@ -84,5 +84,7 @@ byte valve_setup ();
 enum ASTATE valve_getstate ();
 int16_t appsetaction(char cmd, unsigned int valveindex, byte pos);
 
+extern int16_t currentbound_low_fac;     // lower current limit factor for detection of end stop
+extern int16_t currentbound_high_fac;    // upper current limit factor for detection of end stop
 
 #endif     //_MOTOR_H
