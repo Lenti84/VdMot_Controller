@@ -1,9 +1,15 @@
 /**HEADER*******************************************************************
   project : VdMot Controller
-  author : Lenti84
+
+  author : SurfGargano, Lenti84
+
   Comments:
+
   Version :
+
   Modifcations :
+
+
 ***************************************************************************
 *
 * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
@@ -23,43 +29,38 @@
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License.
   See the GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
   Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+
 *END************************************************************************/
 
-#ifndef _COMMUNICATION_H
-	#define _COMMUNICATION_H
 
-#include <Arduino.h>
+#include "Arduino.h"
+#include "TypedQueue.h"
+#include "globals.h"
 
-// public
-extern void communication_setup (void);
-extern int16_t communication_loop (void);
-
-#define APP_PRE_SETTARGETPOS        "stgtp"			// doc
-#define APP_PRE_GETONEWIRECNT       "gonec"			// doc
-#define APP_PRE_GETONEWIREDATA      "goned"			// doc
-#define APP_PRE_SET1STSENSORINDEX   "stsnx"			// doc
-#define APP_PRE_SET2NDSENSORINDEX   "stsny"			// doc
-#define APP_PRE_SETALLVLVOPEN       "staop"			// doc
-#define APP_PRE_GETONEWIRESETT      "gvlon"			// doc
-#define APP_PRE_GETVLVDATA          "gvlvd"			// doc
-
-#define APP_PRE_SETONEWIRESEARCH    "stons"		  // doc
-#define APP_PRE_GETVERSION			    "gvers"     // doc
-#define APP_PRE_GETTARGETPOS       	"gtgtp"	    // doc 
-#define APP_PRE_SETLEARNTIME        "stlnt"		  // doc
-#define APP_PRE_SETLEARNMOVEM       "stlnm"     // doc
-#define APP_PRE_SETVLLEARN          "staln"		  // doc	
-#define APP_PRE_SETMOTCHARS         "smotc"		  // doc	
-#define APP_PRE_GETMOTCHARS         "gmotc"		  // doc
-
-#define APP_PRE_GETACTUALPOS       	"gactp"     // not implemented
-#define APP_PRE_GETMEANCURR        	"gmenc"     // not implemented
-#define APP_PRE_GETSTATUS          	"gstat"     // not implemented
+#pragma once
 
 
-#endif //_COMMUNICATION_H
+class CQueue {
+  private:
+   TypedQueue<String> m_queue;
+   bool m_enabled;
+   String m_currentLine;
+   byte m_bufferSize;
+  public:
+  CQueue(byte bufferSize=40);
+  int available();
+  String pop();
+  void disable();
+  void enable();
+  bool isEnabled();
+  void clear();
+  void setBufferSize(byte size);
+  void push(String data);
+};
 
-
+extern CQueue Queue;

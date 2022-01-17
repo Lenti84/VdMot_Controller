@@ -1,9 +1,15 @@
 /**HEADER*******************************************************************
   project : VdMot Controller
-  author : Lenti84
+
+  author : SurfGargano, Lenti84
+
   Comments:
+
   Version :
+
   Modifcations :
+
+
 ***************************************************************************
 *
 * THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
@@ -23,43 +29,58 @@
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License.
   See the GNU General Public License for more details.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
   Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+
 *END************************************************************************/
 
-#ifndef _COMMUNICATION_H
-	#define _COMMUNICATION_H
 
-#include <Arduino.h>
+#include "Queue.h"
 
-// public
-extern void communication_setup (void);
-extern int16_t communication_loop (void);
+CQueue Queue;      
 
-#define APP_PRE_SETTARGETPOS        "stgtp"			// doc
-#define APP_PRE_GETONEWIRECNT       "gonec"			// doc
-#define APP_PRE_GETONEWIREDATA      "goned"			// doc
-#define APP_PRE_SET1STSENSORINDEX   "stsnx"			// doc
-#define APP_PRE_SET2NDSENSORINDEX   "stsny"			// doc
-#define APP_PRE_SETALLVLVOPEN       "staop"			// doc
-#define APP_PRE_GETONEWIRESETT      "gvlon"			// doc
-#define APP_PRE_GETVLVDATA          "gvlvd"			// doc
+CQueue::CQueue(byte bufferSize) {
+  m_enabled = true;
+  m_bufferSize = bufferSize;
+}
 
-#define APP_PRE_SETONEWIRESEARCH    "stons"		  // doc
-#define APP_PRE_GETVERSION			    "gvers"     // doc
-#define APP_PRE_GETTARGETPOS       	"gtgtp"	    // doc 
-#define APP_PRE_SETLEARNTIME        "stlnt"		  // doc
-#define APP_PRE_SETLEARNMOVEM       "stlnm"     // doc
-#define APP_PRE_SETVLLEARN          "staln"		  // doc	
-#define APP_PRE_SETMOTCHARS         "smotc"		  // doc	
-#define APP_PRE_GETMOTCHARS         "gmotc"		  // doc
+void CQueue::clear() {
+  while (available()) {
+    pop();
+  }
+}
 
-#define APP_PRE_GETACTUALPOS       	"gactp"     // not implemented
-#define APP_PRE_GETMEANCURR        	"gmenc"     // not implemented
-#define APP_PRE_GETSTATUS          	"gstat"     // not implemented
+void CQueue::setBufferSize(byte size) {
+  m_bufferSize = size;
+}
+
+void CQueue::disable() {
+  m_enabled = false;
+  clear();
+}
+
+void CQueue::enable() {
+  m_enabled = true;
+}
+
+bool CQueue::isEnabled() {
+  return m_enabled;
+}
+
+void CQueue::push(String data) {
+  if (m_enabled && m_queue.Count() <= m_bufferSize) {
+    m_queue.Push(data);
+  }
+}
 
 
-#endif //_COMMUNICATION_H
+int CQueue::available()  {
+  return m_queue.Count();
+}
 
-
+String CQueue::pop() {
+  return m_queue.Pop();
+}

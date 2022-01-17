@@ -61,7 +61,8 @@
 static const char* commCmds [] = 
                {APP_PRE_SETTARGETPOS,APP_PRE_GETONEWIRECNT,APP_PRE_GETONEWIREDATA,
                 APP_PRE_SETONEWIRESEARCH,APP_PRE_SETALLVLVOPEN,APP_PRE_GETVLVDATA,
-                APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETTARGETPOS,NULL};
+                APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETTARGETPOS,
+                APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,NULL};
 
 
 CStmApp StmApp;
@@ -107,12 +108,12 @@ void  CStmApp::app_setup() {
 void CStmApp::valvesCalibration()
 {
     uint8_t i=255;
-    app_cmd(APP_PRE_SETVLLEARN+String(" ")+String(i));
+    app_cmd(APP_PRE_SETVLLEARN,String(i));
 }
 
 void CStmApp::valvesAssembly()
 {
-    app_cmd(APP_PRE_SETALLVLVOPEN+String(" "));
+    app_cmd(APP_PRE_SETALLVLVOPEN);
 }
 
 void CStmApp::scanTemps()
@@ -120,7 +121,7 @@ void CStmApp::scanTemps()
     for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
         memset(tempsId[i].id,0x0,sizeof(tempsId[i].id));
     }
-    StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH+String(" "));
+    StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH);
 }
 
 
@@ -136,21 +137,21 @@ bool CStmApp::checkCmdIsAvailable (String thisCmd)
     uint8_t i=0;
     while (commCmds[i] != NULL)
     {
-        if (strncmp((const char*) &thisCmd,commCmds[i],5)==0)
+        if (memcmp((const char*) &thisCmd,commCmds[i],5)==0)
         {
             return(true);
         }
         i++;
     }
-    UART_DBG.println("Command not found "+thisCmd);
+    UART_DBG.println("Command not found "+String(thisCmd));
     return (false);
 }
 
-void  CStmApp::app_cmd(String command) 
+void  CStmApp::app_cmd(String command,String args) 
 {    
     if (checkCmdIsAvailable(command)) {
-        UART_DBG.println("push "+String(command));
-        Queue.push(command);
+        UART_DBG.println("push "+String(command)+String(" ")+String(args));
+        Queue.push(command+String(" ")+args);
     }
 }
 

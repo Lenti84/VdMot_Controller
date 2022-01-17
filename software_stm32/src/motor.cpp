@@ -113,7 +113,8 @@ int valvenr;
 byte poschangecmd;
 unsigned int m_meancurrent;           // mean current in mA
 
-              
+int16_t currentbound_low_fac = 30;     // lower current limit factor for detection of end stop
+int16_t currentbound_high_fac = 30;    // upper current limit factor for detection of end stop
 
 //volatile uint32_t revcounter;
 
@@ -517,6 +518,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
   static int currentbound_low;              // lower current limit for detection of end stop
   static int currentbound_high;             // upper current limit for detection of end stop
 
+
   static unsigned int meancurrent_cnt;      // counts meancurrent values
   static long meancurrent_mem;              // memory for meancurrent values
   byte result;
@@ -611,8 +613,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     result = M_RES_TURNING;
                     isr_timer_go = 1;
 
-                    currentbound_low = (int) m_meancurrent * 10 * -3;
-                    currentbound_high = (int) m_meancurrent * 10 * 3;
+                    currentbound_low = (int) m_meancurrent * (-currentbound_low_fac); //10 * -3;
+                    currentbound_high = (int) m_meancurrent * currentbound_high_fac; //10 * 3;
 
                     meancurrent_mem = 0;
                     meancurrent_cnt = 0;

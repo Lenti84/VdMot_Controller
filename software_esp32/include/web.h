@@ -61,7 +61,7 @@ public:
   String getNetInfo(VDM_NETWORK_INFO networkInfo); 
   String getNetConfig (VDM_NETWORK_CONFIG netConfig);
   String getProtConfig (VDM_PROTOCOL_CONFIG protConfig);
-  String getValvesConfig (VDM_VALVES_CONFIG valvesConfig);
+  String getValvesConfig (VDM_VALVES_CONFIG valvesConfig,VDM_MOTOR_CONFIG motorConfig);
   String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig);
   String getTempSensorsID();
   String getSysDynInfo();
