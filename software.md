@@ -43,7 +43,7 @@ This page will document the software part of the VdMot_Controller.
 |---|---|---|---|---|
 |stgtp x y|set target position of valve *x* to *y* %|-|x=0...11, y=0...100%||
 |gtgtp x|get target position of valve *x*|gtgtp *target_position*|0...100%||
-|gvlvd x|get data of valve *x*|gvlvd *position meancurrent status 1st_temperature 2nd_temperature*|*% mA - 1/10°C 1/10°C*||
+|gvlvd x|get data of valve *x*|gvlvd *valve_index position meancurrent status 1st_temperature 2nd_temperature*|*% mA - 1/10°C 1/10°C*||
 |stons|start new 1-wire search|-|-|get result via *gonec* and *goned*|
 |gonec|get count of 1-wire devices|gonec *count*|*-*||
 |goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *6ByteHexAddress temperature*|*0x 0x 0x 0x 0x 0x 1/10°C*||

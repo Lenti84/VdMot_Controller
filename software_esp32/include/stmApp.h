@@ -47,7 +47,8 @@ typedef struct  {
   unsigned char target_position;      // to controller
   unsigned char state;                // from controller
   unsigned int  meancurrent;          // from controller
-  int           temperature;          // temperature of assigned sensor
+  int           temperature;          // temperature of 1st assigned sensor
+  int           temperature2;         // temperature of 2nd assigned sensor
 } ACTUATOR_STRUC;
 
 typedef struct  {
@@ -147,11 +148,13 @@ private:
   char    arg2[20];
   char    arg3[20];
   char    arg4[20];
+  char    arg5[20];
 	char*		arg0ptr;
 	char*		arg1ptr;
   char*		arg2ptr;
   char*		arg3ptr;
   char*		arg4ptr;
+  char*		arg5ptr;
 	uint8_t	argcnt;
 };
 

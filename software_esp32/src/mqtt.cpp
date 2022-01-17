@@ -220,10 +220,17 @@ void CMqtt::publish_valves () {
         itoa(StmApp.actuators[x-1].meancurrent, valstr, 10);
         mqtt_client.publish(topicstr, valstr);
 
-        // temperature
+        // temperature 1st sensor
         topicstr[len] = '\0';
-        strcat(topicstr, "/temperature");
+        strcat(topicstr, "/temp1");
+        #warning change to StmApp.actuators[x-1] later
         itoa(StmApp.temps[x-1].temperature, valstr, 10);
+        mqtt_client.publish(topicstr, valstr);
+
+        // temperature 2nd sensor
+        topicstr[len] = '\0';
+        strcat(topicstr, "/temp2");
+        itoa(StmApp.actuators[x-1].temperature2, valstr, 10);
         mqtt_client.publish(topicstr, valstr);
     }
 }
