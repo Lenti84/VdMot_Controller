@@ -1262,6 +1262,9 @@
 		function scanTSensors(){
 			if (confirm('Are you sure you want to scan temperature sensors ?')) {
 				postCmd('{"action":"scanTempSensors"}');
+				setTimeout(function() {
+					getTempSensorsID();	
+				},5000);
 			}
 		}
 
@@ -1443,7 +1446,6 @@
 			getSystemDynInfo();
 			getValvesStatus();
 			getTempsStatus();
-			getTempSensorsID();
 		}
 		
 		function fillValvesTable (valvesJson) {
@@ -1478,7 +1480,6 @@
 			id('vCfg-movCalib').value=cfgValvesJson.calib.cycles;
 			id("vCfg-lowC").value=cfgValvesJson.motor.lowC;
 			id("vCfg-highC").value=cfgValvesJson.motor.highC;
-			valvesCfg.motor=motor;
 		}
 		
 		function fillTempsTable (tempsJson) {

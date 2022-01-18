@@ -79,6 +79,7 @@ void CServices::runOnce()
    StmApp.app_cmd(APP_PRE_SETMOTCHARS,
           String(VdmConfig.configFlash.motorConfig.maxLowCurrent)+
           String(" ")+String(VdmConfig.configFlash.motorConfig.maxHighCurrent)+String(" "));
+   StmApp.scanTemps();
 }
 
 void CServices::restartSystem() {
