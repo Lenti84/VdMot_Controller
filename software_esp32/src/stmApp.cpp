@@ -85,6 +85,8 @@ CStmApp::CStmApp()
     arg4ptr = arg4;
     arg5ptr = arg5;
 	argcnt = 0;
+    tempsPrivCount=0;
+    setTempIdxActive=false;
 }
 
 void  CStmApp::app_setup() {
@@ -95,9 +97,9 @@ void  CStmApp::app_setup() {
         actuators[x].target_position = 0;
         actuators[x].meancurrent = 342;
         actuators[x].state = VLV_STATE_IDLE;
-        actuators[x].temperature = -500;
-        actuators[x].temperature2 = -500;
-    }
+        actuators[x].temp1 = -500;
+        actuators[x].temp2 = -500;
+   }
 
     for(uint8_t x = 0; x<ACTUATOR_COUNT; x++)
     {
@@ -120,10 +122,16 @@ void CStmApp::valvesAssembly()
 
 void CStmApp::scanTemps()
 {
+    tempsCount=0;
     for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
         memset(tempsId[i].id,0x0,sizeof(tempsId[i].id));
     }
     StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH);
+}
+
+void CStmApp::setTempIdx()
+{
+    // todo
 }
 
 
@@ -314,16 +322,8 @@ void  CStmApp::app_check_data()
                     actuators[atoi(arg0ptr)].actual_position = atoi(arg1ptr);
                     actuators[atoi(arg0ptr)].meancurrent = atoi(arg2ptr);
                     actuators[atoi(arg0ptr)].state = atoi(arg3ptr);
-                    actuators[atoi(arg0ptr)].temperature = atoi(arg4ptr);
-                    actuators[atoi(arg0ptr)].temperature2 = atoi(arg5ptr);
-
-                    // UART_DBG.print("VLV ");
-                    // UART_DBG.print(atoi(arg0ptr), DEC);
-                    // UART_DBG.print(" t1 ");
-                    // UART_DBG.print(atoi(arg4ptr), DEC);
-                    // UART_DBG.print(" t2 ");
-                    // UART_DBG.println(atoi(arg5ptr), DEC);
-
+                    actuators[atoi(arg0ptr)].temp1 = atoi(arg4ptr);
+                    actuators[atoi(arg0ptr)].temp2 = atoi(arg5ptr);
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                         syslog.log(LOG_DEBUG, "got full vlv data packet");
                     }
@@ -337,9 +337,9 @@ void  CStmApp::app_check_data()
         
         else if(memcmp(APP_PRE_GETONEWIRECNT,cmd,5) == 0) {
             if(argcnt == 1) {
-                tempsCount= atoi(arg0ptr); 
+                tempsPrivCount= atoi(arg0ptr); 
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"one wire count "+String(tempsCount));
+                    syslog.log(LOG_DEBUG,"one wire count "+String(tempsPrivCount));
                 }       
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
@@ -359,7 +359,10 @@ void  CStmApp::app_check_data()
                     temps[idx].temperature=atoi(arg1ptr)+VdmConfig.configFlash.tempsConfig.tempConfig[idx].offset;
                 } 
                 tempIndex++;
-                if (tempIndex>=tempsCount) tempIndex=0;
+                if (tempIndex>=tempsPrivCount) {  // all temp sensors read
+                    tempIndex=0;
+                    tempsCount=tempsPrivCount;
+                }
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
@@ -453,8 +456,7 @@ void  CStmApp::app_comm_machine()
                 }
 
                 // update target position mirror - 
-                for(unsigned int x = 0; x<ACTUATOR_COUNT; x++)
-                {
+                for(unsigned int x = 0; x<ACTUATOR_COUNT; x++) {
                     target_position_mirror[x] = actuators[x].target_position;
                 }
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
@@ -522,7 +524,7 @@ void  CStmApp::app_comm_machine()
 
         case COMM_GETONEWIRE:
                 commstate = COMM_HANDLEQUEUE;
-                if (tempsCount>0) {
+                if (tempsPrivCount>0) {
                     memset(sendbuffer,0x0,sizeof(sendbuffer));
                     
                     strcat(sendbuffer, APP_PRE_GETONEWIREDATA);

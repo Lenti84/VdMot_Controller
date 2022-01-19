@@ -72,6 +72,5 @@ extern uint8_t vismode;
 #define STM32_TX            17
 
 
-// MQTT settings
-#define DEFAULT_MAINTOPIC   "/VdMotFBH/valve/"           //  /VdMotFBH/valve/1/actual
+
 

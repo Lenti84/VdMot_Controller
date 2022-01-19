@@ -42,6 +42,11 @@
 
 #define MAINTOPIC_LEN 30
 
+// MQTT settings
+#define DEFAULT_MAINTOPIC    "/VdMotFBH/"           //  /VdMotFBH/valve/1/actual
+#define DEFAULT_VALVESTOPIC  "valves/"
+#define DEFAULT_TEMPSTOPIC   "temps/"
+
 class CMqtt
 {
   public:
@@ -53,7 +58,10 @@ class CMqtt
     void reconnect();
     void publish_valves ();
 
-    char mqtt_maintopic[MAINTOPIC_LEN];
+    char mqtt_mainTopic[MAINTOPIC_LEN];
+    char mqtt_valvesTopic[MAINTOPIC_LEN];
+    char mqtt_tempsTopic[MAINTOPIC_LEN];
+    char mqtt_callbackTopic[MAINTOPIC_LEN];
 };
 
 extern CMqtt Mqtt;

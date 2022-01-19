@@ -57,3 +57,11 @@ String ConvBinUnits(size_t bytes, byte resolution) {
   }
   else return "";
 }
+
+bool isNumber(const String& str)
+{
+    for (char const &c : str) {
+        if (std::isdigit(c) == 0) return false;
+    }
+    return true;
+}
