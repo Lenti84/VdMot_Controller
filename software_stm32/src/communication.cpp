@@ -34,6 +34,7 @@
 #include "motor.h"
 #include "communication.h"
 #include "temperature.h"
+#include "eeprom.h"
 
 #define COMM_SER				Serial1		// serial port to ESP32
 //#define COMM_DBG				Serial3		// serial port for debugging
@@ -84,6 +85,8 @@ int16_t communication_loop (void) {
     char valbuffer[10];
 
 	char sendbuf[SEND_BUFFER_LEN];
+	DeviceAddress currAddress;
+	uint8_t numberOfDevices;
 
 	availcnt = COMM_SER.available(); 
     if(availcnt>0)
@@ -350,8 +353,25 @@ int16_t communication_loop (void) {
 				COMM_DBG.println("comm: set 1st sensor index");
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
 				{
-					myvalves[x].sensorindex1 = (byte) y;
-					//COMM_SER.println(APP_PRE_SET1STSENSORINDEX);
+					numberOfDevices = sensors.getDeviceCount();
+					if (numberOfDevices > 0) 
+					{
+						// write sensor address code to eeprom layout mirror
+						sensors.getAddress(currAddress, y);
+						eep_content.owsensors1[x].familycode = currAddress[0];
+						eep_content.owsensors1[x].romcode[0] = currAddress[1];
+						eep_content.owsensors1[x].romcode[1] = currAddress[2];
+						eep_content.owsensors1[x].romcode[2] = currAddress[3];
+						eep_content.owsensors1[x].romcode[3] = currAddress[4];
+						eep_content.owsensors1[x].romcode[4] = currAddress[5];
+						eep_content.owsensors1[x].romcode[5] = currAddress[6];
+						eep_content.owsensors1[x].crc = currAddress[7];
+
+						// write index to valves structure
+						myvalves[x].sensorindex1 = (byte) y;
+
+						eeprom_changed();	
+					}					
 				}
 			}
 			else COMM_DBG.println("to few arguments");
@@ -370,8 +390,25 @@ int16_t communication_loop (void) {
 				COMM_DBG.println("comm: set 2nd sensor index");
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
 				{
-					myvalves[x].sensorindex2 = (byte) y;
-					//COMM_SER.println(APP_PRE_SET2NDSENSORINDEX);
+					numberOfDevices = sensors.getDeviceCount();
+					if (numberOfDevices > 0) 
+					{
+						// write sensor address code to eeprom layout mirror
+						sensors.getAddress(currAddress, y);
+						eep_content.owsensors2[x].familycode = currAddress[0];
+						eep_content.owsensors2[x].romcode[0] = currAddress[1];
+						eep_content.owsensors2[x].romcode[1] = currAddress[2];
+						eep_content.owsensors2[x].romcode[2] = currAddress[3];
+						eep_content.owsensors2[x].romcode[3] = currAddress[4];
+						eep_content.owsensors2[x].romcode[4] = currAddress[5];
+						eep_content.owsensors2[x].romcode[5] = currAddress[6];
+						eep_content.owsensors2[x].crc = currAddress[7];
+
+						// write index to valves structure
+						myvalves[x].sensorindex2 = (byte) y;	
+
+						eeprom_changed();					
+					}
 				}
 			}
 			else COMM_DBG.println("to few arguments");
@@ -418,8 +455,19 @@ int16_t communication_loop (void) {
 			COMM_DBG.print("got set motor characteristics request ");
 
 			if(argcnt == 2) {
-				currentbound_low_fac = atoi(arg0ptr);
-				currentbound_high_fac = atoi(arg1ptr);
+				x = atoi(arg0ptr);
+				y = atoi(arg1ptr);
+
+				if (x>=5 && x<=50 && y>=5 && y<=50) {
+					currentbound_low_fac = atoi(arg0ptr);
+					currentbound_high_fac = atoi(arg1ptr);
+
+					eep_content.currentbound_low_fac = currentbound_low_fac;
+					eep_content.currentbound_high_fac = currentbound_high_fac;
+					eeprom_changed();
+					COMM_DBG.println("- valid");
+				}
+				else COMM_DBG.println("- values out of bounds");
 			}
 			else {
 				COMM_DBG.println("- error");

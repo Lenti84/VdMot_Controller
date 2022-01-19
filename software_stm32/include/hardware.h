@@ -160,6 +160,8 @@
 // #error "EEPROM: adress for EE_SENSORDATA_ADR collides with EE_GENERALDATA_ADR"
 // #endif
 
+enum EEP_STATE { E_INIT, E_VALID, E_CHANGED };
+
 struct ds1820_eeprom_layout {
 	uint8_t		familycode;				// family code
 	uint8_t		romcode[6];				// rom code
@@ -167,11 +169,13 @@ struct ds1820_eeprom_layout {
 };
 
 struct eeprom_layout {
-	uint8_t     b_slave;                // 0 -> master, >0 -> slave
-    char		descr[25];				// string for system description
+  enum EEP_STATE status;                 // status of eeprom content
+	uint8_t     b_slave;            // 0 -> master, >0 -> slave
+    char		descr[25];				    // string for system description
 	uint8_t		OneWireCfg[3];		    // 3 bytes for One Wire Gateway Configuration						
-										// byte 0 - conversion interval
-
+										              // byte 0 - conversion interval
+  uint8_t currentbound_low_fac;   
+  uint8_t currentbound_high_fac;
 	struct ds1820_eeprom_layout owsensors1[ACTUATOR_COUNT];	// a lot of ds1820 sensors - first sensor of valve
 	struct ds1820_eeprom_layout owsensors2[ACTUATOR_COUNT];	// a lot of ds1820 sensors - second sensor of valve
 	struct ds1820_eeprom_layout owsensors[ADDITIONAL_SENSOR_COUNT];	// some other ds1820 sensors

@@ -168,6 +168,8 @@ void loop_system() {
 
     digitalWrite(LED, !digitalRead(LED));   // toggle LED
     
+    eepromloop();
+
     //Serial.println("help");
     //Serial.println("gactp 0 14 ");
 
@@ -205,7 +207,7 @@ void loop_system() {
 
     temperature_loop();
 
-    eepromloop();
+    //eepromloop();
 
     //mycan_loop();         // can hardware testcode
 

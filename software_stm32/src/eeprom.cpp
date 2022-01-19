@@ -87,6 +87,8 @@ int16_t eepromsetup () {
 	// EEPROM_DEBUG("Finish to write:");
 	// EEPROM_DEBUG(millis());
 	// EEPROM_DEBUG("\r\n");
+
+	eep_content.status = E_INIT;
 	
   return 0;
 }
@@ -97,6 +99,7 @@ int16_t eepromloop() {
     #define E_INIT      0
     #define E_IDLE      1
     #define E_READCFG   2
+	#define E_WRITECFG  3
 
     static int eepromstate = E_INIT;
 
@@ -124,7 +127,10 @@ int16_t eepromloop() {
                     break;
 
         case E_IDLE:                  
-                    eepromstate = E_IDLE;
+                    if (eep_content.status == E_CHANGED) {
+						eepromstate = E_WRITECFG;
+					}
+					
                     break;
 
 
@@ -132,6 +138,17 @@ int16_t eepromloop() {
 
 
                     break;
+
+
+		case E_WRITECFG:
+					
+					eeprom_write_layout (&eep_content);
+
+					eep_content.status = E_VALID;					
+					eepromstate = E_IDLE;
+
+                    break;
+
 
         default:    eepromstate = E_IDLE;
                     break;
@@ -227,6 +244,10 @@ int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 		x++;
 	}
 
+	// current bounds
+	buf[x++] = (uint8_t) (lay->currentbound_low_fac);
+	buf[x++] = (uint8_t) (lay->currentbound_high_fac);
+
   	//eep.write(address, buf, x);
 	eeprom.writeBlock(address, buf, x);
 
@@ -307,7 +328,7 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 	address = EE_GENERALDATA_ADR;
 
 	// first read base layout
-	x = 1 + sizeof(lay->descr) + sizeof(lay->OneWireCfg);
+	x = 1 + sizeof(lay->descr) + sizeof(lay->OneWireCfg) + sizeof(lay->currentbound_low_fac) + sizeof(lay->currentbound_high_fac);
 	//eep.readByteArray(address, buf, x);
 	eeprom.readBlock(address, buf, x);
 
@@ -321,6 +342,9 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 		lay->OneWireCfg[y] = buf[x];
 		x++;
 	}
+		// current bounds
+	lay->currentbound_low_fac = (uint8_t) (buf[x++]);
+	lay->currentbound_high_fac = (uint8_t) (buf[x++]);
 
 	// then read sensor data
 	address = EE_GENERALDATA_ADR + x;
@@ -380,7 +404,16 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 		address += x;
 	}
 
+	eep_content.status = E_VALID;
+
 	EEPROM_DEBUG("finished\r\n");
 
 	return 0;
+}
+
+// call everytime some eeprom content was changed
+int16_t eeprom_changed () {
+
+	eep_content.status = E_CHANGED;
+
 }

@@ -48,13 +48,15 @@ This page will document the software part of the VdMot_Controller.
 |gonec|get count of 1-wire devices|gonec *count*|*-*||
 |goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *6ByteHexAddress temperature*|*0x 0x 0x 0x 0x 0x 1/10°C*||
 |gvlon x|get 1-wire settings for valve *x*|gvlon *6ByteHexAddressFirstSensor* - *6ByteHexAddressSecondSensor*|*0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x*||
-|stsnx x y|set first 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35||
-|stsny x y|set second 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35||
+|stsnx x y|set first 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35|will be saved in eeprom|
+|stsny x y|set second 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35|will be saved in eeprom|
 |staop x|set valve *x* open|-|0...11, 255|usefull for installation, opens quickly one (x) or all valves (x=255) so they can be mounted|
 |staln x|set learning for valve *x*|-|0...11, 255|performs learning cycle for one (x) or all valves (x=255)|
 |stlnm x|set learning movement counter|-|0...32000|after x movement requests to valve a new learning cycle will be perfomed|
 |stlnt x|set learning time|-|0...1000000|after x seconds a new learning cycle will be perfomed|
 |gvers|get version|gvers *version_string*|tbd||
+|smotc x y|set motor characteristics: *x* endpoint threshold low (inv), *y* endpoint threshold high|-|x=5...50 y=5...50|endpoint detection will be performed with these current values, will be saved in eeprom|
+|gmotc|get motor characteristics|-|*x* endpoint threshold low (inv), *y* endpoint threshold high|see *smotc*|
 
 
 

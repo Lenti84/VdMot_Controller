@@ -175,50 +175,47 @@ int16_t app_loop (void) {
     // if valve machine is idle search for new tasks
     if(valve_getstate() == A_IDLE) {
 
-      // check all valves
-      // for(unsigned int x=0; x<ACTUATOR_COUNT; x++)
-      // {
-          // handle first found difference then break
-          //if(target_position_mirror[x] != myvalves[x].target_position)
-          if(myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
-          {
-              COMM_DBG.print("M: target pos changed for valve "); COMM_DBG.println(lastvalve, 10);
-              
-              // check if valve was learned before
-              if(myvalvemots[lastvalve].status == VLV_STATE_UNKNOWN || myvalvemots[lastvalve].status == VLV_STATE_OPENCIR) 
-              {
-                COMM_DBG.print("M: learning started for valve "); COMM_DBG.println(lastvalve, 10);
-                appsetaction(CMD_A_LEARN,lastvalve,0);    
-                //myvalves[lastvalve].status = VLV_STATE_IDLE;   // for test
-              }
-              // check if valve is not open circuit
-              //else if(myvalves[lastvalve].status == VLV_STATE_OPENCIR) 
-              //{
-                //COMM_DBG.print("M: valve "); COMM_DBG.print(lastvalve, 10); COMM_DBG.println(" open circuit");
-                //myvalves[lastvalve].target_position = myvalves[lastvalve].actual_position;
-              //}
-              else // valve was learned before
-              {
-                // reset full open command
-                if(myvalvemots[lastvalve].status == VLV_STATE_FULLOPEN) myvalvemots[lastvalve].status = VLV_STATE_UNKNOWN;
+        // find unknown states and try to find out whats on with the valve
+        // this will rattle the relay - fix needed
+        // if(myvalvemots[lastvalve].status == VLV_STATE_UNKNOWN) 
+        // {
+        //   COMM_DBG.print("App: valve "); COMM_DBG.print(lastvalve, 10);
+        //   COMM_DBG.println(" unknown, try to find out...");
+        //   appsetaction(CMD_A_LEARN,lastvalve,0);    
+        // }
 
-                // should valve be opened
-                //if(myvalves[lastvalve].target_position > target_position_mirror[lastvalve]) {
-                if(myvalvemots[lastvalve].target_position > myvalvemots[lastvalve].actual_position) {                  
-                  if(myvalvemots[lastvalve].target_position == 100) appsetaction(CMD_A_OPEN_END,lastvalve,(byte)0);
-                  else appsetaction(CMD_A_OPEN,lastvalve,myvalvemots[lastvalve].target_position-myvalvemots[lastvalve].actual_position);
-                }
-                // valve should be closed
-                else {
-                  if(myvalvemots[lastvalve].target_position == 0) appsetaction(CMD_A_CLOSE_END,lastvalve,(byte)0);
-                  else appsetaction(CMD_A_CLOSE,lastvalve,myvalvemots[lastvalve].actual_position-myvalvemots[lastvalve].target_position);
-                }
-              }
-          }
+        // handle first found difference then break
+        if(myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
+        {
+            COMM_DBG.print("App: target pos changed for valve "); COMM_DBG.println(lastvalve, 10);
+            
+            // check if valve was learned before
+            if(myvalvemots[lastvalve].status == VLV_STATE_UNKNOWN || myvalvemots[lastvalve].status == VLV_STATE_OPENCIR) 
+            {
+              COMM_DBG.print("App: learning started for valve "); COMM_DBG.println(lastvalve, 10);
+              appsetaction(CMD_A_LEARN,lastvalve,0);                  
+            }
+            else // valve was learned before
+            {
+              // reset full open command
+              if(myvalvemots[lastvalve].status == VLV_STATE_FULLOPEN) myvalvemots[lastvalve].status = VLV_STATE_UNKNOWN;
 
-          lastvalve++;
-          if (lastvalve>=ACTUATOR_COUNT) lastvalve = 0;
-      //}
+              // should valve be opened
+              if(myvalvemots[lastvalve].target_position > myvalvemots[lastvalve].actual_position) {                  
+                if(myvalvemots[lastvalve].target_position == 100) appsetaction(CMD_A_OPEN_END,lastvalve,(byte)0);
+                else appsetaction(CMD_A_OPEN,lastvalve,myvalvemots[lastvalve].target_position-myvalvemots[lastvalve].actual_position);
+              }
+              // valve should be closed
+              else {
+                if(myvalvemots[lastvalve].target_position == 0) appsetaction(CMD_A_CLOSE_END,lastvalve,(byte)0);
+                else appsetaction(CMD_A_CLOSE,lastvalve,myvalvemots[lastvalve].actual_position-myvalvemots[lastvalve].target_position);
+              }
+            }
+        }
+
+        lastvalve++;
+        if (lastvalve>=ACTUATOR_COUNT) lastvalve = 0;
+
     }
 
 return 0;
@@ -240,7 +237,7 @@ byte app_10s_loop () {
       if(myvalves[x].learn_time <= 10) {
         myvalves[x].learn_time = learning_time;
         myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, next set target req will do a learning cycle
-        COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
+        COMM_DBG.print("App: Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
       }
       else myvalves[x].learn_time -= 10;    
     }
@@ -252,7 +249,7 @@ byte app_10s_loop () {
       if(myvalves[x].learn_movements == 0) {
         myvalves[x].learn_movements = learning_movements;
         myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
-        COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
+        COMM_DBG.print("App: Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
       }   
     } 
   }

@@ -35,6 +35,7 @@
 #include "STM32TimerInterrupt.h"      // library https://github.com/khoih-prog/STM32_TimerInterrupt
 #include "terminal.h"
 #include "app.h"
+#include "eeprom.h"
 
 
 
@@ -160,6 +161,8 @@ byte valve_setup () {
   else
     COMM_DBG.println(F("Can't set ITimer0. Select another freq. or timer"));
 
+  currentbound_low_fac = eep_content.currentbound_low_fac;
+  currentbound_high_fac = eep_content.currentbound_high_fac;
 
   return 0;
 }

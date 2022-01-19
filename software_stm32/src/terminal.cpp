@@ -318,7 +318,8 @@ int16_t Terminal_Serve (void) {
 		// save eeprom layout
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp("saveep",&cmd[0],6) == 0) {
-			eeprom_write_layout(&eep_content);
+			//eeprom_write_layout(&eep_content);
+			eeprom_changed();
 			COMM_DBG.println("saved eeprom layout");
 		}
 
@@ -326,10 +327,10 @@ int16_t Terminal_Serve (void) {
 		// x - valve index
 		// y - temp sensor index
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		else if(memcmp("setssi1",&cmd[0],7) == 0) {
+		else if(memcmp(APP_PRE_SET1STSENSORINDEX,&cmd[0],5) == 0) {
 
 			if(argcnt == 2) {				
-				COMM_DBG.println("comm: set first sensor index");
+			COMM_DBG.println("comm: set 1st sensor index");
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
 				{
 					numberOfDevices = sensors.getDeviceCount();
@@ -347,9 +348,10 @@ int16_t Terminal_Serve (void) {
 						eep_content.owsensors1[x].crc = currAddress[7];
 
 						// write index to valves structure
-						myvalves[x].sensorindex1 = (byte) y;						
-					}
-					 
+						myvalves[x].sensorindex1 = (byte) y;
+
+						eeprom_changed();	
+					}					
 				}
 			}
 			else COMM_DBG.println("to few arguments");
@@ -360,10 +362,10 @@ int16_t Terminal_Serve (void) {
 		// x - valve index
 		// y - temp sensor index
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		else if(memcmp("setssi2",&cmd[0],7) == 0) {
+		else if(memcmp(APP_PRE_SET2NDSENSORINDEX,&cmd[0],5) == 0) {
 
 			if(argcnt == 2) {				
-				COMM_DBG.println("comm: set second sensor index");
+				COMM_DBG.println("comm: set 2nd sensor index");
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
 				{
 					numberOfDevices = sensors.getDeviceCount();
@@ -381,9 +383,10 @@ int16_t Terminal_Serve (void) {
 						eep_content.owsensors2[x].crc = currAddress[7];
 
 						// write index to valves structure
-						myvalves[x].sensorindex2 = (byte) y;						
+						myvalves[x].sensorindex2 = (byte) y;	
+
+						eeprom_changed();					
 					}
-					 
 				}
 			}
 			else COMM_DBG.println("to few arguments");
@@ -471,6 +474,42 @@ int16_t Terminal_Serve (void) {
 				COMM_DBG.println("- error");
 			}
 		}
+
+
+		// set motor characteristics
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETMOTCHARS,&cmd[0],5) == 0) {
+			COMM_DBG.print("got set motor characteristics request ");
+
+			if(argcnt == 2) {
+				x = atoi(arg0ptr);
+				y = atoi(arg1ptr);
+
+				if (x>=5 && x<=50 && y>=5 && y<=50) {
+					currentbound_low_fac = atoi(arg0ptr);
+					currentbound_high_fac = atoi(arg1ptr);
+
+					eep_content.currentbound_low_fac = currentbound_low_fac;
+					eep_content.currentbound_high_fac = currentbound_high_fac;
+					eeprom_changed();
+					COMM_DBG.println("- valid");
+				}
+				else COMM_DBG.println("- values out of bounds");
+			}
+			else {
+				COMM_DBG.println("- error");
+			}
+		}
+
+
+		// get motor characteristics
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETMOTCHARS,&cmd[0],5) == 0) {
+			COMM_DBG.print("got get motor characteristics request - low: ");			
+			COMM_DBG.print(currentbound_low_fac, DEC);
+			COMM_DBG.println(" high: ");		
+			COMM_DBG.println(currentbound_high_fac, DEC);			
+		} 
 
 
 		// unknown command
