@@ -109,7 +109,9 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,VDM_MOTOR_CONFIG mo
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
     result += "{\"name\":\""+String(valvesConfig.valveConfig[x].name) + "\"," +
-              "\"active\":"+String(valvesConfig.valveConfig[x].active) + "}";
+              "\"active\":"+String(valvesConfig.valveConfig[x].active) + ","+
+              "\"tIdx1\":"+String(StmApp.actuators[x].tIdx1) + ","+
+              "\"tIdx2\":"+String(StmApp.actuators[x].tIdx2) + "}";
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
   result += "]}"; 
@@ -191,8 +193,6 @@ String CWeb::getSysDynInfo()
   return result;  
 }
 
-
-
 String CWeb::getValvesStatus() 
 {
   String result = "[";
@@ -209,7 +209,6 @@ String CWeb::getValvesStatus()
   result += "]";
   return result;
 }
-
 
 String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig) 
 {

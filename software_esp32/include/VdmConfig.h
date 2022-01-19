@@ -173,6 +173,7 @@ public:
   void postTempsCfg (JsonObject doc);
   String handleAuth (JsonObject doc);
   uint32_t doc2IPAddress(String id);
+  int8_t findTempID (char* tempId);
 
   Preferences prefs;
 

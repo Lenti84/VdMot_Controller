@@ -332,3 +332,18 @@ String CVdmConfig::handleAuth (JsonObject doc)
   } else result=3;
   return ("{\"auth\":"+String(result)+"}");
 }
+
+
+int8_t CVdmConfig::findTempID (char* tempId)
+{
+  uint8_t idx=0;
+  for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++)
+  {
+    if (strncmp (tempId,configFlash.tempsConfig.tempConfig[i].ID,sizeof(configFlash.tempsConfig.tempConfig[i].ID)) == 0)
+    { 
+      return (idx);
+    }
+    idx++;
+  }
+  return (-1);
+}

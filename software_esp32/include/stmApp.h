@@ -47,7 +47,10 @@ typedef struct  {
   unsigned char target_position;      // to controller
   unsigned char state;                // from controller
   unsigned int  meancurrent;          // from controller
-  int           temperature;          // temperature of assigned sensor
+  uint8_t       tIdx1;          // Index of temp1 in temp list
+  int           temp1;          // temperature of assigned sensor
+  uint8_t       tIdx2;          // Index of temp2 in temp list
+  int           temp2;          // temperature of assigned sensor
 } ACTUATOR_STRUC;
 
 typedef struct  {
@@ -58,7 +61,6 @@ typedef struct  {
 typedef struct  {
   char id[25];
 } TEMPID_STRUC;
-
 
 
 #define APP_PRE_SETTXENA			      "stxen"   // not used in stm
@@ -131,6 +133,7 @@ private:
   COMM_STATE commstate;    
   uint8_t tempIndex;
   uint8_t checkTempsCount;
+  uint8_t tempsPrivCount;
   String cmd_buffer;
 
   char buffer[1200];

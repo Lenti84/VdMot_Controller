@@ -82,6 +82,11 @@ void CServices::runOnce()
    StmApp.scanTemps();
 }
 
+void CServices::runOnceDelayed()
+{
+  VdmNet.startBroker();
+}
+
 void CServices::restartSystem() {
       VdmTask.taskIdResetSystem = taskManager.scheduleOnce(1000, [] {
                 ESP.restart();

@@ -50,6 +50,7 @@ public:
   CServices();
   void servicesLoop();
   void runOnce();
+  void runOnceDelayed();
   void restartSystem();
   void restartStmApp(uint32_t ms);
   void checkServiceValves();

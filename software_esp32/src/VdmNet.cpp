@@ -264,11 +264,6 @@ void CVdmNet::checkNet()
     VdmTask.deleteTask(VdmTask.taskIdCheckNet);
 
     VdmSystem.getSystemInfo();
-    if (VdmConfig.configFlash.protConfig.dataProtocol!=noneProtocol)
-    {
-      startBroker();
-    }
-    // todo STM32_Start();
 
     if (MDNS.begin("esp32")) {
       UART_DBG.println("MDNS responder started");

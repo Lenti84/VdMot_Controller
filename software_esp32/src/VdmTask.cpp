@@ -122,6 +122,9 @@ void CVdmTask::startServices()
     taskIdRunOnce = taskManager.scheduleOnce(1000, [] {
                 Services.runOnce();
     });
+    taskIdRunOnceDelayed = taskManager.scheduleOnce(10000, [] {
+                Services.runOnceDelayed();
+    });
     taskIdServices = taskManager.scheduleFixedRate(60*1000, [] {
         Services.servicesLoop();
     });
