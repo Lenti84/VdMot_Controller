@@ -252,19 +252,18 @@ void CMqtt::publish_valves () {
         strncat(topicstr, "/meancur",sizeof(topicstr));
         itoa(StmApp.actuators[x].meancurrent, valstr, 10);
         mqtt_client.publish(topicstr, valstr);
-        
-        // temperature 1
+
+        // temperature 1st sensor
         topicstr[len] = '\0';
-        strncat(topicstr, "/temp1",sizeof(topicstr));
-        String s = String(((float)StmApp.actuators[x].temp1)/10,1);   
+        strcat(topicstr, "/temp1");
+        String s = String(((float)StmApp.actuators[x].temp1)/10,1); 
         mqtt_client.publish(topicstr, (const char*) &s);
 
-        // temperature 2
+        // temperature 2nd sensor
         topicstr[len] = '\0';
-        strncat(topicstr, "/temp2",sizeof(topicstr));
-        s = String(((float)StmApp.actuators[x].temp2)/10,1);
+        strcat(topicstr, "/temp2");
+        s = String(((float)StmApp.actuators[x].temp2)/10,1); 
         mqtt_client.publish(topicstr, (const char*) &s);
-        
     }
     
     for (uint8_t x = 0;x<StmApp.tempsCount;x++) 

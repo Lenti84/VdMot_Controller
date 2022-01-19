@@ -1015,7 +1015,7 @@
 				el.setAttribute('id', 'cfgVTIdx1-' + row);
 				el.setAttribute('style','width:35px;');
 				el.setAttribute('min','0');
-				el.setAttribute('max','12');
+				el.setAttribute('max','34');
 				el.setAttribute('onchange', 'SetTIdxHasChanged()');
 				thiscell.appendChild(el);
 				thiscell = cfgValvesTable.rows[row].cells[4];
@@ -1025,7 +1025,7 @@
 				el.setAttribute('id', 'cfgVTIdx2-' + row);
 				el.setAttribute('style','width:35px;');
 				el.setAttribute('min','0');
-				el.setAttribute('max','12');
+				el.setAttribute('max','34');
 				el.setAttribute('onchange', 'SetTIdxHasChanged()');
 				thiscell.appendChild(el);
 			}
@@ -1405,9 +1405,14 @@
 		}
 		
 		async function postValvesCfg() {
+			await postChunkValvesCfg(1,6,true);
+			await postChunkValvesCfg(7,12);
+		}
+		
+		async function postChunkValvesCfg(chunkStart,chunkEnd,postMotor=false) {
 			const cfgValvesTable = id('cfgValvesTable');
 			let valvesItemsCfg = [];
-			for (let row = 1; row<13; row++) {
+			for (let row = chunkStart; row<chunkEnd+1; row++) {
 				let valveValues={};
 				valveValues.name = id('cfgVName'+row).value; 
 				valveValues.active = id('cfgVActive'+row).checked  ? 1 : 0;
@@ -1427,13 +1432,17 @@
 				let x = Number(id('vCfg-d'+i).checked);
 				dCalib|=x<<i;
 			}
-			valvesCalib.dayOfCalib=dCalib;
-			valvesCalib.cycles=id('vCfg-movCalib').value;
-			valvesCfg.calib=valvesCalib;
 			valvesCfg.valves=valvesItemsCfg;
-			motor.lowC=id("vCfg-lowC").value;
-			motor.highC=id("vCfg-highC").value;
-			valvesCfg.motor=motor;
+			valvesCfg.chunkStart=chunkStart;
+			valvesCfg.chunkEnd=chunkEnd;
+			if (postMotor===true) {
+				valvesCalib.dayOfCalib=dCalib;
+				valvesCalib.cycles=id('vCfg-movCalib').value;
+				valvesCfg.calib=valvesCalib;
+				motor.lowC=id("vCfg-lowC").value;
+				motor.highC=id("vCfg-highC").value;
+				valvesCfg.motor=motor;
+			}
 			await postJson("valvesconfig",JSON.stringify(valvesCfg));
 		}
 				
@@ -1453,8 +1462,8 @@
 			}
 			let tempsCfg={};
 			tempsCfg.temps=tempsItemsCfg;
-			tempsCfg.chunkStart=chunkStart-1;
-			tempsCfg.chunkEnd=chunkEnd-1;
+			tempsCfg.chunkStart=chunkStart;
+			tempsCfg.chunkEnd=chunkEnd;
 			await postJson("tempsconfig",JSON.stringify(tempsCfg));
 		}
 		

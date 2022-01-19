@@ -42,6 +42,7 @@
 #include "VdmConfig.h"
 #include "web.h"
 #include "Services.h"
+#include "StmApp.h"
 
 CVdmConfig VdmConfig;
 
@@ -286,17 +287,31 @@ void CVdmConfig::postProtCfg (JsonObject doc)
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
 {
+  uint8_t chunkStart=doc["chunkStart"];
+  uint8_t chunkEnd=doc["chunkEnd"];
+  uint8_t idx=0;
   if (!doc["calib"]["dayOfCalib"].isNull()) configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
   if (!doc["calib"]["hourOfCalib"].isNull()) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
   if (!doc["calib"]["cycles"].isNull()) configFlash.valvesConfig.learnAfterMovements=doc["calib"]["cycles"];
-
-  for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
-    if (!doc["valves"][i]["name"].isNull()) strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][i]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
-    if (!doc["valves"][i]["active"].isNull()) configFlash.valvesConfig.valveConfig[i].active=doc["valves"][i]["active"];
+  
+  StmApp.setTempIdxActive=false;
+  for (uint8_t i=chunkStart-1; i<chunkEnd; i++) {
+    if (!doc["valves"][idx]["name"].isNull()) strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][idx]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
+    if (!doc["valves"][idx]["active"].isNull()) configFlash.valvesConfig.valveConfig[i].active=doc["valves"][idx]["active"];
+    if (!doc["valves"][idx]["tIdx1"].isNull()) {
+      StmApp.actuators[i].tIdx1=doc["valves"][idx]["tIdx1"];
+      StmApp.setTempIdxActive=true;
+    }
+    if (!doc["valves"][idx]["tIdx2"].isNull()) {
+      StmApp.actuators[i].tIdx2=doc["valves"][idx]["tIdx2"];
+      StmApp.setTempIdxActive=true;
+    }
+    idx++;
   }
   if (!doc["motor"]["lowC"].isNull()) configFlash.motorConfig.maxLowCurrent=doc["motor"]["lowC"];
   if (!doc["motor"]["highC"].isNull()) configFlash.motorConfig.maxHighCurrent=doc["motor"]["highC"];
- 
+  
+  if (StmApp.setTempIdxActive) StmApp.setTempIdx();
 }
 
 void CVdmConfig::postTempsCfg (JsonObject doc)
@@ -304,7 +319,7 @@ void CVdmConfig::postTempsCfg (JsonObject doc)
   uint8_t chunkStart=doc["chunkStart"];
   uint8_t chunkEnd=doc["chunkEnd"];
   uint8_t idx=0;
-  for (uint8_t i=chunkStart; i<chunkEnd+1; i++) {
+  for (uint8_t i=chunkStart-1; i<chunkEnd; i++) {
     if (!doc["temps"][idx]["name"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][idx]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
     if (!doc["temps"][idx]["id"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].ID,doc["temps"][idx]["id"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].ID));
     if (!doc["temps"][idx]["active"].isNull()) configFlash.tempsConfig.tempConfig[i].active=doc["temps"][idx]["active"];

@@ -83,8 +83,10 @@ CStmApp::CStmApp()
     arg2ptr = arg2;
     arg3ptr = arg3;
     arg4ptr = arg4;
+    arg5ptr = arg5;
 	argcnt = 0;
     tempsPrivCount=0;
+    setTempIdxActive=false;
 }
 
 void  CStmApp::app_setup() {
@@ -97,7 +99,7 @@ void  CStmApp::app_setup() {
         actuators[x].state = VLV_STATE_IDLE;
         actuators[x].temp1 = -500;
         actuators[x].temp2 = -500;
-    }
+   }
 
     for(uint8_t x = 0; x<ACTUATOR_COUNT; x++)
     {
@@ -125,6 +127,11 @@ void CStmApp::scanTemps()
         memset(tempsId[i].id,0x0,sizeof(tempsId[i].id));
     }
     StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH);
+}
+
+void CStmApp::setTempIdx()
+{
+    // todo
 }
 
 
@@ -209,7 +216,7 @@ void  CStmApp::app_check_data()
 		// ****************************************
 		cmdptr = buffer;
         
-		for(int x=0;x<6;x++){
+		for(int x=0;x<7;x++){
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
@@ -239,6 +246,12 @@ void  CStmApp::app_check_data()
                     strncpy(arg4,cmdptr,sizeof(arg4)-1); 
                     argcnt=5;	
                 } 	// 5th argument
+
+                else if(x==6) {	
+                    memset (arg5,0x0,sizeof(arg5));
+                    strncpy(arg5,cmdptr,sizeof(arg5)-1); 
+                    argcnt=6;	
+                } 	// 6th argument
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -304,14 +317,16 @@ void  CStmApp::app_check_data()
         // get data values
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVLVDATA,cmd,5) == 0) {
-            if(argcnt == 5) {
-                actuators[atoi(arg0ptr)].actual_position = atoi(arg1ptr);
-                actuators[atoi(arg0ptr)].meancurrent = atoi(arg2ptr);
-                actuators[atoi(arg0ptr)].state = atoi(arg3ptr);
-                actuators[atoi(arg0ptr)].temp1 = atoi(arg4ptr);
-
-                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG, "got full vlv data packet");
+            if(argcnt == 6) {
+                if(atoi(arg0ptr) < ACTUATOR_COUNT) {
+                    actuators[atoi(arg0ptr)].actual_position = atoi(arg1ptr);
+                    actuators[atoi(arg0ptr)].meancurrent = atoi(arg2ptr);
+                    actuators[atoi(arg0ptr)].state = atoi(arg3ptr);
+                    actuators[atoi(arg0ptr)].temp1 = atoi(arg4ptr);
+                    actuators[atoi(arg0ptr)].temp2 = atoi(arg5ptr);
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                        syslog.log(LOG_DEBUG, "got full vlv data packet");
+                    }
                 }
             } 
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
@@ -522,6 +537,7 @@ void  CStmApp::app_comm_machine()
                     UART_STM32.println(sendbuffer);
                     }
                 break;
+
         case COMM_HANDLEQUEUE:
                 commstate = COMM_IDLE;
                 if ((cmd_buffer=="") && (Queue.available()>0)) {

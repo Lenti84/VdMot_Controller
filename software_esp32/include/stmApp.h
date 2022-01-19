@@ -47,10 +47,10 @@ typedef struct  {
   unsigned char target_position;      // to controller
   unsigned char state;                // from controller
   unsigned int  meancurrent;          // from controller
-  uint8_t       tIdx1;          // Index of temp1 in temp list
-  int           temp1;          // temperature of assigned sensor
-  uint8_t       tIdx2;          // Index of temp2 in temp list
-  int           temp2;          // temperature of assigned sensor
+  uint8_t       tIdx1;
+  int           temp1;                // temperature of 1st assigned sensor
+  uint8_t       tIdx2;
+  int           temp2;                // temperature of 2nd assigned sensor
 } ACTUATOR_STRUC;
 
 typedef struct  {
@@ -114,11 +114,13 @@ public:
   void valvesCalibration();
   void valvesAssembly();
   void scanTemps();
+  void setTempIdx();
 
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
   TEMP_STRUC temps[TEMP_SENSORS_COUNT];
   TEMPID_STRUC tempsId[TEMP_SENSORS_COUNT];
   uint8_t tempsCount;
+  bool setTempIdxActive;
 private:
   void app_check_data();
   void app_comm_machine();
@@ -150,11 +152,13 @@ private:
   char    arg2[20];
   char    arg3[20];
   char    arg4[20];
+  char    arg5[20];
 	char*		arg0ptr;
 	char*		arg1ptr;
   char*		arg2ptr;
   char*		arg3ptr;
   char*		arg4ptr;
+  char*		arg5ptr;
 	uint8_t	argcnt;
 };
 
