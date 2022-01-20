@@ -81,30 +81,27 @@ CMqtt::CMqtt()
 
 void CMqtt::mqtt_loop() 
 {
-    if (!mqtt_client.connected())
-    {
+    if (!mqtt_client.connected()) {
         reconnect();        
     }
-    if (mqtt_client.connected()) 
-    {
+    if (mqtt_client.connected()) {
         mqtt_client.loop();
         publish_valves();
     }
 }
 
 
-void CMqtt::reconnect() {
+void CMqtt::reconnect() 
+{
     char topicstr[MAINTOPIC_LEN+30];
     char nrstr[11];
     char* mqttUser = NULL;
     char* mqttPwd = NULL;
-    if ((strlen(VdmConfig.configFlash.protConfig.userName)>0) && (strlen(VdmConfig.configFlash.protConfig.userPwd)>0))
-    {
+    if ((strlen(VdmConfig.configFlash.protConfig.userName)>0) && (strlen(VdmConfig.configFlash.protConfig.userPwd)>0)) {
         mqttUser = VdmConfig.configFlash.protConfig.userName;
         mqttPwd = VdmConfig.configFlash.protConfig.userPwd;
     }
-    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) 
-    {
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
         syslog.log(LOG_INFO, "Reconnecting MQTT...");
     }
     UART_DBG.println("Reconnecting MQTT...");
@@ -112,8 +109,7 @@ void CMqtt::reconnect() {
         UART_DBG.print("failed, rc=");
         UART_DBG.print(mqtt_client.state());
         UART_DBG.println(" retrying");
-        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) 
-        {
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
             syslog.log(LOG_ERR, "MQTT failed rc="+String(mqtt_client.state())+String(" retrying"));
         }
         VdmTask.yieldTask(5000);
@@ -121,8 +117,7 @@ void CMqtt::reconnect() {
     }
 
     // make some subscriptions
-    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) 
-    {
+    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         memset(topicstr,0x0,sizeof(topicstr));
         memset(nrstr,0x0,sizeof(nrstr));
         itoa((x+1), nrstr, 10);
@@ -136,8 +131,7 @@ void CMqtt::reconnect() {
         strncat(topicstr, "/target",sizeof(topicstr));
         mqtt_client.subscribe(topicstr);
     }
-    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) 
-    {
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
         syslog.log(LOG_INFO, "MQTT Connected...");
     }
 }
@@ -151,16 +145,13 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
     uint8_t i;
     uint8_t idx;
    
-    if (length>0) 
-    {
-        if (memcmp(mqtt_valvesTopic,(const char*) topic, strlen(mqtt_valvesTopic))==0) 
-        {
+    if (length>0) {
+        if (memcmp(mqtt_valvesTopic,(const char*) topic, strlen(mqtt_valvesTopic))==0) {
             memset(item,0x0,sizeof(item));
             pt= (char*) topic;
             pt+= strlen(mqtt_valvesTopic);
             idx=0;
-            for (i=strlen(mqtt_valvesTopic);i<strlen(topic);i++) 
-            {
+            for (i=strlen(mqtt_valvesTopic);i<strlen(topic);i++) {
                 if (*pt=='/') break;
                 item[idx]=*pt;
                 idx++;
@@ -170,38 +161,30 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                 // find approbiated valve
                 idx=0;
                 found = false;
-                for (i=0;i<ACTUATOR_COUNT;i++)
-                {
-                    if (strncmp(VdmConfig.configFlash.valvesConfig.valveConfig[i].name,item,sizeof(VdmConfig.configFlash.valvesConfig.valveConfig[i].name))==0)
-                    {
+                for (i=0;i<ACTUATOR_COUNT;i++) {
+                    if (strncmp(VdmConfig.configFlash.valvesConfig.valveConfig[i].name,item,sizeof(VdmConfig.configFlash.valvesConfig.valveConfig[i].name))==0) {
                         found = true;
                         break;
                     }
                     idx++;    
                 }
-                if (!found) 
-                {
-                    if (isNumber(item)) 
-                    {
+                if (!found) {
+                    if (isNumber(item)) {
                         idx=atoi(item)-1;
                         found=true;
                     }
                 }
-                if (found)
-                {
+                if (found) {
                     memset(value,0x0,sizeof(value));
                     memcpy(value,payload,length);
-                    if (isNumber(value)) 
-                    {
+                    if (isNumber(value)) {
                         StmApp.actuators[idx].target_position = atoi(value);
                     }
-                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) 
-                    {
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
                         syslog.log(LOG_INFO, "MQTT: found target topic "+String(item)+" : "+String(value));
                     }
                 } else {
-                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) 
-                    {
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
                         syslog.log(LOG_INFO, "MQTT: not found target topic "+String(item));
                     }   
                 }
@@ -210,16 +193,15 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
     }
 }
 
-void CMqtt::publish_valves () {
-
+void CMqtt::publish_valves () 
+{
     char topicstr[MAINTOPIC_LEN+30];
     char nrstr[11];
     char valstr[10];
     int8_t tempIdx;
     uint8_t len;
     
-    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) 
-    {
+    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         memset(topicstr,0x0,sizeof(topicstr));
         memset(nrstr,0x0,sizeof(nrstr));
         itoa((x+1), nrstr, 10);
@@ -266,11 +248,9 @@ void CMqtt::publish_valves () {
         mqtt_client.publish(topicstr, (const char*) &s);
     }
     
-    for (uint8_t x = 0;x<StmApp.tempsCount;x++) 
-    {
+    for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
         tempIdx=VdmConfig.findTempID(StmApp.temps[x].id);
-        if (tempIdx>=0) 
-        {
+        if (tempIdx>=0) {
             memset(topicstr,0x0,sizeof(topicstr));
             memset(nrstr,0x0,sizeof(nrstr));
             itoa((x+1), nrstr, 10);

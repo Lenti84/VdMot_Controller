@@ -121,6 +121,7 @@ public:
   TEMPID_STRUC tempsId[TEMP_SENSORS_COUNT];
   uint8_t tempsCount;
   bool setTempIdxActive;
+  bool waitForFinishQueue;
 private:
   void app_check_data();
   void app_comm_machine();

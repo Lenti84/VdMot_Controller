@@ -49,6 +49,7 @@ CVdmConfig VdmConfig;
 
 CVdmConfig::CVdmConfig()
 {
+  
 }
 
 void CVdmConfig::init()
@@ -97,11 +98,11 @@ void CVdmConfig::clearConfig()
   memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
   memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
 
-  for (uint8_t i=0; i<ACTUATOR_COUNT; i++){
+  for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesConfig.valveConfig[i].active = false;
     memset (configFlash.valvesConfig.valveConfig[i].name,0,sizeof(configFlash.valvesConfig.valveConfig[i].name));
   }
-  for (uint8_t i=0; i<ACTUATOR_COUNT; i++){
+  for (uint8_t i=0; i<TEMP_SENSORS_COUNT; i++) {
     configFlash.tempsConfig.tempConfig[i].active = false;
     configFlash.tempsConfig.tempConfig[i].offset = 0;
     memset (configFlash.tempsConfig.tempConfig[i].name,0,sizeof(configFlash.tempsConfig.tempConfig[i].name));
@@ -126,7 +127,7 @@ void CVdmConfig::clearConfig()
 void CVdmConfig::readConfig()
 {
   
-  if (prefs.begin(nvsNetCfg,false)){
+  if (prefs.begin(nvsNetCfg,false)) {
   configFlash.netConfig.eth_wifi=prefs.getUChar(nvsNetEthwifi);
   configFlash.netConfig.dhcpEnabled=prefs.getUChar(nvsNetDhcp,1);
   configFlash.netConfig.staticIp=prefs.getULong(nvsNetStaticIp);
@@ -178,7 +179,7 @@ void CVdmConfig::readConfig()
   prefs.end();
   }
  
- if (prefs.begin(nvsTempsCfg,false)){
+ if (prefs.begin(nvsTempsCfg,false)) {
   if (prefs.isKey(nvsTemps))
     prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
@@ -311,7 +312,9 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
   if (!doc["motor"]["lowC"].isNull()) configFlash.motorConfig.maxLowCurrent=doc["motor"]["lowC"];
   if (!doc["motor"]["highC"].isNull()) configFlash.motorConfig.maxHighCurrent=doc["motor"]["highC"];
   
-  if (StmApp.setTempIdxActive) StmApp.setTempIdx();
+  if (StmApp.setTempIdxActive) {
+    StmApp.setTempIdx();
+  }
 }
 
 void CVdmConfig::postTempsCfg (JsonObject doc)
@@ -333,10 +336,8 @@ String CVdmConfig::handleAuth (JsonObject doc)
   bool userCheck=false;
   bool pwdCheck=false;
   uint8_t result=0;
-  if ((strlen(configFlash.netConfig.userName)>0) && (strlen(configFlash.netConfig.userPwd)>0))
-  {
-    if (!(doc["user"].isNull() || doc["pwd"].isNull()))
-    {
+  if ((strlen(configFlash.netConfig.userName)>0) && (strlen(configFlash.netConfig.userPwd)>0)) {
+    if (!(doc["user"].isNull() || doc["pwd"].isNull())) {
       const char* du=doc["user"].as<const char*>();
       const char* dp=doc["pwd"].as<const char*>();
       userCheck=(strncmp (configFlash.netConfig.userName,du,sizeof(configFlash.netConfig.userName)))==0;
@@ -352,10 +353,8 @@ String CVdmConfig::handleAuth (JsonObject doc)
 int8_t CVdmConfig::findTempID (char* tempId)
 {
   uint8_t idx=0;
-  for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++)
-  {
-    if (strncmp (tempId,configFlash.tempsConfig.tempConfig[i].ID,sizeof(configFlash.tempsConfig.tempConfig[i].ID)) == 0)
-    { 
+  for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
+    if (strncmp (tempId,configFlash.tempsConfig.tempConfig[i].ID,sizeof(configFlash.tempsConfig.tempConfig[i].ID)) == 0) { 
       return (idx);
     }
     idx++;

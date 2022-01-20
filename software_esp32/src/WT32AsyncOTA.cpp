@@ -84,11 +84,11 @@ void CWT32AsyncOTA::begin(AsyncWebServer *server, const char* userName, const ch
 {
     _server = server;
 
-    if(strlen(userName) > 0){
+    if (strlen(userName) > 0) {
         _authRequired = true;
         _userName = userName;
         _pwd = pwd;
-    }else{
+    } else {
         _authRequired = false;
         _userName = "";
         _pwd = "";
@@ -164,7 +164,7 @@ void CWT32AsyncOTA::begin(AsyncWebServer *server, const char* userName, const ch
         }
 
         // Write chunked data to the free sketch space
-        if(len){
+        if (len) {
             if (Update.write(data, len) != len) {
                 return request->send(400, "text/plain", "OTA could not begin");
             }

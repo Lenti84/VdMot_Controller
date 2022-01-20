@@ -70,6 +70,7 @@ public:
   uint8_t numfiles;
   String stmVersion;
   time_t stmBuild;
+
 private:
   bool spiffsStarted;
 };

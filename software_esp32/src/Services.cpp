@@ -43,6 +43,7 @@
 #include "VdmTask.h"
 #include "VdmConfig.h"
 #include "stmApp.h"
+#include "Queue.h"
 
 CServices Services;
 
@@ -78,8 +79,7 @@ void CServices::runOnce()
    StmApp.app_cmd(APP_PRE_GETVERSION);
    StmApp.app_cmd(APP_PRE_SETMOTCHARS,
           String(VdmConfig.configFlash.motorConfig.maxLowCurrent)+
-          String(" ")+String(VdmConfig.configFlash.motorConfig.maxHighCurrent)+String(" "));
-   StmApp.scanTemps();
+          String(" ")+String(VdmConfig.configFlash.motorConfig.maxHighCurrent));
 }
 
 void CServices::runOnceDelayed()
@@ -88,9 +88,26 @@ void CServices::runOnceDelayed()
 }
 
 void CServices::restartSystem() {
+    if (StmApp.waitForFinishQueue) {
+         UART_DBG.println("wait for finish queue");
+        VdmTask.taskIdResetSystem = taskManager.scheduleOnce(10*1000, [] {
+                ESP.restart();
+            });
+        VdmTask.taskIdwaitForFinishQueue = taskManager.scheduleFixedRate(500, [] {
+          if (Queue.available()==0) {
+            UART_DBG.println("queue finished, restart now");
+              VdmTask.taskIdResetSystem = taskManager.scheduleOnce(2000, [] {
+                ESP.restart();
+              });
+              VdmTask.deleteTask(VdmTask.taskIdwaitForFinishQueue);
+          }
+        });
+    } else {
+      UART_DBG.println("normal restart");
       VdmTask.taskIdResetSystem = taskManager.scheduleOnce(1000, [] {
                 ESP.restart();
             });
+    }
 }
 
 void CServices::restartStmApp(uint32_t ms) {

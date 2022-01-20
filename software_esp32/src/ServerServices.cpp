@@ -143,7 +143,8 @@ void CServerServices::postSetValve (JsonObject doc)
   }
 }
 
-String getContentType(String filename) { // convert the file extension to the MIME type
+String getContentType(String filename) 
+{ // convert the file extension to the MIME type
   if (filename.endsWith(".html")) return th;
   else if (filename.endsWith(".css")) return "text/css";
   else if (filename.endsWith(".js")) return "application/javascript";
@@ -159,10 +160,8 @@ int8_t checkEntry (String url)
   String thisUrl=url;
   if (url=="/") thisUrl = "/index.html";
  
-  while (entry->NAME != NULL)
-  {
-      if (thisUrl == String(entry->NAME))
-      {
+  while (entry->NAME != NULL) {
+      if (thisUrl == String(entry->NAME)) {
         return(i);
       }
       entry++;
@@ -223,11 +222,9 @@ void handleNotFound(AsyncWebServerRequest *request)
     message += request->args();
     message += "\n";
 
-    for (uint8_t i = 0; i < request->args(); i++)
-    {
+    for (uint8_t i = 0; i < request->args(); i++) {
       message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
     }
-
     request->send(404, tp, message);
   }
 }
@@ -307,10 +304,8 @@ bool handleCmd(JsonObject doc)
     const char* d=doc["action"].as<const char*>();
     uint8_t i=0;
   
-    for (p=names; *p!=NULL; p++)
-    {
-      if (strcmp(d, *p)==0)
-      {
+    for (p=names; *p!=NULL; p++) {
+      if (strcmp(d, *p)==0) {
         fpList[i](doc);
         found=true;
         break;
@@ -386,7 +381,8 @@ void CServerServices::stmDoUpdate(JsonObject doc)
   }
 }
 
-void  CServerServices::initServer() {
+void  CServerServices::initServer() 
+{
   // define on events
   server.on("/", HTTP_GET, [](AsyncWebServerRequest * request) {handleRoot(request);});
   server.onNotFound(handleNotFound);

@@ -106,7 +106,8 @@ void CVdmNet::init()
 
 }
 
-void CVdmNet::setup() {
+void CVdmNet::setup() 
+{
   #ifdef netDebug
     UART_DBG.print("Interface type ");
     UART_DBG.println(VdmConfig.configFlash.netConfig.eth_wifi);
@@ -133,7 +134,8 @@ void CVdmNet::setup() {
   }
 }
 
-void CVdmNet::setupEth() {
+void CVdmNet::setupEth() 
+{
   #ifdef netDebug
     UART_DBG.print("Setup Eth ");
     UART_DBG.println (ethState);
@@ -145,8 +147,7 @@ void CVdmNet::setupEth() {
       case wifiIdle :
       {  
         ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
-        if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) 
-        {
+        if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) {
           ETH.config(VdmConfig.configFlash.netConfig.staticIp, 
           VdmConfig.configFlash.netConfig.gateway, 
           VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
@@ -182,7 +183,8 @@ void CVdmNet::setupEth() {
 }
 
 
-void CVdmNet::setupWifi() {
+void CVdmNet::setupWifi() 
+{
   #ifdef netDebug
   UART_DBG.print("Setup Wifi ");
   UART_DBG.println (wifiState);
@@ -192,15 +194,13 @@ void CVdmNet::setupWifi() {
     switch (wifiState) {
       case wifiIdle :
       {
-        if ((strlen(VdmConfig.configFlash.netConfig.ssid)==0) || (strlen(VdmConfig.configFlash.netConfig.pwd)==0))
-        {
+        if ((strlen(VdmConfig.configFlash.netConfig.ssid)==0) || (strlen(VdmConfig.configFlash.netConfig.pwd)==0)) {
           wifiState=wifiDisabled;
           UART_DBG.println("wifi : no ssid or no pathword");
           break;
         }
         WiFi.mode(WIFI_AP_STA);
-        if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) 
-        {
+        if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) {
           WiFi.config(VdmConfig.configFlash.netConfig.staticIp, 
           VdmConfig.configFlash.netConfig.gateway, 
           VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
@@ -233,7 +233,8 @@ void CVdmNet::setupWifi() {
   }
 }
 
-void CVdmNet::setupNtp() {
+void CVdmNet::setupNtp() 
+{
   // Init and get the time
   configTime(VdmConfig.configFlash.netConfig.timeOffset, 
              VdmConfig.configFlash.netConfig.daylightOffset, 
@@ -274,9 +275,7 @@ void CVdmNet::checkNet()
 
     // prepare syslog configuration here (can be anywhere before first call of 
     // log/logf method)
-    if (VdmConfig.configFlash.netConfig.syslogLevel>0)
-    {
-     
+    if (VdmConfig.configFlash.netConfig.syslogLevel>0) {
       syslog.server(IPAddress(VdmConfig.configFlash.netConfig.syslogIp), VdmConfig.configFlash.netConfig.syslogPort);
       syslog.deviceHostname(DEVICE_HOSTNAME);
       syslog.appName(APP_NAME);

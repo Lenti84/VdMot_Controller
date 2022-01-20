@@ -83,8 +83,7 @@ void CVdmTask::startMqtt(uint32_t interval)
 
 void CVdmTask::startApp()
 {
-    if (taskIdStm32Ota!=TASKMGR_INVALIDID) 
-    {
+    if (taskIdStm32Ota!=TASKMGR_INVALIDID) {
         deleteTask (taskIdStm32Ota);
         delay (1000);       // wait to finish task; 
         taskIdStm32Ota=TASKMGR_INVALIDID; 

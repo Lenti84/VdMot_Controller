@@ -51,6 +51,7 @@
 #include "Logger.h"
 #include "VdmNet.h"
 #include "VdmSystem.h"
+#include "VdmConfig.h"
 #include "stm32.h"
 #include "Queue.h"
 
@@ -87,6 +88,7 @@ CStmApp::CStmApp()
 	argcnt = 0;
     tempsPrivCount=0;
     setTempIdxActive=false;
+    waitForFinishQueue=false;
 }
 
 void  CStmApp::app_setup() {
@@ -101,8 +103,7 @@ void  CStmApp::app_setup() {
         actuators[x].temp2 = -500;
    }
 
-    for(uint8_t x = 0; x<ACTUATOR_COUNT; x++)
-    {
+    for (uint8_t x = 0; x<ACTUATOR_COUNT; x++) {
         target_position_mirror[x] = actuators[x].target_position;
     }
     commstate=COMM_IDLE;
@@ -126,12 +127,37 @@ void CStmApp::scanTemps()
     for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
         memset(tempsId[i].id,0x0,sizeof(tempsId[i].id));
     }
-    StmApp.app_cmd(APP_PRE_SETONEWIRESEARCH);
+    app_cmd(APP_PRE_SETONEWIRESEARCH);
 }
 
 void CStmApp::setTempIdx()
 {
-    // todo
+    String s=" "; // todo
+    uint8_t tIdx1;
+    uint8_t tIdx2;
+    bool pushNow;
+  
+    for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
+        tIdx1=StmApp.actuators[i].tIdx1;
+        tIdx2=StmApp.actuators[i].tIdx2;
+        pushNow=false;
+        if (tIdx1>0) {
+            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tIdx1].ID)>0) {
+                s+=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx1].ID+String(" ");
+                pushNow=true;
+            }   
+        }
+        if (tIdx2>0) {
+            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tIdx2].ID)>0) {
+                s+=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx2].ID+String(" "); 
+                pushNow=true;  
+            }
+        }
+        if (pushNow) {
+            waitForFinishQueue=true;
+            // todo app_cmd(s);
+        }
+    }
 }
 
 
@@ -145,10 +171,8 @@ void  CStmApp::app_loop()
 bool CStmApp::checkCmdIsAvailable (String thisCmd)
 {   
     uint8_t i=0;
-    while (commCmds[i] != NULL)
-    {
-        if (memcmp((const char*) &thisCmd,commCmds[i],5)==0)
-        {
+    while (commCmds[i] != NULL) {
+        if (memcmp((const char*) &thisCmd,commCmds[i],5)==0) {
             return(true);
         }
         i++;
@@ -160,17 +184,17 @@ bool CStmApp::checkCmdIsAvailable (String thisCmd)
 void  CStmApp::app_cmd(String command,String args) 
 {    
     if (checkCmdIsAvailable(command)) {
-        UART_DBG.println("push "+String(command)+String(" ")+String(args));
-        Queue.push(command+String(" ")+args);
+        String s=command+String(" ");
+        if (args!="") s+=args+" ";
+        UART_DBG.println("push "+s);
+        Queue.push(s);
     }
 }
 
 int8_t CStmApp::findTempID(char* ID) 
 {
-    for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) 
-    {
-        if (strncmp(ID,VdmConfig.configFlash.tempsConfig.tempConfig[i].ID,sizeof(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID))==0)
-        {
+    for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
+        if (strncmp(ID,VdmConfig.configFlash.tempsConfig.tempConfig[i].ID,sizeof(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID))==0) {
            return (i);
         }
     }
@@ -180,10 +204,8 @@ int8_t CStmApp::findTempID(char* ID)
 void  CStmApp::app_check_data() 
 {
     availcnt = UART_STM32.available(); 
-    if (availcnt>0)
-    {    
-        for (int c = 0; c < availcnt; c++)
-        {           
+    if (availcnt>0) {    
+        for (int c = 0; c < availcnt; c++) {           
             *bufptr++ = (char) UART_STM32.read();
             buflen++;
         }
@@ -193,12 +215,9 @@ void  CStmApp::app_check_data()
     } else return;
 
    
-    if(buflen > 4) 
-    {
-        for (unsigned int c = 0; c < buflen; c++)
-        {           
-            if(buffer[c] == '\r') 
-            {
+    if(buflen > 4) {
+        for (unsigned int c = 0; c < buflen; c++) {           
+            if (buffer[c] == '\r') {
                 buffer[c] = '\0';
                 found = true;
 
@@ -206,17 +225,15 @@ void  CStmApp::app_check_data()
                 bufptr = buffer;    // reset ptr
             }
         }
-
     }
 
-    if (found)
-    {
+    if (found) {
 
         // devide buffer into command and data
 		// ****************************************
 		cmdptr = buffer;
         
-		for(int x=0;x<7;x++){
+		for(int x=0;x<7;x++) {
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
@@ -416,65 +433,54 @@ void  CStmApp::app_comm_machine()
         // send target position values
         case COMM_SENDTARGET:
                 commstate = COMM_GETDATA;
-                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG, "checking valve positions");
-                }
-                for(unsigned int x=0; x<ACTUATOR_COUNT; x++)
-                {
-                    // check if target has changed
-                    if(target_position_mirror[x] != actuators[x].target_position)
-                    {
-                        memset(sendbuffer,0x0,sizeof(sendbuffer));
-                        strcat(sendbuffer, APP_PRE_SETTARGETPOS);
-                        strcat(sendbuffer, " ");
-
-                        itoa(x, valbuffer, 10);
-                        strcat(sendbuffer, valbuffer);
-                        strcat(sendbuffer, " ");   
-
-                        itoa(actuators[x].target_position, valbuffer, 10);      
-                        strcat(sendbuffer, valbuffer);
-                        strcat(sendbuffer, " ");
-
-                        UART_STM32.println(sendbuffer);
-                        
-                        // generate debug messages
-                        if (vismode == VISMODE_DETAIL) {
-                            UART_DBG.println(sendbuffer);
+                for (uint8_t x=0; x<ACTUATOR_COUNT; x++) {
+                    if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
+                        // check if target has changed
+                        if(target_position_mirror[x] != actuators[x].target_position)
+                        {
                             if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                                syslog.log(LOG_DEBUG, sendbuffer);
+                                syslog.log(LOG_DEBUG, "valve position has changed : "+String(x)+" = "+String(actuators[x].target_position));
                             }
-                            logger.print(sendbuffer, logger.DATA);
-                        }
+                            memset(sendbuffer,0x0,sizeof(sendbuffer));
+                            strcat(sendbuffer, APP_PRE_SETTARGETPOS);
+                            strcat(sendbuffer, " ");
 
-                        // break loop, next valve will be served in next cycle
-                        x = ACTUATOR_COUNT;
+                            itoa(x, valbuffer, 10);
+                            strcat(sendbuffer, valbuffer);
+                            strcat(sendbuffer, " ");   
 
-                        timeout = 10;
-                        commstate = COMM_CHECKTARGET;
-                    }   
+                            itoa(actuators[x].target_position, valbuffer, 10);      
+                            strcat(sendbuffer, valbuffer);
+                            strcat(sendbuffer, " ");
+
+                            UART_STM32.println(sendbuffer);
+                            UART_DBG.println("valve position has changed : "+String(x)+" = "+String(actuators[x].target_position));
+                            // break loop, next valve will be served in next cycle
+                            break;
+
+                            timeout = 10;
+                            commstate = COMM_CHECKTARGET;
+                        }   
+                    }
                 }
-
                 // update target position mirror - 
-                for(unsigned int x = 0; x<ACTUATOR_COUNT; x++) {
-                    target_position_mirror[x] = actuators[x].target_position;
-                }
-                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG, "updated position mirror");
+                for (uint8_t x = 0; x<ACTUATOR_COUNT; x++) {
+                    if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
+                        target_position_mirror[x] = actuators[x].target_position;
+                    }
                 }
                 break;
 
         // check correct transmission of target value
         case COMM_CHECKTARGET:
-
-                if(timeout>0) timeout--;
+                if (timeout>0) timeout--;
                 else {
                     // answer received
-                    if(settarget_check) {                        
+                    if (settarget_check) {                        
                         commstate = COMM_GETDATA; 
                     }
                     else {
-                        if(retry>0) retry--;
+                        if (retry>0) retry--;
                         else commstate = COMM_GETDATA; 
                         commstate = COMM_SENDTARGET;
                     }
@@ -486,7 +492,7 @@ void  CStmApp::app_comm_machine()
                 commstate =  COMM_GETONEWIRECOUNT;
                 
                 // walk through all valves, one per cycle
-                if(getindex<ACTUATOR_COUNT-1) getindex++; else getindex=0;
+                if (getindex<ACTUATOR_COUNT-1) getindex++; else getindex=0;
 
                 memset(sendbuffer,0x0,sizeof(sendbuffer));
                 strcat(sendbuffer, APP_PRE_GETVLVDATA);
@@ -501,11 +507,6 @@ void  CStmApp::app_comm_machine()
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG, sendbuffer);
                 }
-                // generate debug messages
-                if (vismode == VISMODE_DETAIL) {
-                    UART_DBG.println(sendbuffer);                
-                    logger.print(sendbuffer, logger.DATA);
-                }     
                 
                 break;
 
@@ -535,7 +536,7 @@ void  CStmApp::app_comm_machine()
                     strcat(sendbuffer, " ");   
 
                     UART_STM32.println(sendbuffer);
-                    }
+                }
                 break;
 
         case COMM_HANDLEQUEUE:
@@ -566,7 +567,7 @@ void  CStmApp::app_alive_check()
             }
             // generate debug messages
             if (vismode > VISMODE_OFF) {
-                logger.print("connection to STM32 established");
+                logger.println("connection to STM32 established");
             }
         }
         oldalivestate = 1;
@@ -578,7 +579,7 @@ void  CStmApp::app_alive_check()
                 syslog.log(LOG_DEBUG, "connection to STM32 lost");
             }
             if (vismode > VISMODE_OFF) {
-                logger.print("connection to STM32 lost");
+                logger.println("connection to STM32 lost");
             }
         }
         oldalivestate = 0;
