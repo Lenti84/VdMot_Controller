@@ -78,6 +78,7 @@ public:
   taskid_t restartStmApp;
   taskid_t taskIdRunOnce;
   taskid_t taskIdRunOnceDelayed;
+  taskid_t taskIdwaitForFinishQueue;
   
   TsetFactoryCfgState setFactoryCfgState;
 

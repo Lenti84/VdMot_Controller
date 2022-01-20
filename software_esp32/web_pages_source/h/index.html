@@ -125,6 +125,14 @@
 		grid-column : span 2;
 	}
 	
+	.rtabframe3 {
+		border: white 2px solid;
+		padding: 5px;
+		border-radius: 5px;
+		text-align: center;
+		grid-column : span 3;
+	}
+	
 	table.tabTable td {
 		padding-left: 5px;
 		height:21px;
@@ -313,7 +321,7 @@
 	
 	<div id="Status" class="tabContent">
 	<div class="container3">
-		<div class="rtabframe2" style="height:430px">  
+		<div class="rtabframe3" style="height:430px">  
 		<h3>Valves</h3>	
 		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
@@ -603,8 +611,8 @@
 			</table>
 			<table>
 			<tr>
-			<label><input type="number" min="5" max="50" maxlength="2" style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low </label>
-			<label><input type="number" min="5" max="50" maxlength="2" style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
+			<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low </label>
+			<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
 			</tr>
 			<tr></tr>
 			</table>
@@ -924,7 +932,7 @@
 			const ValvesTable = id('valvesTable');	  
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesTable.insertRow(0);
-				for (let i = 0; i < 7; i++) {
+				for (let i = 0; i < 9; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -950,18 +958,22 @@
 				el.setAttribute('value', 'Set');
 				thiscell.appendChild(el);
 				valvesTable.rows[row].cells[0].innerHTML = row;
+				
 			}
 			valvesTable.rows[0].cells[0].textContent = 'No';
 			valvesTable.rows[0].cells[1].textContent = 'Name';
 			valvesTable.rows[0].cells[2].textContent = '%';
 			valvesTable.rows[0].cells[3].textContent = 'mA';
 			valvesTable.rows[0].cells[4].textContent = 'State';
+			valvesTable.rows[0].cells[5].innerHTML = 'Target %';
+			valvesTable.rows[0].cells[7].innerHTML = 'Temp1';
+			valvesTable.rows[0].cells[8].innerHTML = 'Temp2';
+			
 			thiscell = ValvesTable.rows[0].cells[5];
 			el = document.createElement('input');
 			el.setAttribute('type', 'checkbox');
 			el.setAttribute('name', 'activeSetValves');
 			el.setAttribute('id', 'activeSetValves');
-			valvesTable.rows[0].cells[5].innerHTML = 'Target %';
 			thiscell.appendChild(el);
 		}
 		
@@ -1439,8 +1451,13 @@
 				valvesCalib.dayOfCalib=dCalib;
 				valvesCalib.cycles=id('vCfg-movCalib').value;
 				valvesCfg.calib=valvesCalib;
-				motor.lowC=id("vCfg-lowC").value;
-				motor.highC=id("vCfg-highC").value;
+				if (id("vCfg-lowC").value<0.5) id("vCfg-lowC").value=0.5;
+				if (id("vCfg-lowC").value>5) id("vCfg-lowC").value=5;
+				if (id("vCfg-highC").value<0.5) id("vCfg-highC").value=0.5;
+				if (id("vCfg-highC").value>5) id("vCfg-highC").value=5;
+				
+				motor.lowC=Math.round(id("vCfg-lowC").value*10);
+				motor.highC=Math.round(id("vCfg-highC").value*10);
 				valvesCfg.motor=motor;
 			}
 			await postJson("valvesconfig",JSON.stringify(valvesCfg));
@@ -1494,6 +1511,10 @@
 				ValvesTable.rows[item.idx].cells[2].textContent = item.pos;	
 				ValvesTable.rows[item.idx].cells[3].textContent = item.meanCur;
 				ValvesTable.rows[item.idx].cells[4].textContent = States[item.state-1];
+				if (item.temp1)
+					ValvesTable.rows[item.idx].cells[7].textContent = item.temp1;
+				if (item.temp2)
+					ValvesTable.rows[item.idx].cells[8].textContent = item.temp2;
 				if (!(id('activeSetValves').checked)) {
 					id('setValveP'+item.idx).value=item.targetPos;
 				}
@@ -1519,8 +1540,8 @@
 				if (dCalib==0) id('vCfg-d'+i).checked=false; else id('vCfg-d'+i).checked=true; 
 			}
 			id('vCfg-movCalib').value=cfgValvesJson.calib.cycles;
-			id("vCfg-lowC").value=cfgValvesJson.motor.lowC;
-			id("vCfg-highC").value=cfgValvesJson.motor.highC;
+			id("vCfg-lowC").value=cfgValvesJson.motor.lowC/10;
+			id("vCfg-highC").value=cfgValvesJson.motor.highC/10;
 		}
 		
 		function fillTempsTable (tempsJson) {

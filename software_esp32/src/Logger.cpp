@@ -42,53 +42,65 @@
 
 CLogger logger;      // web service logger
 
-CLogger::CLogger(byte bufferSize) {
+CLogger::CLogger(byte bufferSize) 
+{
   m_enabled = true;
   m_bufferSize = bufferSize;
 }
 
-void CLogger::Clear() {
+void CLogger::Clear() 
+{
   while (Available()) {
     Pop();
   }
 }
 
-void CLogger::SetBufferSize(byte size) {
+void CLogger::SetBufferSize(byte size) 
+{
   m_bufferSize = size;
 }
 
-void CLogger::Disable() {
+void CLogger::Disable() 
+{
   m_enabled = false;
   Clear();
 }
 
-void CLogger::Enable() {
+void CLogger::Enable() 
+{
   m_enabled = true;
 }
 
-bool CLogger::IsEnabled() {
+bool CLogger::IsEnabled() 
+{
   return m_enabled;
 }
 
-void CLogger::println(LogType type) {
+void CLogger::println(LogType type) 
+{
   println("", type);
 }
 
-void CLogger::print(uint32_t data, LogType type) {
+void CLogger::print(uint32_t data, LogType type) 
+{
   print(String(data), type);
 }
-void CLogger::println(uint32_t data, LogType type) {
+
+void CLogger::println(uint32_t data, LogType type) 
+{
   println(String(data), type);
 }
 
 
-void CLogger::logData(String data, LogType type) {
+void CLogger::logData(String data, LogType type) 
+{
   if (m_enabled &&  m_queue.Count() <= m_bufferSize) {
     m_queue.Push("DATA:" + data);
   }
 }
 
-void CLogger::print(String data, LogType type) {
+void CLogger::print(String data, LogType type) 
+{
   if (m_enabled && type != LogType::ONLYSYS) {
     Serial.print(data);
   }
@@ -97,7 +109,8 @@ void CLogger::print(String data, LogType type) {
   }
 }
 
-void CLogger::println(String data, LogType type) {
+void CLogger::println(String data, LogType type) 
+{
   if (m_enabled && type != LogType::ONLYSYS) {
     Serial.println(data);
   }
@@ -121,10 +134,12 @@ void CLogger::println(String data, LogType type) {
   m_currentLine = "";
 }
 
-int CLogger::Available()  {
+int CLogger::Available()  
+{
   return m_queue.Count();
 }
 
-String CLogger::Pop() {
+String CLogger::Pop() 
+{
   return m_queue.Pop();
 }

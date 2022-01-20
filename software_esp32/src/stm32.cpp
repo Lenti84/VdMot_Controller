@@ -52,7 +52,8 @@ CStm32::CStm32()
   tempcrc = 0;
 }
 
-void CStm32::STM32ota_setup() {
+void CStm32::STM32ota_setup() 
+{
 
   // flash interface
   // ATTENTION: on WT32-ETH01 use for UART_STM32 pins: RX2 IO35 and TX2 IO17
@@ -70,7 +71,8 @@ void CStm32::STM32ota_setup() {
   stmUpdateStatus = updNotStarted;
 }
 
-void CStm32::STM32ota_loop() {
+void CStm32::STM32ota_loop() 
+{
   switch(stm32ota_state) {
 
         case STM32OTA_IDLE: 
@@ -94,7 +96,7 @@ void CStm32::STM32ota_loop() {
         case STM32OTA_PREPAREFILE:
                 UART_DBG.println("STM32 ota: prepare file");
                 stmUpdateStatus = updStarted;
-                if(PrepareFile(updateFileName) == 0){
+                if (PrepareFile(updateFileName) == 0) {
                   stm32ota_state = STM32OTA_PREPARE;
                   stmUpdPercent = 5;                  
                 }
@@ -381,8 +383,8 @@ void CStm32::STM32ota_loop() {
 }
 
 
-void CStm32::STM32ota_start(uint8_t command, String thisFileName) {
-
+void CStm32::STM32ota_start(uint8_t command, String thisFileName) 
+{
   if (command == STM32OTA_START) stm32ota_command = STM32OTA_START;
   else if (command == STM32OTA_STARTBLANK) stm32ota_command = STM32OTA_STARTBLANK;
   updateFileName=thisFileName;
@@ -393,7 +395,8 @@ void CStm32::STM32ota_start(uint8_t command, String thisFileName) {
 
 
 // has to be called prior to stm32 flash transactions
-void CStm32::STM32ota_begin() {
+void CStm32::STM32ota_begin() 
+{
   UART_DBG.println("STM32 ota: begin");
   // flash interface
   // ATTENTION: on WT32-ETH01 use for UART_STM32 pins: RX2 IO35 and TX2 IO17
@@ -403,7 +406,8 @@ void CStm32::STM32ota_begin() {
 }
 
 
-void CStm32::ResetSTM32(bool useTask) {
+void CStm32::ResetSTM32(bool useTask) 
+{
   UART_DBG.println("STM32 ota: reset STM32");
   if (useTask) VdmTask.yieldTask(100); else delay(100); ;
   digitalWrite(NRST, HIGH);  
@@ -413,7 +417,8 @@ void CStm32::ResetSTM32(bool useTask) {
 }
 
 
-void CStm32::FlashMode()  {    //Tested
+void CStm32::FlashMode()  
+{    //Tested
   UART_DBG.println("Set Flash mode");
   digitalWrite(BOOT0, HIGH);
   delay(100);
@@ -425,7 +430,8 @@ void CStm32::FlashMode()  {    //Tested
 }
 
 
-void CStm32::RunMode()  {    //Tested
+void CStm32::RunMode()  
+{    //Tested
   UART_DBG.println("Set Run mode");
   digitalWrite(BOOT0, LOW);
   delay(100);
@@ -437,7 +443,8 @@ void CStm32::RunMode()  {    //Tested
 }
 
 
-int CStm32::PrepareFile(String FileName) {
+int CStm32::PrepareFile(String FileName) 
+{
 
   CRC32 crc;
   uint8_t buffer;
@@ -481,7 +488,8 @@ int CStm32::PrepareFile(String FileName) {
 }
 
 
-int CStm32::FlashBytes(int Block, int Bytes) {
+int CStm32::FlashBytes(int Block, int Bytes) 
+{
   uint8_t binbuffer[STM32OTA_BLOCKSIZE+1];
   uint8_t cflag;
   size_t readlen;
@@ -513,7 +521,8 @@ int CStm32::FlashBytes(int Block, int Bytes) {
 
 
 // unTested
-unsigned char CStm32::stm32StartRead(unsigned long rdaddress, unsigned int rdlen) {
+unsigned char CStm32::stm32StartRead(unsigned long rdaddress, unsigned int rdlen) 
+{
   // send read request
   //UART_DBG.println("send STM32RD");
   StmOta.stm32SendCommand(STM32RD);

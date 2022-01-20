@@ -45,11 +45,12 @@ String ip2String (IPAddress ipv4addr)
   return ipv4addr.toString();
 }
 
-String ConvBinUnits(size_t bytes, byte resolution) {
-  if      (bytes < 1024)                 {
+String ConvBinUnits(size_t bytes, byte resolution) 
+{
+  if  (bytes < 1024) {
     return String(bytes) + " B";
   }
-  else if (bytes < 1024 * 1024)          {
+  else if (bytes < 1024 * 1024) {
     return String(bytes / 1024.0, resolution) + " KB";
   }
   else if (bytes < (1024 * 1024 * 1024)) {

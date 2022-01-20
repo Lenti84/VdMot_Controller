@@ -50,7 +50,8 @@ Credits to https://github.com/csnol/1CHIP-Programmers
 
 CStmOta StmOta;
 
-CStmOta::CStmOta(){
+CStmOta::CStmOta()
+{
 
 }
 
@@ -66,12 +67,14 @@ const String STM32_CHIPNAME[9] = {
   "STM32F401xB/C"
 };
 
-void CStmOta::stm32SendCommand(unsigned char commd) {    // Tested
+void CStmOta::stm32SendCommand(unsigned char commd) 
+{    // Tested
   UART_STM32.write(commd);
   UART_STM32.write(~commd);
 }
 
-unsigned char CStmOta::stm32Erase() {     // Tested
+unsigned char CStmOta::stm32Erase() 
+{     // Tested
   stm32SendCommand(STM32ERASE);
   while (!UART_STM32.available());
   if (UART_STM32.read() == STM32ACK)
@@ -84,7 +87,8 @@ unsigned char CStmOta::stm32Erase() {     // Tested
   return UART_STM32.read();
 }
 
-unsigned char CStmOta::stm32Erasen() {     // Tested
+unsigned char CStmOta::stm32Erasen() 
+{     // Tested
   stm32SendCommand(STM32ERASEN);
   while (!UART_STM32.available());
   if (UART_STM32.read() == STM32ACK)
@@ -98,7 +102,8 @@ unsigned char CStmOta::stm32Erasen() {     // Tested
   return UART_STM32.read();
 }
 
-unsigned char CStmOta::stm32ErasenStart() {     // Tested
+unsigned char CStmOta::stm32ErasenStart() 
+{     // Tested
   int x;
 
   stm32SendCommand(STM32ERASEN);
@@ -120,7 +125,8 @@ unsigned char CStmOta::stm32ErasenStart() {     // Tested
 }
 
 // No test yet
-unsigned char CStmOta::stm32Run()   {
+unsigned char CStmOta::stm32Run()   
+{
   stm32SendCommand(STM32RUN);
   while (!UART_STM32.available());
   if (UART_STM32.read() == STM32ACK) {
@@ -132,7 +138,8 @@ unsigned char CStmOta::stm32Run()   {
 }
 
 // Tested
-unsigned char CStmOta::stm32Read(unsigned char * rdbuf, unsigned long rdaddress, unsigned int rdlen) {
+unsigned char CStmOta::stm32Read(unsigned char * rdbuf, unsigned long rdaddress, unsigned int rdlen) 
+{
   unsigned int timer = 0;
   size_t getlen;
   
@@ -180,7 +187,8 @@ unsigned char CStmOta::stm32Read(unsigned char * rdbuf, unsigned long rdaddress,
   return STM32ERR;
 }
 
-unsigned char CStmOta::stm32Address(unsigned long addr) {    // Tested
+unsigned char CStmOta::stm32Address(unsigned long addr) 
+{    // Tested
   unsigned char sendaddr[4];
   unsigned char addcheck = 0;
   sendaddr[0] = addr >> 24;
@@ -196,7 +204,8 @@ unsigned char CStmOta::stm32Address(unsigned long addr) {    // Tested
   return UART_STM32.read();
 }
 
-unsigned char CStmOta::stm32SendData(unsigned char * data, unsigned char wrlen) {     // Tested
+unsigned char CStmOta::stm32SendData(unsigned char * data, unsigned char wrlen) 
+{     // Tested
   UART_STM32.write(wrlen);
   for (int i = 0; i <= wrlen; i++) {
     UART_STM32.write(data[i]);
@@ -207,7 +216,8 @@ unsigned char CStmOta::stm32SendData(unsigned char * data, unsigned char wrlen) 
   return UART_STM32.read();
 }
 
-char CStmOta::stm32Version() {     // Tested
+char CStmOta::stm32Version() 
+{     // Tested
   int x;
   unsigned char vsbuf[14];
 
@@ -236,7 +246,8 @@ char CStmOta::stm32Version() {     // Tested
   return STM32ERR;  
 }
 
-unsigned char CStmOta::stm32GetId() {     // Tested
+unsigned char CStmOta::stm32GetId() 
+{     // Tested
   int x;
   int getid = 0;
   unsigned char sbuf[5];

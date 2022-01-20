@@ -179,7 +179,7 @@ String CWeb::getSysDynInfo()
   char buf[50];
   String time;
  
-  if(!getLocalTime(&timeinfo)){
+  if(!getLocalTime(&timeinfo)) {
     time = "Failed to obtain time";
   } else {
     strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
@@ -203,7 +203,9 @@ String CWeb::getValvesStatus()
                  "\"state\":"+String(StmApp.actuators[x].state) + ","+
                  "\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
                  "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
-                 "\"targetPos\":" + String(StmApp.actuators[x].target_position)+"}";      
+                 "\"targetPos\":" + String(StmApp.actuators[x].target_position)+","+
+                 "\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1)+","+
+                 "\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1)+"}";      
     }
   }  
   result += "]";
