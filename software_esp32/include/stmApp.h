@@ -72,10 +72,10 @@ typedef struct  {
 #define APP_PRE_GETONEWIRECNT		    "gonec"			
 #define APP_PRE_GETONEWIREDATA		  "goned"	
 #define APP_PRE_SETONEWIRESEARCH    "stons"		
-#define APP_PRE_SET1STSENSORINDEX	  "stsnx"   // not used	in stm		
-#define APP_PRE_SET2NDSENSORINDEX	  "stsny"		// not used	in stm	
+#define APP_PRE_SET1STSENSORINDEX	  "stsnx"   		
+#define APP_PRE_SET2NDSENSORINDEX	  "stsny"			
 #define APP_PRE_SETALLVLVOPEN		    "staop"			
-#define APP_PRE_GETONEWIRESETT		  "gvlon"	  // not used	in stm	
+#define APP_PRE_GETONEWIRESETT		  "gvlon"	  	
 #define APP_PRE_GETVLVDATA			    "gvlvd"			
 #define APP_PRE_SETVLLEARN          "staln"   // one valve
 
@@ -88,6 +88,10 @@ typedef struct  {
 #define APP_PRE_GETACTUALPOS       	"gactp"   // not used in stm
 #define APP_PRE_GETMEANCURR        	"gmenc"   // not used in stm
 #define APP_PRE_GETSTATUS          	"gstat"   // not used in stm
+
+#define APP_PRE_SETVLVSENSOR        "stvls"
+#define APP_PRE_UNDEFSENSOR         "00-00-00-00-00-00-00-00"
+
 
 #define VLV_STATE_IDLE      0x01 // nothing to do
 #define VLV_STATE_OPENING   0x02 // opens
@@ -115,6 +119,7 @@ public:
   void valvesAssembly();
   void scanTemps();
   void setTempIdx();
+  void getParametersFromSTM();
 
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
   TEMP_STRUC temps[TEMP_SENSORS_COUNT];

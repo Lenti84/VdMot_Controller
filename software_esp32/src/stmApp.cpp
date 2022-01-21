@@ -63,7 +63,7 @@ static const char* commCmds [] =
                {APP_PRE_SETTARGETPOS,APP_PRE_GETONEWIRECNT,APP_PRE_GETONEWIREDATA,
                 APP_PRE_SETONEWIRESEARCH,APP_PRE_SETALLVLVOPEN,APP_PRE_GETVLVDATA,
                 APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETTARGETPOS,
-                APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,NULL};
+                APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,APP_PRE_SETVLVSENSOR,NULL};
 
 
 CStmApp StmApp;
@@ -121,6 +121,15 @@ void CStmApp::valvesAssembly()
     app_cmd(APP_PRE_SETALLVLVOPEN);
 }
 
+void CStmApp::getParametersFromSTM()
+{
+  app_cmd(APP_PRE_GETVERSION);
+  app_cmd(APP_PRE_GETMOTCHARS);
+  for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
+    //app_cmd(    todo get temp index   
+  }
+}
+
 void CStmApp::scanTemps()
 {
     tempsCount=0;
@@ -132,30 +141,32 @@ void CStmApp::scanTemps()
 
 void CStmApp::setTempIdx()
 {
-    String s=" "; // todo
+    String s1;
+    String s2;
     uint8_t tIdx1;
     uint8_t tIdx2;
     bool pushNow;
-  
     for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
         tIdx1=StmApp.actuators[i].tIdx1;
         tIdx2=StmApp.actuators[i].tIdx2;
         pushNow=false;
+        s1=APP_PRE_UNDEFSENSOR;
+        s2=APP_PRE_UNDEFSENSOR;
         if (tIdx1>0) {
             if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tIdx1].ID)>0) {
-                s+=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx1].ID+String(" ");
+                s1=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx1].ID;
                 pushNow=true;
             }   
         }
         if (tIdx2>0) {
             if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tIdx2].ID)>0) {
-                s+=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx2].ID+String(" "); 
+                s2=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx2].ID; 
                 pushNow=true;  
             }
         }
         if (pushNow) {
             waitForFinishQueue=true;
-            // todo app_cmd(s);
+            app_cmd(APP_PRE_SETVLVSENSOR,s1+String(" ")+s2);
         }
     }
 }
@@ -363,6 +374,7 @@ void  CStmApp::app_check_data()
         }
 
 		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
+            syslog.log(LOG_DEBUG,"one wire data "+String(argcnt)+" "+String(arg0ptr)+":"+String(arg1ptr));
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG,"one wire data "+String(arg0ptr)+":"+String(arg1ptr));
