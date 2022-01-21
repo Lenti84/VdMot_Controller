@@ -55,6 +55,8 @@ extern int16_t communication_loop (void);
 #define APP_PRE_SETMOTCHARS         "smotc"		  // doc	
 #define APP_PRE_GETMOTCHARS         "gmotc"		  // doc
 
+#define APP_PRE_SETVLVSENSOR        "stvls"     // new
+
 #define APP_PRE_GETACTUALPOS       	"gactp"     // not implemented
 #define APP_PRE_GETMEANCURR        	"gmenc"     // not implemented
 #define APP_PRE_GETSTATUS          	"gstat"     // not implemented

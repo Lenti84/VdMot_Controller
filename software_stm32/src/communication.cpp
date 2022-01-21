@@ -35,6 +35,7 @@
 #include "communication.h"
 #include "temperature.h"
 #include "eeprom.h"
+#include "DallasTemperature.h"
 
 #define COMM_SER				Serial1		// serial port to ESP32
 //#define COMM_DBG				Serial3		// serial port for debugging
@@ -72,10 +73,12 @@ int16_t communication_loop (void) {
 	char*       cmdptr;
     char*	    cmdptrend;
     char        cmd[10];
-    char		arg0[20];	
-    char        arg1[20];		
+    char		arg0[30];	
+    char        arg1[30];		
+	char        arg2[30];		
 	char*		arg0ptr = arg0;
 	char*		arg1ptr = arg1;
+	char*		arg2ptr = arg2;
 	uint8_t		argcnt = 0;
     
 	uint16_t		x;
@@ -83,6 +86,8 @@ int16_t communication_loop (void) {
 	uint16_t		y;
 	char sendbuffer[30];
     char valbuffer[10];
+
+	uint8_t buff[10];
 
 	char sendbuf[SEND_BUFFER_LEN];
 	DeviceAddress currAddress;
@@ -126,13 +131,14 @@ int16_t communication_loop (void) {
 		// ****************************************
 		cmdptr = buffer;
 
-		for(unsigned int xx=0;xx<3;xx++){
+		for(unsigned int xx=0;xx<4;xx++){
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
 				if(xx==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
 				else if(xx==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
 				else if(xx==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
+				else if(xx==3) {	strncpy(arg2,cmdptr,sizeof(arg2)-1); argcnt=3;	} 	// 3nd argument
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -145,6 +151,8 @@ int16_t communication_loop (void) {
 		// set target position
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		if(memcmp(APP_PRE_SETTARGETPOS,&cmd[0],5) == 0) {
+			COMM_DBG.println("set target pos");
+
 			x = atoi(arg0ptr);
 			y = atoi(arg1ptr);
 
@@ -163,6 +171,8 @@ int16_t communication_loop (void) {
 		// get target position
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		if(memcmp(APP_PRE_GETTARGETPOS,&cmd[0],5) == 0) {
+			COMM_DBG.println("get target pos");
+
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1) {				
@@ -182,6 +192,8 @@ int16_t communication_loop (void) {
 		// get valve data (actual position, target position, meancurrent, status, temperature)
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVLVDATA,&cmd[0],5) == 0) {
+			COMM_DBG.println("get valve data");
+
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1) {				
@@ -409,6 +421,78 @@ int16_t communication_loop (void) {
 
 						eeprom_changed();					
 					}
+				}
+			}
+			else COMM_DBG.println("to few arguments");
+		}
+
+
+		// set valve sensors
+		// x - valve index
+		// arg1 - 8 byte hex address of 1st 1-wire sensor
+		// arg2 - 8 byte hex address of 2nd 1-wire sensor
+		// if hex address == 00-00-00-00-00-00-00-00 this sensor will be ignored
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETVLVSENSOR,&cmd[0],5) == 0) {
+			x = atoi(arg0ptr); // valve index
+			
+			if(argcnt == 1) {				
+				COMM_DBG.println("comm: set vavle sensors");
+				if (x >= 0 && x < ACTUATOR_COUNT) 
+				{
+					// first sensor address
+					if(strlen(arg1ptr)==23) {
+
+						// from end to beginning
+						for(unsigned int xx=0;xx<=7;xx++) {
+							cmdptr=strrchr(arg1ptr,'-');
+							currAddress[7-xx] = atoi(cmdptr+1);
+							*cmdptr = '\0';
+						}
+						
+						if (sensors.validAddress(currAddress)) {
+							eep_content.owsensors1[x].familycode = currAddress[0];
+							eep_content.owsensors1[x].romcode[0] = currAddress[1];
+							eep_content.owsensors1[x].romcode[1] = currAddress[2];
+							eep_content.owsensors1[x].romcode[2] = currAddress[3];
+							eep_content.owsensors1[x].romcode[3] = currAddress[4];
+							eep_content.owsensors1[x].romcode[4] = currAddress[5];
+							eep_content.owsensors1[x].romcode[5] = currAddress[6];
+							eep_content.owsensors1[x].crc = currAddress[7];
+						
+							eeprom_changed();	
+							
+  							// match sensor address to valve struct at runtime, otherwise restart needed
+  							app_match_sensors();
+						}
+					}
+
+					// second sensor address
+					if(strlen(arg2ptr)==23) {
+
+						// from end to beginning
+						for(unsigned int xx=0;xx<=7;xx++) {
+							cmdptr=strrchr(arg2ptr,'-');
+							currAddress[7-xx] = atoi(cmdptr+1);
+							*cmdptr = '\0';
+						}
+						
+						if (sensors.validAddress(currAddress)) {
+							eep_content.owsensors2[x].familycode = currAddress[0];
+							eep_content.owsensors2[x].romcode[0] = currAddress[1];
+							eep_content.owsensors2[x].romcode[1] = currAddress[2];
+							eep_content.owsensors2[x].romcode[2] = currAddress[3];
+							eep_content.owsensors2[x].romcode[3] = currAddress[4];
+							eep_content.owsensors2[x].romcode[4] = currAddress[5];
+							eep_content.owsensors2[x].romcode[5] = currAddress[6];
+							eep_content.owsensors2[x].crc = currAddress[7];
+							
+							eeprom_changed();	
+							
+  							// match sensor address to valve struct at runtime, otherwise restart needed
+  							app_match_sensors();
+						}
+					}			
 				}
 			}
 			else COMM_DBG.println("to few arguments");

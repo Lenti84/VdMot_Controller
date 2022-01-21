@@ -50,7 +50,7 @@
 
 #define TIMEOUT_OVERCURRENT     10           // cycles of "byte motorcycle (byte valvenr, byte cmd)"
 
-#define TIMEOUT_UNDERCURRENT    150          // cycles of "byte motorcycle (byte valvenr, byte cmd)"
+#define TIMEOUT_UNDERCURRENT    20           // cycles of "byte motorcycle (byte valvenr, byte cmd)"
 #define THRESHOLD_UNDERCURRENT  20           // threshold for detecting undercurrent in 1/10 mA
 
 
@@ -60,6 +60,7 @@
 #define CMD_M_STOP      's'
 #define CMD_M_STOP_ISR  'x'
 #define CMD_M_NOTHING   'n'
+#define CMD_M_TEST      't'
 
 
 // return values motor cycle
@@ -72,6 +73,7 @@
 #define M_RES_STOP        7
 #define M_RES_STOP_ISR    8
 #define M_RES_NOCURRENT   9
+#define M_RES_TEST        10
 
 
 void set_motor (int smvalvenr, int dir);
@@ -253,6 +255,14 @@ byte valve_loop () {
                     PSU_ON(); 
                     psuofftimer = 0;
                     waittimer = 50; 
+                  }
+                  else if (command == CMD_A_TEST) {                    
+                    COMM_DBG.print("A: cmd test valve ");                  
+                    COMM_DBG.println(valveindex, 10);                    
+                    valvestate = A_TEST;
+                    PSU_ON();
+                    waittimer = 100;
+                    psuofftimer = 0;
                   }
                   else {
                     valvestate = A_IDLE;
@@ -486,6 +496,29 @@ byte valve_loop () {
                   }           
                   break;
 
+
+     case A_TEST:  // test if a valve is connected
+                  if (!waittimer) {
+                    
+                    temp = motorcycle (valveindex, CMD_M_TEST);
+                    if (temp != M_RES_TEST) {  
+                      COMM_DBG.print("A: test finished");
+                      COMM_DBG.print(temp, DEC);                  
+                      
+                      if(temp == M_RES_NOCURRENT) {
+                        COMM_DBG.println(" --> undercurrent, no valve");
+                        myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
+                      }
+                      else {
+                        COMM_DBG.println(" --> valve present");
+                        myvalvemots[valveindex].status = VLV_STATE_PRESENT;
+                      }
+
+                      valvestate = A_IDLE;                    
+                    }
+                  }
+                  break;
+
                   
     default:      valvestate = A_IDLE;
                   break;  
@@ -509,6 +542,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
   #define M_STOP      5
   #define M_STOP_ISR  6
   #define M_UNDERCURR 7
+  #define M_TESTPREP  9
+  #define M_TEST      10
 
   static byte motorstate = M_INIT;
 
@@ -560,6 +595,10 @@ byte motorcycle (int mvalvenr, byte cmd) {
                       motorstate = M_STOP;
                       result = M_RES_STOP;  
                     }
+                    else if (cmd == CMD_M_TEST) {
+                      motorstate = M_TESTPREP;
+                      result = M_RES_TEST;  
+                    }
                     else {
                       motorstate = M_IDLE;  
                       result = M_RES_IDLE;
@@ -609,8 +648,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     attachInterrupt(digitalPinToInterrupt(REVINPIN), isr_count, RISING);
   
                     break;
-                    
-
+                  
       case M_TURNON:
                     isr_turning = 1;
                     result = M_RES_TURNING;
@@ -763,6 +801,83 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     motorstate = M_IDLE;
                     result = M_RES_NOCURRENT;                  
                     
+                    break;
+
+      case M_TESTPREP:
+                    COMM_DBG.println("M: test prep");                                  
+                    set_motor(mvalvenr, DIR_OPEN); 
+                    ena_motor(mvalvenr, 1);                 
+                
+                    cyclecnt = 0;
+                    undercurrcnt = 0;
+                    debouncecnt = 0;
+
+                    analog_current_old = 0;
+                    analog_current = 0;
+
+                    motorstate = M_TEST;
+                    result = M_RES_TEST;                    
+
+                    break;
+
+      case M_TEST:
+                    COMM_DBG.print("M: testing"); 
+
+                    result = M_RES_TEST;
+    
+                    // calc current in 1/10 mA
+                    analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
+
+                    analog_current = (int) (((int32_t) analog_current_old * 500 + (int32_t) analog_current * 500) / 1000);
+                    analog_current_old = analog_current;
+
+                    current_mA = analog_current;
+                    
+                    COMM_DBG.print(" - current: ");
+                    COMM_DBG.println (analog_current,DEC);
+
+                    if(debouncecnt<255) debouncecnt++;
+
+                    if(debouncecnt>7) {
+
+                      // under current detection
+                      if(current_mA < THRESHOLD_UNDERCURRENT && current_mA > -THRESHOLD_UNDERCURRENT) 
+                      {
+                        // undercurrcnt++;
+                        // if (undercurrcnt > TIMEOUT_UNDERCURRENT)
+                        // {
+                          COMM_DBG.println("undercurrent!");
+                          undercurrcnt = 0;
+                          motorstate = M_IDLE;
+                          result = M_RES_NOCURRENT;
+                          ena_motor(0, 0);
+                        //}                        
+                      }
+
+                      // overcurrent detection
+                      else if(current_mA > currentbound_high || current_mA < currentbound_low ||  
+                        current_mA > 1000 || current_mA < -1000)         // safety mechanism, limit at +- 100 mA
+                      {
+                        // overcurrcnt++;
+                        // if (overcurrcnt > TIMEOUT_OVERCURRENT)
+                        // {
+                          COMM_DBG.println("overcurrent!");
+                          overcurrcnt = 0;
+                          motorstate = M_IDLE;
+                          result = M_RES_ENDSTOP;
+                          ena_motor(0, 0);
+                        
+                        //}
+                      }
+
+                      // normal turning
+                      else  {                      
+                         motorstate = M_IDLE;
+                         result = M_RES_OPENS;
+                         ena_motor(0, 0);                      
+                      }
+                    }
+
                     break;
                     
       default:      motorstate = M_IDLE;

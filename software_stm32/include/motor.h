@@ -39,6 +39,7 @@
 #define CMD_A_CLOSE_END 'v'
 #define CMD_A_LEARN     'l'
 #define CMD_A_TARGET    't'
+#define CMD_A_TEST      'x'
 
 #define VLV_STATE_IDLE      (byte) 0x01       // nothing to do
 #define VLV_STATE_OPENING   (byte) 0x02       // opens
@@ -47,6 +48,7 @@
 #define VLV_STATE_UNKNOWN   (byte) 0x05       // initial state
 #define VLV_STATE_OPENCIR   (byte) 0x06       // open circuit detected
 #define VLV_STATE_FULLOPEN  (byte) 0x07       // go directly full open
+#define VLV_STATE_PRESENT   (byte) 0x08       // connected
 
 
 struct valvemotor {
@@ -69,7 +71,7 @@ extern valvemotor myvalvemots[ACTUATOR_COUNT];
 
 enum ASTATE {
 A_INIT, A_IDLE, A_CLOSE, A_OPEN1, A_OPEN2, A_LEARN1, 
-A_LEARN2, A_LEARN3, A_LEARN4, A_CLOSE1, A_CLOSE2 };
+A_LEARN2, A_LEARN3, A_LEARN4, A_CLOSE1, A_CLOSE2, A_TEST };
 
 extern enum ASTATE valvestate;
 

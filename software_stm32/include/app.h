@@ -52,6 +52,7 @@ int16_t app_set_learnmovements(uint16_t cycles);
 int16_t app_set_learntime(uint32_t time);
 int16_t app_set_valvelearning(uint16_t valve);
 int16_t app_set_valveopen(int16_t valve);
+int16_t app_match_sensors();
 
 
 // struct valvemotor {
