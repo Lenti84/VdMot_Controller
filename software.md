@@ -57,7 +57,7 @@ This page will document the software part of the VdMot_Controller.
 |gvers|get version|gvers *version_string*|tbd||
 |smotc x y|set motor characteristics: *x* endpoint threshold low (inv), *y* endpoint threshold high|-|x=5...50 y=5...50|endpoint detection will be performed with these current values, will be saved in eeprom|
 |gmotc|get motor characteristics|-|*x* endpoint threshold low (inv), *y* endpoint threshold high|see *smotc*|
-
+|stvls|set valve sensors to valve *x*|-|-|example: 'stvls 1 00-00-00-00-00-00-00-00 00-00-00-00-00-00-00-00 '|
 
 
 # OTA update of ESP32 and STM32
