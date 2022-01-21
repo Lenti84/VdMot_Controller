@@ -146,7 +146,9 @@ int16_t communication_loop (void) {
 		// evaluate data
 		// ****************************************************************************************
 		// clear sendbuffer, otherwise there is something from older commands
-		memset (sendbuffer,0x0,sizeof(sendbuffer));
+		//memset (sendbuffer,0x0,sizeof(sendbuffer));
+		#warning Just a test, maybe this is sufficient
+		sendbuffer[0] = '\0';			
 		
 		// set target position
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -201,7 +203,7 @@ int16_t communication_loop (void) {
 				//if(0) 
 				if (x < ACTUATOR_COUNT) 
 				{
-					sendbuffer[0] = '\0';
+					sendbuffer[0] = '\0';		// sendbuffer reset
 					//COMM_SER.println("sending new target value");
                     
 					strcat(sendbuffer, APP_PRE_GETVLVDATA);
@@ -278,6 +280,8 @@ int16_t communication_loop (void) {
 
 				if(x<MAXSENSORCOUNT)
 				{
+					sendbuffer[0] = '\0';			// reset sendbuffer
+
 					// 8 Byte adress
 					for (uint8_t i = 0; i < 8; i++)
 					{
@@ -300,6 +304,81 @@ int16_t communication_loop (void) {
 			COMM_SER.print(" ");			
 			COMM_SER.print(sendbuffer);
 			COMM_SER.println(" ");			
+		}
+
+
+		// get 1st and 2nd onewire sensor address for valve x
+		// example answer: gvlon 1 28-84-37-94-97-FF-03-23 00-00-00-00-00-00-00-00
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETONEWIRESETT,&cmd[0],5) == 0) {
+			COMM_DBG.print("cmd: get 1st and 2nd onewire sensor addresses");
+
+			x = atoi(arg0ptr);
+
+			if(argcnt == 1) {
+
+				if(x<ACTUATOR_COUNT)
+				{
+					// answer begin
+					COMM_SER.print(APP_PRE_GETONEWIRESETT);
+					COMM_SER.print(" ");
+
+					// valve index
+					COMM_SER.print(x, DEC);
+					COMM_SER.print(" ");
+					
+					// 1st sensor 8 Byte adress
+					y = myvalves[x].sensorindex1;					
+					if(y!=VALVE_SENSOR_UNKNOWN) {
+						sendbuffer[0] = '\0';			// reset sendbuffer
+						for (uint8_t i = 0; i < 8; i++)
+						{
+							if (tempsensors[y].address[i] < 16) strcat(sendbuffer, "0");
+							itoa(tempsensors[y].address[i], valbuffer, 16);      
+							strcat(sendbuffer, valbuffer);
+							if (i<7) strcat(sendbuffer, "-");
+						}
+						COMM_SER.print(sendbuffer);
+					}
+					else {
+						COMM_SER.print("00-00-00-00-00-00-00-00");
+					}
+					COMM_SER.print(" ");
+
+					// 2nd sensor 8 Byte adress
+					y = myvalves[x].sensorindex2;
+					if(y!=VALVE_SENSOR_UNKNOWN) {
+						sendbuffer[0] = '\0';			// reset sendbuffer
+						for (uint8_t i = 0; i < 8; i++)
+						{
+							if (tempsensors[y].address[i] < 16) strcat(sendbuffer, "0");
+							itoa(tempsensors[y].address[i], valbuffer, 16);      
+							strcat(sendbuffer, valbuffer);
+							if (i<7) strcat(sendbuffer, "-");
+						}
+						COMM_SER.print(sendbuffer);
+					}
+					else {
+						COMM_SER.print("00-00-00-00-00-00-00-00");
+					}
+
+					// finish answer
+					COMM_SER.println(" ");
+
+				}
+				else {
+					COMM_DBG.println(" - error");
+
+					COMM_SER.print(APP_PRE_GETONEWIREDATA);
+					COMM_SER.println(" error ");
+				}
+			}
+			else {
+				COMM_DBG.println(" - error");
+
+				COMM_SER.print(APP_PRE_GETONEWIREDATA);
+				COMM_SER.println(" error ");			
+			}			
 		}
 
 

@@ -502,7 +502,7 @@ byte valve_loop () {
                     
                     temp = motorcycle (valveindex, CMD_M_TEST);
                     if (temp != M_RES_TEST) {  
-                      COMM_DBG.print("A: test finished");
+                      COMM_DBG.print("A: test valve ");
                       COMM_DBG.print(temp, DEC);                  
                       
                       if(temp == M_RES_NOCURRENT) {
@@ -821,7 +821,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     break;
 
       case M_TEST:
-                    COMM_DBG.print("M: testing"); 
+                    //COMM_DBG.print("M: testing"); 
 
                     result = M_RES_TEST;
     
@@ -833,8 +833,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
 
                     current_mA = analog_current;
                     
-                    COMM_DBG.print(" - current: ");
-                    COMM_DBG.println (analog_current,DEC);
+                    //COMM_DBG.print(" - current: ");
+                    //COMM_DBG.println (analog_current,DEC);
 
                     if(debouncecnt<255) debouncecnt++;
 
@@ -846,7 +846,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                         // undercurrcnt++;
                         // if (undercurrcnt > TIMEOUT_UNDERCURRENT)
                         // {
-                          COMM_DBG.println("undercurrent!");
+                          COMM_DBG.println("test: undercurrent!");
                           undercurrcnt = 0;
                           motorstate = M_IDLE;
                           result = M_RES_NOCURRENT;
@@ -861,7 +861,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                         // overcurrcnt++;
                         // if (overcurrcnt > TIMEOUT_OVERCURRENT)
                         // {
-                          COMM_DBG.println("overcurrent!");
+                          COMM_DBG.println("test: overcurrent!");
                           overcurrcnt = 0;
                           motorstate = M_IDLE;
                           result = M_RES_ENDSTOP;
@@ -871,7 +871,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
                       }
 
                       // normal turning
-                      else  {                      
+                      else  {          
+                         COMM_DBG.println("test: normal turning!");            
                          motorstate = M_IDLE;
                          result = M_RES_OPENS;
                          ena_motor(0, 0);                      
