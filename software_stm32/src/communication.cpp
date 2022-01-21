@@ -262,7 +262,7 @@ int16_t communication_loop (void) {
 			COMM_DBG.println("cmd: get onewire sensor count");
 			COMM_SER.print(APP_PRE_GETONEWIRECNT);
 			COMM_SER.print(" ");			
-			COMM_SER.print(numberOfDevices, DEC);
+			COMM_SER.print(sensors.getDeviceCount(), DEC);
 			COMM_SER.println(" ");			
 		}
 

@@ -76,10 +76,7 @@ void CServices::servicesLoop()
 
 void CServices::runOnce() 
 {
-   StmApp.app_cmd(APP_PRE_GETVERSION);
-   StmApp.app_cmd(APP_PRE_SETMOTCHARS,
-          String(VdmConfig.configFlash.motorConfig.maxLowCurrent)+
-          String(" ")+String(VdmConfig.configFlash.motorConfig.maxHighCurrent));
+    StmApp.getParametersFromSTM();
 }
 
 void CServices::runOnceDelayed()

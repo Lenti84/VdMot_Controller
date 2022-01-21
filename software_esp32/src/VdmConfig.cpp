@@ -295,7 +295,7 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
   if (!doc["calib"]["hourOfCalib"].isNull()) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
   if (!doc["calib"]["cycles"].isNull()) configFlash.valvesConfig.learnAfterMovements=doc["calib"]["cycles"];
   
-  StmApp.setTempIdxActive=false;
+  
   for (uint8_t i=chunkStart-1; i<chunkEnd; i++) {
     if (!doc["valves"][idx]["name"].isNull()) strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][idx]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
     if (!doc["valves"][idx]["active"].isNull()) configFlash.valvesConfig.valveConfig[i].active=doc["valves"][idx]["active"];
@@ -312,8 +312,10 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
   if (!doc["motor"]["lowC"].isNull()) configFlash.motorConfig.maxLowCurrent=doc["motor"]["lowC"];
   if (!doc["motor"]["highC"].isNull()) configFlash.motorConfig.maxHighCurrent=doc["motor"]["highC"];
   
-  if (StmApp.setTempIdxActive) {
+ 
+  if ((StmApp.setTempIdxActive) && (chunkEnd==12)) {
     StmApp.setTempIdx();
+    StmApp.setTempIdxActive=false;
   }
 }
 
