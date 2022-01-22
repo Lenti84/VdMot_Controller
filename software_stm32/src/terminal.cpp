@@ -105,6 +105,8 @@ int16_t Terminal_Serve (void) {
 	uint16_t		y;
 
 	char sendbuf[SEND_BUFFER_LEN];
+    char valbuffer[10];
+
 	DeviceAddress currAddress;
 	uint8_t numberOfDevices;
 
@@ -168,6 +170,7 @@ int16_t Terminal_Serve (void) {
 
 		// evsluate commands
 		// ****************************************************************************************
+		sendbuf[0] = '\0';			// reset sendbuf
 
 		// help
 		if(memcmp("help",&cmd[0],4) == 0) {
@@ -479,6 +482,76 @@ int16_t Terminal_Serve (void) {
 				}
 			}
 			else COMM_DBG.println("to few arguments");
+		}
+
+
+		// get 1st and 2nd onewire sensor address for valve x
+		// example answer: gvlon 1 28-84-37-94-97-FF-03-23 00-00-00-00-00-00-00-00
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETONEWIRESETT,&cmd[0],5) == 0) {
+			COMM_DBG.print("cmd: get 1st and 2nd onewire sensor addresses");
+
+			x = atoi(arg0ptr);
+
+			if(argcnt == 1) {
+
+				if(x<ACTUATOR_COUNT)
+				{
+					// answer begin
+					COMM_DBG.print(" - ");
+					COMM_DBG.print(APP_PRE_GETONEWIRESETT);
+					COMM_DBG.print(" ");
+
+					// valve index
+					COMM_DBG.print(x, DEC);
+					COMM_DBG.print(" ");
+					
+					// 1st sensor 8 Byte adress
+					y = myvalves[x].sensorindex1;					
+					if(y!=VALVE_SENSOR_UNKNOWN) {
+						sendbuf[0] = '\0';			// reset sendbuffer
+						for (uint8_t i = 0; i < 8; i++)
+						{
+							if (tempsensors[y].address[i] < 16) strcat(sendbuf, "0");
+							itoa(tempsensors[y].address[i], valbuffer, 16);      
+							strcat(sendbuf, valbuffer);
+							if (i<7) strcat(sendbuf, "-");
+						}
+						COMM_DBG.print(sendbuf);
+					}
+					else {
+						COMM_DBG.print("00-00-00-00-00-00-00-00");
+					}
+					COMM_DBG.print(" ");
+
+					// 2nd sensor 8 Byte adress
+					y = myvalves[x].sensorindex2;
+					if(y!=VALVE_SENSOR_UNKNOWN) {
+						sendbuf[0] = '\0';			// reset sendbuffer
+						for (uint8_t i = 0; i < 8; i++)
+						{
+							if (tempsensors[y].address[i] < 16) strcat(sendbuf, "0");
+							itoa(tempsensors[y].address[i], valbuffer, 16);      
+							strcat(sendbuf, valbuffer);
+							if (i<7) strcat(sendbuf, "-");
+						}
+						COMM_DBG.print(sendbuf);
+					}
+					else {
+						COMM_DBG.print("00-00-00-00-00-00-00-00");
+					}
+
+					// finish answer
+					COMM_DBG.println(" ");
+
+				}
+				else {
+					COMM_DBG.println(" - error");
+				}
+			}
+			else {
+				COMM_DBG.println(" - error");		
+			}			
 		}
 
 

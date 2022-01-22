@@ -46,8 +46,8 @@ This page will document the software part of the VdMot_Controller.
 |gvlvd x|get data of valve *x*|gvlvd *valve_index position meancurrent status 1st_temperature 2nd_temperature*|*% mA - 1/10°C 1/10°C*||
 |stons|start new 1-wire search|-|-|get result via *gonec* and *goned*|
 |gonec|get count of 1-wire devices|gonec *count*|*-*||
-|goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *6ByteHexAddress temperature*|*0x 0x 0x 0x 0x 0x 1/10°C*||
-|gvlon x|get 1-wire settings for valve *x*|gvlon *6ByteHexAddressFirstSensor* - *6ByteHexAddressSecondSensor*|*0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x*||
+|goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *8ByteHexAddress temperature*|*hex 1/10°C*||
+|gvlon x|get 1-wire settings for valve *x*|gvlon *x 8ByteHexAddressFirstSensor 8ByteHexAddressSecondSensor*|*- hex hex*|example: 'gvlon 2 28-84-37-94-97-FF-03-23 00-00-00-00-00-00-00-00 '|
 |stsnx x y|set first 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...33|will be saved in eeprom|
 |stsny x y|set second 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...33|will be saved in eeprom|
 |staop x|set valve *x* open|-|0...11, 255|usefull for installation, opens quickly one (x) or all valves (x=255) so they can be mounted|
