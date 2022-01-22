@@ -111,17 +111,11 @@ void CVdmConfig::clearConfig()
 
   configFlash.valvesConfig.dayOfCalib=9;
   configFlash.valvesConfig.hourOfCalib=0;
-  configFlash.valvesConfig.learnAfterMovements = 500;
   memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
   strncpy(configFlash.netConfig.timeServer,"pool.ntp.org",sizeof(configFlash.netConfig.timeServer));
   configFlash.netConfig.syslogLevel=0;
   configFlash.netConfig.syslogIp=0;
-  configFlash.netConfig.syslogPort=0;
-
-  configFlash.motorConfig.maxLowCurrent = 5;
-  configFlash.motorConfig.maxHighCurrent = 5;
-  
-  
+  configFlash.netConfig.syslogPort=0; 
 }
 
 void CVdmConfig::readConfig()
@@ -175,19 +169,12 @@ void CVdmConfig::readConfig()
     prefs.getBytes(nvsValves, (void *) configFlash.valvesConfig.valveConfig, sizeof(configFlash.valvesConfig.valveConfig));
   configFlash.valvesConfig.dayOfCalib=prefs.getUChar(nvsDayOfCalib,9);
   configFlash.valvesConfig.hourOfCalib=prefs.getUChar(nvsHourOfCalib); 
-  configFlash.valvesConfig.learnAfterMovements = prefs.getULong(nvsMovCalib,500);
   prefs.end();
   }
  
  if (prefs.begin(nvsTempsCfg,false)) {
   if (prefs.isKey(nvsTemps))
     prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
-  prefs.end();
- }
- 
- if (prefs.begin(nvsMotorCfg,false)){
-  configFlash.motorConfig.maxLowCurrent = prefs.getUChar(nvsMotorMinC,30);
-  configFlash.motorConfig.maxHighCurrent = prefs.getUChar(nvsMotorMaxC,30);
   prefs.end();
  }
 }
@@ -231,17 +218,11 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.putBytes(nvsValves, (void *) configFlash.valvesConfig.valveConfig, sizeof(configFlash.valvesConfig.valveConfig));
   prefs.putUChar(nvsDayOfCalib,configFlash.valvesConfig.dayOfCalib);
   prefs.putUChar(nvsHourOfCalib,configFlash.valvesConfig.hourOfCalib);
-  prefs.putULong(nvsMovCalib,configFlash.valvesConfig.learnAfterMovements);
   prefs.end();
 
   prefs.begin(nvsTempsCfg,false);
   prefs.clear();
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
-  prefs.end();
-
-  prefs.begin(nvsMotorCfg,false);
-  prefs.putUChar(nvsMotorMinC,configFlash.motorConfig.maxLowCurrent);
-  prefs.putUChar(nvsMotorMaxC,configFlash.motorConfig.maxHighCurrent);
   prefs.end();
   
   if (reboot) Services.restartSystem();
@@ -293,8 +274,7 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
   uint8_t idx=0;
   if (!doc["calib"]["dayOfCalib"].isNull()) configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
   if (!doc["calib"]["hourOfCalib"].isNull()) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
-  if (!doc["calib"]["cycles"].isNull()) configFlash.valvesConfig.learnAfterMovements=doc["calib"]["cycles"];
-  
+ 
   
   for (uint8_t i=chunkStart-1; i<chunkEnd; i++) {
     if (!doc["valves"][idx]["name"].isNull()) strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][idx]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
@@ -309,9 +289,24 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
     }
     idx++;
   }
-  if (!doc["motor"]["lowC"].isNull()) configFlash.motorConfig.maxLowCurrent=doc["motor"]["lowC"];
-  if (!doc["motor"]["highC"].isNull()) configFlash.motorConfig.maxHighCurrent=doc["motor"]["highC"];
   
+  if (!doc["calib"]["cycles"].isNull()) {
+    StmApp.learnAfterMovements=doc["calib"]["cycles"];
+    StmApp.setLearnAfterMovements();
+  }
+  if (!doc["motor"]["lowC"].isNull()) {
+    StmApp.motorChars.maxLowCurrent=doc["motor"]["lowC"];
+    StmApp.setMotorCharsActive=true;
+  }
+  if (!doc["motor"]["highC"].isNull()) {
+    StmApp.motorChars.maxHighCurrent=doc["motor"]["highC"];
+    StmApp.setMotorCharsActive=true;
+  }
+  
+  if (StmApp.setMotorCharsActive) {
+    StmApp.setMotorChars();
+    StmApp.setMotorCharsActive=false;
+  }
  
   if ((StmApp.setTempIdxActive) && (chunkEnd==12)) {
     StmApp.setTempIdx();

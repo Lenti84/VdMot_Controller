@@ -89,6 +89,7 @@ CStmApp::CStmApp()
     tempsPrivCount=0;
     setTempIdxActive=false;
     waitForFinishQueue=false;
+    setMotorCharsActive=false;
 }
 
 void  CStmApp::app_setup() {
@@ -171,6 +172,17 @@ void CStmApp::setTempIdx()
     }
 }
 
+void CStmApp::setLearnAfterMovements()
+{
+    waitForFinishQueue=true;
+    app_cmd(APP_PRE_SETLEARNMOVEM,String(learnAfterMovements));   
+}
+
+void CStmApp::setMotorChars()
+{
+    waitForFinishQueue=true;
+    app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+String(" ")+String(motorChars.maxHighCurrent));   
+}
 
 void  CStmApp::app_loop() 
 {

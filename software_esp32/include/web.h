@@ -45,6 +45,7 @@
 #include "VdmNet.h"
 #include "VdmConfig.h"
 #include "globals.h"
+#include "StmApp.h"
 
 class CWeb
 {
@@ -61,7 +62,7 @@ public:
   String getNetInfo(VDM_NETWORK_INFO networkInfo); 
   String getNetConfig (VDM_NETWORK_CONFIG netConfig);
   String getProtConfig (VDM_PROTOCOL_CONFIG protConfig);
-  String getValvesConfig (VDM_VALVES_CONFIG valvesConfig,VDM_MOTOR_CONFIG motorConfig);
+  String getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorConfig);
   String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig);
   String getTempSensorsID();
   String getSysDynInfo();

@@ -48,6 +48,7 @@
 #include "WiFi.h"
 #include "helper.h"
 #include "stm32.h"
+#include "stmApp.h"
 
 
 CWeb Web;
@@ -98,11 +99,11 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
   return result;  
 }
 
-String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,VDM_MOTOR_CONFIG motorConfig)
+String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorConfig)
 {
   String result = "{\"calib\":{\"dayOfCalib\":"+String(valvesConfig.dayOfCalib) + "," +
                    "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib)+ "," +
-                    "\"cycles\":"+String(valvesConfig.learnAfterMovements)+ "}," +
+                    "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
                    "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
                    "\"highC\":"+String(motorConfig.maxHighCurrent)+ "}," +
                    "\"valves\":[" ;

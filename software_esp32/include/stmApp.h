@@ -62,6 +62,11 @@ typedef struct  {
   char id[25];
 } TEMPID_STRUC;
 
+typedef struct {
+  uint8_t maxHighCurrent;
+  uint8_t maxLowCurrent;
+} MOTOR_CHARS;
+
 
 #define APP_PRE_SETTXENA			      "stxen"   // not used in stm
 #define APP_PRE_GETSUPPLYSENS		    "gspst"   // not used in stm
@@ -78,6 +83,7 @@ typedef struct  {
 #define APP_PRE_GETONEWIRESETT		  "gvlon"	  	
 #define APP_PRE_GETVLVDATA			    "gvlvd"			
 #define APP_PRE_SETVLLEARN          "staln"   // one valve
+#define APP_PRE_SETLEARNMOVEM       "stlnm"    
 
 #define APP_PRE_GETVERSION			    "gvers"
 #define APP_PRE_GETTARGETPOS       	"gtgtp"			
@@ -119,6 +125,8 @@ public:
   void valvesAssembly();
   void scanTemps();
   void setTempIdx();
+  void setLearnAfterMovements();
+  void setMotorChars();
   void getParametersFromSTM();
 
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
@@ -127,6 +135,10 @@ public:
   uint8_t tempsCount;
   bool setTempIdxActive;
   bool waitForFinishQueue;
+  MOTOR_CHARS motorChars;
+  bool setMotorCharsActive;
+  uint32_t learnAfterMovements;
+
 private:
   void app_check_data();
   void app_comm_machine();
