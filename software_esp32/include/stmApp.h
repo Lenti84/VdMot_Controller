@@ -63,8 +63,8 @@ typedef struct  {
 } TEMPID_STRUC;
 
 typedef struct {
-  uint8_t maxHighCurrent;
-  uint8_t maxLowCurrent;
+  uint16_t maxHighCurrent;
+  uint16_t maxLowCurrent;
 } MOTOR_CHARS;
 
 
@@ -83,7 +83,8 @@ typedef struct {
 #define APP_PRE_GETONEWIRESETT		  "gvlon"	  	
 #define APP_PRE_GETVLVDATA			    "gvlvd"			
 #define APP_PRE_SETVLLEARN          "staln"   // one valve
-#define APP_PRE_SETLEARNMOVEM       "stlnm"    
+#define APP_PRE_SETLEARNMOVEM       "stlnm" 
+#define APP_PRE_GETLEARNMOVEM       "gtlnm"   
 
 #define APP_PRE_GETVERSION			    "gvers"
 #define APP_PRE_GETTARGETPOS       	"gtgtp"			
@@ -108,6 +109,8 @@ typedef struct {
 #define VLV_STATE_FULLOPEN  0x07 // go directly full open
 
 #define COMM_ALIVE_CYCLE      30        // send "Alive" cycle in 100 ms cycles
+
+#define ARG_DELIMITER       String(" ")
 
 enum COMM_STATE {COMM_IDLE,COMM_ALIVE,COMM_SENDTARGET,COMM_CHECKTARGET,COMM_GETDATA,
                   COMM_GETONEWIRE,COMM_GETONEWIRECOUNT,COMM_HANDLEQUEUE};
@@ -145,7 +148,9 @@ private:
   void app_alive_check();
   void app_web_cmd_check();
   int8_t findTempID(char* ID);
+  void setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2); 
   
+  bool fastQueueMode;
   uint16_t stm32alive;
   bool settarget_check;
   uint8_t target_position_mirror[ACTUATOR_COUNT];
@@ -166,11 +171,11 @@ private:
   char*	  cmdptrend;
   char    cmd[50];
   char		arg0[1200];	
-  char    arg1[20];		
-  char    arg2[20];
-  char    arg3[20];
-  char    arg4[20];
-  char    arg5[20];
+  char    arg1[30];		
+  char    arg2[30];
+  char    arg3[30];
+  char    arg4[30];
+  char    arg5[30];
 	char*		arg0ptr;
 	char*		arg1ptr;
   char*		arg2ptr;

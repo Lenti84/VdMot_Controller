@@ -801,6 +801,8 @@
 		var UserPwdHasChanged=false;
 		var brokerPwdHasChanged=false;
 		var TIdxHasChanged=false;
+		var motorCharsHasChanged=false;
+		var movCalibHasChanged=false;
 		var showAllTabs=window.location.href.startsWith('file');
 		var getStatusInterval;
 		var dataTempSensorsID=null;
@@ -890,13 +892,14 @@
 			showAllTabsNow();
 			setTimeout(function() {
 				loadStmData();	
-			},5000);
+			},7000);
 		}		
 		
 		function loadStmData() {
 			getTempSensorsID();
 			getTempsStatus();
 			getSystemInfo();
+			getValvesConfig();
 		}
 				
 		async function checkLogin() {
@@ -1216,6 +1219,17 @@
 			id("fileAllDelete").onclick = function(){
 				fileAllDelete();
 			};
+			
+			id ("vCfg-lowC").onchange = function (){
+				motorCharsHasChanged=true;
+			}
+			id ("vCfg-highC").onchange = function (){
+				motorCharsHasChanged=true;
+			}
+			id ("vCfg-movCalib").onchange = function (){
+				movCalibHasChanged=true;
+			}
+			
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
 			  modal.style.display = "none";
@@ -1449,16 +1463,20 @@
 			valvesCfg.chunkEnd=chunkEnd;
 			if (postMotor===true) {
 				valvesCalib.dayOfCalib=dCalib;
-				valvesCalib.cycles=id('vCfg-movCalib').value;
-				valvesCfg.calib=valvesCalib;
-				if (id("vCfg-lowC").value<0.5) id("vCfg-lowC").value=0.5;
-				if (id("vCfg-lowC").value>5) id("vCfg-lowC").value=5;
-				if (id("vCfg-highC").value<0.5) id("vCfg-highC").value=0.5;
-				if (id("vCfg-highC").value>5) id("vCfg-highC").value=5;
-				
-				motor.lowC=Math.round(id("vCfg-lowC").value*10);
-				motor.highC=Math.round(id("vCfg-highC").value*10);
-				valvesCfg.motor=motor;
+				if (movCalibHasChanged===true){
+					valvesCalib.cycles=id('vCfg-movCalib').value;
+					valvesCfg.calib=valvesCalib;
+				}
+				if (motorCharsHasChanged===true) {
+					if (id("vCfg-lowC").value<0.5) id("vCfg-lowC").value=0.5;
+					if (id("vCfg-lowC").value>5) id("vCfg-lowC").value=5;
+					if (id("vCfg-highC").value<0.5) id("vCfg-highC").value=0.5;
+					if (id("vCfg-highC").value>5) id("vCfg-highC").value=5;
+					
+					motor.lowC=Math.round(id("vCfg-lowC").value*10);
+					motor.highC=Math.round(id("vCfg-highC").value*10);
+					valvesCfg.motor=motor;
+				}
 			}
 			await postJson("valvesconfig",JSON.stringify(valvesCfg));
 		}
@@ -1506,7 +1524,7 @@
 		
 		function fillValvesTable (valvesJson) {
 			const ValvesTable = id('valvesTable');
-			const States = ["idle","opens","closes","blocked","unknown","no valve","full open"];
+			const States = ["idle","opens","closes","blocked","unknown","no valve","full open","connected"];
 			valvesJson.forEach(function(item, index){
 				ValvesTable.rows[item.idx].cells[2].textContent = item.pos;	
 				ValvesTable.rows[item.idx].cells[3].textContent = item.meanCur;

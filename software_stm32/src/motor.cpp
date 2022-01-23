@@ -116,8 +116,8 @@ int valvenr;
 byte poschangecmd;
 unsigned int m_meancurrent;           // mean current in mA
 
-int16_t currentbound_low_fac = 30;     // lower current limit factor for detection of end stop
-int16_t currentbound_high_fac = 30;    // upper current limit factor for detection of end stop
+uint8_t currentbound_low_fac = 30;     // lower current limit factor for detection of end stop
+uint8_t currentbound_high_fac = 30;    // upper current limit factor for detection of end stop
 
 //volatile uint32_t revcounter;
 
@@ -163,8 +163,10 @@ byte valve_setup () {
   else
     COMM_DBG.println(F("Can't set ITimer0. Select another freq. or timer"));
 
-  currentbound_low_fac = eep_content.currentbound_low_fac;
-  currentbound_high_fac = eep_content.currentbound_high_fac;
+  if ((eep_content.currentbound_low_fac>=10) && (eep_content.currentbound_low_fac<=50))
+    currentbound_low_fac = eep_content.currentbound_low_fac;
+  if ((eep_content.currentbound_high_fac>=10) && (eep_content.currentbound_high_fac<=50))
+    currentbound_high_fac = eep_content.currentbound_high_fac;
 
   return 0;
 }
@@ -654,8 +656,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     result = M_RES_TURNING;
                     isr_timer_go = 1;
 
-                    currentbound_low = (int) m_meancurrent * (-currentbound_low_fac); //10 * -3;
-                    currentbound_high = (int) m_meancurrent * currentbound_high_fac; //10 * 3;
+                    currentbound_low = (int) (m_meancurrent * -1 * currentbound_low_fac); //10 * -3;
+                    currentbound_high = (int) (m_meancurrent * currentbound_high_fac); //10 * 3;
 
                     meancurrent_mem = 0;
                     meancurrent_cnt = 0;

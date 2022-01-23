@@ -36,6 +36,8 @@
 #include "temperature.h"
 #include "eeprom.h"
 #include "DallasTemperature.h"
+#include <string.h>
+#include <stdio.h>
 
 #define COMM_SER				Serial1		// serial port to ESP32
 //#define COMM_DBG				Serial3		// serial port for debugging
@@ -46,6 +48,36 @@
 #define COMM_MAX_ARG_LEN		20			// max length of one command argument
 #define SEND_BUFFER_LEN			100
 
+
+void setValveIDSensor (uint8_t idx,char* pString, uint8_t* pSensor)
+{
+	uint8_t currAddress[8];
+	uint16_t sum=0;
+
+	if (idx >= 0 && idx < ACTUATOR_COUNT) {
+		// first sensor address
+		if(strlen(pString)==23) {
+			// from end to beginning
+			for(uint8_t xx=0;xx<8;xx++) {
+				char* cmdptr=strchr(pString,'-');
+				uint8_t code=strtol(pString, &cmdptr, 16);
+				currAddress[xx] = code;
+				sum+=code;
+				pString+=3;
+			}
+			
+			if (sensors.validAddress(currAddress)) {
+				memcpy(pSensor,currAddress,8);	
+				// match sensor address to valve struct at runtime, otherwise restart needed
+				//app_match_sensors();
+			} else {
+				if (sum==0) memset(pSensor,0x0,8);
+			}
+			eeprom_changed();
+			app_match_sensors();
+		}
+	}
+}
 
 void communication_setup (void) {
 	
@@ -146,9 +178,7 @@ int16_t communication_loop (void) {
 		// evaluate data
 		// ****************************************************************************************
 		// clear sendbuffer, otherwise there is something from older commands
-		//memset (sendbuffer,0x0,sizeof(sendbuffer));
-		#warning Just a test, maybe this is sufficient
-		sendbuffer[0] = '\0';			
+		memset (sendbuffer,0x0,sizeof(sendbuffer));	
 		
 		// set target position
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -203,7 +233,7 @@ int16_t communication_loop (void) {
 				//if(0) 
 				if (x < ACTUATOR_COUNT) 
 				{
-					sendbuffer[0] = '\0';		// sendbuffer reset
+					memset (sendbuffer,0x0,sizeof(sendbuffer));			// sendbuffer reset
 					//COMM_SER.println("sending new target value");
                     
 					strcat(sendbuffer, APP_PRE_GETVLVDATA);
@@ -280,7 +310,7 @@ int16_t communication_loop (void) {
 
 				if(x<MAXSENSORCOUNT)
 				{
-					sendbuffer[0] = '\0';			// reset sendbuffer
+					memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
 
 					// 8 Byte adress
 					for (uint8_t i = 0; i < 8; i++)
@@ -330,7 +360,7 @@ int16_t communication_loop (void) {
 					// 1st sensor 8 Byte adress
 					y = myvalves[x].sensorindex1;					
 					if(y!=VALVE_SENSOR_UNKNOWN) {
-						sendbuffer[0] = '\0';			// reset sendbuffer
+						memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
 						for (uint8_t i = 0; i < 8; i++)
 						{
 							if (tempsensors[y].address[i] < 16) strcat(sendbuffer, "0");
@@ -348,7 +378,7 @@ int16_t communication_loop (void) {
 					// 2nd sensor 8 Byte adress
 					y = myvalves[x].sensorindex2;
 					if(y!=VALVE_SENSOR_UNKNOWN) {
-						sendbuffer[0] = '\0';			// reset sendbuffer
+						memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
 						for (uint8_t i = 0; i < 8; i++)
 						{
 							if (tempsensors[y].address[i] < 16) strcat(sendbuffer, "0");
@@ -413,12 +443,26 @@ int16_t communication_loop (void) {
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1 && x >= 0) {
-				if( app_set_learnmovements(x) == 0) COMM_DBG.println(x, DEC);
+				if(app_set_learnmovements(x) == 0) {
+					COMM_DBG.println(x, DEC);
+					eep_content.numberOfMovements=x;
+					eeprom_changed();
+				}
 				else COMM_DBG.println("- error");
 			}
 			else {
 				COMM_DBG.println("- error");
 			}
+		}
+
+		// get valve learning movements
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETLEARNMOVEM,&cmd[0],5) == 0) {
+			COMM_DBG.print("get valve learning movements");
+			COMM_SER.print(APP_PRE_GETLEARNMOVEM);
+			COMM_SER.print(" ");			
+			COMM_SER.print(learning_movements, DEC);
+			COMM_SER.println(" ");			
 		}
 
 
@@ -515,64 +559,10 @@ int16_t communication_loop (void) {
 		else if(memcmp(APP_PRE_SETVLVSENSOR,&cmd[0],5) == 0) {
 			x = atoi(arg0ptr); // valve index
 			
-			if(argcnt == 1) {				
-				COMM_DBG.println("comm: set vavle sensors");
-				if (x >= 0 && x < ACTUATOR_COUNT) 
-				{
-					// first sensor address
-					if(strlen(arg1ptr)==23) {
-
-						// from end to beginning
-						for(unsigned int xx=0;xx<=7;xx++) {
-							cmdptr=strrchr(arg1ptr,'-');
-							currAddress[7-xx] = atoi(cmdptr+1);
-							*cmdptr = '\0';
-						}
-						
-						if (sensors.validAddress(currAddress)) {
-							eep_content.owsensors1[x].familycode = currAddress[0];
-							eep_content.owsensors1[x].romcode[0] = currAddress[1];
-							eep_content.owsensors1[x].romcode[1] = currAddress[2];
-							eep_content.owsensors1[x].romcode[2] = currAddress[3];
-							eep_content.owsensors1[x].romcode[3] = currAddress[4];
-							eep_content.owsensors1[x].romcode[4] = currAddress[5];
-							eep_content.owsensors1[x].romcode[5] = currAddress[6];
-							eep_content.owsensors1[x].crc = currAddress[7];
-						
-							eeprom_changed();	
-							
-  							// match sensor address to valve struct at runtime, otherwise restart needed
-  							app_match_sensors();
-						}
-					}
-
-					// second sensor address
-					if(strlen(arg2ptr)==23) {
-
-						// from end to beginning
-						for(unsigned int xx=0;xx<=7;xx++) {
-							cmdptr=strrchr(arg2ptr,'-');
-							currAddress[7-xx] = atoi(cmdptr+1);
-							*cmdptr = '\0';
-						}
-						
-						if (sensors.validAddress(currAddress)) {
-							eep_content.owsensors2[x].familycode = currAddress[0];
-							eep_content.owsensors2[x].romcode[0] = currAddress[1];
-							eep_content.owsensors2[x].romcode[1] = currAddress[2];
-							eep_content.owsensors2[x].romcode[2] = currAddress[3];
-							eep_content.owsensors2[x].romcode[3] = currAddress[4];
-							eep_content.owsensors2[x].romcode[4] = currAddress[5];
-							eep_content.owsensors2[x].romcode[5] = currAddress[6];
-							eep_content.owsensors2[x].crc = currAddress[7];
-							
-							eeprom_changed();	
-							
-  							// match sensor address to valve struct at runtime, otherwise restart needed
-  							app_match_sensors();
-						}
-					}			
-				}
+			if(argcnt == 3) {				
+				COMM_DBG.println("comm: set valve sensors");
+				setValveIDSensor (x,arg1ptr,(uint8_t*) &eep_content.owsensors1[x]);
+				setValveIDSensor (x,arg2ptr,(uint8_t*) &eep_content.owsensors2[x]);
 			}
 			else COMM_DBG.println("to few arguments");
 		}
@@ -644,7 +634,7 @@ int16_t communication_loop (void) {
 			COMM_SER.print(APP_PRE_GETMOTCHARS);
 			COMM_SER.print(" ");			
 			COMM_SER.print(currentbound_low_fac, DEC);
-			COMM_SER.println(" ");		
+			COMM_SER.print(" ");		
 			COMM_SER.print(currentbound_high_fac, DEC);
 			COMM_SER.println(" ");			
 		} 

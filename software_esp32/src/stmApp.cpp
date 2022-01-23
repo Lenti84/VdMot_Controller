@@ -63,7 +63,8 @@ static const char* commCmds [] =
                {APP_PRE_SETTARGETPOS,APP_PRE_GETONEWIRECNT,APP_PRE_GETONEWIREDATA,
                 APP_PRE_SETONEWIRESEARCH,APP_PRE_SETALLVLVOPEN,APP_PRE_GETVLVDATA,
                 APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETTARGETPOS,
-                APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,APP_PRE_SETVLVSENSOR,NULL};
+                APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,APP_PRE_SETVLVSENSOR,
+                APP_PRE_GETONEWIRESETT,APP_PRE_SETLEARNMOVEM,APP_PRE_GETLEARNMOVEM,NULL};
 
 
 CStmApp StmApp;
@@ -90,6 +91,7 @@ CStmApp::CStmApp()
     setTempIdxActive=false;
     waitForFinishQueue=false;
     setMotorCharsActive=false;
+    fastQueueMode=false;
 }
 
 void  CStmApp::app_setup() {
@@ -102,6 +104,8 @@ void  CStmApp::app_setup() {
         actuators[x].state = VLV_STATE_IDLE;
         actuators[x].temp1 = -500;
         actuators[x].temp2 = -500;
+        actuators[x].tIdx1 = 0;
+        actuators[x].tIdx2 = 0;
    }
 
     for (uint8_t x = 0; x<ACTUATOR_COUNT; x++) {
@@ -124,10 +128,12 @@ void CStmApp::valvesAssembly()
 
 void CStmApp::getParametersFromSTM()
 {
+  fastQueueMode=true;  
   app_cmd(APP_PRE_GETVERSION);
   app_cmd(APP_PRE_GETMOTCHARS);
+  app_cmd(APP_PRE_GETLEARNMOVEM);
   for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
-    //app_cmd(    todo get temp index   
+    app_cmd(APP_PRE_GETONEWIRESETT,String(i));   
   }
 }
 
@@ -146,29 +152,26 @@ void CStmApp::setTempIdx()
     String s2;
     uint8_t tIdx1;
     uint8_t tIdx2;
-    bool pushNow;
+    
     for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
         tIdx1=StmApp.actuators[i].tIdx1;
         tIdx2=StmApp.actuators[i].tIdx2;
-        pushNow=false;
         s1=APP_PRE_UNDEFSENSOR;
         s2=APP_PRE_UNDEFSENSOR;
         if (tIdx1>0) {
-            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tIdx1].ID)>0) {
-                s1=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx1].ID;
-                pushNow=true;
+            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tIdx1-1].ID)>0) {
+                s1=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx1-1].ID;
             }   
         }
         if (tIdx2>0) {
-            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tIdx2].ID)>0) {
-                s2=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx2].ID; 
-                pushNow=true;  
+            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tIdx2-1].ID)>0) {
+                s2=VdmConfig.configFlash.tempsConfig.tempConfig[tIdx2-1].ID; 
             }
         }
-        if (pushNow) {
-            waitForFinishQueue=true;
-            app_cmd(APP_PRE_SETVLVSENSOR,s1+String(" ")+s2);
-        }
+        
+        waitForFinishQueue=true;
+        fastQueueMode=true;
+        app_cmd(APP_PRE_SETVLVSENSOR,String(i)+ARG_DELIMITER+s1+ARG_DELIMITER+s2);
     }
 }
 
@@ -181,7 +184,7 @@ void CStmApp::setLearnAfterMovements()
 void CStmApp::setMotorChars()
 {
     waitForFinishQueue=true;
-    app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+String(" ")+String(motorChars.maxHighCurrent));   
+    app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent));   
 }
 
 void  CStmApp::app_loop() 
@@ -207,8 +210,8 @@ bool CStmApp::checkCmdIsAvailable (String thisCmd)
 void  CStmApp::app_cmd(String command,String args) 
 {    
     if (checkCmdIsAvailable(command)) {
-        String s=command+String(" ");
-        if (args!="") s+=args+" ";
+        String s=command+ARG_DELIMITER;
+        if (args!="") s+=args+ARG_DELIMITER;
         UART_DBG.println("push "+s);
         Queue.push(s);
     }
@@ -222,6 +225,15 @@ int8_t CStmApp::findTempID(char* ID)
         }
     }
     return -1;
+}
+
+void CStmApp::setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2)
+{
+    int8_t sensorIdx;
+    sensorIdx=findTempID(sensor1);
+    if (sensorIdx>=0) actuators[valveIndex].tIdx1=sensorIdx+1; else actuators[valveIndex].tIdx1=0;
+    sensorIdx=findTempID(sensor2);
+    if (sensorIdx>=0) actuators[valveIndex].tIdx2=sensorIdx+1; else actuators[valveIndex].tIdx2=0;
 }
 
 void  CStmApp::app_check_data() 
@@ -418,6 +430,28 @@ void  CStmApp::app_check_data()
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
+
+        else if(memcmp(APP_PRE_GETONEWIRESETT,cmd,5) == 0) {
+            if(argcnt == 3) {
+                setSensorIndex(atoi(arg0ptr),arg1ptr,arg2ptr);
+            }
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+        }
+
+        else if(memcmp(APP_PRE_GETLEARNMOVEM,cmd,5) == 0) {
+            if(argcnt == 1) {
+                learnAfterMovements=atoi(arg0ptr);
+            }
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+        }
+
+        else if(memcmp(APP_PRE_GETMOTCHARS,cmd,5) == 0) {
+            if(argcnt == 2) {
+                motorChars.maxLowCurrent=atoi(arg0ptr);
+                motorChars.maxHighCurrent=atoi(arg1ptr);
+            }
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+        }
         cmd_buffer="";
     }
 }
@@ -564,13 +598,19 @@ void  CStmApp::app_comm_machine()
                 break;
 
         case COMM_HANDLEQUEUE:
-                commstate = COMM_IDLE;
                 if ((cmd_buffer=="") && (Queue.available()>0)) {
                     memset(&cmd_buffer,0x0,sizeof(cmd_buffer));
-                    cmd_buffer=Queue.pop()+String(" ");
+                    cmd_buffer=Queue.pop();
                     UART_DBG.println("pop "+String(cmd_buffer));
                     UART_STM32.println(cmd_buffer);
                 }
+                if (fastQueueMode) {
+                    if (Queue.available()==0) {
+                        fastQueueMode=false;
+                        commstate = COMM_IDLE;
+                    }
+                } else commstate = COMM_IDLE;
+                
                 break;
         
         default:    

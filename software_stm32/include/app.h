@@ -85,7 +85,7 @@ struct valve {
 };
 
 extern struct valve myvalves[ACTUATOR_COUNT];
-
+extern unsigned int learning_movements;
 
 #endif //_APP_H
 
