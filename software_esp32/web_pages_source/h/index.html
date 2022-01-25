@@ -321,13 +321,13 @@
 	
 	<div id="Status" class="tabContent">
 	<div class="container3">
-		<div class="rtabframe3" style="height:430px">  
+		<div class="rtabframe3">  
 		<h3>Valves</h3>	
 		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
 		
-		<div class="rtabframe" style="height:430px;overflow-y:auto" id="tempStatusTabFrame">  
+		<div class="rtabframe" style="overflow-y:auto" id="tempStatusTabFrame">  
 		<h3>Temperature</h3>
 		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
@@ -872,7 +872,6 @@
 		}
 		
 		function OnStart() {
-			makeValvesTable();
 			makeTempsTable(0);
 			makeCfgValvesTable();
 			makeCfgTempTable();
@@ -892,7 +891,7 @@
 			showAllTabsNow();
 			setTimeout(function() {
 				loadStmData();	
-			},7000);
+			},5000);
 		}		
 		
 		function loadStmData() {
@@ -931,15 +930,16 @@
 			}
 		}
 		
-		function makeValvesTable() {
-			const ValvesTable = id('valvesTable');	  
-			for (let row=0; row<13; row++) { 
+		function makeValvesTable(valvesJson) {
+			const ValvesTable = id('valvesTable');
+			ValvesTable.innerHTML="";
+			for (let row=0; row<valvesJson.length+1; row++) { 
 				const thisRow = valvesTable.insertRow(0);
 				for (let i = 0; i < 9; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
-			for (row=1;row<13;row++) {
+			for (row=1;row<valvesJson.length+1;row++) {
 				let thiscell = ValvesTable.rows[row].cells[5];
 				let el = document.createElement('input');
 				el.setAttribute('type', 'number');
@@ -955,13 +955,13 @@
 				thiscell = ValvesTable.rows[row].cells[6];
 				el = document.createElement('input');
 				el.setAttribute('type', 'button');
-				el.setAttribute('name', 'setValveButton' + row);
-				el.setAttribute('id', 'setValveButton' + row);
+				el.setAttribute('name', 'setValveButton-' + valvesJson[row-1].idx);
+				el.setAttribute('id', 'setValveButton-' + row);
 				el.setAttribute('style','height:20px;width:35px;visibility:hidden;');
 				el.setAttribute('value', 'Set');
+				el.setAttribute('onclick','setValve(this);');
 				thiscell.appendChild(el);
 				valvesTable.rows[row].cells[0].innerHTML = row;
-				
 			}
 			valvesTable.rows[0].cells[0].textContent = 'No';
 			valvesTable.rows[0].cells[1].textContent = 'Name';
@@ -977,6 +977,7 @@
 			el.setAttribute('type', 'checkbox');
 			el.setAttribute('name', 'activeSetValves');
 			el.setAttribute('id', 'activeSetValves');
+			el.setAttribute('onclick','activateSetValves();');
 			thiscell.appendChild(el);
 		}
 		
@@ -997,6 +998,7 @@
 			tempsTable.rows[0].cells[0].textContent = 'No';
 			tempsTable.rows[0].cells[1].textContent = 'Name';
 			tempsTable.rows[0].cells[2].textContent = 'C';
+			if (NoOfSensors>12) tempsTable.style.height="430px";
 		}
 		
 		function makeCfgValvesTable() {
@@ -1196,17 +1198,9 @@
 				brokerPwdHasChanged=true;
 			};
 			
-			id("activeSetValves").onclick = function(){
-				activateSetValves();
-			};
-			
 			id("tempSensorScan").onclick = function(){
 				scanTSensors();
 			};
-			
-			for (let i=1; i<13;i++) { 
-				generateOnValveClick(i);
-			}
 			
 			id("login-button").onclick = function(){
 				doLogin();
@@ -1248,21 +1242,17 @@
 			TIdxHasChanged=true;
 		}
 		
-		function generateOnValveClick (nr) {
-			let el = id("setValveButton" + nr);
-				el.onclick = function () {
-					setValve(nr);
-				}
-		}
-		
 		function activateSetValves(){
 			let checked=id("activeSetValves").checked ;
-			for (i=1; i<13;i++){
-				id('setValveP'+i).readOnly=!checked;
-				if (checked) 
-					id('setValveButton'+i).style.visibility="visible"
+			const valvesTable = id('valvesTable');
+			const valvesCfgTable = id('cfgValvesTable');
+			for (i=1; i<valvesTable.rows.length;i++){
+				let active=id('cfgVActive'+i).checked; 
+				id('setValveP'+i).readOnly=!(checked && active);
+				if (checked && active) 
+					id('setValveButton-'+i).style.visibility="visible"
 				else
-					id('setValveButton'+i).style.visibility="hidden";
+					id('setValveButton-'+i).style.visibility="hidden";
 			}
 		}
 		
@@ -1506,8 +1496,12 @@
 			await postJson("cmd",cmd);
 		}
 		
-		async function setValve(valveNo){
-			const value = id('setValveP'+valveNo).value;
+		async function setValve(thisButton){
+			const buttonName = thisButton.name;
+			const buttonId= thisButton.id;
+			let valveNo = buttonName.slice(buttonName.indexOf("-")+1);
+			let valveRow=buttonId.slice(buttonId.indexOf("-")+1);
+			const value = id('setValveP'+valveRow).value;
 			if (value){
 				let setThisValve = {};
 				setThisValve.valve = valveNo;
@@ -1524,19 +1518,25 @@
 		
 		function fillValvesTable (valvesJson) {
 			const ValvesTable = id('valvesTable');
+			if (ValvesTable.rows.length != valvesJson.length+1) {
+				makeValvesTable(valvesJson);
+			}
 			const States = ["idle","opens","closes","blocked","unknown","no valve","full open","connected"];
 			valvesJson.forEach(function(item, index){
-				ValvesTable.rows[item.idx].cells[2].textContent = item.pos;	
-				ValvesTable.rows[item.idx].cells[3].textContent = item.meanCur;
-				ValvesTable.rows[item.idx].cells[4].textContent = States[item.state-1];
+				ValvesTable.rows[index+1].cells[0].textContent = item.idx;	
+				ValvesTable.rows[index+1].cells[1].textContent = item.name;	
+				ValvesTable.rows[index+1].cells[2].textContent = item.pos;	
+				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
+				ValvesTable.rows[index+1].cells[4].textContent = States[item.state-1];
 				if (item.temp1)
-					ValvesTable.rows[item.idx].cells[7].textContent = item.temp1;
+					ValvesTable.rows[index+1].cells[7].textContent = item.temp1;
+				else ValvesTable.rows[index+1].cells[7].textContent = "";
 				if (item.temp2)
-					ValvesTable.rows[item.idx].cells[8].textContent = item.temp2;
+					ValvesTable.rows[index+1].cells[8].textContent = item.temp2;
+				else ValvesTable.rows[index+1].cells[8].textContent = "";
 				if (!(id('activeSetValves').checked)) {
-					id('setValveP'+item.idx).value=item.targetPos;
+					id('setValveP'+(index+1)).value=item.targetPos;
 				}
-				
 			});
 		}
 		
@@ -1544,7 +1544,6 @@
 			const ValvesTable = id('valvesTable');
 			const cfgValvesTable = id('cfgValvesTable');
 			for (let row = 1; row<13; row++) {
-				ValvesTable.rows[row].cells[1].textContent = cfgValvesJson.valves[row-1].name;
 				id('cfgVName'+row).value = cfgValvesJson.valves[row-1].name;
 				id('cfgVActive'+row).checked = cfgValvesJson.valves[row-1].active;
 				id('cfgVTIdx1-'+row).value = cfgValvesJson.valves[row-1].tIdx1;

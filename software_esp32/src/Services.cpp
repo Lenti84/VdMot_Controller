@@ -86,8 +86,9 @@ void CServices::runOnceDelayed()
 
 void CServices::restartSystem() {
     if (StmApp.waitForFinishQueue) {
-         UART_DBG.println("wait for finish queue");
-        VdmTask.taskIdResetSystem = taskManager.scheduleOnce(10*1000, [] {
+        UART_DBG.println("wait for finish queue");
+        VdmTask.taskIdResetSystem = taskManager.scheduleOnce(30*1000, [] {
+                UART_DBG.println("wait for finish queue timeout, restart now");
                 ESP.restart();
             });
         VdmTask.taskIdwaitForFinishQueue = taskManager.scheduleFixedRate(500, [] {
@@ -101,7 +102,7 @@ void CServices::restartSystem() {
         });
     } else {
       UART_DBG.println("normal restart");
-      VdmTask.taskIdResetSystem = taskManager.scheduleOnce(1000, [] {
+      VdmTask.taskIdResetSystem = taskManager.scheduleOnce(2000, [] {
                 ESP.restart();
             });
     }

@@ -74,6 +74,11 @@ void temperature_setup() {
 
     COMM_DBG.println("starting 1-wire setup"); 
 
+    for (uint8_t i=0; i<MAXSENSORCOUNT; i++)
+    {
+      memset (tempsensors[i].address,0x0,8);
+    }
+
     sensors.begin();
   
     sensors.setWaitForConversion(false);
@@ -88,7 +93,6 @@ void temperature_setup() {
     for (unsigned int i=0; i<numberOfDevices; i++)
     {
         sensors.getAddress(tempsensors[i].address, i);
-        //tempsensors[i].address = currAddress;
         printAddress(tempsensors[i].address);
         COMM_DBG.println();
     }

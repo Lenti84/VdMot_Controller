@@ -50,6 +50,7 @@
 #include "VdmConfig.h"
 #include "VdmTask.h"
 #include "helper.h"
+#include "web.h"
 
 CMqtt Mqtt;
 
@@ -251,23 +252,25 @@ void CMqtt::publish_valves ()
     for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
         tempIdx=VdmConfig.findTempID(StmApp.temps[x].id);
         if (tempIdx>=0) {
-            memset(topicstr,0x0,sizeof(topicstr));
-            memset(nrstr,0x0,sizeof(nrstr));
-            itoa((x+1), nrstr, 10);
-            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0)
-                strncpy(nrstr,VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name,sizeof(nrstr));
-            // prepare prefix
-            strncat(topicstr, mqtt_tempsTopic,sizeof(topicstr));
-            strncat(topicstr, nrstr,sizeof(topicstr));
-            len = strlen(topicstr);
-            // id
-            strncat(topicstr, "/id",sizeof(topicstr));     
-            mqtt_client.publish(topicstr,StmApp.temps[x].id);
-            // actual value
-            topicstr[len] = '\0';
-            strncat(topicstr, "/value",sizeof(topicstr));
-            String s = String(((float)StmApp.temps[x].temperature)/10,1);     
-            mqtt_client.publish(topicstr,(const char*) &s);
+            if (!Web.findIdInValve (tempIdx)) {
+                memset(topicstr,0x0,sizeof(topicstr));
+                memset(nrstr,0x0,sizeof(nrstr));
+                itoa((x+1), nrstr, 10);
+                if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0)
+                    strncpy(nrstr,VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name,sizeof(nrstr));
+                // prepare prefix
+                strncat(topicstr, mqtt_tempsTopic,sizeof(topicstr));
+                strncat(topicstr, nrstr,sizeof(topicstr));
+                len = strlen(topicstr);
+                // id
+                strncat(topicstr, "/id",sizeof(topicstr));     
+                mqtt_client.publish(topicstr,StmApp.temps[x].id);
+                // actual value
+                topicstr[len] = '\0';
+                strncat(topicstr, "/value",sizeof(topicstr));
+                String s = String(((float)StmApp.temps[x].temperature)/10,1);     
+                mqtt_client.publish(topicstr,(const char*) &s);
+            }
         }
     }
     

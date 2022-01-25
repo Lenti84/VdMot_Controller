@@ -68,14 +68,57 @@ void setValveIDSensor (uint8_t idx,char* pString, uint8_t* pSensor)
 			
 			if (sensors.validAddress(currAddress)) {
 				memcpy(pSensor,currAddress,8);	
-				// match sensor address to valve struct at runtime, otherwise restart needed
-				//app_match_sensors();
 			} else {
+				// match sensor address to valve struct at runtime, otherwise restart needed
 				if (sum==0) memset(pSensor,0x0,8);
 			}
 			eeprom_changed();
 			app_match_sensors();
 		}
+	}
+}
+
+void sensorID2Ascii (uint8_t* sID, char* idBuf)
+{
+	char valBuffer[10];
+	// 8 Byte adress
+	for (uint8_t i = 0; i < 8; i++)
+	{
+		memset(valBuffer,0x0,sizeof(valBuffer));
+		if (*sID < 16) strcat(idBuf, "0");
+		itoa(*sID, valBuffer, 16);      
+		strcat(idBuf, valBuffer);
+		if (i<7) strcat(idBuf, "-");
+		sID++;
+	}
+}
+
+void sendValvesTempsId (uint8_t idx, char delimiter)
+{
+	char mySendBuffer[30];
+	// 1st sensor 8 Byte adress
+	uint8_t y = myvalves[idx].sensorindex1;					
+	if(y!=VALVE_SENSOR_UNKNOWN) {
+		memset (mySendBuffer,0x0,sizeof(mySendBuffer));				// reset sendbuffer
+		// 8 Byte adress
+		sensorID2Ascii (&tempsensors[y].address[0],mySendBuffer);
+		COMM_SER.print(mySendBuffer);
+	}
+	else {
+		COMM_SER.print("00-00-00-00-00-00-00-00");
+	}
+	COMM_SER.print(delimiter);
+
+	// 2nd sensor 8 Byte adress
+	y = myvalves[idx].sensorindex2;
+	if(y!=VALVE_SENSOR_UNKNOWN) {
+		memset (mySendBuffer,0x0,sizeof(mySendBuffer));				// reset sendbuffer
+		// 8 Byte adress
+		sensorID2Ascii (&tempsensors[y].address[0],mySendBuffer);
+		COMM_SER.print(mySendBuffer);
+	}
+	else {
+		COMM_SER.print("00-00-00-00-00-00-00-00");
 	}
 }
 
@@ -287,17 +330,57 @@ int16_t communication_loop (void) {
 			//return CMD_LEARN;
 		}
 
+		// get valve present
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETVLSTATUS,&cmd[0],5) == 0) {
+			COMM_DBG.println("cmd: get sensor status");
+			
+			COMM_SER.print(APP_PRE_GETVLSTATUS);
+			COMM_SER.print(" ");
+			COMM_SER.print(ACTUATOR_COUNT, DEC);
+			COMM_SER.print(" ");
+
+			for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
+				memset(sendbuffer,0x0,sizeof(sendbuffer));
+				itoa(myvalvemots[x].status, sendbuffer, 10);				
+				COMM_SER.print(sendbuffer);
+				if (x<ACTUATOR_COUNT-1) COMM_SER.print(",");
+			}	
+			COMM_SER.println(" ");
+		}
 
 		// get onewire sensor count
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIRECNT,&cmd[0],5) == 0) {
 			COMM_DBG.println("cmd: get onewire sensor count");
-			COMM_SER.print(APP_PRE_GETONEWIRECNT);
-			COMM_SER.print(" ");			
-			COMM_SER.print(sensors.getDeviceCount(), DEC);
-			COMM_SER.println(" ");			
+			
+			if(argcnt == 0) {
+				COMM_SER.print(APP_PRE_GETONEWIRECNT);
+				COMM_SER.print(" ");			
+				COMM_SER.print(sensors.getDeviceCount(), DEC);
+				COMM_SER.println(" ");
+			}	
+			if(argcnt == 1) {	
+				x = atoi(arg0ptr);
+				if (x==255) {
+					// get all onewire detected sensor
+					uint8_t nDevices = sensors.getDeviceCount();
+					COMM_SER.print(APP_PRE_GETONEWIRECNT);
+					COMM_SER.print(" ");		
+					COMM_SER.print(nDevices, DEC);
+					if (nDevices>0) COMM_SER.print(" ");
+					for (uint8_t i=0;i<nDevices;i++){
+						memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
+						// 8 Byte adress
+						sensorID2Ascii (&tempsensors[i].address[0],sendbuffer);
+						COMM_SER.print(sendbuffer);
+						if (i<nDevices-1) COMM_SER.print(",");
+					}	
+					COMM_SER.println(" ");
+				}
+			
+			} 		
 		}
-
 
 		// get onewire sensor data of sensor x (adress and temperature)
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -311,15 +394,9 @@ int16_t communication_loop (void) {
 				if(x<MAXSENSORCOUNT)
 				{
 					memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
-
 					// 8 Byte adress
-					for (uint8_t i = 0; i < 8; i++)
-					{
-						if (tempsensors[x].address[i] < 16) strcat(sendbuffer, "0");
-						itoa(tempsensors[x].address[i], valbuffer, 16);      
-						strcat(sendbuffer, valbuffer);
-						if (i<7) strcat(sendbuffer, "-");
-					}
+					sensorID2Ascii (&tempsensors[x].address[0],sendbuffer);
+					
 					strcat(sendbuffer," ");
 					// temperature
 					itoa(tempsensors[x].temperature, valbuffer, 10);      
@@ -347,8 +424,7 @@ int16_t communication_loop (void) {
 
 			if(argcnt == 1) {
 
-				if(x<ACTUATOR_COUNT)
-				{
+				if(x<ACTUATOR_COUNT) {
 					// answer begin
 					COMM_SER.print(APP_PRE_GETONEWIRESETT);
 					COMM_SER.print(" ");
@@ -357,50 +433,35 @@ int16_t communication_loop (void) {
 					COMM_SER.print(x, DEC);
 					COMM_SER.print(" ");
 					
-					// 1st sensor 8 Byte adress
-					y = myvalves[x].sensorindex1;					
-					if(y!=VALVE_SENSOR_UNKNOWN) {
-						memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
-						for (uint8_t i = 0; i < 8; i++)
-						{
-							if (tempsensors[y].address[i] < 16) strcat(sendbuffer, "0");
-							itoa(tempsensors[y].address[i], valbuffer, 16);      
-							strcat(sendbuffer, valbuffer);
-							if (i<7) strcat(sendbuffer, "-");
-						}
-						COMM_SER.print(sendbuffer);
-					}
-					else {
-						COMM_SER.print("00-00-00-00-00-00-00-00");
-					}
-					COMM_SER.print(" ");
-
-					// 2nd sensor 8 Byte adress
-					y = myvalves[x].sensorindex2;
-					if(y!=VALVE_SENSOR_UNKNOWN) {
-						memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
-						for (uint8_t i = 0; i < 8; i++)
-						{
-							if (tempsensors[y].address[i] < 16) strcat(sendbuffer, "0");
-							itoa(tempsensors[y].address[i], valbuffer, 16);      
-							strcat(sendbuffer, valbuffer);
-							if (i<7) strcat(sendbuffer, "-");
-						}
-						COMM_SER.print(sendbuffer);
-					}
-					else {
-						COMM_SER.print("00-00-00-00-00-00-00-00");
-					}
-
+					sendValvesTempsId(x,' ');
 					// finish answer
 					COMM_SER.println(" ");
 
 				}
 				else {
+					if (x==255) {
+						// answer begin
+						COMM_SER.print(APP_PRE_GETONEWIRESETT);
+						COMM_SER.print(" ");
+						// valve index
+						uint8_t z=ACTUATOR_COUNT;
+						//z=4;
+						COMM_SER.print(z, DEC);
+						COMM_SER.print(" ");
+						// 1st sensor 8 Byte adress
+						for (uint8_t i=0;i<z;i++) {
+							sendValvesTempsId(i,',');
+							if (i<z-1) COMM_SER.print(",");
+						}
+						// finish answer
+						COMM_SER.println(" ");
+					}
+					else {
 					COMM_DBG.println(" - error");
 
 					COMM_SER.print(APP_PRE_GETONEWIREDATA);
 					COMM_SER.println(" error ");
+					}
 				}
 			}
 			else {

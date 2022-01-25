@@ -145,6 +145,14 @@ String CWeb::getTempSensorsID()
   return result;  
 }
 
+bool CWeb::findIdInValve (uint8_t idx) {
+  for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
+    if (StmApp.actuators[i].tIdx1 == idx+1) return (true); 
+    if (StmApp.actuators[i].tIdx2 == idx+1) return (true); 
+  }
+  return (false);
+}  
+
 String CWeb::getSysInfo()
 {
   String wt32Build="";
@@ -196,17 +204,25 @@ String CWeb::getSysDynInfo()
 
 String CWeb::getValvesStatus() 
 {
+  bool start=false;
   String result = "[";
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
     if (StmApp.actuators[x].state!=VLV_STATE_OPENCIR) {
-      if (x>0) result += ",";
+      if (start) result += ",";
       result += "{\"idx\":"+String(x+1) + ","+
+                 "\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) +"\"," +
                  "\"state\":"+String(StmApp.actuators[x].state) + ","+
                  "\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
                  "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
-                 "\"targetPos\":" + String(StmApp.actuators[x].target_position)+","+
-                 "\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1)+","+
-                 "\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1)+"}";      
+                 "\"targetPos\":" + String(StmApp.actuators[x].target_position);
+                 if (StmApp.actuators[x].temp1>-500) {
+                    result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
+                 }
+                 if (StmApp.actuators[x].temp2>-500) {
+                    result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
+                 }
+                 result +="}";      
+    start = true;
     }
   }  
   result += "]";
@@ -217,12 +233,16 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
 {
   String result = "[";
   int16_t temperature;
+  bool start = false;
   for (uint8_t i=0;i<StmApp.tempsCount;i++) {
-    temperature = StmApp.temps[i].temperature;
-    result += "{\"id\":\"" + String(StmApp.temps[i].id) + "\","+
-               "\"name\":\"" + String(tempsConfig.tempConfig[i].name) + "\","+
-               "\"temp\":" + String(((float)temperature)/10,1)+"}";
-    if (i<StmApp.tempsCount-1) result += ",";
+    if (!findIdInValve(i)) {
+      if (start) result += ",";
+      temperature = StmApp.temps[i].temperature;
+      result += "{\"id\":\"" + String(StmApp.temps[i].id) + "\","+
+                "\"name\":\"" + String(tempsConfig.tempConfig[i].name) + "\","+
+                "\"temp\":" + String(((float)temperature)/10,1)+"}";
+      start = true;
+    }
   }  
   result += "]";
   return result;

@@ -69,6 +69,7 @@ public:
   String getSysInfo();
   String getFSDir();
   String getStmUpdStatus();
+  bool findIdInValve (uint8_t idx);
 };
 
 extern CWeb Web;

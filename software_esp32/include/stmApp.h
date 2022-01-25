@@ -84,7 +84,8 @@ typedef struct {
 #define APP_PRE_GETVLVDATA			    "gvlvd"			
 #define APP_PRE_SETVLLEARN          "staln"   // one valve
 #define APP_PRE_SETLEARNMOVEM       "stlnm" 
-#define APP_PRE_GETLEARNMOVEM       "gtlnm"   
+#define APP_PRE_GETLEARNMOVEM       "gtlnm"
+#define APP_PRE_GETVLSTATUS         "gvlst"   
 
 #define APP_PRE_GETVERSION			    "gvers"
 #define APP_PRE_GETTARGETPOS       	"gtgtp"			
@@ -171,7 +172,7 @@ private:
   char*	  cmdptrend;
   char    cmd[50];
   char		arg0[1200];	
-  char    arg1[30];		
+  char    arg1[1200];		
   char    arg2[30];
   char    arg3[30];
   char    arg4[30];

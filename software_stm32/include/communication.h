@@ -45,6 +45,7 @@ extern int16_t communication_loop (void);
 #define APP_PRE_SETALLVLVOPEN       "staop"			// doc
 #define APP_PRE_GETONEWIRESETT      "gvlon"			// doc
 #define APP_PRE_GETVLVDATA          "gvlvd"			// doc
+#define APP_PRE_GETVLSTATUS         "gvlst"			// new
 
 #define APP_PRE_SETONEWIRESEARCH    "stons"		  // doc
 #define APP_PRE_GETVERSION			    "gvers"     // doc
@@ -60,7 +61,7 @@ extern int16_t communication_loop (void);
 
 #define APP_PRE_GETACTUALPOS       	"gactp"     // not implemented
 #define APP_PRE_GETMEANCURR        	"gmenc"     // not implemented
-#define APP_PRE_GETSTATUS          	"gstat"     // not implemented
+
 
 
 #endif //_COMMUNICATION_H

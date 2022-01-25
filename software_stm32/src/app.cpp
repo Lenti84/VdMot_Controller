@@ -65,8 +65,6 @@ int16_t app_setup (void) {
   return 0;
 }
 
-
-
 int16_t app_loop (void) {
 
   static unsigned int lastvalve = 0;
@@ -307,6 +305,8 @@ int16_t app_match_sensors() {
           // COMM_DBG.print(owsensorindex, DEC);
           COMM_DBG.println(valveindexlast, DEC);
           myvalves[valveindexlast].sensorindex1 = owsensorindex;
+      } else {
+        myvalves[valveindexlast].sensorindex1 = VALVE_SENSOR_UNKNOWN;
       }
       // else 
       // {
@@ -341,6 +341,8 @@ int16_t app_match_sensors() {
           // COMM_DBG.print(owsensorindex, DEC);
           COMM_DBG.println(valveindexlast, DEC);
           myvalves[valveindexlast].sensorindex2 = owsensorindex;
+      }  else {
+        myvalves[valveindexlast].sensorindex2 = VALVE_SENSOR_UNKNOWN;
       }
       // else 
       // {

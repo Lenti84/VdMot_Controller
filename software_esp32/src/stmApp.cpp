@@ -64,7 +64,8 @@ static const char* commCmds [] =
                 APP_PRE_SETONEWIRESEARCH,APP_PRE_SETALLVLVOPEN,APP_PRE_GETVLVDATA,
                 APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETTARGETPOS,
                 APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,APP_PRE_SETVLVSENSOR,
-                APP_PRE_GETONEWIRESETT,APP_PRE_SETLEARNMOVEM,APP_PRE_GETLEARNMOVEM,NULL};
+                APP_PRE_GETONEWIRESETT,APP_PRE_SETLEARNMOVEM,APP_PRE_GETLEARNMOVEM,
+                APP_PRE_GETVLSTATUS,NULL};
 
 
 CStmApp StmApp;
@@ -88,6 +89,7 @@ CStmApp::CStmApp()
     arg5ptr = arg5;
 	argcnt = 0;
     tempsPrivCount=0;
+    tempsCount=0;
     setTempIdxActive=false;
     waitForFinishQueue=false;
     setMotorCharsActive=false;
@@ -96,7 +98,7 @@ CStmApp::CStmApp()
 
 void  CStmApp::app_setup() {
     UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL); 
-
+    UART_STM32.setRxBufferSize (2000);
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         actuators[x].actual_position = 100;
         actuators[x].target_position = 0;
@@ -132,9 +134,9 @@ void CStmApp::getParametersFromSTM()
   app_cmd(APP_PRE_GETVERSION);
   app_cmd(APP_PRE_GETMOTCHARS);
   app_cmd(APP_PRE_GETLEARNMOVEM);
-  for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
-    app_cmd(APP_PRE_GETONEWIRESETT,String(i));   
-  }
+  app_cmd(APP_PRE_GETONEWIRECNT,String(255));
+  app_cmd(APP_PRE_GETONEWIRESETT,String(255));
+  app_cmd(APP_PRE_GETVLSTATUS);
 }
 
 void CStmApp::scanTemps()
@@ -172,19 +174,23 @@ void CStmApp::setTempIdx()
         waitForFinishQueue=true;
         fastQueueMode=true;
         app_cmd(APP_PRE_SETVLVSENSOR,String(i)+ARG_DELIMITER+s1+ARG_DELIMITER+s2);
+        fastQueueMode=true;
     }
+    fastQueueMode=true;
 }
 
 void CStmApp::setLearnAfterMovements()
 {
     waitForFinishQueue=true;
-    app_cmd(APP_PRE_SETLEARNMOVEM,String(learnAfterMovements));   
+    app_cmd(APP_PRE_SETLEARNMOVEM,String(learnAfterMovements));
+    fastQueueMode=true;   
 }
 
 void CStmApp::setMotorChars()
 {
     waitForFinishQueue=true;
     app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent));   
+    fastQueueMode=true;
 }
 
 void  CStmApp::app_loop() 
@@ -345,14 +351,22 @@ void  CStmApp::app_check_data()
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
     
-        // get status
+        // get valve status
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		else if(memcmp(APP_PRE_GETSTATUS,cmd,5) == 0) { 
+		else if(memcmp(APP_PRE_GETVLSTATUS,cmd,5) == 0) { 
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"status answer "+String(arg0ptr)+" : "+String(arg1ptr));
+                    syslog.log(LOG_DEBUG,"valve status "+String(arg1ptr));
                 }
-                actuators[atoi(arg0ptr)].state = atoi(arg1ptr);     
+                uint8_t nActuators = atoi(arg0ptr);
+                char* cmdptr;
+                char* ps=arg1ptr;
+                for (uint8_t idx=0; idx<nActuators;idx++) {
+                    if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
+                    actuators[idx].state = atoi(ps);
+                    if (cmdptr!=NULL) ps=cmdptr+1;
+                    idx++;
+                }      
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
@@ -390,10 +404,28 @@ void  CStmApp::app_check_data()
         else if(memcmp(APP_PRE_GETONEWIRECNT,cmd,5) == 0) {
             if(argcnt == 1) {
                 tempsPrivCount= atoi(arg0ptr); 
+                if (tempsPrivCount!=tempsCount) app_cmd(APP_PRE_GETONEWIRECNT,String(255));
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG,"one wire count "+String(tempsPrivCount));
                 }       
             }
+             if(argcnt == 2) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"one wire data "+String(arg1ptr));
+                } 
+                tempsPrivCount= atoi(arg0ptr);
+                if (tempsPrivCount>0) {
+                    char* cmdptr;
+                    char* ps=arg1ptr;
+                    for (uint8_t idx=0; idx<tempsPrivCount;idx++) {
+                        if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
+                        strncpy(tempsId[idx].id,ps,sizeof(tempsId[tempIndex].id));
+                        ps=cmdptr+1;
+                        idx++;
+                    }
+                }
+                tempsCount=tempsPrivCount;
+             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
 
@@ -412,9 +444,9 @@ void  CStmApp::app_check_data()
                     temps[idx].temperature=atoi(arg1ptr)+VdmConfig.configFlash.tempsConfig.tempConfig[idx].offset;
                 } 
                 tempIndex++;
-                if (tempIndex>=tempsPrivCount) {  // all temp sensors read
+                if (tempIndex>=tempsCount) {  // all temp sensors read
                     tempIndex=0;
-                    tempsCount=tempsPrivCount;
+                    //tempsCount=tempsPrivCount;
                 }
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
@@ -434,6 +466,27 @@ void  CStmApp::app_check_data()
         else if(memcmp(APP_PRE_GETONEWIRESETT,cmd,5) == 0) {
             if(argcnt == 3) {
                 setSensorIndex(atoi(arg0ptr),arg1ptr,arg2ptr);
+            }
+            if(argcnt == 2) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"one wire settings data "+String(arg1ptr));
+                }   
+                uint8_t nItems= atoi(arg0ptr);
+                if (nItems>0) {
+                    char* cmdptr;
+                    char* ps=arg1ptr;
+                    for (uint8_t idx=0; idx<nItems;idx++) {
+                        if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
+                        strncpy(arg4ptr,ps,sizeof(arg4));
+                        if (cmdptr!=NULL) ps=cmdptr+1;
+                        if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
+                        strncpy(arg5ptr,ps,sizeof(arg5));
+                        setSensorIndex(idx,arg4ptr,arg5ptr);
+                        if (cmdptr!=NULL) ps=cmdptr+1;
+                        idx++;
+                    }
+                }
+                
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
