@@ -100,14 +100,15 @@ typedef struct {
 #define APP_PRE_SETVLVSENSOR        "stvls"
 #define APP_PRE_UNDEFSENSOR         "00-00-00-00-00-00-00-00"
 
-
-#define VLV_STATE_IDLE      0x01 // nothing to do
-#define VLV_STATE_OPENING   0x02 // opens
-#define VLV_STATE_CLOSING   0x03 // closes
-#define VLV_STATE_BLOCKS    0x04 // valve is blocked
-#define VLV_STATE_UNKNOWN   0x05 // initial state
-#define VLV_STATE_OPENCIR   0x06 // open circuit detected
-#define VLV_STATE_FULLOPEN  0x07 // go directly full open
+#define VLV_STATE_START       0x00
+#define VLV_STATE_IDLE        0x01 // nothing to do
+#define VLV_STATE_OPENING     0x02 // opens
+#define VLV_STATE_CLOSING     0x03 // closes
+#define VLV_STATE_BLOCKS      0x04 // valve is blocked
+#define VLV_STATE_UNKNOWN     0x05 // initial state
+#define VLV_STATE_OPENCIR     0x06 // open circuit detected, no valve connected
+#define VLV_STATE_FULLOPEN    0x07 // go directly full open
+#define VLV_STATE_CONNECTED   0x08 // valve is connected
 
 #define COMM_ALIVE_CYCLE      30        // send "Alive" cycle in 100 ms cycles
 
@@ -116,6 +117,7 @@ typedef struct {
 enum COMM_STATE {COMM_IDLE,COMM_ALIVE,COMM_SENDTARGET,COMM_CHECKTARGET,COMM_GETDATA,
                   COMM_GETONEWIRE,COMM_GETONEWIRECOUNT,COMM_HANDLEQUEUE};
 
+enum STM_START_PROC {STM_NOT_READY,STM_READY,STM_READ_ALL_FROM_QUEUE};
 
 class CStmApp
 {
@@ -142,6 +144,7 @@ public:
   MOTOR_CHARS motorChars;
   bool setMotorCharsActive;
   uint32_t learnAfterMovements;
+  volatile STM_START_PROC stmStatus;
 
 private:
   void app_check_data();
@@ -152,9 +155,11 @@ private:
   void setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2); 
   
   bool fastQueueMode;
+
   uint16_t stm32alive;
   bool settarget_check;
   uint8_t target_position_mirror[ACTUATOR_COUNT];
+  uint8_t getindex;
 
   COMM_STATE commstate;    
   uint8_t tempIndex;
@@ -177,12 +182,14 @@ private:
   char    arg3[30];
   char    arg4[30];
   char    arg5[30];
+  
 	char*		arg0ptr;
 	char*		arg1ptr;
   char*		arg2ptr;
   char*		arg3ptr;
   char*		arg4ptr;
   char*		arg5ptr;
+  
 	uint8_t	argcnt;
 };
 

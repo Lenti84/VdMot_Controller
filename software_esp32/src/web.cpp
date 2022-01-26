@@ -197,7 +197,8 @@ String CWeb::getSysDynInfo()
   String result = "{\"locTime\":\""+time+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
                   "\"wifirssi\":"+WiFi.RSSI()+ "," +
-                  "\"wifich\":"+WiFi.channel()+
+                  "\"wifich\":"+WiFi.channel()+ "," +
+                  "\"stmStatus\":"+String(StmApp.stmStatus)+
                   "}";
   return result;  
 }
@@ -207,7 +208,7 @@ String CWeb::getValvesStatus()
   bool start=false;
   String result = "[";
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
-    if (StmApp.actuators[x].state!=VLV_STATE_OPENCIR) {
+    if ((StmApp.actuators[x].state!=VLV_STATE_OPENCIR) && (StmApp.actuators[x].state!=VLV_STATE_START)) {
       if (start) result += ",";
       result += "{\"idx\":"+String(x+1) + ","+
                  "\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) +"\"," +

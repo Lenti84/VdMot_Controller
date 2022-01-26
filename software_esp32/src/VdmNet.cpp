@@ -282,7 +282,6 @@ void CVdmNet::checkNet()
       syslog.defaultPriority(LOG_KERN);
     }
 
-
     VdmTask.startApp();
     VdmTask.startServices();
   } else {

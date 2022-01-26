@@ -94,6 +94,8 @@ CStmApp::CStmApp()
     waitForFinishQueue=false;
     setMotorCharsActive=false;
     fastQueueMode=false;
+    stmStatus=STM_NOT_READY;
+    getindex = 0;
 }
 
 void  CStmApp::app_setup() {
@@ -269,7 +271,7 @@ void  CStmApp::app_check_data()
     }
 
     if (found) {
-
+        if (stmStatus==STM_NOT_READY) stmStatus=STM_READY;
         // devide buffer into command and data
 		// ****************************************
 		cmdptr = buffer;
@@ -366,12 +368,13 @@ void  CStmApp::app_check_data()
                     actuators[idx].state = atoi(ps);
                     if (cmdptr!=NULL) ps=cmdptr+1;
                     idx++;
-                }      
+                }  
+                stmStatus=STM_READ_ALL_FROM_QUEUE;    
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
 
-         // get set target answer
+        // get set target answer
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETTARGETPOS,cmd,5) == 0) {
             if(argcnt == 0) {
@@ -379,6 +382,14 @@ void  CStmApp::app_check_data()
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
+        // get target position
+            // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            else if(memcmp(APP_PRE_GETTARGETPOS,cmd,5) == 0) {
+                if(argcnt == 2) {
+                    actuators[atoi(arg0ptr)].target_position = atoi(arg1ptr);
+                }
+                if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+            }
 
         // get data values
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -391,7 +402,8 @@ void  CStmApp::app_check_data()
                     actuators[atoi(arg0ptr)].temp1 = atoi(arg4ptr);
                     actuators[atoi(arg0ptr)].temp2 = atoi(arg5ptr);
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                        syslog.log(LOG_DEBUG, "got full vlv data packet");
+                        syslog.log(LOG_DEBUG, "got valve data #"+String(arg0ptr)+" pos:"+String(arg1ptr)+
+                        " mean:"+String(arg2ptr)+" state:"+String(arg3ptr)+" t1:"+String(arg4ptr)+" t2:"+String(arg5ptr));
                     }
                 }
             } 
@@ -490,11 +502,35 @@ void  CStmApp::app_check_data()
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
+        
+        else if(memcmp(APP_PRE_SETONEWIRESEARCH,cmd,5) == 0) {
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+        }
+
+        else if(memcmp(APP_PRE_SETLEARNMOVEM,cmd,5) == 0) {
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+        }
 
         else if(memcmp(APP_PRE_GETLEARNMOVEM,cmd,5) == 0) {
             if(argcnt == 1) {
                 learnAfterMovements=atoi(arg0ptr);
             }
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+        }
+
+        else if(memcmp(APP_PRE_SETVLVSENSOR,cmd,5) == 0) {
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+        }
+
+        else if(memcmp(APP_PRE_SETALLVLVOPEN,cmd,5) == 0) {
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+        }
+
+        else if(memcmp(APP_PRE_SETVLLEARN,cmd,5) == 0) {
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+        }
+
+        else if(memcmp(APP_PRE_SETMOTCHARS,cmd,5) == 0) {
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
         }
 
@@ -515,7 +551,6 @@ void  CStmApp::app_comm_machine()
     char valbuffer[10];
 
     static unsigned int cnt_alive = COMM_ALIVE_CYCLE;
-    static unsigned int getindex = 0;
         
     static unsigned int timeout = 0;
     static unsigned int retry = 0;
@@ -651,7 +686,7 @@ void  CStmApp::app_comm_machine()
                 break;
 
         case COMM_HANDLEQUEUE:
-                if ((cmd_buffer=="") && (Queue.available()>0)) {
+                if ((cmd_buffer=="") && (Queue.available()>0) && (stmStatus>=STM_READY)) {
                     memset(&cmd_buffer,0x0,sizeof(cmd_buffer));
                     cmd_buffer=Queue.pop();
                     UART_DBG.println("pop "+String(cmd_buffer));

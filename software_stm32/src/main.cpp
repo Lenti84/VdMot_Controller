@@ -131,16 +131,12 @@ void setup_system() {
   // valve app setup
   app_setup();
   valve_setup();
-  //valve_setup(myvalves);
 
   // can
   //mycan_setup();          // can hardware testcode setup
 
   // rs485
   //rs485_setup();          // rs485 hardware testcode setup
-
-  // just for testing
-  //myvalves[0].sensorindex = 0;
 }
 
 

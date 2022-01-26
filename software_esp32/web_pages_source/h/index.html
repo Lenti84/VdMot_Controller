@@ -807,6 +807,7 @@
 		var getStatusInterval;
 		var dataTempSensorsID=null;
 		const NoOfMaxSensors = 34;
+		var stmStatus = 0;
 		
 		// Get the modal
 		var modal = id("pwdModal");
@@ -880,21 +881,19 @@
 			getNetInfo();
 			getNetConfig();
 			getProtConfig();
-			getValvesConfig();
-			getTempSensorsID();
+			//getValvesConfig();
+			//getTempSensorsID();
 			getTempsConfig();
 			getValvesStatus();
-			getTempsStatus();
+			//getTempsStatus();
 			getFSDir();
-			getStatusInterval = window.setInterval(getStatus, 5000);
+			getStatusInterval = window.setInterval(getStatus, 2000);
 			generateOnClick();
 			showAllTabsNow();
-			setTimeout(function() {
-				loadStmData();	
-			},5000);
 		}		
 		
 		function loadStmData() {
+			console.log("load stm data");
 			getTempSensorsID();
 			getTempsStatus();
 			getSystemInfo();
@@ -1521,13 +1520,13 @@
 			if (ValvesTable.rows.length != valvesJson.length+1) {
 				makeValvesTable(valvesJson);
 			}
-			const States = ["idle","opens","closes","blocked","unknown","no valve","full open","connected"];
+			const States = ["---","idle","opens","closes","blocked","unknown","no valve","full open","connected"];
 			valvesJson.forEach(function(item, index){
 				ValvesTable.rows[index+1].cells[0].textContent = item.idx;	
 				ValvesTable.rows[index+1].cells[1].textContent = item.name;	
 				ValvesTable.rows[index+1].cells[2].textContent = item.pos;	
 				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
-				ValvesTable.rows[index+1].cells[4].textContent = States[item.state-1];
+				ValvesTable.rows[index+1].cells[4].textContent = States[item.state];
 				if (item.temp1)
 					ValvesTable.rows[index+1].cells[7].textContent = item.temp1;
 				else ValvesTable.rows[index+1].cells[7].textContent = "";
@@ -1668,6 +1667,15 @@
 				id("locTime").textContent = dataSystemDynInfo["locTime"];
 				id("heap").textContent = dataSystemDynInfo["heap"];
 				id("rssi").textContent = dataSystemDynInfo["wifirssi"];
+				var newStmStatus=dataSystemDynInfo["stmStatus"];
+				if (newStmStatus!=stmStatus) {
+					stmStatus=newStmStatus;
+					if (stmStatus===2) {
+						setTimeout(function() {
+							loadStmData();	
+						},3000);
+					}
+				}
 			}
 		}
 		

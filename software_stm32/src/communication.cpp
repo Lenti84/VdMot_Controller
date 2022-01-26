@@ -256,6 +256,8 @@ int16_t communication_loop (void) {
 				{	
 					COMM_SER.print(APP_PRE_GETTARGETPOS);
 					COMM_SER.print(" ");
+					COMM_SER.print(x, DEC);
+					COMM_SER.print(" ");
 					COMM_SER.print(myvalvemots[x].target_position, DEC);
 					COMM_SER.println(" ");
 				}
@@ -478,6 +480,7 @@ int16_t communication_loop (void) {
 		else if(memcmp(APP_PRE_SETONEWIRESEARCH,&cmd[0],5) == 0) {
 			COMM_DBG.println("start new 1-wire search");
 			temp_command(TEMP_CMD_NEWSEARCH);
+			COMM_SER.println(APP_PRE_SETONEWIRESEARCH);
 		}
 		
 
@@ -488,7 +491,10 @@ int16_t communication_loop (void) {
 			xu32 = atol(arg0ptr);
 
 			if(argcnt == 1 && xu32 >= 0) {
-				if( app_set_learntime(xu32) == 0) COMM_DBG.println(xu32, DEC);
+				if(app_set_learntime(xu32) == 0) {
+					COMM_SER.println(APP_PRE_SETLEARNTIME);
+					COMM_DBG.println(xu32, DEC);
+				}
 				else COMM_DBG.println("- error");
 			}
 			else {
@@ -508,6 +514,7 @@ int16_t communication_loop (void) {
 					COMM_DBG.println(x, DEC);
 					eep_content.numberOfMovements=x;
 					eeprom_changed();
+					COMM_SER.println(APP_PRE_SETLEARNMOVEM);
 				}
 				else COMM_DBG.println("- error");
 			}
@@ -566,7 +573,8 @@ int16_t communication_loop (void) {
 						// write index to valves structure
 						myvalves[x].sensorindex1 = (byte) y;
 
-						eeprom_changed();	
+						eeprom_changed();
+						COMM_SER.println(APP_PRE_SET1STSENSORINDEX);
 					}					
 				}
 			}
@@ -603,7 +611,8 @@ int16_t communication_loop (void) {
 						// write index to valves structure
 						myvalves[x].sensorindex2 = (byte) y;	
 
-						eeprom_changed();					
+						eeprom_changed();	
+						COMM_SER.println(APP_PRE_SET2NDSENSORINDEX);				
 					}
 				}
 			}
@@ -624,6 +633,7 @@ int16_t communication_loop (void) {
 				COMM_DBG.println("comm: set valve sensors");
 				setValveIDSensor (x,arg1ptr,(uint8_t*) &eep_content.owsensors1[x]);
 				setValveIDSensor (x,arg2ptr,(uint8_t*) &eep_content.owsensors2[x]);
+				COMM_SER.println(APP_PRE_SETVLVSENSOR);
 			}
 			else COMM_DBG.println("to few arguments");
 		}
@@ -637,7 +647,10 @@ int16_t communication_loop (void) {
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1 && x >= 0) {
-				if( app_set_valveopen(x) == 0) COMM_DBG.println(x, DEC);
+				if( app_set_valveopen(x) == 0) {
+					COMM_SER.println(APP_PRE_SETALLVLVOPEN);
+					COMM_DBG.println(x, DEC);
+				}
 				else COMM_DBG.println("- error");
 			}
 			else {
@@ -655,7 +668,10 @@ int16_t communication_loop (void) {
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1 && x >= 0) {
-				if( app_set_valvelearning(x) == 0) COMM_DBG.println(x, DEC);
+				if(app_set_valvelearning(x) == 0) {
+					COMM_SER.println(APP_PRE_SETVLLEARN);
+					COMM_DBG.println(x, DEC);
+				}
 				else COMM_DBG.println("- error");
 			}
 			else {
@@ -679,6 +695,7 @@ int16_t communication_loop (void) {
 					eep_content.currentbound_low_fac = currentbound_low_fac;
 					eep_content.currentbound_high_fac = currentbound_high_fac;
 					eeprom_changed();
+					COMM_SER.println(APP_PRE_SETMOTCHARS);
 					COMM_DBG.println("- valid");
 				}
 				else COMM_DBG.println("- values out of bounds");
