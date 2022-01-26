@@ -217,12 +217,6 @@ void CMqtt::publish_valves ()
         strncat(topicstr, "/actual",sizeof(topicstr));
         itoa(StmApp.actuators[x].actual_position, valstr, 10);        
         mqtt_client.publish(topicstr, valstr);
-       
-        // target
-        topicstr[len] = '\0';
-        strncat(topicstr, "/target",sizeof(topicstr));
-        itoa(StmApp.actuators[x].target_position, valstr, 10);
-        mqtt_client.publish(topicstr, valstr);
         
         // state
         topicstr[len] = '\0';

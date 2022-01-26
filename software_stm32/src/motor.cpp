@@ -823,7 +823,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     break;
 
       case M_TEST:
-                    //COMM_DBG.print("M: testing"); 
+                    COMM_DBG.print("M: testing"); 
 
                     result = M_RES_TEST;
     
@@ -835,8 +835,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
 
                     current_mA = analog_current;
                     
-                    //COMM_DBG.print(" - current: ");
-                    //COMM_DBG.println (analog_current,DEC);
+                    COMM_DBG.print(" - current: ");
+                    COMM_DBG.println (analog_current,DEC);
 
                     if(debouncecnt<255) debouncecnt++;
 
