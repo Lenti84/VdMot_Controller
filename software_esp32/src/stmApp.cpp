@@ -105,7 +105,7 @@ void  CStmApp::app_setup() {
         actuators[x].actual_position = 100;
         actuators[x].target_position = 0;
         actuators[x].meancurrent = 342;
-        actuators[x].state = VLV_STATE_IDLE;
+        actuators[x].state = VLV_STATE_START; //VLV_STATE_IDLE;
         actuators[x].temp1 = -500;
         actuators[x].temp2 = -500;
         actuators[x].tIdx1 = 0;

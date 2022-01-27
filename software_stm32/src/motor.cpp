@@ -505,7 +505,7 @@ byte valve_loop () {
                     temp = motorcycle (valveindex, CMD_M_TEST);
                     if (temp != M_RES_TEST) {  
                       COMM_DBG.print("A: test valve ");
-                      COMM_DBG.print(temp, DEC);                  
+                      COMM_DBG.print(valveindex, DEC);                  
                       
                       if(temp == M_RES_NOCURRENT) {
                         COMM_DBG.println(" --> undercurrent, no valve");
@@ -823,7 +823,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     break;
 
       case M_TEST:
-                    COMM_DBG.print("M: testing"); 
+                   // COMM_DBG.print("M: testing"); 
 
                     result = M_RES_TEST;
     
@@ -835,8 +835,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
 
                     current_mA = analog_current;
                     
-                    COMM_DBG.print(" - current: ");
-                    COMM_DBG.println (analog_current,DEC);
+                   // COMM_DBG.print(" - current: ");
+                   // COMM_DBG.println (analog_current,DEC);
 
                     if(debouncecnt<255) debouncecnt++;
 

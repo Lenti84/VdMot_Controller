@@ -533,17 +533,17 @@
 				</td>
             </tr> 
 		</table>
-		<table id="protcfg-mqtt" style="display:none;" class="tabTable">
+		<table id="protcfg-Broker" style="display:none;" class="tabTable">
 				<tr>
 				<th>Broker IP</th>
 				<td>
-				<input type="text" class="form-input" id="protcfg-mqttIp" name="protcfg-mqttIp" placeholder="xxx.xxx.xxx.xxx"/>
+				<input type="text" class="form-input" id="protcfg-Ip" name="protcfg-Ip" placeholder="xxx.xxx.xxx.xxx"/>
 				</td>
 			</tr>
 			<tr>
 				<th>Broker Port</th>
 				<td>
-				<input type="text" class="form-input" id="protcfg-mqttPort" name="protcfg-mqttPort" placeholder="xxxxx"/>
+				<input type="text" class="form-input" id="protcfg-Port" name="protcfg-Port" placeholder="xxxxx"/>
 				</td>
 			</tr>
 			<tr>
@@ -568,6 +568,12 @@
 				<th>Re-type password</th>
 				<td>
 				<input type="password" maxlength="64" class="form-input" id="protcfg-Pwd2" name="protcfg-Pwd2"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Publish target</th>
+				<td>
+				<input type="checkbox" id="protcfg-pubTarget" name="protcfg-pubTarget"/>
 				</td>
 			</tr>
 		</table>
@@ -1116,8 +1122,8 @@
 			cfgTempTable.rows[0].cells[4].textContent = 'ID';
 		}
 		
-		function showMqttIP(){
-			let x = id("protcfg-mqtt");
+		function showBrokerIP(){
+			let x = id("protcfg-Broker");
 			let select = id("protcfg-dataProt").selectedIndex;
 			if (select === 0) {
 				x.style.display = "none";
@@ -1158,7 +1164,7 @@
 				showSyslogIP();
 			}
 			id("protcfg-dataProt").onclick = function(){
-			  showMqttIP();
+			  showBrokerIP();
 			}
 			id("valvesStartCalib").onclick = function(){
 				valvesStartCalib();
@@ -1357,7 +1363,7 @@
 				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
-				mqttPwdHasChanged=false;
+				brokerPwdHasChanged=false;
 				reloadDoc("http:/#home",4000,true);
 			}
 		}
@@ -1402,10 +1408,11 @@
 			let protCfg = {};
 			protCfg.prot = id("protcfg-dataProt").selectedIndex;
 			if (id("protcfg-dataProt").selectedIndex==1) {
-				protCfg.mqttIp = id("protcfg-mqttIp").value;
-				protCfg.mqttPort = id("protcfg-mqttPort").value;
+				protCfg.ip = id("protcfg-Ip").value;
+				protCfg.port = id("protcfg-Port").value;
 				protCfg.interval = id("protcfg-Interval").value;
 				protCfg.user = id("protcfg-User").value;
+				protCfg.pubTarget = id("protcfg-pubTarget").checked ? 1 : 0;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -1722,11 +1729,12 @@
 			const dataProtConfig=await getJson("protconfig");
 			if (dataProtConfig) {
 				id("protcfg-dataProt").selectedIndex = dataProtConfig["prot"];
-				id("protcfg-mqttIp").value = dataProtConfig["mqttIp"];
-				id("protcfg-mqttPort").value = dataProtConfig["mqttPort"];
+				id("protcfg-Ip").value = dataProtConfig["ip"];
+				id("protcfg-Port").value = dataProtConfig["port"];
 				id("protcfg-Interval").value = dataProtConfig["interval"];
 				id("protcfg-User").value = dataProtConfig["user"];
-				showMqttIP();
+				id("protcfg-pubTarget").checked = dataProtConfig["pubTarget"];
+				showBrokerIP();
 			}
 		}
 		

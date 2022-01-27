@@ -92,9 +92,10 @@ String CWeb::getNetInfo(VDM_NETWORK_INFO networkInfo)
 String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
 {
   String result = "{\"prot\":"+String(protConfig.dataProtocol)+","+
-                    "\"mqttIp\":\""+ip2String(protConfig.brokerIp)+"\","+
-                    "\"mqttPort\":\""+String(protConfig.brokerPort)+"\","+
+                    "\"ip\":\""+ip2String(protConfig.brokerIp)+"\","+
+                    "\"port\":\""+String(protConfig.brokerPort)+"\","+
                     "\"interval\":"+String(protConfig.brokerInterval)+","+
+                    "\"pubTarget\":"+String(protConfig.publishTarget)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
 }

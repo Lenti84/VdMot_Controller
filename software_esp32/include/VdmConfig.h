@@ -74,6 +74,7 @@ typedef struct {
   uint32_t brokerInterval;
   char userName[65];
   char userPwd[65];
+  bool publishTarget;
 } VDM_PROTOCOL_CONFIG;
 
 typedef struct {
@@ -107,44 +108,45 @@ typedef struct
 } CONFIG_FLASH;
 
 
-#define nvsNetCfg         "netCfg"
-#define nvsNetEthwifi     "ethwifi"
-#define nvsNetDhcp        "dhcp"
-#define nvsNetStaticIp    "staticIp"
-#define nvsNetMask        "mask"
-#define nvsNetGW          "gw"
-#define nvsNetDnsIp       "dnsIp"       
-#define nvsNetSsid        "ssid"
-#define nvsNetPwd         "pwd"
-#define nvsNetUserName    "userName"
-#define nvsNetUserPwd     "userPwd"
-#define nvsNetTimeServer  "timeServer"
-#define nvsNetTimeOffset  "timeOffset"
-#define nvsNetDayLightOffset "dstOffset"
-#define nvsNetSysLogEnable  "syslogEnable"
-#define nvsNetSysLogIp      "sysLogIp"
-#define nvsNetSysLogPort    "sysLogPort"
+#define nvsNetCfg                   "netCfg"
+#define nvsNetEthwifi               "ethwifi"
+#define nvsNetDhcp                  "dhcp"
+#define nvsNetStaticIp              "staticIp"
+#define nvsNetMask                  "mask"
+#define nvsNetGW                    "gw"
+#define nvsNetDnsIp                 "dnsIp"       
+#define nvsNetSsid                  "ssid"
+#define nvsNetPwd                   "pwd"
+#define nvsNetUserName              "userName"
+#define nvsNetUserPwd               "userPwd"
+#define nvsNetTimeServer            "timeServer"
+#define nvsNetTimeOffset            "timeOffset"
+#define nvsNetDayLightOffset        "dstOffset"
+#define nvsNetSysLogEnable          "syslogEnable"
+#define nvsNetSysLogIp              "sysLogIp"
+#define nvsNetSysLogPort            "sysLogPort"
 
-#define nvsProtCfg        "protCfg"
-#define nvsProtDataProt   "dataProt"
-#define nvsProtBrokerIp   "brokerIp"
-#define nvsProtBrokerPort "brokerPort"
-#define nvsProtBrokerInterval "brokerInterval"
-#define nvsProtBrokerUser "brokerUser"
-#define nvsProtBrokerPwd  "brokerPwd"
+#define nvsProtCfg                  "protCfg"
+#define nvsProtDataProt             "dataProt"
+#define nvsProtBrokerIp             "brokerIp"
+#define nvsProtBrokerPort           "brokerPort"
+#define nvsProtBrokerInterval       "brokerInterval"
+#define nvsProtBrokerUser           "brokerUser"
+#define nvsProtBrokerPwd            "brokerPwd"
+#define nvsProtBrokerPublishTarget  "brokerPT"
 
-#define nvsValvesCfg      "valvesCfg"
-#define nvsValves         "valves"
+#define nvsValvesCfg                "valvesCfg"
+#define nvsValves                   "valves"
 
-#define nvsTempsCfg      "tempsCfg"
-#define nvsTemps         "temps"
-#define nvsDayOfCalib    "dayOfCalib"
-#define nvsHourOfCalib   "hourOfCalib"
-#define nvsMovCalib      "movCalib"
+#define nvsTempsCfg                 "tempsCfg"
+#define nvsTemps                    "temps"
+#define nvsDayOfCalib               "dayOfCalib"
+#define nvsHourOfCalib              "hourOfCalib"
+#define nvsMovCalib                 "movCalib"
 
-#define nvsMotorCfg      "motorCfg"
-#define nvsMotorMinC     "motorMinC"
-#define nvsMotorMaxC     "motorMaxC"
+#define nvsMotorCfg                 "motorCfg"
+#define nvsMotorMinC                "motorMinC"
+#define nvsMotorMaxC                "motorMaxC"
 
 
 

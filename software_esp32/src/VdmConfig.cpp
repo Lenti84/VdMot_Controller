@@ -97,7 +97,8 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.brokerInterval = 2000;
   memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
   memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
-
+  configFlash.protConfig.publishTarget = false;
+  
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesConfig.valveConfig[i].active = false;
     memset (configFlash.valvesConfig.valveConfig[i].name,0,sizeof(configFlash.valvesConfig.valveConfig[i].name));
@@ -122,54 +123,54 @@ void CVdmConfig::readConfig()
 {
   
   if (prefs.begin(nvsNetCfg,false)) {
-  configFlash.netConfig.eth_wifi=prefs.getUChar(nvsNetEthwifi);
-  configFlash.netConfig.dhcpEnabled=prefs.getUChar(nvsNetDhcp,1);
-  configFlash.netConfig.staticIp=prefs.getULong(nvsNetStaticIp);
-  configFlash.netConfig.mask=prefs.getULong(nvsNetMask);
-  configFlash.netConfig.gateway=prefs.getULong(nvsNetGW);
-  configFlash.netConfig.dnsIp=prefs.getULong(nvsNetDnsIp); 
-  if (prefs.isKey(nvsNetSsid))
-    prefs.getString(nvsNetSsid,(char*) configFlash.netConfig.ssid,sizeof(configFlash.netConfig.ssid));
-  if (prefs.isKey(nvsNetPwd))
-    prefs.getString(nvsNetPwd,(char*) configFlash.netConfig.pwd,sizeof(configFlash.netConfig.pwd));
-  if (prefs.isKey(nvsNetUserName))
-    prefs.getString(nvsNetUserName,(char*) configFlash.netConfig.userName,sizeof(configFlash.netConfig.userName));
-  if (prefs.isKey(nvsNetUserPwd))
-    prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
-  if (prefs.isKey(nvsNetTimeServer))
-    prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
-  
-  if (strlen(configFlash.netConfig.timeServer) == 0) {
-    memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
-    strncpy(configFlash.netConfig.timeServer,"pool.ntp.org",sizeof(configFlash.netConfig.timeServer));
-  }
-  
-  configFlash.netConfig.timeOffset=prefs.getLong(nvsNetTimeOffset,3600);
-  configFlash.netConfig.daylightOffset=prefs.getInt(nvsNetDayLightOffset,3600);
-  configFlash.netConfig.syslogLevel=prefs.getUChar(nvsNetSysLogEnable);
-  configFlash.netConfig.syslogIp=prefs.getULong(nvsNetSysLogIp);
-  configFlash.netConfig.syslogPort=prefs.getUShort(nvsNetSysLogPort);
-  prefs.end();
+    configFlash.netConfig.eth_wifi=prefs.getUChar(nvsNetEthwifi);
+    configFlash.netConfig.dhcpEnabled=prefs.getUChar(nvsNetDhcp,1);
+    configFlash.netConfig.staticIp=prefs.getULong(nvsNetStaticIp);
+    configFlash.netConfig.mask=prefs.getULong(nvsNetMask);
+    configFlash.netConfig.gateway=prefs.getULong(nvsNetGW);
+    configFlash.netConfig.dnsIp=prefs.getULong(nvsNetDnsIp); 
+    if (prefs.isKey(nvsNetSsid))
+      prefs.getString(nvsNetSsid,(char*) configFlash.netConfig.ssid,sizeof(configFlash.netConfig.ssid));
+    if (prefs.isKey(nvsNetPwd))
+      prefs.getString(nvsNetPwd,(char*) configFlash.netConfig.pwd,sizeof(configFlash.netConfig.pwd));
+    if (prefs.isKey(nvsNetUserName))
+      prefs.getString(nvsNetUserName,(char*) configFlash.netConfig.userName,sizeof(configFlash.netConfig.userName));
+    if (prefs.isKey(nvsNetUserPwd))
+      prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
+    if (prefs.isKey(nvsNetTimeServer))
+      prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
+    
+    if (strlen(configFlash.netConfig.timeServer) == 0) {
+      memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
+      strncpy(configFlash.netConfig.timeServer,"pool.ntp.org",sizeof(configFlash.netConfig.timeServer));
+    }
+    
+    configFlash.netConfig.timeOffset=prefs.getLong(nvsNetTimeOffset,3600);
+    configFlash.netConfig.daylightOffset=prefs.getInt(nvsNetDayLightOffset,3600);
+    configFlash.netConfig.syslogLevel=prefs.getUChar(nvsNetSysLogEnable);
+    configFlash.netConfig.syslogIp=prefs.getULong(nvsNetSysLogIp);
+    configFlash.netConfig.syslogPort=prefs.getUShort(nvsNetSysLogPort);
+    prefs.end();
   }
   if (prefs.begin(nvsProtCfg,false)) {
-  configFlash.protConfig.dataProtocol = prefs.getUChar(nvsProtDataProt);
-  configFlash.protConfig.brokerIp = prefs.getULong(nvsProtBrokerIp);
-  configFlash.protConfig.brokerPort = prefs.getUShort(nvsProtBrokerPort);
-  configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,2000);
-  if (prefs.isKey(nvsProtBrokerUser))
-    prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName));
-  if (prefs.isKey(nvsProtBrokerPwd))
-    prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd));
-  
-  prefs.end();
+    configFlash.protConfig.dataProtocol = prefs.getUChar(nvsProtDataProt);
+    configFlash.protConfig.brokerIp = prefs.getULong(nvsProtBrokerIp);
+    configFlash.protConfig.brokerPort = prefs.getUShort(nvsProtBrokerPort);
+    configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,2000);
+    if (prefs.isKey(nvsProtBrokerUser))
+      prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName));
+    if (prefs.isKey(nvsProtBrokerPwd))
+      prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd));
+    configFlash.protConfig.publishTarget = prefs.getUChar(nvsProtBrokerPublishTarget);
+    prefs.end();
   }
 
   if (prefs.begin(nvsValvesCfg,false)) {
-  if (prefs.isKey(nvsValves))
-    prefs.getBytes(nvsValves, (void *) configFlash.valvesConfig.valveConfig, sizeof(configFlash.valvesConfig.valveConfig));
-  configFlash.valvesConfig.dayOfCalib=prefs.getUChar(nvsDayOfCalib,9);
-  configFlash.valvesConfig.hourOfCalib=prefs.getUChar(nvsHourOfCalib); 
-  prefs.end();
+    if (prefs.isKey(nvsValves))
+      prefs.getBytes(nvsValves, (void *) configFlash.valvesConfig.valveConfig, sizeof(configFlash.valvesConfig.valveConfig));
+    configFlash.valvesConfig.dayOfCalib=prefs.getUChar(nvsDayOfCalib,9);
+    configFlash.valvesConfig.hourOfCalib=prefs.getUChar(nvsHourOfCalib); 
+    prefs.end();
   }
  
  if (prefs.begin(nvsTempsCfg,false)) {
@@ -210,6 +211,7 @@ void CVdmConfig::writeConfig(bool reboot)
     prefs.putULong(nvsProtBrokerInterval,configFlash.protConfig.brokerInterval);
     prefs.putString(nvsProtBrokerUser,configFlash.protConfig.userName);
     prefs.putString(nvsProtBrokerPwd,configFlash.protConfig.userPwd);
+    prefs.putUChar(nvsProtBrokerPublishTarget,configFlash.protConfig.publishTarget);
   }
   prefs.end();
  
@@ -259,12 +261,12 @@ void CVdmConfig::postNetCfg (JsonObject doc)
 void CVdmConfig::postProtCfg (JsonObject doc)
 {
   if (!doc["prot"].isNull()) configFlash.protConfig.dataProtocol = doc["prot"];
-  if (!doc["mqttIp"].isNull()) configFlash.protConfig.brokerIp = doc2IPAddress(doc["mqttIp"]);
-  if (!doc["mqttPort"].isNull()) configFlash.protConfig.brokerPort = doc["mqttPort"];
+  if (!doc["ip"].isNull()) configFlash.protConfig.brokerIp = doc2IPAddress(doc["ip"]);
+  if (!doc["port"].isNull()) configFlash.protConfig.brokerPort = doc["port"];
   if (!doc["interval"].isNull()) configFlash.protConfig.brokerInterval = doc["interval"];
   if (!doc["user"].isNull()) strncpy(configFlash.protConfig.userName,doc["user"].as<const char*>(),sizeof(configFlash.netConfig.userName));
   if (!doc["pwd"].isNull()) strncpy(configFlash.protConfig.userPwd,doc["pwd"].as<const char*>(),sizeof(configFlash.netConfig.userPwd));
-
+  if (!doc["pubTarget"].isNull()) configFlash.protConfig.publishTarget = doc["pubTarget"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
