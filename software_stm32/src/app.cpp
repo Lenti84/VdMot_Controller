@@ -62,6 +62,9 @@ int16_t app_setup (void) {
 
   if ((eep_content.numberOfMovements>=50) && (eep_content.numberOfMovements<65535))
     learning_movements=eep_content.numberOfMovements;
+
+  COMM_DBG.print("learning_movements: "); 
+  COMM_DBG.println(learning_movements, DEC);
   return 0;
 }
 
@@ -288,9 +291,11 @@ int16_t app_match_sensors() {
 
       //COMM_DBG.print("owsensorindex ");
       //COMM_DBG.println(owsensorindex, DEC);
-      printAddress(currAddress);
-      //COMM_DBG.println("");
-      
+      #ifdef appDebug
+        printAddress(currAddress);
+        //COMM_DBG.println("");
+      #endif
+
       // first sensor of valve
       // step through all possible valves
       for (unsigned int valveindex1 = 0;valveindex1<ACTUATOR_COUNT;valveindex1++) {
