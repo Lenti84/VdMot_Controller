@@ -55,25 +55,28 @@ volatile int temp_cmd = 0;
 
 void printAddress(DeviceAddress deviceAddress)
 {
-  COMM_DBG.print("{");
-  for (uint8_t i = 0; i < 8; i++)
-  {
-    // zero pad the address if necessary
-    //COMM_DBG.print("0x");
-    COMM_DBG.print(" ");
-    if (deviceAddress[i] < 16) COMM_DBG.print("0");
-    COMM_DBG.print(deviceAddress[i], HEX);
-    if (i<7) COMM_DBG.print(", ");
-    
-  }
-  COMM_DBG.print(" }");  
+  #ifdef tempDebug
+    COMM_DBG.print("{");
+    for (uint8_t i = 0; i < 8; i++)
+    {
+      // zero pad the address if necessary
+      //COMM_DBG.print("0x");
+      
+      COMM_DBG.print(" ");
+      if (deviceAddress[i] < 16) COMM_DBG.print("0");
+      COMM_DBG.print(deviceAddress[i], HEX);
+      if (i<7) COMM_DBG.print(", ");
+      
+    }
+    COMM_DBG.print(" }");  
+  #endif
 }
 
 
 void temperature_setup() {
-
-    COMM_DBG.println("starting 1-wire setup"); 
-
+    #ifdef tempDebug
+      COMM_DBG.println("starting 1-wire setup"); 
+    #endif
     for (uint8_t i=0; i<MAXSENSORCOUNT; i++)
     {
       memset (tempsensors[i].address,0x0,8);
@@ -82,19 +85,24 @@ void temperature_setup() {
     sensors.begin();
   
     sensors.setWaitForConversion(false);
-
-    COMM_DBG.println("search for devices"); 
-
+    #ifdef tempDebug
+      COMM_DBG.println("search for devices"); 
+    #endif
     //DeviceAddress currAddress;
     //uint8_t numberOfDevices = sensors.getDeviceCount();
     numberOfDevices = sensors.getDeviceCount();
-    COMM_DBG.print("Found "); COMM_DBG.print(numberOfDevices, 10); COMM_DBG.println(" temp sensors:");
-    
+    #ifdef tempDebug
+      COMM_DBG.print("Found "); 
+      COMM_DBG.print(numberOfDevices, 10); 
+      COMM_DBG.println(" temp sensors:");
+    #endif
     for (unsigned int i=0; i<numberOfDevices; i++)
     {
         sensors.getAddress(tempsensors[i].address, i);
         printAddress(tempsensors[i].address);
-        COMM_DBG.println();
+        #ifdef tempDebug
+          COMM_DBG.println();
+        #endif
     }
 
     // init sensor array
@@ -121,7 +129,11 @@ void temperature_loop() {
   switch (tempstate) {
     case T_INIT:  
               //numberOfDevices = sensors.getDeviceCount();
-              //COMM_DBG.print("Found "); COMM_DBG.print(numberOfDevices, 10); COMM_DBG.println(" temp sensors");
+              #ifdef tempDebug
+                COMM_DBG.print("Found "); 
+                COMM_DBG.print(numberOfDevices, 10); 
+                COMM_DBG.println(" temp sensors");
+              #endif
               timer = CONV_INTERVALL / 10;                
               tempstate = T_IDLE;
               break;
@@ -145,7 +157,9 @@ void temperature_loop() {
     case T_REQUEST:
               // if(timer) timer--;
               // else {
-                COMM_DBG.println("Requesting temperatures...");
+                #ifdef tempDebug
+                  COMM_DBG.println("Requesting temperatures...");
+                #endif
                 sensors.requestTemperatures();
 
                 timer = 20 + (sensors.millisToWaitForConversion(sensors.getResolution()) / 10);
@@ -171,13 +185,15 @@ void temperature_loop() {
                 //sensors.getTempCByIndex(devcnt);                
                 //sensors.getAddress(currAddress, devcnt);
                 //printAddress(currAddress);
-                COMM_DBG.print("Sensor ");
-                COMM_DBG.print(devcnt);
-                COMM_DBG.print(": ");
-                COMM_DBG.print(tempsensors[devcnt].temperature/10);
-                COMM_DBG.print(".");
-                COMM_DBG.print(tempsensors[devcnt].temperature%10);
-                COMM_DBG.println();  
+                #ifdef tempDebug
+                  COMM_DBG.print("Sensor ");
+                  COMM_DBG.print(devcnt);
+                  COMM_DBG.print(": ");
+                  COMM_DBG.print(tempsensors[devcnt].temperature/10);
+                  COMM_DBG.print(".");
+                  COMM_DBG.print(tempsensors[devcnt].temperature%10);
+                  COMM_DBG.println();  
+                #endif
               }
               else tempstate = T_IDLE;
               devcnt++;
@@ -189,16 +205,20 @@ void temperature_loop() {
     case T_SEARCH:
               // start new search
               if (substate == 0) {
-                COMM_DBG.println("New 1-wire search");
+                #ifdef tempDebug
+                  COMM_DBG.println("New 1-wire search");
+                #endif
                 sensors.begin();
                 substate = 1;
               }
               // read device count
               else if (substate == 1) {
                 numberOfDevices = sensors.getDeviceCount();
-                COMM_DBG.print("Found "); 
-                COMM_DBG.print(numberOfDevices, 10); 
-                COMM_DBG.println(" temp sensors:");
+                #ifdef tempDebug
+                  COMM_DBG.print("Found "); 
+                  COMM_DBG.print(numberOfDevices, 10); 
+                  COMM_DBG.println(" temp sensors:");
+                #endif
                 devcnt=0;
                 substate = 2;
               }
@@ -207,11 +227,15 @@ void temperature_loop() {
                 if(devcnt < numberOfDevices) {
                   sensors.getAddress(tempsensors[devcnt].address, devcnt);
                   printAddress(tempsensors[devcnt].address);
-                  COMM_DBG.print(" ");
+                  #ifdef tempDebug
+                    COMM_DBG.print(" ");
+                  #endif
                   temp = sensors.getTempCByIndex(devcnt);
                   tempsensors[devcnt].temperature = round(temp*10);
-                  COMM_DBG.print(temp,DEC);
-                  COMM_DBG.println();
+                  #ifdef tempDebug
+                    COMM_DBG.print(temp,DEC);
+                    COMM_DBG.println();
+                  #endif
                 }
                 else {
                   temp_cmd = TEMP_CMD_NONE;

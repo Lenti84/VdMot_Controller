@@ -87,8 +87,10 @@ int16_t app_loop (void) {
         if(myvalvemots[testvlvindex].status == VLV_STATE_UNKNOWN) 
         //if(0)
         {
-          COMM_DBG.print("App: valve "); COMM_DBG.print(testvlvindex, 10);
-          COMM_DBG.println(" unknown, try to find out...");
+          #ifdef appDebug
+            COMM_DBG.print("App: valve "); COMM_DBG.print(testvlvindex, 10);
+            COMM_DBG.println(" unknown, try to find out...");
+          #endif
           appsetaction(CMD_A_TEST,testvlvindex,0);    
           testvlvindex += 2;
 
@@ -101,13 +103,18 @@ int16_t app_loop (void) {
         // handle first found difference then break
         else if(myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
         {
-            COMM_DBG.print("App: target pos changed for valve "); COMM_DBG.println(lastvalve, 10);
-            
+            #ifdef appDebug
+              COMM_DBG.print("App: target pos changed for valve "); 
+              COMM_DBG.println(lastvalve, 10);
+            #endif
             // check if valve was learned before
             //if(myvalvemots[lastvalve].status == VLV_STATE_UNKNOWN || myvalvemots[lastvalve].status == VLV_STATE_OPENCIR) 
             if(myvalvemots[lastvalve].status == VLV_STATE_PRESENT)             
             {
-              COMM_DBG.print("App: learning started for valve "); COMM_DBG.println(lastvalve, 10);
+              #ifdef appDebug
+                COMM_DBG.print("App: learning started for valve "); 
+                COMM_DBG.println(lastvalve, 10);
+              #endif
               appsetaction(CMD_A_LEARN,lastvalve,0);                  
             }
             else // valve was learned before
@@ -152,7 +159,11 @@ byte app_10s_loop () {
       if(myvalves[x].learn_time <= 10) {
         myvalves[x].learn_time = learning_time;
         myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, next set target req will do a learning cycle
-        COMM_DBG.print("App: Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
+        #ifdef appDebug
+          COMM_DBG.print("App: Valve "); 
+          COMM_DBG.print(x, 10); 
+          COMM_DBG.println(" will be learned soon");
+        #endif
       }
       else myvalves[x].learn_time -= 10;    
     }
@@ -164,7 +175,11 @@ byte app_10s_loop () {
       if(myvalves[x].learn_movements == 0) {
         myvalves[x].learn_movements = learning_movements;
         myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
-        COMM_DBG.print("App: Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
+        #ifdef appDebug
+          COMM_DBG.print("App: Valve "); 
+          COMM_DBG.print(x, 10); 
+          COMM_DBG.println(" will be learned soon");
+        #endif
       }   
     } 
   }
@@ -261,8 +276,9 @@ int16_t app_match_sensors() {
   DeviceAddress currAddress;
   uint8_t   found1, found2;
   uint8_t   valveindexlast;
-
-  COMM_DBG.println("Read 1-wire sensor addresses from eeprom");
+  #ifdef appDebug
+    COMM_DBG.println("Read 1-wire sensor addresses from eeprom");
+  #endif
   numberOfDevices = sensors.getDeviceCount();  
     
   for (unsigned int owsensorindex=0; owsensorindex<numberOfDevices; owsensorindex++)
@@ -301,9 +317,11 @@ int16_t app_match_sensors() {
       }
       if (found1 == 7)
       {
-          COMM_DBG.print(" found as 1st sensor at valve: ");
-          // COMM_DBG.print(owsensorindex, DEC);
-          COMM_DBG.println(valveindexlast, DEC);
+          #ifdef appDebug
+            COMM_DBG.print(" found as 1st sensor at valve: ");
+            // COMM_DBG.print(owsensorindex, DEC);
+            COMM_DBG.println(valveindexlast, DEC);
+          #endif
           myvalves[valveindexlast].sensorindex1 = owsensorindex;
       } else {
         myvalves[valveindexlast].sensorindex1 = VALVE_SENSOR_UNKNOWN;
@@ -336,10 +354,12 @@ int16_t app_match_sensors() {
         }
       }
       if (found2 == 7)
-      {          
-          COMM_DBG.print(" found as 2nd sensor at valve: ");
-          // COMM_DBG.print(owsensorindex, DEC);
-          COMM_DBG.println(valveindexlast, DEC);
+      {     
+          #ifdef appDebug     
+            COMM_DBG.print(" found as 2nd sensor at valve: ");
+            // COMM_DBG.print(owsensorindex, DEC);
+            COMM_DBG.println(valveindexlast, DEC);
+          #endif
           myvalves[valveindexlast].sensorindex2 = owsensorindex;
       }  else {
         myvalves[valveindexlast].sensorindex2 = VALVE_SENSOR_UNKNOWN;
@@ -351,7 +371,9 @@ int16_t app_match_sensors() {
       // }
 
       if(found1==0 && found2==0) {
-        COMM_DBG.println(" not found");
+        #ifdef appDebug
+          COMM_DBG.println(" not found");
+        #endif
       }
 
       

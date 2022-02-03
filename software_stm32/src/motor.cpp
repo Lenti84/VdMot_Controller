@@ -158,10 +158,15 @@ byte valve_setup () {
   // Interval in microsecs
   if (ITimer0.attachInterruptInterval(TIMER0_INTERVAL_MS * 1000, TimerHandler0))
   {
-    COMM_DBG.print(F("Starting ITimer0 OK, millis() = ")); COMM_DBG.println(millis());
+    #ifdef motDebug 
+        COMM_DBG.print(F("Starting ITimer0 OK, millis() = ")); COMM_DBG.println(millis());
+    #endif
   }
-  else
-    COMM_DBG.println(F("Can't set ITimer0. Select another freq. or timer"));
+  else {
+    #ifdef motDebug
+      COMM_DBG.println(F("Can't set ITimer0. Select another freq. or timer"));
+    #endif
+  }
 
   if ((eep_content.currentbound_low_fac>=10) && (eep_content.currentbound_low_fac<=50))
     currentbound_low_fac = eep_content.currentbound_low_fac;
@@ -200,7 +205,9 @@ byte valve_loop () {
   switch (valvestate) {
     case A_INIT:  
                   if ( motorcycle(0, CMD_M_NOTHING) == M_RES_IDLE ) {                    
-                     COMM_DBG.println("A: init ready");
+                     #ifdef motDebug
+                        COMM_DBG.println("A: init ready");
+                     #endif
                      valvestate = A_IDLE;
                      
                      //valveindex = 0;                     
@@ -214,9 +221,11 @@ byte valve_loop () {
 
     case A_IDLE:  
                   valveindex = valvenr;
-                  if (command == CMD_A_OPEN) {                    
-                    COMM_DBG.print("A: cmd open for valve ");                  
-                    COMM_DBG.println(valveindex, 10);                    
+                  if (command == CMD_A_OPEN) {
+                    #ifdef motDebug                    
+                      COMM_DBG.print("A: cmd open for valve ");                  
+                      COMM_DBG.println(valveindex, 10);                    
+                    #endif
                     valvestate = A_OPEN1;
                     PSU_ON();
                     waittimer = 50;
@@ -224,43 +233,53 @@ byte valve_loop () {
                     pos_change = poschangecmd;
                   }
                   else if (command == CMD_A_CLOSE) {
-                    COMM_DBG.print("A: cmd close for valve ");                  
-                    COMM_DBG.println(valveindex, 10);                                        
+                    #ifdef motDebug
+                      COMM_DBG.print("A: cmd close for valve ");                  
+                      COMM_DBG.println(valveindex, 10);                                        
+                    #endif
                     valvestate = A_CLOSE1;  
                     PSU_ON();
                     waittimer = 50;
                     psuofftimer = 0;
                     pos_change = poschangecmd;
                   }
-                  else if (command == CMD_A_OPEN_END) {                    
-                    COMM_DBG.print("A: cmd open to endstop for valve ");                  
-                    COMM_DBG.println(valveindex, 10);                    
+                  else if (command == CMD_A_OPEN_END) {  
+                    #ifdef motDebug                  
+                      COMM_DBG.print("A: cmd open to endstop for valve ");                  
+                      COMM_DBG.println(valveindex, 10);                    
+                    #endif
                     valvestate = A_OPEN1;
                     PSU_ON();
                     waittimer = 50;
                     psuofftimer = 0;
                     pos_change = 255;
                   }
-                  else if (command == CMD_A_CLOSE_END) {                    
-                    COMM_DBG.print("A: cmd close to endstop for valve ");                  
-                    COMM_DBG.println(valveindex, 10);                    
+                  else if (command == CMD_A_CLOSE_END) {   
+                    #ifdef motDebug                 
+                      COMM_DBG.print("A: cmd close to endstop for valve ");                  
+                      COMM_DBG.println(valveindex, 10);                    
+                    #endif
                     valvestate = A_CLOSE1;
                     PSU_ON();
                     waittimer = 50;
                     psuofftimer = 0;
                     pos_change = 255;
                   }
-                  else if (command == CMD_A_LEARN) {                    
-                    COMM_DBG.print("A: cmd learn for valve ");                  
-                    COMM_DBG.println(valveindex, 10);                    
+                  else if (command == CMD_A_LEARN) {
+                    #ifdef motDebug                    
+                      COMM_DBG.print("A: cmd learn for valve ");                  
+                      COMM_DBG.println(valveindex, 10);                    
+                    #endif
                     valvestate = A_LEARN1;
                     PSU_ON(); 
                     psuofftimer = 0;
                     waittimer = 50; 
                   }
-                  else if (command == CMD_A_TEST) {                    
-                    COMM_DBG.print("A: cmd test valve ");                  
-                    COMM_DBG.println(valveindex, 10);                    
+                  else if (command == CMD_A_TEST) { 
+                    #ifdef motDebug                   
+                      COMM_DBG.print("A: cmd test valve ");                  
+                      COMM_DBG.println(valveindex, 10);  
+                    #endif                  
                     valvestate = A_TEST;
                     PSU_ON();
                     waittimer = 100;
@@ -306,14 +325,18 @@ byte valve_loop () {
                     m_meancurrent = myvalvemots[valveindex].meancurrent;
                     
                     if (motorcycle (valveindex, CMD_M_OPEN) == M_RES_OPENS) {
-                      COMM_DBG.print("A: begin opening by ");                  
-                      COMM_DBG.println(pos_change);
+                      #ifdef motDebug
+                        COMM_DBG.print("A: begin opening by ");                  
+                        COMM_DBG.println(pos_change);
+                      #endif
                       myvalvemots[valveindex].status = VLV_STATE_OPENING;                                                            
                       valvestate = A_OPEN2;
                       isr_counter=0;
                     }
                     else {
-                      COMM_DBG.print("A: cant open valve");                  
+                      #ifdef motDebug
+                        COMM_DBG.print("A: cant open valve");                  
+                      #endif
                       valvestate = A_IDLE;
                     }
                   }
@@ -322,25 +345,35 @@ byte valve_loop () {
     case A_OPEN2:  // wait for finish opening
                   temp = motorcycle (valveindex, 0);
                   if (temp == M_RES_STOP) {
-                    COMM_DBG.println("A: opened valve");                  
+                    #ifdef motDebug
+                      COMM_DBG.println("A: opened valve"); 
+                    #endif                 
                     valvestate = A_IDLE;
                     myvalvemots[valveindex].actual_position += pos_change;
-                    myvalvemots[valveindex].status = VLV_STATE_IDLE;                    
-                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
+                    myvalvemots[valveindex].status = VLV_STATE_IDLE; 
+                    #ifdef motDebug                   
+                      COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
+                    #endif
                   }
                   else if (temp == M_RES_NOCURRENT) {
-                    COMM_DBG.println("A: undercurrent");
+                    #ifdef motDebug
+                      COMM_DBG.println("A: undercurrent");
+                    #endif
                     myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
                     myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
                     valvestate = A_IDLE;
                     isr_counter=0;
                   } 
                   else if (temp == M_RES_ENDSTOP) {
-                    COMM_DBG.println("A: opened valve to end stop");
+                    #ifdef motDebug
+                      COMM_DBG.println("A: opened valve to end stop");
+                    #endif
                     valvestate = A_IDLE;
                     myvalvemots[valveindex].status = VLV_STATE_IDLE;
                     myvalvemots[valveindex].actual_position = 100;
-                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
+                    #ifdef motDebug
+                      COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
+                    #endif
                   }                  
                   break;
 
@@ -351,14 +384,18 @@ byte valve_loop () {
                     m_meancurrent = myvalvemots[valveindex].meancurrent;
                     
                     if (motorcycle (valveindex, CMD_M_CLOSE) == M_RES_CLOSES) {
-                      COMM_DBG.print("A: begin closing by ");                  
-                      COMM_DBG.println(pos_change);       
+                      #ifdef motDebug
+                        COMM_DBG.print("A: begin closing by ");                  
+                        COMM_DBG.println(pos_change);       
+                      #endif
                       myvalvemots[valveindex].status = VLV_STATE_CLOSING;                                                     
                       valvestate = A_CLOSE2;
                       isr_counter=0;
                     }   
                     else {
-                      COMM_DBG.print("A: cant close valve");                  
+                      #ifdef motDebug
+                        COMM_DBG.print("A: cant close valve");                  
+                      #endif
                       valvestate = A_IDLE;
                     }
                   }
@@ -367,30 +404,42 @@ byte valve_loop () {
     case A_CLOSE2:  // wait for finish closing
                   temp = motorcycle (valveindex, 0);
                   if (temp == M_RES_STOP) {
-                    COMM_DBG.println("A: closed valve");
+                    #ifdef motDebug
+                      COMM_DBG.println("A: closed valve");
+                    #endif
                     valvestate = A_IDLE;
                     myvalvemots[valveindex].status = VLV_STATE_IDLE;
                     myvalvemots[valveindex].actual_position -= pos_change; 
-                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);                   
+                    #ifdef motDebug
+                      COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);                   
+                    #endif
                   }
                   else if (temp == M_RES_NOCURRENT) {
-                    COMM_DBG.println("A: undercurrent");
+                    #ifdef motDebug
+                      COMM_DBG.println("A: undercurrent");
+                    #endif
                     myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
                     myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
                     valvestate = A_IDLE;
                     isr_counter=0;
                   } 
                   else if (temp == M_RES_ENDSTOP) {
-                    COMM_DBG.println("A: closed valve to end stop");
+                    #ifdef motDebug
+                      COMM_DBG.println("A: closed valve to end stop");
+                    #endif
                     valvestate = A_IDLE;
                     myvalvemots[valveindex].status = VLV_STATE_IDLE;
                     myvalvemots[valveindex].actual_position = 0;
-                    COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
+                    #ifdef motDebug
+                      COMM_DBG.print("A: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
+                    #endif
                   }                  
                   break;                  
     
-    case A_LEARN1:  // prepare learning          
-                  COMM_DBG.println("A: try learning valve");                  
+    case A_LEARN1:  // prepare learning  
+                  #ifdef motDebug        
+                    COMM_DBG.println("A: try learning valve");                  
+                  #endif
                   // first: closing completely
                   motorcycle (valveindex, CMD_M_CLOSE);
                   myvalvemots[valveindex].status = VLV_STATE_CLOSING;
@@ -405,7 +454,9 @@ byte valve_loop () {
                     // waiting for closed valve as start position
                     temp = motorcycle (valveindex, 0);
                     if (temp == M_RES_ENDSTOP) {
-                      COMM_DBG.println("A: closed valve before learning, now opening");                  
+                      #ifdef motDebug
+                        COMM_DBG.println("A: closed valve before learning, now opening");                  
+                      #endif
                       // second: opening completely and count rotations
                       isr_counter=0;
                       myvalvemots[valveindex].status = VLV_STATE_OPENING;
@@ -416,7 +467,9 @@ byte valve_loop () {
                       waittimer = 10;
                     }
                     else if (temp == M_RES_NOCURRENT) {
-                      COMM_DBG.println("A: undercurrent");
+                      #ifdef motDebug
+                        COMM_DBG.println("A: undercurrent");
+                      #endif
                       myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
                       myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
                       valvestate = A_IDLE;
@@ -430,11 +483,16 @@ byte valve_loop () {
                     // waiting for opened valve
                     temp = motorcycle (valveindex, 0);
                     if (temp == M_RES_ENDSTOP) {
-                      COMM_DBG.println("A: opened valve for learning, now closing again");                  
+                      #ifdef motDebug
+                        COMM_DBG.println("A: opened valve for learning, now closing again");                  
+                      #endif
                       opening_count = isr_counter;   
                       if(m_meancurrent > 0) {
                         myvalvemots[valveindex].meancurrent = m_meancurrent;
-                        COMM_DBG.print("A: learned mean current = "); COMM_DBG.println(myvalvemots[valveindex].meancurrent);
+                        #ifdef motDebug
+                          COMM_DBG.print("A: learned mean current = "); 
+                          COMM_DBG.println(myvalvemots[valveindex].meancurrent);
+                        #endif
                       }                 
                       // third: closing completely and count rotations
                       isr_counter=0;
@@ -446,7 +504,9 @@ byte valve_loop () {
                       waittimer = 10;
                     }          
                     else if (temp == M_RES_NOCURRENT) {
-                      COMM_DBG.println("A: undercurrent");
+                      #ifdef motDebug
+                        COMM_DBG.println("A: undercurrent");
+                      #endif
                       myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
                       myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
                       valvestate = A_IDLE;
@@ -459,24 +519,29 @@ byte valve_loop () {
                   if (!waittimer) {
                     // waiting for closed valve again
                     temp = motorcycle (valveindex, 0);
-                    if (temp == M_RES_ENDSTOP) {  
-                      COMM_DBG.println("A: closed valve for learning");                  
+                    if (temp == M_RES_ENDSTOP) { 
+                      #ifdef motDebug 
+                        COMM_DBG.println("A: closed valve for learning");                  
+                      #endif
                       closing_count = isr_counter;  
 
                       if(m_meancurrent > 0) {
-                        COMM_DBG.print("A: learned mean current = "); COMM_DBG.println(m_meancurrent);
+                        #ifdef motDebug
+                          COMM_DBG.print("A: learned mean current = "); 
+                          COMM_DBG.println(m_meancurrent);
+                        #endif
                         myvalvemots[valveindex].meancurrent = (myvalvemots[valveindex].meancurrent + m_meancurrent) / 2;                      
                       }                      
                                           
                       deadzone_count = closing_count - opening_count;
                       scaler = opening_count / 100;
-
-                      COMM_DBG.print("A: learned closing_count = "); COMM_DBG.println(closing_count);
-                      COMM_DBG.print("A: learned opening_count = "); COMM_DBG.println(opening_count);
-                      COMM_DBG.print("A: learned deadzone_count = "); COMM_DBG.println(deadzone_count);
-                      COMM_DBG.print("A: learned scaler = "); COMM_DBG.println(scaler);
-                      COMM_DBG.print("A: learned mean current = "); COMM_DBG.println(myvalvemots[valveindex].meancurrent);
-
+                      #ifdef motDebug
+                        COMM_DBG.print("A: learned closing_count = "); COMM_DBG.println(closing_count);
+                        COMM_DBG.print("A: learned opening_count = "); COMM_DBG.println(opening_count);
+                        COMM_DBG.print("A: learned deadzone_count = "); COMM_DBG.println(deadzone_count);
+                        COMM_DBG.print("A: learned scaler = "); COMM_DBG.println(scaler);
+                        COMM_DBG.print("A: learned mean current = "); COMM_DBG.println(myvalvemots[valveindex].meancurrent);
+                      #endif
                       myvalvemots[valveindex].closing_count = closing_count;
                       myvalvemots[valveindex].opening_count = opening_count;
                       myvalvemots[valveindex].deadzone_count = deadzone_count;
@@ -489,7 +554,9 @@ byte valve_loop () {
                       valvestate = A_IDLE;
                     }    
                     else if (temp == M_RES_NOCURRENT) {
-                      COMM_DBG.println("A: undercurrent");
+                      #ifdef motDebug
+                        COMM_DBG.println("A: undercurrent");
+                      #endif
                       myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
                       myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
                       valvestate = A_IDLE;
@@ -504,15 +571,20 @@ byte valve_loop () {
                     
                     temp = motorcycle (valveindex, CMD_M_TEST);
                     if (temp != M_RES_TEST) {  
-                      COMM_DBG.print("A: test valve ");
-                      COMM_DBG.print(valveindex, DEC);                  
-                      
+                      #ifdef motDebug
+                        COMM_DBG.print("A: test valve ");
+                        COMM_DBG.print(valveindex, DEC);                  
+                      #endif
                       if(temp == M_RES_NOCURRENT) {
-                        COMM_DBG.println(" --> undercurrent, no valve");
+                        #ifdef motDebug
+                          COMM_DBG.println(" --> undercurrent, no valve");
+                        #endif
                         myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
                       }
                       else {
-                        COMM_DBG.println(" --> valve present");
+                        #ifdef motDebug
+                          COMM_DBG.println(" --> valve present");
+                        #endif
                         myvalvemots[valveindex].status = VLV_STATE_PRESENT;
                       }
 
@@ -618,10 +690,11 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     break;
       
       case M_OPEN:  
-                    COMM_DBG.println("M: state open");                                  
+                    #ifdef motDebug
+                      COMM_DBG.println("M: state open");                                  
+                    #endif
                     set_motor(mvalvenr, DIR_OPEN);
                     //digitalWrite(POWER_ENA, 0);   // enable PSU for vlaves   
-                    delay(50);    // wait for relay
                     //ena_motor(valvenr, 1);  
   
                     motorstate = M_TURNON;
@@ -635,10 +708,11 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     break;
                     
       case M_CLOSE:
-                    COMM_DBG.println("M: state close");                                 
+                    #ifdef motDebug
+                      COMM_DBG.println("M: state close");                                 
+                    #endif
                     set_motor(mvalvenr, DIR_CLOSE);
                     //digitalWrite(POWER_ENA, 0);   // enable PSU for vlaves
-                    delay(50);    // wait for relay
                     //ena_motor(mvalvenr, 1);
                       
                     motorstate = M_TURNON;
@@ -736,12 +810,13 @@ byte motorcycle (int mvalvenr, byte cmd) {
 
                           if (meancurrent_cnt > 0) m_meancurrent = abs(meancurrent_mem) / meancurrent_cnt / 10;
                           else m_meancurrent = 0;
-                      
-                          COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA/10,10); COMM_DBG.println(" mA");
-                          //#warning fixme
-                          //COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA,10); COMM_DBG.println(" 1/10 mA");
-                          COMM_DBG.print("M: Cnt:     "); COMM_DBG.println(isr_counter, DEC);                                 
-                          COMM_DBG.println("M: Autostop, reached end stop");
+                          #ifdef motDebug
+                            COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA/10,10); COMM_DBG.println(" mA");
+                            //#warning fixme
+                            //COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA,10); COMM_DBG.println(" 1/10 mA");
+                            COMM_DBG.print("M: Cnt:     "); COMM_DBG.println(isr_counter, DEC);                                 
+                            COMM_DBG.println("M: Autostop, reached end stop");
+                          #endif
                         }
                       }
                       else 
@@ -753,16 +828,23 @@ byte motorcycle (int mvalvenr, byte cmd) {
                       // testmode
                       // output position and current
                       if(testmode) {
-                        COMM_DBG.print("tm;"); COMM_DBG.print(current_mA,10); COMM_DBG.print(";"); COMM_DBG.println(isr_counter);
+                        #ifdef motDebug
+                          COMM_DBG.print("tm;"); 
+                          COMM_DBG.print(current_mA,10); 
+                          COMM_DBG.print(";"); 
+                          COMM_DBG.println(isr_counter);
+                        #endif
 
                       }
                     }
 
                     if (debouncecnt > 50 && cyclecnt > 50) {
                       cyclecnt=0;
-                      COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA/10, 10); COMM_DBG.println(" mA");
-                      //#warning fixme
-                      //COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA, 10); COMM_DBG.println(" 1/10 mA");
+                      #ifdef motDebug
+                        COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA/10, 10); COMM_DBG.println(" mA");
+                        //#warning fixme
+                        //COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA, 10); COMM_DBG.println(" 1/10 mA");
+                      #endif
                       meancurrent_mem += current_mA;
                       meancurrent_cnt++;
                     }
@@ -770,31 +852,35 @@ byte motorcycle (int mvalvenr, byte cmd) {
                       
       case M_STOP:         
                     //detachInterrupt(digitalPinToInterrupt(REVINPIN));
-                    COMM_DBG.println("M: state stop");    
-                                                      
+                    #ifdef motDebug
+                      COMM_DBG.println("M: state stop");    
+                    #endif                                  
                     ena_motor(0, 0);
                     //digitalWrite(POWER_ENA, 1);   // disable PSU for vlaves   
                     isr_turning = 0;
                     //MUX_OFF();
-                    
-                    COMM_DBG.print("M: Cnt: ");  
-                    COMM_DBG.println(isr_counter, DEC);                                 
-  
+                    #ifdef motDebug
+                      COMM_DBG.print("M: Cnt: ");  
+                      COMM_DBG.println(isr_counter, DEC);                                 
+                    #endif
                     motorstate = M_IDLE;
                     result = M_RES_STOP;                  
                     
                     break;
 
       case M_STOP_ISR: 
-                    COMM_DBG.println("M: target stop");  
+                    #ifdef motDebug
+                      COMM_DBG.println("M: target stop");  
+                    #endif
                     motorstate = M_STOP;
                     result = M_RES_STOP_ISR;  
                     break;
 
       case M_UNDERCURR:         
                     detachInterrupt(digitalPinToInterrupt(REVINPIN));
-                    COMM_DBG.println("M: state undercurrent detected, stopped");    
-                                                      
+                    #ifdef motDebug
+                      COMM_DBG.println("M: state undercurrent detected, stopped");    
+                    #endif                                  
                     ena_motor(0, 0);
                     //digitalWrite(POWER_ENA, 1);   // disable PSU for vlaves 
                     isr_turning = 0;
@@ -806,7 +892,9 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     break;
 
       case M_TESTPREP:
-                    COMM_DBG.println("M: test prep");                                  
+                    #ifdef motDebug
+                      COMM_DBG.println("M: test prep");                                  
+                    #endif
                     set_motor(mvalvenr, DIR_OPEN); 
                     ena_motor(mvalvenr, 1);                 
                 
@@ -823,8 +911,9 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     break;
 
       case M_TEST:
-                   // COMM_DBG.print("M: testing"); 
-
+                    #ifdef motDebug
+                      COMM_DBG.print("M: testing"); 
+                    #endif
                     result = M_RES_TEST;
     
                     // calc current in 1/10 mA
@@ -834,10 +923,10 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     analog_current_old = analog_current;
 
                     current_mA = analog_current;
-                    
-                   // COMM_DBG.print(" - current: ");
-                   // COMM_DBG.println (analog_current,DEC);
-
+                    #ifdef motDebug
+                      COMM_DBG.print(" - current: ");
+                      COMM_DBG.println (analog_current,DEC);
+                    #endif
                     if(debouncecnt<255) debouncecnt++;
 
                     if(debouncecnt>7) {
@@ -848,7 +937,9 @@ byte motorcycle (int mvalvenr, byte cmd) {
                         // undercurrcnt++;
                         // if (undercurrcnt > TIMEOUT_UNDERCURRENT)
                         // {
-                          COMM_DBG.println("test: undercurrent!");
+                          #ifdef motDebug
+                            COMM_DBG.println("test: undercurrent!");
+                          #endif
                           undercurrcnt = 0;
                           motorstate = M_IDLE;
                           result = M_RES_NOCURRENT;
@@ -863,7 +954,9 @@ byte motorcycle (int mvalvenr, byte cmd) {
                         // overcurrcnt++;
                         // if (overcurrcnt > TIMEOUT_OVERCURRENT)
                         // {
-                          COMM_DBG.println("test: overcurrent!");
+                          #ifdef motDebug
+                            COMM_DBG.println("test: overcurrent!");
+                          #endif
                           overcurrcnt = 0;
                           motorstate = M_IDLE;
                           result = M_RES_ENDSTOP;
@@ -873,8 +966,10 @@ byte motorcycle (int mvalvenr, byte cmd) {
                       }
 
                       // normal turning
-                      else  {          
-                         COMM_DBG.println("test: normal turning!");            
+                      else  {
+                        #ifdef motDebug          
+                          COMM_DBG.println("test: normal turning!");            
+                         #endif
                          motorstate = M_IDLE;
                          result = M_RES_OPENS;
                          ena_motor(0, 0);                      
@@ -898,6 +993,7 @@ void set_motor (int smvalvenr, int dir) {
 
   if (smvalvenr % 2) { MUX_OFF(); }
   else { MUX_ON(); }
+  delay(50); // wait for relay settling
   
   if (dir == DIR_OPEN) { DIR_OFF(); } 
   else { DIR_ON(); }

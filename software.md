@@ -1,7 +1,9 @@
-This page will document the software part of the VdMot_Controller.
+# This page will document the software part of the VdMot_Controller
 
-# ESP32
+## ESP32
+
 ## Feature list software
+
 - responsive design
 - user login
 - status page
@@ -19,6 +21,7 @@ This page will document the software part of the VdMot_Controller.
   - flash ESP32 by direct send chunks
 
 ## ESP32 user interface
+
 - home page  
   ![-](./software_esp32/media/home.png "home page")
 - status page  
@@ -36,12 +39,14 @@ This page will document the software part of the VdMot_Controller.
 - stm32 update page  
   ![-](./software_esp32/media/stm32Update.png "update stm32 page")
 
+## JSON Interface WTH32
 
-# JSON Interface WTH32
-## WTH32 supports following commands
+### WTH32 supports following commands
 
-## Get
+### Get
+
 #### "/valves" : read the values of all connected valves
+
 |command|description|units|
 |---|---|---|
 |"idx"|Index of the valve|0..11
@@ -54,6 +59,7 @@ This page will document the software part of the VdMot_Controller.
 |"temp2"|Temperature of assigned channel 2, send only if assigned|°C
 
 #### "/temps" : read all the temperatures values, except assigned to a valve
+
 |command|description|units|
 |---|---|---|
 |"id"|Index of the valve|0..33
@@ -61,6 +67,7 @@ This page will document the software part of the VdMot_Controller.
 |"temp"|Temperature of the sensor|°C
 
 #### "/netinfo" : read the network info
+
 |command|description|units|
 |---|---|---|
 |"ethWifi"|detected lan interface| 0 = eth, 1 = wifi
@@ -72,6 +79,7 @@ This page will document the software part of the VdMot_Controller.
 |"dns"|DNS Server of the system
 
 #### "/sysinfo" : read the static system info
+
 |command|description|units|
 |---|---|---|
 |"wt32version"|Version of the WTH32 software
@@ -80,6 +88,7 @@ This page will document the software part of the VdMot_Controller.
 |"stm32version"|Version of the STM32 software
 
 #### "/sysdyninfo" : read the dynamic system info
+
 |command|description|units|
 |---|---|---|
 |"locTime"|Location time
@@ -89,6 +98,7 @@ This page will document the software part of the VdMot_Controller.
 |"stmStatus"|Status of the STM32
 
 #### "/netconfig" : read the network configuration
+
 |command|description|units|
 |---|---|---|
 |"ethWifi"|Configuration lan interface|0 = Auto, 1= Eth, 2=Wifi
@@ -102,11 +112,12 @@ This page will document the software part of the VdMot_Controller.
 |"timeServer"|Url of the sntp server or pool
 |"timeOffset"|Time offset of zone|seconds
 |"timeDST"|Daylight saving time|0 = off, 1 = on
-|"syslogLevel"|Level of the syslog|0 = Off, 1 = Small, 2 = Detail, 3 = Atomic 
-""syslogIp"!Ip address of the syslog client
+|"syslogLevel"|Level of the syslog|0 = Off, 1 = Small, 2 = Detail, 3 = Atomic
+|"syslogIp"!Ip address of the syslog client
 |"syslogPort"|:Port of the syslog client
 
 #### "/protconfig" : read the protocol configuration
+
 |command|description|units|
 |---|---|---|
 |"prot"|Kind of protocol|0 = off, 1 = Mqtt
@@ -117,6 +128,7 @@ This page will document the software part of the VdMot_Controller.
 |"user"|Username if authorization required
 
 #### "/valvesconfig" : read the valves configuration
+
 |command|description|units|
 |---|---|---|
 |"calib"|Calibration data
@@ -133,16 +145,18 @@ This page will document the software part of the VdMot_Controller.
 |"tIdx1"|Index 2 of the assigned temperature sensor1..34, 0 = not assigned
 
 #### "/tempsconfig" : read the temps configuration
+
 |command|description|units|
 |---|---|---|
 |"name"|Name of the sensor
 |"active"|Activate the sensor
 |"id"|Sensor id
 |"offset"|Offset, will be added to the measured value|°C
- 
 
-## Post
+### Post
+
 #### "/netconfig" : saves the network configuration
+
 |command|description|units|
 |---|---|---|
 |"ethWifi"|Configuration lan interface|0 = Auto, 1= Eth, 2=Wifi
@@ -157,11 +171,12 @@ This page will document the software part of the VdMot_Controller.
 |"timeServer"|Url of the sntp server or pool
 |"timeOffset"|Time offset of zone|seconds
 |"timeDST"|Daylight saving time|0 = off, 1 = on
-|"syslogLevel"|Level of the syslog|0 = Off, 1 = Small, 2 = Detail, 3 = Atomic 
-""syslogIp"|Ip address of the syslog client
+|"syslogLevel"|Level of the syslog|0 = Off, 1 = Small, 2 = Detail, 3 = Atomic
+|"syslogIp"|Ip address of the syslog client
 |"syslogPort"|:Port of the syslog client
- 
+
 #### "/protconfig" : saves the protocol configuration
+
 |command|description|units|
 |---|---|---|
 |"prot"|Kind of protocol|0 = off, 1 = Mqtt
@@ -173,6 +188,7 @@ This page will document the software part of the VdMot_Controller.
 |"pwd"|Password if authorization required
 
 #### "/valvesconfig" : saves the valves configuration
+
 |command|description|units|
 |---|---|---|
 |"calib"|Calibration data
@@ -189,6 +205,7 @@ This page will document the software part of the VdMot_Controller.
 |"tIdx1"|Index 2 of the assigned temperature sensor1..34, 0 = not assigned
 
 #### "/tempsconfig" : saves the temps configuration
+
 |command|description|units|
 |---|---|---|
 |"name"|Name of the sensor
@@ -197,8 +214,10 @@ This page will document the software part of the VdMot_Controller.
 |"offset"|Offset, will be added to the measured value|°C
 
 #### "/cmd" : execute a command
+
 |command|description|units|
 |---|---|---|
+|example payload : {"action":"reboot"}
 |"action"|
 |"reboot"|reboots the system
 |"saveCfg"|saves the configuration
@@ -210,10 +229,12 @@ This page will document the software part of the VdMot_Controller.
 |"vCalib"|execute the valve calibration
 |"vAssembly"|sets all valves to assembly position
 
-<div style="page-break-after: always"></div>
+***
 
-# command list STM32
+## command list STM32
+
 ## STM32 supports following commands
+
 |command|description|answer|units|comment|
 |---|---|---|---|---|
 |stgtp x y|set target position of valve *x* to *y* %|-|x=0...11, y=0...100%||
@@ -234,9 +255,10 @@ This page will document the software part of the VdMot_Controller.
 |gmotc|get motor characteristics|-|*x* endpoint threshold low (inv), *y* endpoint threshold high|see *smotc*|
 |stvls|set valve sensors to valve *x*|-|-|example: 'stvls 1 00-00-00-00-00-00-00-00 00-00-00-00-00-00-00-00 '|
 
+## OTA update of ESP32 and STM32
 
-# OTA update of ESP32 and STM32
 ## STM32 OTA
+
 - STM32 can be reset via ESP32 pin
 - STM32 BOOT0 pin is not accessible by ESP32 cause of BlackPill board design
 - the alternative approach: STM32 jumps to internal bootloader after receiving a magic sequence from ESP32 right after start-up

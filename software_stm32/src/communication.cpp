@@ -226,32 +226,44 @@ int16_t communication_loop (void) {
 		// set target position
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		if(memcmp(APP_PRE_SETTARGETPOS,&cmd[0],5) == 0) {
-			COMM_DBG.println("set target pos");
+			#ifdef commDebug
+				COMM_DBG.println("set target pos"); 
+			#endif
 
 			x = atoi(arg0ptr);
 			y = atoi(arg1ptr);
 
 			if(argcnt == 2) {				
-				COMM_DBG.println("comm: set target position");
+				#ifdef commDebug 
+					COMM_DBG.println("comm: set target position"); 
+				#endif
 				if (y >= 0 && y <= 100 && x < ACTUATOR_COUNT) 
 				{
 					myvalvemots[x].target_position = (byte) y;
 					COMM_SER.println(APP_PRE_SETTARGETPOS);
 				}
 			}
-			else COMM_DBG.println("to few arguments");
+			else {
+				#ifdef commDebug 
+					COMM_DBG.println("to few arguments");
+				#endif
+			}
 		}
 
 
 		// get target position
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		if(memcmp(APP_PRE_GETTARGETPOS,&cmd[0],5) == 0) {
-			COMM_DBG.println("get target pos");
+			#ifdef commDebug 
+				COMM_DBG.println("get target pos");
+			#endif
 
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1) {				
-				COMM_DBG.println("comm: got target position request");
+				#ifdef commDebug 
+					COMM_DBG.println("comm: got target position request");
+				#endif
 				if (x >= 0 && x < ACTUATOR_COUNT) 
 				{	
 					COMM_SER.print(APP_PRE_GETTARGETPOS);
@@ -262,14 +274,20 @@ int16_t communication_loop (void) {
 					COMM_SER.println(" ");
 				}
 			}
-			else COMM_DBG.println("to few arguments");
+			else {
+				#ifdef commDebug 
+					COMM_DBG.println("to few arguments");
+				#endif
+			}
 		}
 
 
 		// get valve data (actual position, target position, meancurrent, status, temperature)
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVLVDATA,&cmd[0],5) == 0) {
-			COMM_DBG.println("get valve data");
+			#ifdef commDebug  
+				COMM_DBG.println("get valve data");
+			#endif
 
 			x = atoi(arg0ptr);
 
@@ -327,15 +345,20 @@ int16_t communication_loop (void) {
 					//COMM_DBG.println(sendbuffer);		// debug				
 				}
 			}
-			else COMM_DBG.println("to few arguments");
-
+			else { 
+				#ifdef commDebug 
+					COMM_DBG.println("to few arguments");
+				#endif
+			}
 			//return CMD_LEARN;
 		}
 
 		// get valve present
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVLSTATUS,&cmd[0],5) == 0) {
-			COMM_DBG.println("cmd: get sensor status");
+			#ifdef commDebug 
+				COMM_DBG.println("cmd: get sensor status");
+			#endif
 			
 			COMM_SER.print(APP_PRE_GETVLSTATUS);
 			COMM_SER.print(" ");
@@ -354,7 +377,9 @@ int16_t communication_loop (void) {
 		// get onewire sensor count
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIRECNT,&cmd[0],5) == 0) {
-			COMM_DBG.println("cmd: get onewire sensor count");
+			#ifdef commDebug 
+				COMM_DBG.println("cmd: get onewire sensor count");
+			#endif
 			
 			if(argcnt == 0) {
 				COMM_SER.print(APP_PRE_GETONEWIRECNT);
@@ -387,7 +412,9 @@ int16_t communication_loop (void) {
 		// get onewire sensor data of sensor x (adress and temperature)
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIREDATA,&cmd[0],5) == 0) {
-			COMM_DBG.println("cmd: get onewire sensor data");
+			#ifdef commDebug 
+				COMM_DBG.println("cmd: get onewire sensor data");
+			#endif
 
 			x = atoi(arg0ptr);
 
@@ -420,7 +447,9 @@ int16_t communication_loop (void) {
 		// example answer: gvlon 1 28-84-37-94-97-FF-03-23 00-00-00-00-00-00-00-00
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIRESETT,&cmd[0],5) == 0) {
-			COMM_DBG.print("cmd: get 1st and 2nd onewire sensor addresses");
+			#ifdef commDebug 
+				COMM_DBG.print("cmd: get 1st and 2nd onewire sensor addresses");
+			#endif
 
 			x = atoi(arg0ptr);
 
@@ -459,16 +488,19 @@ int16_t communication_loop (void) {
 						COMM_SER.println(" ");
 					}
 					else {
-					COMM_DBG.println(" - error");
+						#ifdef commDebug 
+							COMM_DBG.println(" - error");
+						#endif
 
-					COMM_SER.print(APP_PRE_GETONEWIREDATA);
-					COMM_SER.println(" error ");
+						COMM_SER.print(APP_PRE_GETONEWIREDATA);
+						COMM_SER.println(" error ");
 					}
 				}
 			}
 			else {
-				COMM_DBG.println(" - error");
-
+				#ifdef commDebug 
+					COMM_DBG.println(" - error");
+				#endif
 				COMM_SER.print(APP_PRE_GETONEWIREDATA);
 				COMM_SER.println(" error ");			
 			}			
@@ -478,7 +510,9 @@ int16_t communication_loop (void) {
 		// start new onewire sensor search
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETONEWIRESEARCH,&cmd[0],5) == 0) {
-			COMM_DBG.println("start new 1-wire search");
+			#ifdef commDebug 
+				COMM_DBG.println("start new 1-wire search");
+			#endif
 			temp_command(TEMP_CMD_NEWSEARCH);
 			COMM_SER.println(APP_PRE_SETONEWIRESEARCH);
 		}
@@ -487,18 +521,28 @@ int16_t communication_loop (void) {
 		// set valve learning time
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETLEARNTIME,&cmd[0],5) == 0) {
-			COMM_DBG.print("set valve learning time to ");
+			#ifdef commDebug 
+				COMM_DBG.print("set valve learning time to ");
+			#endif
 			xu32 = atol(arg0ptr);
 
 			if(argcnt == 1 && xu32 >= 0) {
 				if(app_set_learntime(xu32) == 0) {
 					COMM_SER.println(APP_PRE_SETLEARNTIME);
-					COMM_DBG.println(xu32, DEC);
+					#ifdef commDebug 
+						COMM_DBG.println(xu32, DEC);
+					#endif
 				}
-				else COMM_DBG.println("- error");
+				else { 
+					#ifdef commDebug 
+						COMM_DBG.println("- error");
+					#endif
+				}
 			}
 			else {
-				COMM_DBG.println("- error");
+				#ifdef commDebug 
+					COMM_DBG.println("- error");
+				#endif
 			}
 		}
 
@@ -506,40 +550,57 @@ int16_t communication_loop (void) {
 		// set valve learning movements
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETLEARNMOVEM,&cmd[0],5) == 0) {
-			COMM_DBG.print("set valve learning movements to ");
+			#ifdef commDebug
+				COMM_DBG.print("set valve learning movements to ");
+			#endif
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1 && x >= 0) {
 				if(app_set_learnmovements(x) == 0) {
-					COMM_DBG.println(x, DEC);
+					#ifdef commDebug 
+						COMM_DBG.println(x, DEC);
+					#endif
 					eep_content.numberOfMovements=x;
 					eeprom_changed();
 					COMM_SER.println(APP_PRE_SETLEARNMOVEM);
 				}
-				else COMM_DBG.println("- error");
+				else { 
+					#ifdef commDebug 
+						COMM_DBG.println("- error");
+					#endif
+				}
 			}
 			else {
-				COMM_DBG.println("- error");
+				#ifdef commDebug 
+					COMM_DBG.println("- error");
+				#endif
 			}
 		}
 
 		// get valve learning movements
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETLEARNMOVEM,&cmd[0],5) == 0) {
-			COMM_DBG.print("get valve learning movements");
+			#ifdef commDebug 
+				COMM_DBG.print("get valve learning movements");
+			#endif
 			COMM_SER.print(APP_PRE_GETLEARNMOVEM);
 			COMM_SER.print(" ");			
 			COMM_SER.print(learning_movements, DEC);
 			COMM_SER.println(" ");			
+			
 		}
 
 
 		// ESPalive
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp("ESP",&cmd[0],3) == 0) {	
-			COMM_DBG.println("received ESPalive 22");		
+			#ifdef commDebug 
+				COMM_DBG.println("received ESPalive 22");
+			#endif		
 			if (buflen >= 8 && memcmp("ESPalive",cmd,8) == 0) {
-				COMM_DBG.println("received ESPalive");
+				#ifdef commDebug 
+					COMM_DBG.println("received ESPalive");
+				#endif
 			}			 
 		}
 
@@ -553,7 +614,9 @@ int16_t communication_loop (void) {
 			y = atoi(arg1ptr); // temp sensor index
 
 			if(argcnt == 2) {				
-				COMM_DBG.println("comm: set 1st sensor index");
+				#ifdef commDebug 
+					COMM_DBG.println("comm: set 1st sensor index");
+				#endif
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
 				{
 					numberOfDevices = sensors.getDeviceCount();
@@ -578,7 +641,11 @@ int16_t communication_loop (void) {
 					}					
 				}
 			}
-			else COMM_DBG.println("to few arguments");
+			else {
+				#ifdef commDebug 
+					COMM_DBG.println("to few arguments");
+				#endif
+			}
 		}
 
 
@@ -591,7 +658,9 @@ int16_t communication_loop (void) {
 			y = atoi(arg1ptr); // temp sensor index
 
 			if(argcnt == 2) {				
-				COMM_DBG.println("comm: set 2nd sensor index");
+				#ifdef commDebug 
+					COMM_DBG.println("comm: set 2nd sensor index");
+				#endif
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
 				{
 					numberOfDevices = sensors.getDeviceCount();
@@ -616,7 +685,11 @@ int16_t communication_loop (void) {
 					}
 				}
 			}
-			else COMM_DBG.println("to few arguments");
+			else {
+				#ifdef commDebug 
+					COMM_DBG.println("to few arguments");
+				#endif
+			}
 		}
 
 
@@ -630,31 +703,47 @@ int16_t communication_loop (void) {
 			x = atoi(arg0ptr); // valve index
 			
 			if(argcnt == 3) {				
-				COMM_DBG.println("comm: set valve sensors");
+				#ifdef commDebug 
+					COMM_DBG.println("comm: set valve sensors");
+				#endif
 				setValveIDSensor (x,arg1ptr,(uint8_t*) &eep_content.owsensors1[x]);
 				setValveIDSensor (x,arg2ptr,(uint8_t*) &eep_content.owsensors2[x]);
 				COMM_SER.println(APP_PRE_SETVLVSENSOR);
 			}
-			else COMM_DBG.println("to few arguments");
+			else {
+				#ifdef commDebug 
+					COMM_DBG.println("to few arguments");
+				#endif
+			}
 		}
 
 
 		// open all valves request
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETALLVLVOPEN,&cmd[0],5) == 0) {
-			COMM_DBG.print("got open valve request for ");
+			#ifdef commDebug 
+				COMM_DBG.print("got open valve request for ");
+			#endif
 
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1 && x >= 0) {
 				if( app_set_valveopen(x) == 0) {
 					COMM_SER.println(APP_PRE_SETALLVLVOPEN);
-					COMM_DBG.println(x, DEC);
+					#ifdef commDebug 
+						COMM_DBG.println(x, DEC);
+					#endif
 				}
-				else COMM_DBG.println("- error");
+				else {
+					#ifdef commDebug 
+						COMM_DBG.println("- error");
+					#endif
+				}
 			}
 			else {
-				COMM_DBG.println("- error");
+				#ifdef commDebug 
+					COMM_DBG.println("- error");
+				#endif
 			}
 		}
 
@@ -663,26 +752,38 @@ int16_t communication_loop (void) {
 		// if x is 255 all valves will be learned
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETVLLEARN,&cmd[0],5) == 0) {
-			COMM_DBG.print("start learning for valve ");
+			#ifdef commDebug 
+				COMM_DBG.print("start learning for valve ");
+			#endif
 			
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1 && x >= 0) {
 				if(app_set_valvelearning(x) == 0) {
 					COMM_SER.println(APP_PRE_SETVLLEARN);
-					COMM_DBG.println(x, DEC);
+					#ifdef commDebug 
+						COMM_DBG.println(x, DEC);
+					#endif
 				}
-				else COMM_DBG.println("- error");
+				else {
+					#ifdef commDebug 
+						COMM_DBG.println("- error");
+					#endif
+				}
 			}
 			else {
-				COMM_DBG.println("- error");
+				#ifdef commDebug 
+					COMM_DBG.println("- error");
+				#endif
 			}
 		}
 
 		// set motor characteristics
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETMOTCHARS,&cmd[0],5) == 0) {
-			COMM_DBG.print("got set motor characteristics request ");
+			#ifdef commDebug 
+				COMM_DBG.print("got set motor characteristics request ");
+			#endif
 
 			if(argcnt == 2) {
 				x = atoi(arg0ptr);
@@ -696,19 +797,29 @@ int16_t communication_loop (void) {
 					eep_content.currentbound_high_fac = currentbound_high_fac;
 					eeprom_changed();
 					COMM_SER.println(APP_PRE_SETMOTCHARS);
-					COMM_DBG.println("- valid");
+					#ifdef commDebug 
+						COMM_DBG.println("- valid");
+					#endif
 				}
-				else COMM_DBG.println("- values out of bounds");
+				else {
+					#ifdef commDebug 
+						COMM_DBG.println("- values out of bounds");
+					#endif
+				}
 			}
 			else {
-				COMM_DBG.println("- error");
+				#ifdef commDebug 
+					COMM_DBG.println("- error");
+				#endif
 			}
 		}
 
 		// get motor characteristics
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETMOTCHARS,&cmd[0],5) == 0) {
-			COMM_DBG.print("got get motor characteristics request ");
+			#ifdef commDebug 
+				COMM_DBG.print("got get motor characteristics request ");
+			#endif
 			COMM_SER.print(APP_PRE_GETMOTCHARS);
 			COMM_SER.print(" ");			
 			COMM_SER.print(currentbound_low_fac, DEC);
@@ -720,7 +831,9 @@ int16_t communication_loop (void) {
 		// get version request
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVERSION,&cmd[0],5) == 0) {
-			COMM_DBG.println("got version request");
+			#ifdef commDebug 
+				COMM_DBG.println("got version request");
+			#endif
 
 			COMM_SER.print(APP_PRE_GETVERSION);
 			COMM_SER.print(" ");			
