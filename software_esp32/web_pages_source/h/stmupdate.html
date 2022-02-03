@@ -151,6 +151,10 @@ var getUpdateStatusInterval = null;
 	};
 	
 	const uploadFile = (file) => {
+		let selectTable=id("selectTable");
+		selectTable.className = "hide";
+		let upLoadTable=id("uploadTable");
+		upLoadTable.className = "hide";
 		// add file to FormData object
 		const fd = new FormData();
 		fd.append('STMFiles', file);
