@@ -55,7 +55,7 @@ volatile int temp_cmd = 0;
 
 void printAddress(DeviceAddress deviceAddress)
 {
-  #ifdef tempDebug
+  #if defined tempDebug || defined appDebug
     COMM_DBG.print("{");
     for (uint8_t i = 0; i < 8; i++)
     {
@@ -99,8 +99,8 @@ void temperature_setup() {
     for (unsigned int i=0; i<numberOfDevices; i++)
     {
         sensors.getAddress(tempsensors[i].address, i);
-        printAddress(tempsensors[i].address);
         #ifdef tempDebug
+          printAddress(tempsensors[i].address);       
           COMM_DBG.println();
         #endif
     }
