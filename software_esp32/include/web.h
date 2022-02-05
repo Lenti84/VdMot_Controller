@@ -41,7 +41,6 @@
 #pragma once
 
 #include <Arduino.h>
-#include "Logger.h"
 #include "VdmNet.h"
 #include "VdmConfig.h"
 #include "globals.h"
@@ -67,6 +66,7 @@ public:
   String getTempSensorsID();
   String getSysDynInfo();
   String getSysInfo();
+  String getSysConfig (VDM_SYSTEM_CONFIG sysConfig);
   String getFSDir();
   String getStmUpdStatus();
   bool findIdInValve (uint8_t idx);

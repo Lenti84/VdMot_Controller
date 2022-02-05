@@ -52,7 +52,6 @@
 #define VISMODE_ON          1               // minimum debug messages
 #define VISMODE_DETAIL      2               // detailed debug messages
 #define VISMODE_ATOMIC      3               // atomic debug messages
-extern uint8_t vismode;
 
 
 // This device info

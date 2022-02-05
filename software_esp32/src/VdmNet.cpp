@@ -57,16 +57,10 @@
 #include "stm32.h"
 #include "stm32ota.h"
 #include <ESPmDNS.h>
-#include "telnet.h"
 #include <WiFiUdp.h>
 #include <SPIFFS.h>
 #include <FS.h>
 
-#include "Logger.h"
-
-extern "C" {
-  #include "tfs_data.h"
-}
 #include "VdmTask.h"
 #include "VdmSystem.h"
 #include "mqtt.h"

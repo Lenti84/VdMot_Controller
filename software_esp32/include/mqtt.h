@@ -54,6 +54,8 @@ class CMqtt
     void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort);
     void mqtt_loop();
     void callback(char* topic, byte* payload, unsigned int length);
+    int mqttState;
+    bool mqttConnected;
   private:
     void reconnect();
     void publish_valves ();

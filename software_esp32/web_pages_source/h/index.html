@@ -367,6 +367,13 @@
 				<th>DNS</th>
 				<td id="net-dns"></td>
 			</tr>
+			</table>
+			<table id="net-broker" class="tabTable" style="display:none">
+			<tr>
+				<th>MQTT</th>
+				<td id="net-broker-status"></td>
+			</tr>
+			
 		</table>
 		</div>
 	</div>
@@ -648,6 +655,12 @@
 					<td>
 					<input type="button" class="buttonclass" id="tempSensorScan" value="Scan" title="Scan temperature sensors" />
 					</td>
+					<td>
+					<select id="sys-CF">
+						<option>Celsius</option>
+						<option>Fahrenheit</option>
+					</select>
+					</td>
 				</tr>
 				</table>
 			</div>
@@ -873,6 +886,13 @@
 		// Get the element with id="defaultOpen" and click on it
 		id("defaultOpen").click();
 				
+				
+		function _isContains(json, keyname) {
+			return Object.keys(json).some(key => {
+				return typeof json[key] === 'object' ? 
+				_isContains(json[key], keyname, value) : key === keyname;
+			});
+		}
 		
 		window.onload = function() {
 			OnStart();
@@ -887,11 +907,9 @@
 			getNetInfo();
 			getNetConfig();
 			getProtConfig();
-			//getValvesConfig();
-			//getTempSensorsID();
 			getTempsConfig();
 			getValvesStatus();
-			//getTempsStatus();
+			getSystemConfig();
 			getFSDir();
 			getStatusInterval = window.setInterval(getStatus, 2000);
 			generateOnClick();
@@ -1356,6 +1374,7 @@
 			if (confirm('Are you sure you want to save configuration ?')) {
 				if (!(await postNetCfg())) return;
 				if (!(await postProtCfg())) return;
+				await postSystemConfig();
 				await postValvesCfg();
 				await postTempsCfg(1,11);
 				await postTempsCfg(12,23);
@@ -1366,6 +1385,12 @@
 				brokerPwdHasChanged=false;
 				reloadDoc("http:/#home",4000,true);
 			}
+		}
+		
+		async function postSystemConfig() {
+			let sysCfg = {};
+			sysCfg.CF = id("sys-CF").selectedIndex;
+			await postJson("sysconfig",JSON.stringify(sysCfg));
 		}
 		
 		async function postNetCfg() {
@@ -1522,6 +1547,16 @@
 			getTempsStatus();
 		}
 		
+		function checkValvesConnected (valvesJson){
+			const cfgValvesTable = id('cfgValvesTable');
+			for (let row = 1; row<13; row++) {
+				cfgValvesTable.rows[row].cells[0].style.backgroundColor = "";
+			}
+			valvesJson.forEach(function(item, index){
+				cfgValvesTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+			});
+		}
+		
 		function fillValvesTable (valvesJson) {
 			const ValvesTable = id('valvesTable');
 			if (ValvesTable.rows.length != valvesJson.length+1) {
@@ -1544,6 +1579,7 @@
 					id('setValveP'+(index+1)).value=item.targetPos;
 				}
 			});
+			checkValvesConnected (valvesJson);
 		}
 		
 		function fillCfgValvesTable (cfgValvesJson) {
@@ -1674,6 +1710,10 @@
 				id("locTime").textContent = dataSystemDynInfo["locTime"];
 				id("heap").textContent = dataSystemDynInfo["heap"];
 				id("rssi").textContent = dataSystemDynInfo["wifirssi"];
+				if (_isContains(dataSystemDynInfo, "brokerConnected")) {
+					id("net-broker").style.display="block";
+					id("net-broker-status").textContent=dataSystemDynInfo["brokerConnected"] ? "Connected" : "Not connected"; 
+				}
 				var newStmStatus=dataSystemDynInfo["stmStatus"];
 				if (newStmStatus!=stmStatus) {
 					stmStatus=newStmStatus;
@@ -1683,6 +1723,14 @@
 						},3000);
 					}
 				}
+			}
+		}
+		
+		
+		async function getSystemConfig() {
+			const dataSysCfg=await getJson("sysconfig");
+			if (dataSysCfg) {
+				id("sys-CF").selectedIndex = dataSysCfg["CF"];
 			}
 		}
 		

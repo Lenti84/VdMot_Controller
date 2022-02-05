@@ -54,7 +54,6 @@
 #include "stm32.h"
 #include "stm32ota.h"
 #include <ESPmDNS.h>
-#include "telnet.h"
 #include <WiFiUdp.h>
 #include <SPIFFS.h>
 #include <FS.h>
@@ -278,6 +277,11 @@ void handleSysDynInfo(AsyncWebServerRequest *request)
   request->send(200,aj,Web.getSysDynInfo());
 }
 
+void handleGetSysConfig(AsyncWebServerRequest *request) 
+{ 
+  request->send(200,aj,Web.getSysConfig(VdmConfig.configFlash.systemConfig));
+}
+
 void handleGetFSDir(AsyncWebServerRequest *request) 
 { 
   request->send(200,aj,Web.getFSDir());
@@ -344,23 +348,6 @@ void handleUploadFile(AsyncWebServerRequest *request, const String& filename, si
   }
   
 }
- 
-
-void handleGetLogData (AsyncWebServerRequest *request) 
-{
-  String data = "";
-  if (1) {
-    while (logger.Available()) {
-      data += logger.Pop() + "\n";
-    }
-  }
-  else {
-    data += F("SYS: ***CLEARLOG***\n");
-    data += F("DATA:Logger is disabled\n");
-    data += F("SYS:Logger is disabled\n");
-  }
-  request->send(200, th, data);
-}
 
 CServerServices::CServerServices()
 {
@@ -396,11 +383,11 @@ void  CServerServices::initServer()
   server.on("/sysinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysInfo(request);});
   server.on("/sysdyninfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysDynInfo(request);});
   server.on("/fsdir",HTTP_GET,[](AsyncWebServerRequest * request) {handleGetFSDir(request);});
-  server.on("/logdata",HTTP_GET,[](AsyncWebServerRequest * request) {handleGetLogData(request);});
   server.on("/stmupdate", HTTP_GET, [](AsyncWebServerRequest * request) {handleWebPageStmUpdate(request);});
   server.on("/stmupdstatus", HTTP_GET, [](AsyncWebServerRequest * request) {handleStmUpdStatus(request);});
   server.on("/tempsensorsid", HTTP_GET, [](AsyncWebServerRequest * request) {handleTempSensorsID(request);});
-
+  server.on("/sysconfig", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetSysConfig(request);});
+  
   server.on("/fupload", HTTP_POST, [](AsyncWebServerRequest *request) {},
       [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,
                     size_t len, bool final) {handleUploadFile(request, filename, index, data, len, final);}
@@ -478,6 +465,15 @@ void  CServerServices::initServer()
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(cmdHandler);
+
+  AsyncCallbackJsonWebHandler* sysCfgHandler = new AsyncCallbackJsonWebHandler("/sysconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postSysCfg (jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(sysCfgHandler);
 
   WT32AsyncOTA.begin(&server);    // Start WT32OTA
   server.begin();
