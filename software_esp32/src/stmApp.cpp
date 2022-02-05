@@ -128,6 +128,15 @@ int16_t CStmApp::ConvertCF(int16_t cValue)
     }
 } 
 
+int16_t CStmApp::getTOffset(uint8_t tIdx)
+{
+    int16_t result = 0;
+    if (tIdx>0) {
+        result = VdmConfig.configFlash.tempsConfig.tempConfig[tIdx].offset;
+    } 
+    return (result); 
+}
+
 void CStmApp::valvesCalibration()
 {
     uint8_t i=255;
@@ -400,12 +409,14 @@ void  CStmApp::app_check_data()
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVLVDATA,cmd,5) == 0) {
             if(argcnt == 6) {
-                if(atoi(arg0ptr) < ACTUATOR_COUNT) {
-                    actuators[atoi(arg0ptr)].actual_position = atoi(arg1ptr);
-                    actuators[atoi(arg0ptr)].meancurrent = atoi(arg2ptr);
-                    actuators[atoi(arg0ptr)].state = atoi(arg3ptr);
-                    actuators[atoi(arg0ptr)].temp1 = ConvertCF(atoi(arg4ptr));
-                    actuators[atoi(arg0ptr)].temp2 =  ConvertCF(atoi(arg5ptr));
+                uint8_t idx=atoi(arg0ptr);
+                if(idx < ACTUATOR_COUNT) {
+                    actuators[idx].actual_position = atoi(arg1ptr);
+                    actuators[idx].meancurrent = atoi(arg2ptr);
+                    actuators[idx].state = atoi(arg3ptr);
+                    actuators[idx].temp1 = ConvertCF(atoi(arg4ptr))+getTOffset(actuators[idx].tIdx1);
+                    actuators[idx].temp2 =  ConvertCF(atoi(arg5ptr))+getTOffset(actuators[idx].tIdx2);
+
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                         syslog.log(LOG_DEBUG, "got valve data #"+String(arg0ptr)+" pos:"+String(arg1ptr)+
                         " mean:"+String(arg2ptr)+" state:"+String(arg3ptr)+" t1:"+String(arg4ptr)+" t2:"+String(arg5ptr));
@@ -436,7 +447,7 @@ void  CStmApp::app_check_data()
                     char* ps=arg1ptr;
                     for (uint8_t idx=0; idx<tempsPrivCount;idx++) {
                         if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
-                        strncpy(tempsId[idx].id,ps,sizeof(tempsId[tempIndex].id));
+                        strncpy(tempsId[idx].id,ps,sizeof(tempsId[idx].id));
                         ps=cmdptr+1;
                         idx++;
                     }

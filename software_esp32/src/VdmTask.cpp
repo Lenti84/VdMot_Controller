@@ -54,7 +54,6 @@ CVdmTask::CVdmTask()
   taskIdCheckNet=TASKMGR_INVALIDID;
   taskIdMqtt=TASKMGR_INVALIDID;
   taskIdApp=TASKMGR_INVALIDID;
-  taskIdCheckData=TASKMGR_INVALIDID;
   taskIdStm32Ota=TASKMGR_INVALIDID;
   taskIdServices=TASKMGR_INVALIDID;
   taskIdSetFactoryCfgTimeOut=TASKMGR_INVALIDID;
@@ -95,19 +94,14 @@ void CVdmTask::startApp()
         taskIdApp = taskManager.scheduleFixedRate(100, [] {
                 StmApp.app_loop();
         });
-        //taskIdCheckData = taskManager.scheduleFixedRate(50, [] {
-          //      StmApp.app_check_data();
-        //});
     } else {
-        taskManager.setTaskEnabled (taskIdApp,true); 
-       //taskManager.setTaskEnabled (taskIdCheckData,true);   
+        taskManager.setTaskEnabled (taskIdApp,true);   
     }
 }
 
 void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
 {
     taskManager.setTaskEnabled (taskIdApp,false);
-    //taskManager.setTaskEnabled (taskIdCheckData,false);
     delay (1000);           // wait to finish task;
     Stm32.STM32ota_setup();
     Stm32.STM32ota_start(command,thisFileName);

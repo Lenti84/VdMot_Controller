@@ -899,6 +899,7 @@
 		}
 		
 		function OnStart() {
+			getSystemConfig();
 			makeTempsTable(0);
 			makeCfgValvesTable();
 			makeCfgTempTable();
@@ -909,7 +910,7 @@
 			getProtConfig();
 			getTempsConfig();
 			getValvesStatus();
-			getSystemConfig();
+			
 			getFSDir();
 			getStatusInterval = window.setInterval(getStatus, 2000);
 			generateOnClick();
@@ -1020,7 +1021,10 @@
 			for (let row=1;row<NoOfSensors+1;row++) tempsTable.rows[row].cells[0].innerHTML = row;
 			tempsTable.rows[0].cells[0].textContent = 'No';
 			tempsTable.rows[0].cells[1].textContent = 'Name';
-			tempsTable.rows[0].cells[2].textContent = 'C';
+			if (id("sys-CF").selectedIndex==0)
+				tempsTable.rows[0].cells[2].textContent = 'C';
+			else
+				tempsTable.rows[0].cells[2].textContent = 'F';
 			if (NoOfSensors>12) tempsTable.style.height="430px";
 		}
 		

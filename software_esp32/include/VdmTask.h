@@ -70,7 +70,6 @@ public:
   taskid_t taskIdCheckNet;
   taskid_t taskIdMqtt;
   taskid_t taskIdApp;
-  taskid_t taskIdCheckData;
   taskid_t taskIdStm32Ota;
   taskid_t taskIdServices;
   taskid_t taskIdSetFactoryCfgTimeOut; 
