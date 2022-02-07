@@ -172,12 +172,12 @@ byte valve_setup () {
     currentbound_low_fac = eep_content.currentbound_low_fac;
   if ((eep_content.currentbound_high_fac>=10) && (eep_content.currentbound_high_fac<=50))
     currentbound_high_fac = eep_content.currentbound_high_fac;
-
-  COMM_DBG.print("Current end stop factor low: ");
-  COMM_DBG.println((float) (currentbound_low_fac)/10,DEC);
-  COMM_DBG.print("Current end stop factor high: ");
-  COMM_DBG.println((float) (currentbound_high_fac)/10,DEC);
-
+  #ifdef motDebug
+    COMM_DBG.print("Current end stop factor low: ");
+    COMM_DBG.println((float) (currentbound_low_fac)/10,DEC);
+    COMM_DBG.print("Current end stop factor high: ");
+    COMM_DBG.println((float) (currentbound_high_fac)/10,DEC);
+  #endif
   return 0;
 }
 

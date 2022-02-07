@@ -45,9 +45,6 @@
 #include "VdmTask.h"
 #include "stm32.h"
 
-uint8_t vismode = VISMODE_ON;    // visualisation mode for debug messages
-
-
 void setup(void)
 {
   UART_DBG.begin(115200);
@@ -62,12 +59,6 @@ void setup(void)
 
 
 void loop(void) {
-
-/* todo :
-telnet
-logger
-*/
-  
   taskManager.runLoop();
 }
 

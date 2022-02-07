@@ -95,7 +95,7 @@ void CVdmTask::startApp()
                 StmApp.app_loop();
         });
     } else {
-        taskManager.setTaskEnabled (taskIdApp,true);    
+        taskManager.setTaskEnabled (taskIdApp,true);   
     }
 }
 

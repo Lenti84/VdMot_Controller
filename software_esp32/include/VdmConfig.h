@@ -64,8 +64,11 @@ typedef struct {
   uint8_t syslogLevel;
   uint32_t syslogIp;
   uint32_t syslogPort;
-
 } VDM_NETWORK_CONFIG;
+
+typedef struct {
+  uint8_t celsiusFahrenheit;
+} VDM_SYSTEM_CONFIG;
 
 typedef struct {
   uint8_t  dataProtocol; // 0 = no protocol , 1 = mqtt
@@ -105,6 +108,7 @@ typedef struct
   VDM_PROTOCOL_CONFIG protConfig;
   VDM_VALVES_CONFIG valvesConfig;
   VDM_TEMPS_CONFIG tempsConfig;
+  VDM_SYSTEM_CONFIG systemConfig;
 } CONFIG_FLASH;
 
 
@@ -140,6 +144,7 @@ typedef struct
 
 #define nvsTempsCfg                 "tempsCfg"
 #define nvsTemps                    "temps"
+
 #define nvsDayOfCalib               "dayOfCalib"
 #define nvsHourOfCalib              "hourOfCalib"
 #define nvsMovCalib                 "movCalib"
@@ -148,7 +153,8 @@ typedef struct
 #define nvsMotorMinC                "motorMinC"
 #define nvsMotorMaxC                "motorMaxC"
 
-
+#define nvsSystemCfg                "sysCfg"
+#define nvsCelsiusFahrenheit        "CF"
 
 class CVdmConfig
 {
@@ -165,6 +171,7 @@ public:
   void postProtCfg (JsonObject doc);
   void postValvesCfg (JsonObject doc);
   void postTempsCfg (JsonObject doc);
+  void postSysCfg (JsonObject doc);
   String handleAuth (JsonObject doc);
   uint32_t doc2IPAddress(String id);
   int8_t findTempID (char* tempId);

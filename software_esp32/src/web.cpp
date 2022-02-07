@@ -49,12 +49,19 @@
 #include "helper.h"
 #include "stm32.h"
 #include "stmApp.h"
-
+#include "mqtt.h"
 
 CWeb Web;
 
 CWeb::CWeb()
 {
+}
+
+String CWeb::getSysConfig (VDM_SYSTEM_CONFIG sysConfig)
+{
+  String result = "{\"CF\":"+String(sysConfig.celsiusFahrenheit)+
+                  "}";  
+  return result;  
 }
 
 String CWeb::getNetConfig (VDM_NETWORK_CONFIG netConfig)
@@ -199,8 +206,12 @@ String CWeb::getSysDynInfo()
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
                   "\"wifirssi\":"+WiFi.RSSI()+ "," +
                   "\"wifich\":"+WiFi.channel()+ "," +
-                  "\"stmStatus\":"+String(StmApp.stmStatus)+
-                  "}";
+                  "\"stmStatus\":"+String(StmApp.stmStatus);
+                  if (VdmConfig.configFlash.protConfig.dataProtocol>0) {
+                    result += ",\"brokerStatus\":"+String(Mqtt.mqttState);
+                    result += ",\"brokerConnected\":"+String(Mqtt.mqttConnected);
+                  }
+                  result +="}";
   return result;  
 }
 

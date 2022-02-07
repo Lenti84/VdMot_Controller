@@ -44,11 +44,9 @@
 #include <ArduinoJson.h>
 #include <Arduino.h>
 #include "stmApp.h"
-#include "telnet.h"
 #include <WiFi.h>
 #include <Syslog.h>
 #include <WiFiUdp.h>
-#include "Logger.h"
 #include "VdmNet.h"
 #include "VdmSystem.h"
 #include "VdmConfig.h"
@@ -96,6 +94,7 @@ CStmApp::CStmApp()
     fastQueueMode=false;
     stmStatus=STM_NOT_READY;
     getindex = 0;
+    memset(cmd,0x0,sizeof(cmd));
 }
 
 void  CStmApp::app_setup() {
@@ -117,6 +116,25 @@ void  CStmApp::app_setup() {
     }
     commstate=COMM_IDLE;
     UART_DBG.println("application setup finished");
+}
+
+int16_t CStmApp::ConvertCF(int16_t cValue)
+{
+    if (VdmConfig.configFlash.systemConfig.celsiusFahrenheit==0) {
+        return (cValue);
+    } else {
+        float F=((float) cValue)/10 * 1.8 + 32;
+        return (int16_t(F*10+0.5));
+    }
+} 
+
+int16_t CStmApp::getTOffset(uint8_t tIdx)
+{
+    int16_t result = 0;
+    if (tIdx>0) {
+        result = VdmConfig.configFlash.tempsConfig.tempConfig[tIdx].offset;
+    } 
+    return (result); 
 }
 
 void CStmApp::valvesCalibration()
@@ -259,13 +277,14 @@ void  CStmApp::app_check_data()
 
    
     if(buflen > 4) {
-        for (unsigned int c = 0; c < buflen; c++) {           
+        for (uint16_t c = 0; c < buflen; c++) {           
             if (buffer[c] == '\r') {
                 buffer[c] = '\0';
                 found = true;
 
                 buflen = 0;           // reset counter
                 bufptr = buffer;    // reset ptr
+                break;
             }
         }
     }
@@ -322,11 +341,6 @@ void  CStmApp::app_check_data()
                 syslog.log(LOG_DEBUG,"STMalive received");
             }
             stm32alive = COMM_ALIVE_CYCLE + 100;
-		}
-
-        // help
-		else if(memcmp("help",cmd,4) == 0) {
-			telnet_msg("help command received");
 		}
 
 		// get actual values
@@ -395,12 +409,14 @@ void  CStmApp::app_check_data()
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVLVDATA,cmd,5) == 0) {
             if(argcnt == 6) {
-                if(atoi(arg0ptr) < ACTUATOR_COUNT) {
-                    actuators[atoi(arg0ptr)].actual_position = atoi(arg1ptr);
-                    actuators[atoi(arg0ptr)].meancurrent = atoi(arg2ptr);
-                    actuators[atoi(arg0ptr)].state = atoi(arg3ptr);
-                    actuators[atoi(arg0ptr)].temp1 = atoi(arg4ptr);
-                    actuators[atoi(arg0ptr)].temp2 = atoi(arg5ptr);
+                uint8_t idx=atoi(arg0ptr);
+                if(idx < ACTUATOR_COUNT) {
+                    actuators[idx].actual_position = atoi(arg1ptr);
+                    actuators[idx].meancurrent = atoi(arg2ptr);
+                    actuators[idx].state = atoi(arg3ptr);
+                    actuators[idx].temp1 = ConvertCF(atoi(arg4ptr))+getTOffset(actuators[idx].tIdx1);
+                    actuators[idx].temp2 =  ConvertCF(atoi(arg5ptr))+getTOffset(actuators[idx].tIdx2);
+
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                         syslog.log(LOG_DEBUG, "got valve data #"+String(arg0ptr)+" pos:"+String(arg1ptr)+
                         " mean:"+String(arg2ptr)+" state:"+String(arg3ptr)+" t1:"+String(arg4ptr)+" t2:"+String(arg5ptr));
@@ -431,7 +447,7 @@ void  CStmApp::app_check_data()
                     char* ps=arg1ptr;
                     for (uint8_t idx=0; idx<tempsPrivCount;idx++) {
                         if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
-                        strncpy(tempsId[idx].id,ps,sizeof(tempsId[tempIndex].id));
+                        strncpy(tempsId[idx].id,ps,sizeof(tempsId[idx].id));
                         ps=cmdptr+1;
                         idx++;
                     }
@@ -453,7 +469,8 @@ void  CStmApp::app_check_data()
                 if (idx>=0) {
                     memset(temps[idx].id,0x0,sizeof(temps[idx].id)); 
                     strncpy(temps[idx].id,arg0ptr,sizeof(temps[idx].id));
-                    temps[idx].temperature=atoi(arg1ptr)+VdmConfig.configFlash.tempsConfig.tempConfig[idx].offset;
+                    int16_t cValue=atoi(arg1ptr);
+                    temps[idx].temperature=ConvertCF(cValue)+VdmConfig.configFlash.tempsConfig.tempConfig[idx].offset;
                 } 
                 tempIndex++;
                 if (tempIndex>=tempsCount) {  // all temp sensors read
@@ -717,10 +734,6 @@ void  CStmApp::app_alive_check()
             if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
                 syslog.log(LOG_DEBUG, "connection to STM32 established");
             }
-            // generate debug messages
-            if (vismode > VISMODE_OFF) {
-                logger.println("connection to STM32 established");
-            }
         }
         oldalivestate = 1;
     }
@@ -729,9 +742,6 @@ void  CStmApp::app_alive_check()
         if (oldalivestate == 1) {
             if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
                 syslog.log(LOG_DEBUG, "connection to STM32 lost");
-            }
-            if (vismode > VISMODE_OFF) {
-                logger.println("connection to STM32 lost");
             }
         }
         oldalivestate = 0;

@@ -125,6 +125,7 @@ public:
   CStmApp();
   void app_setup();
   void app_loop();
+  void app_check_data();
   void app_cmd(String command, String args="");
   bool checkCmdIsAvailable (String thisCmd);
   void valvesCalibration();
@@ -147,13 +148,14 @@ public:
   volatile STM_START_PROC stmStatus;
 
 private:
-  void app_check_data();
   void app_comm_machine();
   void app_alive_check();
   void app_web_cmd_check();
   int8_t findTempID(char* ID);
   void setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2); 
-  
+  int16_t ConvertCF(int16_t cValue);
+  int16_t getTOffset(uint8_t tIdx);
+
   bool fastQueueMode;
 
   uint16_t stm32alive;

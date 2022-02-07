@@ -109,7 +109,7 @@ void CVdmConfig::clearConfig()
     memset (configFlash.tempsConfig.tempConfig[i].name,0,sizeof(configFlash.tempsConfig.tempConfig[i].name));
     memset (configFlash.tempsConfig.tempConfig[i].ID,0,sizeof(configFlash.tempsConfig.tempConfig[i].ID));
   }
-
+  configFlash.systemConfig.celsiusFahrenheit=0;
   configFlash.valvesConfig.dayOfCalib=9;
   configFlash.valvesConfig.hourOfCalib=0;
   memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
@@ -121,7 +121,11 @@ void CVdmConfig::clearConfig()
 
 void CVdmConfig::readConfig()
 {
-  
+  if (prefs.begin(nvsSystemCfg,false)) {
+    configFlash.systemConfig.celsiusFahrenheit=prefs.getUChar(nvsCelsiusFahrenheit);
+    prefs.end();
+  }
+
   if (prefs.begin(nvsNetCfg,false)) {
     configFlash.netConfig.eth_wifi=prefs.getUChar(nvsNetEthwifi);
     configFlash.netConfig.dhcpEnabled=prefs.getUChar(nvsNetDhcp,1);
@@ -178,10 +182,17 @@ void CVdmConfig::readConfig()
     prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
  }
+
 }
 
 void CVdmConfig::writeConfig(bool reboot)
 {
+
+  prefs.begin(nvsSystemCfg,false);
+  prefs.clear();
+  prefs.putUChar(nvsCelsiusFahrenheit,configFlash.systemConfig.celsiusFahrenheit);
+  prefs.end();
+ 
   prefs.begin(nvsNetCfg,false);
   prefs.clear();
   prefs.putUChar(nvsNetEthwifi,configFlash.netConfig.eth_wifi);
@@ -226,6 +237,8 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.clear();
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
+  
+  
   
   if (reboot) Services.restartSystem();
 }
@@ -321,6 +334,7 @@ void CVdmConfig::postTempsCfg (JsonObject doc)
   uint8_t chunkStart=doc["chunkStart"];
   uint8_t chunkEnd=doc["chunkEnd"];
   uint8_t idx=0;
+ 
   for (uint8_t i=chunkStart-1; i<chunkEnd; i++) {
     if (!doc["temps"][idx]["name"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].name,doc["temps"][idx]["name"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].name));
     if (!doc["temps"][idx]["id"].isNull()) strncpy(configFlash.tempsConfig.tempConfig[i].ID,doc["temps"][idx]["id"].as<const char*>(),sizeof(configFlash.tempsConfig.tempConfig[i].ID));
@@ -328,6 +342,11 @@ void CVdmConfig::postTempsCfg (JsonObject doc)
     if (!doc["temps"][idx]["offset"].isNull()) configFlash.tempsConfig.tempConfig[i].offset=10*(doc["temps"][idx]["offset"].as<float>()) ;
     idx++;
   }
+}
+
+void CVdmConfig::postSysCfg (JsonObject doc)
+{
+   if (!doc["CF"].isNull()) configFlash.systemConfig.celsiusFahrenheit = doc["CF"];
 }
 
 String CVdmConfig::handleAuth (JsonObject doc)

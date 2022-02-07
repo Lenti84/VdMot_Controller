@@ -62,9 +62,10 @@ int16_t app_setup (void) {
 
   if ((eep_content.numberOfMovements>=50) && (eep_content.numberOfMovements<65535))
     learning_movements=eep_content.numberOfMovements;
-
-  COMM_DBG.print("learning_movements: "); 
-  COMM_DBG.println(learning_movements, DEC);
+  #ifdef appDebug
+    COMM_DBG.print("learning_movements: "); 
+    COMM_DBG.println(learning_movements, DEC);
+  #endif
   return 0;
 }
 
