@@ -114,10 +114,15 @@ typedef struct {
 
 #define ARG_DELIMITER       String(" ")
 
-enum COMM_STATE {COMM_IDLE,COMM_ALIVE,COMM_SENDTARGET,COMM_CHECKTARGET,COMM_GETDATA,
+enum COMM_STATE {COMM_IDLE,COMM_SENDTARGET,COMM_CHECKTARGET,COMM_GETDATA,
                   COMM_GETONEWIRE,COMM_GETONEWIRECOUNT,COMM_HANDLEQUEUE};
 
 enum STM_START_PROC {STM_NOT_READY,STM_READY,STM_READ_ALL_FROM_QUEUE};
+
+enum APP_STATE {APP_IDLE,APP_PENDING,APP_TIMEOUT};
+
+#define maxAppRetries 100
+#define maxAppTimeOuts 10
 
 class CStmApp
 {
@@ -148,21 +153,28 @@ public:
   volatile STM_START_PROC stmStatus;
 
 private:
+  void appHandler();
   void app_comm_machine();
-  void app_alive_check();
   void app_web_cmd_check();
   int8_t findTempID(char* ID);
   void setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2); 
   int16_t ConvertCF(int16_t cValue);
   int16_t getTOffset(uint8_t tIdx);
+  bool checkNewTarget();
 
   bool fastQueueMode;
 
-  uint16_t stm32alive;
   bool settarget_check;
   uint8_t target_position_mirror[ACTUATOR_COUNT];
   uint8_t getindex;
 
+  uint8_t timeout;
+  uint8_t retry;
+  uint8_t cnt_alive;
+  uint8_t appRetry;
+  uint8_t appTimeOuts;
+
+  APP_STATE appState;
   COMM_STATE commstate;    
   uint8_t tempIndex;
   uint8_t checkTempsCount;

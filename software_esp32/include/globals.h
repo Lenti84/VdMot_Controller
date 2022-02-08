@@ -55,7 +55,7 @@
 
 
 // This device info
-#define DEVICE_HOSTNAME     "VDMot"
+#define DEVICE_HOSTNAME     "VdMot"
 #define APP_NAME            "SysLog"
 #define ANOTHER_APP_NAME    "my-another-app"
 

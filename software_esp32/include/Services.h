@@ -57,6 +57,7 @@ public:
   void valvesSetLearn();
 
   bool serviceValvesStarted;
+  bool restartSTM;
 
 };
 

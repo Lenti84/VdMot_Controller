@@ -39,9 +39,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#define COMM_SER				Serial1		// serial port to ESP32
-//#define COMM_DBG				Serial3		// serial port for debugging
-#define COMM_DBG				Serial6		// serial port for debugging
 
 #define COMM_MAX_CMD_LEN		15			// max length of a command without arguments
 #define COMM_ARG_CNT			 2			// number of allowed command arguments

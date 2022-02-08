@@ -110,6 +110,9 @@ void CVdmConfig::clearConfig()
     memset (configFlash.tempsConfig.tempConfig[i].ID,0,sizeof(configFlash.tempsConfig.tempConfig[i].ID));
   }
   configFlash.systemConfig.celsiusFahrenheit=0;
+  memset (configFlash.systemConfig.stationName,0,sizeof(configFlash.systemConfig.stationName));
+  strncpy(configFlash.systemConfig.stationName,DEVICE_HOSTNAME,sizeof(configFlash.systemConfig.stationName));
+
   configFlash.valvesConfig.dayOfCalib=9;
   configFlash.valvesConfig.hourOfCalib=0;
   memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
@@ -122,7 +125,9 @@ void CVdmConfig::clearConfig()
 void CVdmConfig::readConfig()
 {
   if (prefs.begin(nvsSystemCfg,false)) {
-    configFlash.systemConfig.celsiusFahrenheit=prefs.getUChar(nvsCelsiusFahrenheit);
+    configFlash.systemConfig.celsiusFahrenheit=prefs.getUChar(nvsSystemCelsiusFahrenheit);
+    if (prefs.isKey(nvsSystemStationName))
+      prefs.getString(nvsSystemStationName,(char*) configFlash.systemConfig.stationName,sizeof(configFlash.systemConfig.stationName));
     prefs.end();
   }
 
@@ -190,7 +195,8 @@ void CVdmConfig::writeConfig(bool reboot)
 
   prefs.begin(nvsSystemCfg,false);
   prefs.clear();
-  prefs.putUChar(nvsCelsiusFahrenheit,configFlash.systemConfig.celsiusFahrenheit);
+  prefs.putUChar(nvsSystemCelsiusFahrenheit,configFlash.systemConfig.celsiusFahrenheit);
+  prefs.putString(nvsSystemStationName,configFlash.systemConfig.stationName);
   prefs.end();
  
   prefs.begin(nvsNetCfg,false);
@@ -325,6 +331,7 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
  
   if ((StmApp.setTempIdxActive) && (chunkEnd==12)) {
     StmApp.setTempIdx();
+    Services.restartSTM=true;
     StmApp.setTempIdxActive=false;
   }
 }
@@ -346,7 +353,9 @@ void CVdmConfig::postTempsCfg (JsonObject doc)
 
 void CVdmConfig::postSysCfg (JsonObject doc)
 {
-   if (!doc["CF"].isNull()) configFlash.systemConfig.celsiusFahrenheit = doc["CF"];
+  if (!doc["CF"].isNull()) configFlash.systemConfig.celsiusFahrenheit = doc["CF"];
+  if (!doc["station"].isNull()) strncpy(configFlash.systemConfig.stationName,doc["station"].as<const char*>(),sizeof(configFlash.systemConfig.stationName));
+ 
 }
 
 String CVdmConfig::handleAuth (JsonObject doc)

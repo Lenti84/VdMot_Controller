@@ -79,6 +79,7 @@ public:
   void STM32ota_loop();
   void FlashMode();
   void RunMode();
+  void ResetSTM32(bool useTask = false);
 
   volatile uint8_t stmUpdPercent;
   volatile otaUpdateStatus stmUpdateStatus;
@@ -88,7 +89,6 @@ public:
   flashfile myflashfile;
   String updateFileName;
 private:
-  void ResetSTM32(bool useTask = false);
   int PrepareFile(String FileName);
   int FlashBytes(int Block, int Bytes);
   unsigned char stm32StartRead(unsigned long rdaddress, unsigned int rdlen);

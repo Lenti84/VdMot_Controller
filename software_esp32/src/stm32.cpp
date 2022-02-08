@@ -408,7 +408,7 @@ void CStm32::STM32ota_begin()
 
 void CStm32::ResetSTM32(bool useTask) 
 {
-  UART_DBG.println("STM32 ota: reset STM32");
+  UART_DBG.println("Reset STM32");
   if (useTask) VdmTask.yieldTask(100); else delay(100); ;
   digitalWrite(NRST, HIGH);  
   if (useTask) VdmTask.yieldTask(150); else delay(150);

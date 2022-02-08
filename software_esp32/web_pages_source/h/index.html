@@ -138,6 +138,24 @@
 		height:21px;
 	}
 	
+	table.tabTable1 {
+		width : 100%
+	}
+	
+	table.tabTable1 td {
+		padding-left: 5px;
+		height:21px;
+		text-align: center;
+		width : 200px;
+	}
+	
+	table.tabTable1 th {
+		padding-left: 5px;
+		height:21px;
+		text-align: center;
+		width : 140px;
+	}
+	
 	.hide {
 		display: none;
 	}
@@ -280,6 +298,10 @@
 		<h3>VDMot Controller</h3>
 		<table id="homeInfo" class="tabTable">
 			<tr>
+				<th>Station</th>
+				<td id="sysStation"></td>
+			</tr>
+			<tr>
 				<th>Time</th>
 				<td id="locTime"></td>
 			</tr>
@@ -338,7 +360,7 @@
 	<div id="Network" class="tabContent">
 		<div class="tabframe" style="width: 300px;"> 
 		<h3>Network</h3>
-		<table id="netInfo" class="tabTable">
+		<table id="netInfo" class="tabTable1">
 			<tr>
 				<th>Eth/Wifi</th>
 				<td id="net-EthWifi"></td>
@@ -368,7 +390,7 @@
 				<td id="net-dns"></td>
 			</tr>
 			</table>
-			<table id="net-broker" class="tabTable" style="display:none">
+			<table id="net-broker" class="tabTable1" style="display:none">
 			<tr>
 				<th>MQTT</th>
 				<td id="net-broker-status"></td>
@@ -382,7 +404,13 @@
 	<div class="container">
 		<div class="rtabframe">
 		<h3>Network</h3>
-		<table id="netConfig" class="tabTable">
+		<table id="netConfig" class="tabTable1">
+			<tr>
+				<th>Station</th>
+				<td>
+				<input type="text" maxlength="20" class="form-input" id="sysCfg-StationName" name="sysCfg-StationName" />
+				</td>
+			</tr>
 			<tr>
 				<th>User name</th>
 				<td>
@@ -447,7 +475,7 @@
             </tr>  
 		</table>
 		
-		<table id="netcfg-wifi" style="display:none;" class="tabTable">
+		<table id="netcfg-wifi" style="display:none;" class="tabTable1">
 				<tr>
 				<th>Wifi SSID</th>
 				<td>
@@ -470,7 +498,7 @@
 		<tr><th></th></tr>
 		
 		<div class="tabiframe"> 
-		<table id="netcfg-time" class="tabTable">
+		<table id="netcfg-time" class="tabTable1">
 			
 			<tr><th>Time server</th></tr>
 			<tr>
@@ -495,7 +523,7 @@
 		</div>
 		
 		<div class="tabiframe"> 
-		<table id="netcfg-syslog" class="tabTable">		
+		<table id="netcfg-syslog" class="tabTable1">		
 			<tr>
 				<th>Syslog server</th>
 				<td>
@@ -508,7 +536,7 @@
 				</td>
             </tr> 
 		</table>
-		<table id="netcfg-syslog-table" style="display:none;" class="tabTable">
+		<table id="netcfg-syslog-table" style="display:none;" class="tabTable1">
 				<tr>
 				<th>Client IP</th>
 				<td>
@@ -529,7 +557,7 @@
 		<div class="rtabframe" style="height:300px;">
 		<h3>Protocol</h3>
 
-		<table id="protConfig" class="tabTable">		
+		<table id="protConfig" class="tabTable1">		
 			<tr>
 				<th>Data protocol</th>
 				<td>
@@ -540,7 +568,7 @@
 				</td>
             </tr> 
 		</table>
-		<table id="protcfg-Broker" style="display:none;" class="tabTable">
+		<table id="protcfg-Broker" style="display:none;" class="tabTable1">
 				<tr>
 				<th>Broker IP</th>
 				<td>
@@ -656,7 +684,7 @@
 					<input type="button" class="buttonclass" id="tempSensorScan" value="Scan" title="Scan temperature sensors" />
 					</td>
 					<td>
-					<select id="sys-CF">
+					<select id="sysCfg-CF">
 						<option>Celsius</option>
 						<option>Fahrenheit</option>
 					</select>
@@ -1021,7 +1049,7 @@
 			for (let row=1;row<NoOfSensors+1;row++) tempsTable.rows[row].cells[0].innerHTML = row;
 			tempsTable.rows[0].cells[0].textContent = 'No';
 			tempsTable.rows[0].cells[1].textContent = 'Name';
-			if (id("sys-CF").selectedIndex==0)
+			if (id("sysCfg-CF").selectedIndex==0)
 				tempsTable.rows[0].cells[2].textContent = 'C';
 			else
 				tempsTable.rows[0].cells[2].textContent = 'F';
@@ -1163,7 +1191,7 @@
 				e.style.display = "none";
 			} else {
 				x.style.display = "block";
-				e.className = 'show';
+				e.className = 'tabTable';
 			}
 		}
 		
@@ -1393,7 +1421,8 @@
 		
 		async function postSystemConfig() {
 			let sysCfg = {};
-			sysCfg.CF = id("sys-CF").selectedIndex;
+			sysCfg.CF = id("sysCfg-CF").selectedIndex;
+			sysCfg.station=id("sysCfg-StationName").value;
 			await postJson("sysconfig",JSON.stringify(sysCfg));
 		}
 		
@@ -1734,7 +1763,9 @@
 		async function getSystemConfig() {
 			const dataSysCfg=await getJson("sysconfig");
 			if (dataSysCfg) {
-				id("sys-CF").selectedIndex = dataSysCfg["CF"];
+				id("sysCfg-CF").selectedIndex = dataSysCfg["CF"];
+				id("sysCfg-StationName").value=dataSysCfg["station"];
+				id("sysStation").textContent=dataSysCfg["station"];
 			}
 		}
 		
