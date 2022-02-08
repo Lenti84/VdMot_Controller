@@ -118,6 +118,7 @@ void temperature_loop() {
     static enum t_state tempstate = T_INIT;
     static int substate = 0;
     static int devcnt;
+    static int lock = 0;
   
     //static uint8_t numberOfDevices;
     static unsigned int timer = 0;
@@ -144,27 +145,29 @@ void temperature_loop() {
                 substate = 0;
                 tempstate = T_SEARCH;
               }
+              else if (temp_cmd == TEMP_CMD_LOCK) {
+                lock = 1;
+              }
+              else if (temp_cmd == TEMP_CMD_UNLOCK) {
+                lock = 0;
+              }
               else {
-                // if(timer) timer--;
-                // else {
-                  //timer = 20 + (sensors.millisToWaitForConversion(sensors.getResolution()) / 10);
+                if (lock == 0) {
                   tempstate = T_REQUEST;
-                //}  
+                } 
               }
 
               break;
 
     case T_REQUEST:
-              // if(timer) timer--;
-              // else {
-                #ifdef tempDebug
-                  COMM_DBG.println("Requesting temperatures...");
-                #endif
-                sensors.requestTemperatures();
+              #ifdef tempDebug
+                COMM_DBG.println("Requesting temperatures...");
+              #endif
+              sensors.requestTemperatures();
 
-                timer = 20 + (sensors.millisToWaitForConversion(sensors.getResolution()) / 10);
-                tempstate = T_WAIT;
-              //}
+              timer = 20 + (sensors.millisToWaitForConversion(sensors.getResolution()) / 10);
+              tempstate = T_WAIT;
+
               break;
 
     case T_WAIT:
@@ -176,8 +179,6 @@ void temperature_loop() {
               break;
               
     case T_OUTPUT:  
-              // for (int i=0; i<numberOfDevices; i++)
-              // {
               if(devcnt < numberOfDevices) {
                 temp = sensors.getTempCByIndex(devcnt);
                 tempsensors[devcnt].temperature = round(temp*10);

@@ -36,6 +36,7 @@
 #include "terminal.h"
 #include "app.h"
 #include "eeprom.h"
+#include "temperature.h"
 
 
 
@@ -305,6 +306,14 @@ byte valve_loop () {
                   // decrement learning counter
                   if(valvestate == A_OPEN1 || valvestate == A_CLOSE1) {
                     if(myvalves[valveindex].learn_movements) myvalves[valveindex].learn_movements--;
+                  }
+
+                  // pause temperature measurement to avoid ADC interference
+                  if(valvestate != A_IDLE) {
+                    temp_command(TEMP_CMD_LOCK);
+                  }
+                  else {
+                    temp_command(TEMP_CMD_UNLOCK);
                   }
 
                   // // measure idle current for offset (drift) compensation
