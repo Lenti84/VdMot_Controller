@@ -159,18 +159,13 @@ void loop_system() {
     if(time10s>=10) {
       time10s = 0;
       app_10s_loop();
+      // todo sync with comm COMM_SER.println("STMalive ");   // send alive to ESP32
     }
     else time10s++;
 
-    digitalWrite(LED, !digitalRead(LED));   // toggle LED
-    
+    digitalWrite(LED, !digitalRead(LED));   // toggle LED    
     eepromloop();
 
-    //Serial.println("help");
-    //Serial.println("gactp 0 14 ");
-
-    Serial.println("STMalive ");   // send alive to ESP32   
-    //Serial.println("help ");   // send alive to ESP32  
   }
 
 

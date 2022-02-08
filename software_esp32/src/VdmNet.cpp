@@ -146,6 +146,7 @@ void CVdmNet::setupEth()
           VdmConfig.configFlash.netConfig.gateway, 
           VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
         }
+        if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) ETH.setHostname(VdmConfig.configFlash.systemConfig.stationName);
         WT32_ETH01_onEvent();
         ethState=ethIsStarting;
         break;
@@ -200,6 +201,8 @@ void CVdmNet::setupWifi()
           VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
         }
         WiFi.begin(VdmConfig.configFlash.netConfig.ssid, VdmConfig.configFlash.netConfig.pwd);
+        if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) WiFi.setHostname(VdmConfig.configFlash.systemConfig.stationName);
+
         wifiState=wifiIsStarting;
         break;
       }

@@ -68,6 +68,7 @@ typedef struct {
 
 typedef struct {
   uint8_t celsiusFahrenheit;
+  char stationName[21];
 } VDM_SYSTEM_CONFIG;
 
 typedef struct {
@@ -154,7 +155,8 @@ typedef struct
 #define nvsMotorMaxC                "motorMaxC"
 
 #define nvsSystemCfg                "sysCfg"
-#define nvsCelsiusFahrenheit        "CF"
+#define nvsSystemCelsiusFahrenheit  "CF"
+#define nvsSystemStationName        "stName"
 
 class CVdmConfig
 {

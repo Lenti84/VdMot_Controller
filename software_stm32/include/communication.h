@@ -33,6 +33,10 @@
 
 #include <Arduino.h>
 
+#define COMM_SER				Serial1		// serial port to ESP32
+//#define COMM_DBG				Serial3		// serial port for debugging
+#define COMM_DBG				Serial6		// serial port for debugging
+
 // public
 extern void communication_setup (void);
 extern int16_t communication_loop (void);

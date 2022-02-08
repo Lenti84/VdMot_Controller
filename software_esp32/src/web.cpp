@@ -59,7 +59,8 @@ CWeb::CWeb()
 
 String CWeb::getSysConfig (VDM_SYSTEM_CONFIG sysConfig)
 {
-  String result = "{\"CF\":"+String(sysConfig.celsiusFahrenheit)+
+  String result = "{\"CF\":"+String(sysConfig.celsiusFahrenheit)+","+
+                  "\"station\":\""+String(sysConfig.stationName)+"\""+
                   "}";  
   return result;  
 }

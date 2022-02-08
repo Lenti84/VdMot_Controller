@@ -108,7 +108,7 @@ void CMqtt::reconnect()
         syslog.log(LOG_INFO, "Reconnecting MQTT...");
     }
     UART_DBG.println("Reconnecting MQTT...");
-    if (!mqtt_client.connect("VdMot",mqttUser,mqttPwd)) {
+    if (!mqtt_client.connect(VdmConfig.configFlash.systemConfig.stationName,mqttUser,mqttPwd)) {
         UART_DBG.print("failed, rc=");
         UART_DBG.print(mqtt_client.state());
         UART_DBG.println(" retrying");

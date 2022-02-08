@@ -50,6 +50,7 @@ CServices Services;
 CServices::CServices()
 {
   serviceValvesStarted=false;
+  restartSTM=false;
 }
 
 void CServices::checkServiceValves()
@@ -89,12 +90,14 @@ void CServices::restartSystem() {
         UART_DBG.println("wait for finish queue");
         VdmTask.taskIdResetSystem = taskManager.scheduleOnce(30*1000, [] {
                 UART_DBG.println("wait for finish queue timeout, restart now");
+                if (Services.restartSTM) Stm32.ResetSTM32(true);
                 ESP.restart();
             });
         VdmTask.taskIdwaitForFinishQueue = taskManager.scheduleFixedRate(500, [] {
           if (Queue.available()==0) {
             UART_DBG.println("queue finished, restart now");
               VdmTask.taskIdResetSystem = taskManager.scheduleOnce(2000, [] {
+                if (Services.restartSTM) Stm32.ResetSTM32(true);
                 ESP.restart();
               });
               VdmTask.deleteTask(VdmTask.taskIdwaitForFinishQueue);
