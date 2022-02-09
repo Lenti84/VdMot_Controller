@@ -48,6 +48,7 @@ DallasTemperature sensors(&oneWire);
 enum t_state {T_INIT, T_IDLE, T_REQUEST, T_OUTPUT, T_WAIT, T_SEARCH};
 
 volatile int temp_cmd = 0;
+volatile int lock = 0;
 
 //#define COMM_DBG				Serial3		// serial port for debugging
 #define COMM_DBG				Serial6		// serial port for debugging
@@ -118,7 +119,7 @@ void temperature_loop() {
     static enum t_state tempstate = T_INIT;
     static int substate = 0;
     static int devcnt;
-    static int lock = 0;
+    //static int lock = 0;
   
     //static uint8_t numberOfDevices;
     static unsigned int timer = 0;
@@ -144,12 +145,6 @@ void temperature_loop() {
               if(temp_cmd == TEMP_CMD_NEWSEARCH) {
                 substate = 0;
                 tempstate = T_SEARCH;
-              }
-              else if (temp_cmd == TEMP_CMD_LOCK) {
-                lock = 1;
-              }
-              else if (temp_cmd == TEMP_CMD_UNLOCK) {
-                lock = 0;
               }
               else {
                 if (lock == 0) {
@@ -280,8 +275,14 @@ void get_sensordata (unsigned int index, char *buffer, int buflen) {
 }
 
 void temp_command(int command) {
-
-  if (temp_cmd == TEMP_CMD_NONE) temp_cmd = command;
+  
+  if (command == TEMP_CMD_LOCK) {
+    lock = 1;
+  }
+  else if (command == TEMP_CMD_UNLOCK) {
+    lock = 0;
+  }
+  else if (temp_cmd == TEMP_CMD_NONE) temp_cmd = command;
 
 }
 
