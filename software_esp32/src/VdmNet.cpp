@@ -107,7 +107,6 @@ void CVdmNet::setup()
     UART_DBG.println(VdmConfig.configFlash.netConfig.eth_wifi);
   #endif
  
-  VdmConfig.configFlash.netConfig.eth_wifi=0;
   switch (VdmConfig.configFlash.netConfig.eth_wifi) {
     case interfaceAuto :
       {

@@ -322,6 +322,8 @@
 			<tr>
 				<th>Heap</th>
 				<td id="heap"></td>
+				<th>min</th>
+				<td id="min-heap"></td>
 			</tr>	
 			<tr id="tr-rssi" class="hide">
 				<th>RSSI</th>
@@ -1742,6 +1744,7 @@
 			if (dataSystemDynInfo) {
 				id("locTime").textContent = dataSystemDynInfo["locTime"];
 				id("heap").textContent = dataSystemDynInfo["heap"];
+				id("min-heap").textContent = dataSystemDynInfo["minheap"];
 				id("rssi").textContent = dataSystemDynInfo["wifirssi"];
 				if (_isContains(dataSystemDynInfo, "brokerConnected")) {
 					id("net-broker").style.display="block";

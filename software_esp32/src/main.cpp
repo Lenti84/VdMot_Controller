@@ -44,19 +44,24 @@
 #include "VdmNet.h"
 #include "VdmTask.h"
 #include "stm32.h"
+#include "esp_task_wdt.h"
+#include "esp_err.h"
 
-void setup(void)
-{
+void setup(void) {
+  disableCore0WDT();
+  disableCore1WDT();
+  disableLoopWDT(); 
+
   UART_DBG.begin(115200);
-
   Stm32.STM32ota_setup();
-  
+  UART_DBG.println("Start Config");
+
   // init config, read from flash, init network
   VdmConfig.init();
+  VdmConfig.checkToResetCfg();
   VdmNet.init();
   VdmTask.init();
 }
-
 
 void loop(void) {
   taskManager.runLoop();

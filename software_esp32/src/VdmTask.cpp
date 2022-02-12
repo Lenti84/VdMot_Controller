@@ -117,7 +117,6 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
 
 void CVdmTask::startServices()
 {
-    addIntPinResetCfg();
     taskIdRunOnce = taskManager.scheduleOnce(1000, [] {
                 Services.runOnce();
     });
@@ -144,39 +143,3 @@ void CVdmTask::yieldTask (uint16_t ms)
     taskManager.yieldForMicros(ms*1000);
 }
 
-void interruptTask(pintype_t thisPin) 
-{
-   VdmTask.handleSetFactoryCfg (thisPin);
-}
-    
-void CVdmTask::handleSetFactoryCfg (pintype_t thisPin)
-{
-    int readPin = digitalRead(pinSetFactoryCfg);
-    if (readPin==0) {
-        if (setFactoryCfgState==idle) {
-            setFactoryCfgState=inProgress;
-            taskIdSetFactoryCfgTimeOut = taskManager.scheduleOnce(60*1000, [] {
-                VdmTask.setFactoryCfgState=idle;
-            });
-            taskIdSetFactoryCfgInProgress = taskManager.scheduleOnce(10*1000, [] {
-                VdmTask.setFactoryCfgState=action;
-            });
-        }
-    } else {
-      if (setFactoryCfgState==action) {
-          setFactoryCfgState=resetCfg;
-          VdmConfig.restoreConfig(true);
-      }       
-    }
-}
-
-
-void CVdmTask::addIntPinResetCfg ()
-{
-    BasicArduinoInterruptAbstraction interruptAbstraction;
-
-    pinMode(pinSetFactoryCfg, INPUT_PULLUP);
-
-    taskManager.setInterruptCallback(interruptTask);
-    taskManager.addInterrupt(&interruptAbstraction, pinSetFactoryCfg, CHANGE);
-}

@@ -45,6 +45,8 @@
 #include <Preferences.h>
 #include <ArduinoJson.h>
 
+#define pinSetFactoryCfg  2
+
 enum protType  {protTypeNone=0,protTypeMqtt=1};
 
 typedef struct {
@@ -177,6 +179,7 @@ public:
   String handleAuth (JsonObject doc);
   uint32_t doc2IPAddress(String id);
   int8_t findTempID (char* tempId);
+  void checkToResetCfg();
 
   Preferences prefs;
 

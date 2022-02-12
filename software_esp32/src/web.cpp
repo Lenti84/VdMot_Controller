@@ -205,6 +205,7 @@ String CWeb::getSysDynInfo()
   }
   String result = "{\"locTime\":\""+time+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
+                  "\"minheap\":\""+ConvBinUnits(ESP.getMinFreeHeap(),1)+ "\"," +
                   "\"wifirssi\":"+WiFi.RSSI()+ "," +
                   "\"wifich\":"+WiFi.channel()+ "," +
                   "\"stmStatus\":"+String(StmApp.stmStatus);

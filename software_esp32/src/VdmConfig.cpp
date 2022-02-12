@@ -40,6 +40,7 @@
 
 #include <stdint.h>
 #include "VdmConfig.h"
+#include "VdmTask.h"
 #include "web.h"
 #include "Services.h"
 #include "StmApp.h"
@@ -387,4 +388,20 @@ int8_t CVdmConfig::findTempID (char* tempId)
     idx++;
   }
   return (-1);
+}
+
+void CVdmConfig::checkToResetCfg() {
+  pinMode(pinSetFactoryCfg, INPUT_PULLUP);
+  if (digitalRead(pinSetFactoryCfg)==0) {  
+    UART_DBG.println("Entry reset config");
+    delay(1000);
+    if (digitalRead(pinSetFactoryCfg)==0) {
+        UART_DBG.println("Reset config, remove shortcut");
+        while (digitalRead(pinSetFactoryCfg)==0) {
+          delay(100);
+        }
+        UART_DBG.println("Reset config now");
+        VdmConfig.restoreConfig(true);
+    }
+  }
 }

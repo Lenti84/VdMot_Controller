@@ -42,6 +42,7 @@
 
 #include <Arduino.h>
 
+// #define CONFIG_ASYNC_TCP_USE_WDT 0
 
 #define ACTUATOR_COUNT      12
 #define TEMP_SENSORS_COUNT  34

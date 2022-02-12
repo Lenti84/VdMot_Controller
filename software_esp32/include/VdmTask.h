@@ -50,7 +50,6 @@
 #include "stm32.h"
 
 enum TsetFactoryCfgState  {idle,inProgress,action,resetCfg};
-#define pinSetFactoryCfg  2
 
 class CVdmTask
 {
@@ -64,9 +63,7 @@ public:
   void startApp();
   void startStm32Ota(uint8_t command,String thisFileName);
   void startServices();
-  void handleSetFactoryCfg (pintype_t thisPin);
-  void addIntPinResetCfg();
-
+  
   taskid_t taskIdCheckNet;
   taskid_t taskIdMqtt;
   taskid_t taskIdApp;
