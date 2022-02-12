@@ -47,6 +47,8 @@ void printAddress(DeviceAddress deviceAddress);
 
 #define TEMP_CMD_NONE         0x00
 #define TEMP_CMD_NEWSEARCH    0x01
+#define TEMP_CMD_LOCK         0x02
+#define TEMP_CMD_UNLOCK       0x03
 
 typedef struct {
   int 			temperature;

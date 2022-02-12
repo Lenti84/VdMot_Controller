@@ -36,6 +36,7 @@
 #include "terminal.h"
 #include "app.h"
 #include "eeprom.h"
+#include "temperature.h"
 
 
 
@@ -204,8 +205,13 @@ byte valve_loop () {
 
   static int waittimer = 0;
   static int psuofftimer = 0;
+  static int locktimer = 0;
+
+  static enum ASTATE oldvalvestate;
 
   if(waittimer) waittimer--;
+
+  oldvalvestate = valvestate;
 
   switch (valvestate) {
     case A_INIT:  
@@ -307,6 +313,16 @@ byte valve_loop () {
                     if(myvalves[valveindex].learn_movements) myvalves[valveindex].learn_movements--;
                   }
 
+                  // pause temperature measurement to avoid ADC interference
+                  if(valvestate != A_IDLE) {
+                    temp_command(TEMP_CMD_LOCK);
+                    locktimer = 0;
+                  }
+                  else {
+                    if (locktimer<50) locktimer++;
+                    else temp_command(TEMP_CMD_UNLOCK);                      
+                  }            
+               
                   // // measure idle current for offset (drift) compensation
                   // if (idlecurrenttimer < 10) 
                   // {
