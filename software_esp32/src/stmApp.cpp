@@ -161,7 +161,7 @@ void CStmApp::valvesCalibration()
 
 void CStmApp::valvesAssembly()
 {
-    app_cmd(APP_PRE_SETALLVLVOPEN);
+    app_cmd(APP_PRE_SETALLVLVOPEN, "255");
 }
 
 void CStmApp::getParametersFromSTM()

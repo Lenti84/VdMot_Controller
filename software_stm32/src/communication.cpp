@@ -39,6 +39,14 @@
 #include <string.h>
 #include <stdio.h>
 
+// DEBUG
+#ifdef commDebug
+	#define commdbg_print(format, ...) COMM_DBG.print(format, ##__VA_ARGS__)
+	#define commdbg_println(format, ...) COMM_DBG.println(format, ##__VA_ARGS__)
+#else
+	#define commdbg_print(format, ...)	(void)0
+	#define commdbg_println(format, ...)	(void)0
+#endif
 
 #define COMM_MAX_CMD_LEN		15			// max length of a command without arguments
 #define COMM_ARG_CNT			 2			// number of allowed command arguments
@@ -726,7 +734,8 @@ int16_t communication_loop (void) {
 
 			if(argcnt == 1 && x >= 0) {
 				if( app_set_valveopen(x) == 0) {
-					COMM_SER.println(APP_PRE_SETALLVLVOPEN);
+					COMM_SER.print(APP_PRE_SETALLVLVOPEN);
+					COMM_SER.println(" ");
 					#ifdef commDebug 
 						COMM_DBG.println(x, DEC);
 					#endif
@@ -775,6 +784,7 @@ int16_t communication_loop (void) {
 			}
 		}
 
+
 		// set motor characteristics
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETMOTCHARS,&cmd[0],5) == 0) {
@@ -811,11 +821,12 @@ int16_t communication_loop (void) {
 			}
 		}
 
+
 		// get motor characteristics
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETMOTCHARS,&cmd[0],5) == 0) {
 			#ifdef commDebug 
-				COMM_DBG.print("got get motor characteristics request ");
+				COMM_DBG.println("got get motor characteristics request ");
 			#endif
 			COMM_SER.print(APP_PRE_GETMOTCHARS);
 			COMM_SER.print(" ");			
@@ -824,6 +835,31 @@ int16_t communication_loop (void) {
 			COMM_SER.print(currentbound_high_fac, DEC);
 			COMM_SER.println(" ");			
 		} 
+
+
+		// detect valve status
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETDETECTVLV,&cmd[0],5) == 0) {
+			commdbg_print("got detect valve status request");
+
+			x = atoi(arg0ptr);
+
+			if(argcnt == 1 && x >= 0) {
+				// reset status of all valves so they will be detected again
+				if( x == 255) {
+					for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++) {
+						myvalvemots[xx].status = VLV_STATE_UNKNOWN; 
+					}
+					commdbg_println(" - reset all valves");
+				}
+				else commdbg_println(" - error");
+				
+				COMM_SER.print(APP_PRE_SETDETECTVLV);
+				COMM_SER.println(" ");
+			}
+			else commdbg_println(" - error");		
+		} 
+
 
 		// get version request
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
