@@ -68,6 +68,7 @@
 	  color: white;
 	  display: none;
 	  padding: 10px 20px;
+	  height:100%;
 	}
 	
 	/* Style tab links */
@@ -80,7 +81,7 @@
 	  cursor: pointer;
 	  padding: 14px 16px;
 	  font-size: 17px;
-	  width: 10%;
+	  width: 12%;
 	}
 
 	.tabLink:hover {
@@ -616,12 +617,18 @@
 		</table>
 		</div>
 
-		<div class="rtabframe" style="height:430px;">
+		<div class="rtabframe" style="height:460px;">
 		<h3>Valves</h3>
 		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		
 		</table>
-		
-		
+		<table class="tabTable"
+			<tr>
+			<td>
+			<input type="button" class="buttonclass" id="valvesScan" value="Scan" title="Scan valves" />
+			</td>
+			</tr>
+		</table>
 		</div>
 		
 		<div class="rtabframe" id ="motorTabFrame" style="height:400px">
@@ -909,13 +916,10 @@
 			  id(pageName).style.display = "block";
 			  elmnt.style.backgroundColor = color;
 		  }
-		  
 		}
-		
 				
 		// Get the element with id="defaultOpen" and click on it
 		id("defaultOpen").click();
-				
 				
 		function _isContains(json, keyname) {
 			return Object.keys(json).some(key => {
@@ -1224,6 +1228,9 @@
 			id("valvesAssembly").onclick = function(){
 				valvesAssembly();
 			};
+			id("valvesScan").onclick = function(){
+				scanValves();
+			};
 			id("factoryRestore").onclick = function(){
 				factoryRestore();
 			};
@@ -1324,6 +1331,13 @@
 				postCmd('{"action":"vAssembly"}');
 			}
 		}
+		
+		function scanValves(){
+			if (confirm('Are you sure you want to scan valves ?')) {
+				postCmd('{"action":"scanValves"}');
+			}
+		}
+		
 		async function fileDelete() {
 			let fSelect = id("fileSelect");
 			if (fSelect.value) {

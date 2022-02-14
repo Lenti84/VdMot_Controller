@@ -98,6 +98,8 @@ typedef struct {
 #define APP_PRE_GETSTATUS          	"gstat"   // not used in stm
 
 #define APP_PRE_SETVLVSENSOR        "stvls"
+#define APP_PRE_SETDETECTVLV        "stdet"     // new
+
 #define APP_PRE_UNDEFSENSOR         "00-00-00-00-00-00-00-00"
 
 #define VLV_STATE_START       0x00
@@ -135,6 +137,7 @@ public:
   bool checkCmdIsAvailable (String thisCmd);
   void valvesCalibration();
   void valvesAssembly();
+  void scanValves();
   void scanTemps();
   void setTempIdx();
   void setLearnAfterMovements();
