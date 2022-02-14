@@ -36,6 +36,7 @@
 #include "communication.h"
 #include "eeprom.h"
 
+
 //extern HardwareSerial Serial3;
 extern void callback_app(char cmd, byte valveindex, byte pos);
 
@@ -46,13 +47,13 @@ HardwareSerial Serial6(USART6);
 
 
 //#define COMM_DBG				Serial3		// serial port for debugging
-#define COMM_DBG				Serial6		// serial port for debugging
+//#define COMM_DBG				Serial6		// serial port for debugging
 
 
 int testmode = 0;							// flag for testmode
 
 //#define COMM_DBG				Serial3		// serial port for debugging
-#define COMM_DBG				Serial6		// serial port for debugging
+//#define COMM_DBG				Serial6		// serial port for debugging
 
 #define TERM_MAX_CMD_LEN		15			// max length of a command without arguments
 #define TERM_ARG_CNT			 2			// number of allowed command arguments
@@ -747,6 +748,38 @@ int16_t Terminal_Serve (void) {
 			else COMM_DBG.println("to few arguments");
 		}
 
+
+		// detect valve status
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SETDETECTVLV,&cmd[0],5) == 0) {
+			#ifdef commDebug 
+				COMM_DBG.print("got detect valve status request");
+			#endif
+
+			x = atoi(arg0ptr);
+
+			if(argcnt == 1 && x >= 0) {
+				// reset status of all valves so they will be detected again
+				if( x == 255) {
+					for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++) {
+						myvalvemots[xx].status = VLV_STATE_UNKNOWN; 
+					}
+					COMM_DBG.println(" - reset all valves");
+				}
+				// not supported at the moment, app rework needed
+				// reset status of valve x so it will be detected again
+				// else if (x < ACTUATOR_COUNT) {
+				// 	myvalvemots[x].status = VLV_STATE_UNKNOWN;
+				// 	COMM_DBG.print(" - reset valve ");
+				// 	COMM_DBG.println(x, DEC);
+				// }
+				else COMM_DBG.println(" - error");
+				
+				COMM_SER.print(APP_PRE_SETDETECTVLV);
+				COMM_SER.println(" ");
+			}
+			else COMM_DBG.println(" - error");		
+		} 
 
 		// unknown command
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

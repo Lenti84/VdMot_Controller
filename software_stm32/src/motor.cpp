@@ -117,8 +117,8 @@ int valvenr;
 byte poschangecmd;
 unsigned int m_meancurrent;           // mean current in mA
 
-uint8_t currentbound_low_fac = 30;     // lower current limit factor for detection of end stop
-uint8_t currentbound_high_fac = 30;    // upper current limit factor for detection of end stop
+uint8_t currentbound_low_fac = 20;     // lower current limit factor for detection of end stop
+uint8_t currentbound_high_fac = 20;    // upper current limit factor for detection of end stop
 
 //volatile uint32_t revcounter;
 
