@@ -625,7 +625,7 @@
 		<table class="tabTable"
 			<tr>
 			<td>
-			<input type="button" class="buttonclass" id="valvesScan" value="Scan" title="Scan valves" />
+			<input type="button" class="buttonclass" id="valvesDetect" value="Scan" title="Detect valves" />
 			</td>
 			</tr>
 		</table>
@@ -1228,8 +1228,8 @@
 			id("valvesAssembly").onclick = function(){
 				valvesAssembly();
 			};
-			id("valvesScan").onclick = function(){
-				scanValves();
+			id("valvesDetect").onclick = function(){
+				valvesDetect();
 			};
 			id("factoryRestore").onclick = function(){
 				factoryRestore();
@@ -1311,7 +1311,8 @@
 			const valvesTable = id('valvesTable');
 			const valvesCfgTable = id('cfgValvesTable');
 			for (i=1; i<valvesTable.rows.length;i++){
-				let active=id('cfgVActive'+i).checked; 
+				let idx = valvesTable.rows[i].cells[0].textContent;
+				let active=id('cfgVActive'+idx).checked; 
 				id('setValveP'+i).readOnly=!(checked && active);
 				if (checked && active) 
 					id('setValveButton-'+i).style.visibility="visible"
@@ -1332,9 +1333,9 @@
 			}
 		}
 		
-		function scanValves(){
-			if (confirm('Are you sure you want to scan valves ?')) {
-				postCmd('{"action":"scanValves"}');
+		function valvesDetect(){
+			if (confirm('Are you sure you want to detect valves ?')) {
+				postCmd('{"action":"valvesDetect"}');
 			}
 		}
 		

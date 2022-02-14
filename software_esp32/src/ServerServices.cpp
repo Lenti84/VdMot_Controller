@@ -132,9 +132,9 @@ void valvesAssembly (JsonObject doc)
   StmApp.valvesAssembly();
 }
 
-void scanValves (JsonObject doc)
+void valvesDetect (JsonObject doc)
 {  
-  StmApp.scanValves();
+  StmApp.valvesDetect();
 }
 
 
@@ -302,10 +302,10 @@ bool handleCmd(JsonObject doc)
 { 
   typedef void (*fp)(JsonObject doc);
   fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,
-                  &clearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&scanValves} ;
+                  &clearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect} ;
 
   char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete",
-                        "clearFS","scanTempSensors","vCalib","vAssembly","scanValves", NULL};
+                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect", NULL};
   char const **p;
   bool found = false;
 

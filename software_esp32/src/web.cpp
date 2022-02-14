@@ -222,6 +222,9 @@ String CWeb::getValvesStatus()
   bool start=false;
   String result = "[";
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
+    #ifdef ValveSimulation
+      if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) StmApp.actuators[x].state=VLV_STATE_IDLE;
+    #endif
     if ((StmApp.actuators[x].state!=VLV_STATE_OPENCIR) && (StmApp.actuators[x].state!=VLV_STATE_START)) {
       if (start) result += ",";
       result += "{\"idx\":"+String(x+1) + ","+

@@ -63,7 +63,7 @@ static const char* commCmds [] =
                 APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETTARGETPOS,
                 APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,APP_PRE_SETVLVSENSOR,
                 APP_PRE_GETONEWIRESETT,APP_PRE_SETLEARNMOVEM,APP_PRE_GETLEARNMOVEM,
-                APP_PRE_GETVLSTATUS,NULL};
+                APP_PRE_GETVLSTATUS,APP_PRE_SETDETECTVLV,NULL};
 
 
 CStmApp StmApp;
@@ -161,13 +161,14 @@ void CStmApp::valvesCalibration()
 
 void CStmApp::valvesAssembly()
 {
-    app_cmd(APP_PRE_SETALLVLVOPEN,"255");
+    app_cmd(APP_PRE_SETALLVLVOPEN, "255");
 }
 
-void CStmApp::scanValves()
+void CStmApp::valvesDetect()
 {
-    app_cmd(APP_PRE_SETDETECTVLV);
+    app_cmd(APP_PRE_SETDETECTVLV, "255");
 }
+
 
 void CStmApp::getParametersFromSTM()
 {
@@ -507,7 +508,7 @@ void  CStmApp::app_check_data()
             }
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"one wire settings data "+String(arg1ptr));
+                    syslog.log(LOG_DEBUG,"one wire settings data "+String(arg0ptr)+" : "+String(arg1ptr));
                 }   
                 uint8_t nItems= atoi(arg0ptr);
                 if (nItems>0) {
@@ -521,7 +522,6 @@ void  CStmApp::app_check_data()
                         strncpy(arg5ptr,ps,sizeof(arg5));
                         setSensorIndex(idx,arg4ptr,arg5ptr);
                         if (cmdptr!=NULL) ps=cmdptr+1;
-                        idx++;
                     }
                 }
                 

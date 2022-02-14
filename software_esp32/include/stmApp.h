@@ -137,6 +137,7 @@ public:
   bool checkCmdIsAvailable (String thisCmd);
   void valvesCalibration();
   void valvesAssembly();
+  void valvesDetect();
   void scanValves();
   void scanTemps();
   void setTempIdx();
