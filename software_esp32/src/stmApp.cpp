@@ -555,6 +555,10 @@ void  CStmApp::app_check_data()
         else if(memcmp(APP_PRE_SETVLLEARN,cmd,5) == 0) {
             appState=APP_IDLE;
         }
+        
+        else if(memcmp(APP_PRE_SETDETECTVLV,cmd,5) == 0) {
+            appState=APP_IDLE;
+        }
 
         else if(memcmp(APP_PRE_SETMOTCHARS,cmd,5) == 0) {
             appState=APP_IDLE;
