@@ -51,6 +51,7 @@
 #include "VdmTask.h"
 #include "helper.h"
 #include "web.h"
+#include "PIControl.h"
 
 CMqtt Mqtt;
 
@@ -100,6 +101,8 @@ void CMqtt::reconnect()
     char nrstr[11];
     char* mqttUser = NULL;
     char* mqttPwd = NULL;
+    uint8_t len;
+
     if ((strlen(VdmConfig.configFlash.protConfig.userName)>0) && (strlen(VdmConfig.configFlash.protConfig.userPwd)>0)) {
         mqttUser = VdmConfig.configFlash.protConfig.userName;
         mqttPwd = VdmConfig.configFlash.protConfig.userPwd;
@@ -131,10 +134,28 @@ void CMqtt::reconnect()
             // prepare prefix
             strncat(topicstr, mqtt_valvesTopic,sizeof(topicstr));
             strncat(topicstr, nrstr,sizeof(topicstr));      
+            len = strlen(topicstr);
 
             // target value
             strncat(topicstr, "/target",sizeof(topicstr));
             mqtt_client.subscribe(topicstr);
+
+            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].active) {
+                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
+                    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].valueSource==0) {
+                        // temp value
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/tValue",sizeof(topicstr));
+                        mqtt_client.subscribe(topicstr);    
+                    } 
+                    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].targetSource==0) {
+                        // temp target
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/tTarget",sizeof(topicstr));
+                        mqtt_client.subscribe(topicstr);    
+                    } 
+                }
+            }
         }
     }
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
@@ -164,38 +185,60 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                 idx++;
                 pt++;
             } 
-            if (strncmp(pt,"/target",7)==0) {
-                // find approbiated valve
-                idx=0;
-                found = false;
-                for (i=0;i<ACTUATOR_COUNT;i++) {
-                    if (strncmp(VdmConfig.configFlash.valvesConfig.valveConfig[i].name,item,sizeof(VdmConfig.configFlash.valvesConfig.valveConfig[i].name))==0) {
-                        found = true;
-                        break;
-                    }
-                    idx++;    
+            
+            // find approbiated valve
+            idx=0;
+            found = false;
+            for (i=0;i<ACTUATOR_COUNT;i++) {
+                if (strncmp(VdmConfig.configFlash.valvesConfig.valveConfig[i].name,item,sizeof(VdmConfig.configFlash.valvesConfig.valveConfig[i].name))==0) {
+                    found = true;
+                    break;
                 }
-                if (!found) {
-                    if (isNumber(item)) {
-                        idx=atoi(item)-1;
-                        found=true;
-                    }
+                idx++;    
+            }
+            if (!found) {
+                if (isNumber(item)) {
+                    idx=atoi(item)-1;
+                    found=true;
                 }
-                if (found) {
-                    memset(value,0x0,sizeof(value));
-                    memcpy(value,payload,length);
-                    if (isNumber(value)) {
+            }
+
+            if (found) {
+                memset(value,0x0,sizeof(value));
+                memcpy(value,payload,length);
+                if (isNumber(value)) {
+                    if (strncmp(pt,"/target",7)==0) {
                         StmApp.actuators[idx].target_position = atoi(value);
+                    } else if (strncmp(pt,"/tValue",7)==0) {
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].active) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].valueSource==0)
+                                PiControl[idx].value=atof(value);
+                        }
+                    } else if (strncmp(pt,"/tTarget",8)==0) {
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].active) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
+                                PiControl[idx].target=atof(value);
+                        }
+                    }else if (strncmp(pt,"/dynOffs",8)==0) {
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].active) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
+                                PiControl[idx].dynOffset=atoi(value);
+                        }
                     }
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
                         syslog.log(LOG_INFO, "MQTT: found target topic "+String(item)+" : "+String(value));
                     }
                 } else {
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-                        syslog.log(LOG_INFO, "MQTT: not found target topic "+String(item));
-                    }   
+                        syslog.log(LOG_INFO, "MQTT: found target topic, but not a number "+String(item)+" : "+String(value));
+                    }  
                 }
+            } else {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_INFO, "MQTT: not found target topic "+String(item));
+                }   
             }
+            
         }
     }
 }

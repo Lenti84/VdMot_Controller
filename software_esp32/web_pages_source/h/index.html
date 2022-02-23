@@ -275,6 +275,7 @@
 	#Status {background-color: gray;}
 	#Network {background-color: gray;}
 	#Config {background-color: gray;}
+	#Control {background-color: gray;}
 	#Update {background-color: gray;}
 	#About {background-color: gray;}
 
@@ -288,6 +289,7 @@
 	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green')">Status</a>
 	  <a href="#network" class="tabLink" id="networkOpen" name="Network" style ="display:none" onclick="openPage('Network', this, 'blue')">Network</a>
 	  <a href="#config" class="tabLink" id="configOpen" name="Config" style ="display:none" onclick="openPage('Config', this, 'gray')">Config</a>
+	  <a href="#control" class="tabLink" id="controlOpen" name="Control" style ="display:none" onclick="openPage('Control', this, 'gray')">Control</a>
 	  <a href="#update" class="tabLink" id="updateOpen" name="Update" style ="display:none" onclick="openPage('Update', this, 'cyan')">Update</a>
 	  <a href="#about" class="tabLink" id="aboutOpen" name="About" onclick="openPage('About', this, 'darkgray')">About</a>
 	  <a href="javascript:void(0);" class="icon" onclick="resptopNav()">&#9776;</a>
@@ -758,6 +760,23 @@
 		</div>
 	</div>
 	
+	<div id="Control" class="tabContent">
+	<div class="container">
+		<div class="rtabframe">  
+			<h3>Valves</h3>	
+			<table id="cfgValvesControlTable" class="tabTable" border="3" frame="box" style="text-align:center">
+			</table>
+			<table class="tabTable">
+			<tr>
+				<td>
+				<input type="button" class="buttonclass" id="saveVCtrlConfig" value="Save valve control settings" title="Save settings for valves control."/>
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+	</div>
+	
 	<div id="Update" class="tabContent">
 		<div class="rtabframe" style="width: 250px;">
 		<h3>Update</h3>
@@ -936,6 +955,7 @@
 			getSystemConfig();
 			makeTempsTable(0);
 			makeCfgValvesTable();
+			makeValvesControlTable();
 			makeCfgTempTable();
 			getSystemInfo();
 			getSystemDynInfo();
@@ -944,6 +964,7 @@
 			getProtConfig();
 			getTempsConfig();
 			getValvesStatus();
+			getValvesControlConfig();
 			
 			getFSDir();
 			getStatusInterval = window.setInterval(getStatus, 2000);
@@ -1178,6 +1199,111 @@
 			cfgTempTable.rows[0].cells[4].textContent = 'ID';
 		}
 		
+		function makeValvesControlTable () {
+			const valvesControlTable = id('cfgValvesControlTable');	  
+			for (let row=0; row<13; row++) { 
+				const thisRow = valvesControlTable.insertRow(0);
+				for (let i = 0; i < 10; i++) {
+					cell = thisRow.insertCell();
+				}
+			}
+			for (row=1;row<13;row++) {
+				valvesControlTable.rows[row].cells[0].innerHTML = row;
+				
+				thiscell = valvesControlTable.rows[row].cells[2];
+				el = document.createElement('input');
+				el.setAttribute('type', 'checkbox');
+				el.setAttribute('name', 'cfgVCActive' + row);
+				el.setAttribute('id', 'cfgVCActive' + row);
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[3];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCLink-' + row);
+				el.setAttribute('id', 'cfgVCLink-' + row);
+				el.setAttribute('style','width:60px;');
+				let option = new Option('none', 0);
+				el.options[0] = option;
+				let idx=1;
+				for (i=1; i<13;i++) {
+					if (i!=row) {
+						option = new Option(i, i);
+						el.options[idx] = option;
+						idx++;
+					}
+				}
+				el.setAttribute('onclick','setCfgVCLink(this);');				
+				thiscell.appendChild(el);
+				thiscell = valvesControlTable.rows[row].cells[4];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCValue' + row);
+				el.setAttribute('id', 'cfgVCValue' + row);
+				el.setAttribute('style','width:60px;');
+				option = new Option('mqtt', 0);
+				el.options[0] = option;
+				option = new Option('TIdx1', 1);
+				el.options[1] = option;
+				option = new Option('TIdx2', 2);
+				el.options[2] = option;
+				option = new Option('json', 3);
+				el.options[3] = option;
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[5];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCTarget' + row);
+				el.setAttribute('id', 'cfgVCTarget' + row);
+				el.setAttribute('style','width:60px;');
+				option = new Option('mqtt', 0);
+				el.options[0] = option;
+				option = new Option('json', 1);
+				el.options[1] = option;
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[6];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCArea' + row);
+				el.setAttribute('id', 'cfgVCArea' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','0');
+				thiscell.appendChild(el);
+				thiscell = valvesControlTable.rows[row].cells[7];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCOffs' + row);
+				el.setAttribute('id', 'cfgVCOffs' + row);
+				el.setAttribute('style','width:50px;');
+				thiscell.appendChild(el);
+				thiscell = valvesControlTable.rows[row].cells[8];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCTn' + row);
+				el.setAttribute('id', 'cfgVCTn' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','0');
+				thiscell.appendChild(el);
+				thiscell = valvesControlTable.rows[row].cells[9];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCTs' + row);
+				el.setAttribute('id', 'cfgVCTs' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','1');
+				thiscell.appendChild(el);
+			}
+			valvesControlTable.rows[0].cells[0].textContent = 'No';
+			valvesControlTable.rows[0].cells[1].textContent = 'Name';
+			valvesControlTable.rows[0].cells[2].textContent = 'Active';
+			valvesControlTable.rows[0].cells[3].textContent = 'Link';
+			valvesControlTable.rows[0].cells[4].textContent = 'Value';
+			valvesControlTable.rows[0].cells[5].textContent = 'Target';
+			valvesControlTable.rows[0].cells[6].textContent = 'Area';
+			valvesControlTable.rows[0].cells[7].textContent = 'Offset(%)';
+			valvesControlTable.rows[0].cells[8].textContent = 'Tn(s)';
+			valvesControlTable.rows[0].cells[9].textContent = 'Ts(s)';
+		}
+		
 		function showBrokerIP(){
 			let x = id("protcfg-Broker");
 			let select = id("protcfg-dataProt").selectedIndex;
@@ -1299,6 +1425,14 @@
 			};
 			id("dialogCancel").onclick = function () {
 				modal.style.display = "none";
+			};
+			
+			id("saveVCtrlConfig").onclick = async function(){
+				if (confirm('Are you sure you want to save control settings ?')) {
+					await postValvesControlCfg();
+					postCmd('{"action":"vCtrlSave"}');
+					reloadDoc("http:/#home",4000,true);
+				}
 			};
 		}
 		
@@ -1425,6 +1559,7 @@
 				if (!(await postProtCfg())) return;
 				await postSystemConfig();
 				await postValvesCfg();
+				await postValvesControlCfg();
 				await postTempsCfg(1,11);
 				await postTempsCfg(12,23);
 				await postTempsCfg(24,34);
@@ -1551,6 +1686,33 @@
 			}
 			await postJson("valvesconfig",JSON.stringify(valvesCfg));
 		}
+		
+		async function postValvesControlCfg() {
+			await postChunkValvesControlCfg(1,6);
+			await postChunkValvesControlCfg(7,12);
+		}
+		
+		async function postChunkValvesControlCfg(chunkStart,chunkEnd) {
+			const cfgValvesControlTable = id('cfgValvesControlTable');
+			let valvesItemsCfg = [];
+			for (let row = chunkStart; row<chunkEnd+1; row++) {
+				let valveValues={};
+				valveValues.active = id('cfgVCActive'+row).checked  ? 1 : 0;
+				valveValues.link = id('cfgVCLink-'+row).value;
+				valveValues.vSource = id('cfgVCValue'+row).value;
+				valveValues.tSource = id('cfgVCTarget'+row).value;
+				valveValues.area = id('cfgVCArea'+row).value;
+				valveValues.offset = id('cfgVCOffs'+row).value;
+				valveValues.tn = id('cfgVCTn'+row).value;
+				valveValues.ts = id('cfgVCTs'+row).value;
+				valvesItemsCfg.push(valveValues);
+			}
+			let valvesControlCfg={};
+			valvesControlCfg.valves=valvesItemsCfg;
+			valvesControlCfg.chunkStart=chunkStart;
+			valvesControlCfg.chunkEnd=chunkEnd;
+			await postJson("valvesctrlconfig",JSON.stringify(valvesControlCfg));
+		}
 				
 		async function postTempsCfg(chunkStart,chunkEnd) {
 			const cfgTempsTable = id('cfgTSensorTable');
@@ -1590,6 +1752,21 @@
 				await postJson("setvalve",JSON.stringify(setThisValve));
 			}
 		}
+		
+		function setCfgVCLink(thisLink){
+			const linkId= thisLink.id;
+			let linkNo = linkId.slice(linkId.indexOf("-")+1);
+			let display = 'block';
+			if (thisLink.value>0) {
+				display = 'none';
+			}  
+			id('cfgVCValue'+linkNo).style.display=display;
+			id('cfgVCTarget'+linkNo).style.display=display;
+			id('cfgVCArea'+linkNo).style.display=display;
+			id('cfgVCOffs'+linkNo).style.display=display;
+			id('cfgVCTn'+linkNo).style.display=display;
+			id('cfgVCTs'+linkNo).style.display=display;
+		}
 				
 		function getStatus() {
 			getSystemDynInfo();
@@ -1599,11 +1776,14 @@
 		
 		function checkValvesConnected (valvesJson){
 			const cfgValvesTable = id('cfgValvesTable');
+			const cfgValvesControlTable = id('cfgValvesControlTable');
 			for (let row = 1; row<13; row++) {
 				cfgValvesTable.rows[row].cells[0].style.backgroundColor = "";
+				cfgValvesControlTable.rows[row].cells[0].style.backgroundColor = "";
 			}
 			valvesJson.forEach(function(item, index){
 				cfgValvesTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+				cfgValvesControlTable.rows[item.idx].cells[0].style.backgroundColor = "green";
 			});
 		}
 		
@@ -1651,6 +1831,22 @@
 			id('vCfg-movCalib').value=cfgValvesJson.calib.cycles;
 			id("vCfg-lowC").value=cfgValvesJson.motor.lowC/10;
 			id("vCfg-highC").value=cfgValvesJson.motor.highC/10;
+		}
+		
+		function fillCfgValvesControlTable (cfgValvesControlJson) {
+			const cfgValvesControlTable = id('cfgValvesControlTable');
+			for (let row = 1; row<13; row++) {
+				cfgValvesControlTable.rows[row].cells[1].textContent = cfgValvesControlJson[row-1].name;
+				id('cfgVCActive'+row).checked = cfgValvesControlJson[row-1].active;
+				id('cfgVCLink-'+row).value = cfgValvesControlJson[row-1].link;
+				id('cfgVCValue'+row).value = cfgValvesControlJson[row-1].vSource;
+				id('cfgVCTarget'+row).value = cfgValvesControlJson[row-1].tSource;
+				id('cfgVCArea'+row).value = cfgValvesControlJson[row-1].area;
+				id('cfgVCOffs'+row).value = cfgValvesControlJson[row-1].offset;
+				id('cfgVCTn'+row).value = cfgValvesControlJson[row-1].tn;
+				id('cfgVCTs'+row).value = cfgValvesControlJson[row-1].ts;
+				setCfgVCLink(id('cfgVCLink-'+row));
+			}
 		}
 		
 		function fillTempsTable (tempsJson) {
@@ -1842,6 +2038,11 @@
 		async function getValvesConfig() {
 			const dataValvesConfig=await getJson("valvesconfig");
 			if (dataValvesConfig) fillCfgValvesTable(dataValvesConfig);
+		}
+		
+		async function getValvesControlConfig() {
+			const dataValvesControlConfig=await getJson("valvesctrlconfig");
+			if (dataValvesControlConfig) fillCfgValvesControlTable(dataValvesControlConfig);
 		}
 		
 		async function getValvesStatus() {

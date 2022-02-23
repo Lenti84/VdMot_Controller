@@ -95,6 +95,22 @@ typedef struct {
 } VDM_VALVES_CONFIG;
 
 typedef struct {
+  bool active;
+  uint8_t link;
+  uint8_t valueSource;
+  uint8_t targetSource;
+  uint16_t area;
+  uint8_t offset;
+  uint16_t tn;
+  uint16_t ts;
+} VDM_VALVE_CONTROL_CONFIG;
+
+typedef struct {
+  VDM_VALVE_CONTROL_CONFIG valveControlConfig[ACTUATOR_COUNT];
+} VDM_VALVES_CONTROL_CONFIG;
+
+
+typedef struct {
   char name[11];
   bool active;
   int offset;
@@ -112,6 +128,7 @@ typedef struct
   VDM_VALVES_CONFIG valvesConfig;
   VDM_TEMPS_CONFIG tempsConfig;
   VDM_SYSTEM_CONFIG systemConfig;
+  VDM_VALVES_CONTROL_CONFIG valvesControlConfig;
 } CONFIG_FLASH;
 
 
@@ -143,7 +160,9 @@ typedef struct
 #define nvsProtBrokerPublishTarget  "brokerPT"
 
 #define nvsValvesCfg                "valvesCfg"
+#define nvsValvesControlCfg         "valvesCtrlCfg"
 #define nvsValves                   "valves"
+#define nvsValvesControl            "valvesCtrl"
 
 #define nvsTempsCfg                 "tempsCfg"
 #define nvsTemps                    "temps"
@@ -171,9 +190,11 @@ public:
   void writeConfig(bool reboot=false);
   void resetConfig (bool reboot=false);
   void restoreConfig (bool reboot=false);
+  void writeValvesControlConfig(bool reboot=false);
   void postNetCfg (JsonObject doc);
   void postProtCfg (JsonObject doc);
   void postValvesCfg (JsonObject doc);
+  void postValvesControlCfg (JsonObject doc);
   void postTempsCfg (JsonObject doc);
   void postSysCfg (JsonObject doc);
   String handleAuth (JsonObject doc);
