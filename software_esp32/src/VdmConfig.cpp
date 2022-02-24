@@ -107,12 +107,12 @@ void CVdmConfig::clearConfig()
 
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesControlConfig.valveControlConfig[i].active = false;
-    configFlash.valvesControlConfig.valveControlConfig[i].area=50;
+    configFlash.valvesControlConfig.valveControlConfig[i].xp=50;
     configFlash.valvesControlConfig.valveControlConfig[i].link=0;
     configFlash.valvesControlConfig.valveControlConfig[i].offset=0;
     configFlash.valvesControlConfig.valveControlConfig[i].targetSource=0;
     configFlash.valvesControlConfig.valveControlConfig[i].valueSource=0;
-    configFlash.valvesControlConfig.valveControlConfig[i].tn=3600;
+    configFlash.valvesControlConfig.valveControlConfig[i].ti=3600;
     configFlash.valvesControlConfig.valveControlConfig[i].ts=900;
    }
   
@@ -373,9 +373,9 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
     if (!doc["valves"][idx]["link"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].link=doc["valves"][idx]["link"];
     if (!doc["valves"][idx]["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].valueSource=doc["valves"][idx]["vSource"];
     if (!doc["valves"][idx]["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].targetSource=doc["valves"][idx]["tSource"];
-    if (!doc["valves"][idx]["area"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].area=doc["valves"][idx]["area"];
+    if (!doc["valves"][idx]["xp"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].xp=doc["valves"][idx]["xp"];
     if (!doc["valves"][idx]["offset"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].offset=doc["valves"][idx]["offset"];
-    if (!doc["valves"][idx]["tn"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].tn=doc["valves"][idx]["tn"];
+    if (!doc["valves"][idx]["ti"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ti=doc["valves"][idx]["ti"];
     if (!doc["valves"][idx]["ts"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ts=doc["valves"][idx]["ts"];  
     idx++;
   }  

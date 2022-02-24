@@ -1263,8 +1263,8 @@
 				thiscell = valvesControlTable.rows[row].cells[6];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
-				el.setAttribute('name', 'cfgVCArea' + row);
-				el.setAttribute('id', 'cfgVCArea' + row);
+				el.setAttribute('name', 'cfgVCXp' + row);
+				el.setAttribute('id', 'cfgVCXp' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
 				thiscell.appendChild(el);
@@ -1278,8 +1278,8 @@
 				thiscell = valvesControlTable.rows[row].cells[8];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
-				el.setAttribute('name', 'cfgVCTn' + row);
-				el.setAttribute('id', 'cfgVCTn' + row);
+				el.setAttribute('name', 'cfgVCTi' + row);
+				el.setAttribute('id', 'cfgVCTi' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
 				thiscell.appendChild(el);
@@ -1298,9 +1298,9 @@
 			valvesControlTable.rows[0].cells[3].textContent = 'Link';
 			valvesControlTable.rows[0].cells[4].textContent = 'Value';
 			valvesControlTable.rows[0].cells[5].textContent = 'Target';
-			valvesControlTable.rows[0].cells[6].textContent = 'Area';
+			valvesControlTable.rows[0].cells[6].textContent = 'Xp';
 			valvesControlTable.rows[0].cells[7].textContent = 'Offset(%)';
-			valvesControlTable.rows[0].cells[8].textContent = 'Tn(s)';
+			valvesControlTable.rows[0].cells[8].textContent = 'Ti(s)';
 			valvesControlTable.rows[0].cells[9].textContent = 'Ts(s)';
 		}
 		
@@ -1701,9 +1701,9 @@
 				valveValues.link = id('cfgVCLink-'+row).value;
 				valveValues.vSource = id('cfgVCValue'+row).value;
 				valveValues.tSource = id('cfgVCTarget'+row).value;
-				valveValues.area = id('cfgVCArea'+row).value;
+				valveValues.xp = id('cfgVCXp'+row).value;
 				valveValues.offset = id('cfgVCOffs'+row).value;
-				valveValues.tn = id('cfgVCTn'+row).value;
+				valveValues.ti = id('cfgVCTi'+row).value;
 				valveValues.ts = id('cfgVCTs'+row).value;
 				valvesItemsCfg.push(valveValues);
 			}
@@ -1762,9 +1762,9 @@
 			}  
 			id('cfgVCValue'+linkNo).style.display=display;
 			id('cfgVCTarget'+linkNo).style.display=display;
-			id('cfgVCArea'+linkNo).style.display=display;
+			id('cfgVCXp'+linkNo).style.display=display;
 			id('cfgVCOffs'+linkNo).style.display=display;
-			id('cfgVCTn'+linkNo).style.display=display;
+			id('cfgVCTi'+linkNo).style.display=display;
 			id('cfgVCTs'+linkNo).style.display=display;
 		}
 				
@@ -1841,9 +1841,9 @@
 				id('cfgVCLink-'+row).value = cfgValvesControlJson[row-1].link;
 				id('cfgVCValue'+row).value = cfgValvesControlJson[row-1].vSource;
 				id('cfgVCTarget'+row).value = cfgValvesControlJson[row-1].tSource;
-				id('cfgVCArea'+row).value = cfgValvesControlJson[row-1].area;
+				id('cfgVCXp'+row).value = cfgValvesControlJson[row-1].xp;
 				id('cfgVCOffs'+row).value = cfgValvesControlJson[row-1].offset;
-				id('cfgVCTn'+row).value = cfgValvesControlJson[row-1].tn;
+				id('cfgVCTi'+row).value = cfgValvesControlJson[row-1].ti;
 				id('cfgVCTs'+row).value = cfgValvesControlJson[row-1].ts;
 				setCfgVCLink(id('cfgVCLink-'+row));
 			}

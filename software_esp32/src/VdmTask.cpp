@@ -134,8 +134,8 @@ void CVdmTask::startServices()
         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].active) {
             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].link==0) { 
                 PiControl[picIdx].valveIndex=picIdx;
-                PiControl[picIdx].Tn=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].tn;
-                PiControl[picIdx].area=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].area;
+                PiControl[picIdx].ti=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ti;
+                PiControl[picIdx].xp=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].xp;
                 PiControl[picIdx].offset=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].offset;
                  
                 if (picIdx==0) {

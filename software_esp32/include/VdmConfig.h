@@ -99,9 +99,9 @@ typedef struct {
   uint8_t link;
   uint8_t valueSource;
   uint8_t targetSource;
-  uint16_t area;
-  uint8_t offset;
-  uint16_t tn;
+  uint16_t xp;
+  int8_t offset;
+  uint16_t ti;
   uint16_t ts;
 } VDM_VALVE_CONTROL_CONFIG;
 
