@@ -66,3 +66,14 @@ bool isNumber(const String& str)
     }
     return true;
 }
+
+
+bool isFloat(const std::string& str)
+{
+    if (str.empty())
+        return false;
+
+    char* ptr;
+    strtof(str.c_str(), &ptr);
+    return (*ptr) == '\0';
+}

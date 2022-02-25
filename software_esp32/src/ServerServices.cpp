@@ -62,6 +62,7 @@
 #include "VdmTask.h"
 #include "Services.h"
 #include "stmApp.h"
+#include "PiControl.h"
 
 extern "C" {
   #include "tfs_data.h"
@@ -147,7 +148,20 @@ void CServerServices::postSetValve (JsonObject doc)
   uint8_t index;
   if (!doc["valve"].isNull()) {
     index=(doc["valve"].as<uint8_t>())-1;
-    if (!doc["value"].isNull()) StmApp.actuators[index].target_position = doc["value"];
+    if (index<ACTUATOR_COUNT) {
+      if (VdmConfig.configFlash.valvesConfig.valveConfig[index].active) {
+        if (!doc["value"].isNull()) StmApp.actuators[index].target_position = doc["value"];
+      }
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].active) {
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].valueSource==1) {
+          if (!doc["ctrlValue"].isNull()) PiControl[index].value = doc["ctrlValue"];
+        }
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].targetSource==1) {
+          if (!doc["ctrlTarget"].isNull()) PiControl[index].target = doc["ctrlTarget"];
+          if (!doc["ctrlDynOffs"].isNull()) PiControl[index].dynOffset = doc["ctrlDynOffs"];
+        }
+      }
+    }
   }
 }
 

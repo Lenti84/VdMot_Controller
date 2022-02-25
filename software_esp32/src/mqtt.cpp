@@ -206,18 +206,19 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
             if (found) {
                 memset(value,0x0,sizeof(value));
                 memcpy(value,payload,length);
-                if (isNumber(value)) {
+               
+                if (isFloat(value)) {
                     if (strncmp(pt,"/target",7)==0) {
                         StmApp.actuators[idx].target_position = atoi(value);
                     } else if (strncmp(pt,"/tValue",7)==0) {
                         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].active) {
                             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].valueSource==0)
-                                PiControl[idx].value=atof(value);
+                                PiControl[idx].value=strtof(value, NULL);
                         }
                     } else if (strncmp(pt,"/tTarget",8)==0) {
                         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].active) {
                             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
-                                PiControl[idx].target=atof(value);
+                                PiControl[idx].target=strtof(value, NULL);
                         }
                     }else if (strncmp(pt,"/dynOffs",8)==0) {
                         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].active) {
