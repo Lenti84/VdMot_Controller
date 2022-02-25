@@ -81,14 +81,11 @@ float CPiControl::piCtrl(float e) {
   p = y + 50 + offset + dynOffset;
   if (p > 100.0) p = 100.0;
   if (p < 0.0) p = 0.0;
-  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].scheme==0) {
+  
     // i - proportion
     if (ti==0) return (50);
     iProp += ((float)ta / (float)ti) * y;
-  } else {
-    esum += e;
-    iProp = ki * ((float)ta / (float)ti) * esum;
-  }
+ 
 
   // pi
   y = p + iProp;
