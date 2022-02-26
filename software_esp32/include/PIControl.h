@@ -48,6 +48,7 @@ public:
     valveIndex=255;
     start=false;
     dynOffset=0;
+    scheme=0;
   };
   void exec() override {
     controlValve();
@@ -64,6 +65,7 @@ public:
   volatile float target;
   volatile float value;
   uint8_t valveIndex;
+  uint8_t scheme;
 private:
   float iProp;
   time_t ts;

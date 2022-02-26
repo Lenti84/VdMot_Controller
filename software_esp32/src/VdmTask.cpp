@@ -134,75 +134,13 @@ void CVdmTask::startServices()
                 PiControl[picIdx].valveIndex=picIdx;
                 PiControl[picIdx].ti=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ti;
                 PiControl[picIdx].xp=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].xp;
-                PiControl[picIdx].offset=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].offset;
-                 
+                PiControl[picIdx].offset=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].offset; 
+                PiControl[picIdx].ki=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ki; 
+                PiControl[picIdx].scheme=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].scheme;
                 taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts, &PiControl[picIdx], TIME_SECONDS);
- /*              
-                if (picIdx==0) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[0].controlValve();
-                    });
-                }
-                if (picIdx==1) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[1].controlValve();
-                    });
-                }
-                if (picIdx==2) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[2].controlValve();
-                    });
-                }
-                if (picIdx==3) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[3].controlValve();
-                    });
-                }
-                if (picIdx==4) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[4].controlValve();
-                    });
-                }
-                if (picIdx==5) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[5].controlValve();
-                    });
-                }
-                if (picIdx==61) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[6].controlValve();
-                    });
-                }
-                if (picIdx==7) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[7].controlValve();
-                    });
-                }
-                if (picIdx==8) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[8].controlValve();
-                    });
-                }
-                if (picIdx==9) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[9].controlValve();
-                    });
-                }
-                if (picIdx==10) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[10].controlValve();
-                    });
-                }
-                if (picIdx==11) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
-                        PiControl[11].controlValve();
-                    });
-                }
-                */
             }
         }
     }
-    
 }
 
 void CVdmTask::deleteTask (taskid_t taskId)

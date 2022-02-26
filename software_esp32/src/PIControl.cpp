@@ -46,19 +46,9 @@
 #include "VdmNet.h"
 #include <Syslog.h>
 
-// CPiControl **piControls = new CPiControl*[12]; 
-// piControls[0] = new CPiControl;
-// piControls[1] = new CPiControl;
 
 CPiControl PiControl[ACTUATOR_COUNT];
-/*
-CPiControl::CPiControl()
-{
-    valveIndex=255;
-    start=false;
-    dynOffset=0;
-}
-*/
+
 float CPiControl::piCtrl(float e) {
   float p;
   float y;
@@ -82,7 +72,7 @@ float CPiControl::piCtrl(float e) {
   if (p > 100.0) p = 100.0;
   if (p < 0.0) p = 0.0;
   if (ti==0) return (50);
-  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].scheme==0) {
+  if (scheme==0) {
     // i - proportion
     iProp += ((float)ta / (float)ti) * y;
   } else {
