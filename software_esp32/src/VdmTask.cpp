@@ -116,8 +116,6 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
     }
 }
 
-
-
 void CVdmTask::startServices()
 {
     taskIdRunOnce = taskManager.scheduleOnce(1000, [] {
@@ -138,6 +136,8 @@ void CVdmTask::startServices()
                 PiControl[picIdx].xp=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].xp;
                 PiControl[picIdx].offset=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].offset;
                  
+                taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts, &PiControl[picIdx], TIME_SECONDS);
+ /*              
                 if (picIdx==0) {
                     taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts*1000, [] {
                         PiControl[0].controlValve();
@@ -198,6 +198,7 @@ void CVdmTask::startServices()
                         PiControl[11].controlValve();
                     });
                 }
+                */
             }
         }
     }

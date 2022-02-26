@@ -141,7 +141,9 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
               "\"xp\":"+String(valvesControlConfig.valveControlConfig[x].xp) + ","+
               "\"offset\":"+String(valvesControlConfig.valveControlConfig[x].offset) + ","+
               "\"ti\":"+String(valvesControlConfig.valveControlConfig[x].ti) + ","+
-              "\"ts\":"+String(valvesControlConfig.valveControlConfig[x].ts)+ "}"; 
+              "\"ts\":"+String(valvesControlConfig.valveControlConfig[x].ts) + ","+
+              "\"ki\":"+String(valvesControlConfig.valveControlConfig[x].ki) + ","+
+              "\"scheme\":"+String(valvesControlConfig.valveControlConfig[x].scheme)+ "}"; 
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
   result += "]"; 

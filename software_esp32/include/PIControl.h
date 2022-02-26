@@ -38,12 +38,20 @@
 *END************************************************************************/
 
 #include <Arduino.h>
+#include <ExecWithParameter.h>
 #include "globals.h"
 
-class CPiControl
+class CPiControl: public Executable
 {
 public:
-  CPiControl();
+  CPiControl() {
+    valveIndex=255;
+    start=false;
+    dynOffset=0;
+  };
+  void exec() override {
+    controlValve();
+	}
   float piCtrl(float e);
   uint8_t calcValve();
   void controlValve();

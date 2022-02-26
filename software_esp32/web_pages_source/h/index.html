@@ -1203,7 +1203,7 @@
 			const valvesControlTable = id('cfgValvesControlTable');	  
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesControlTable.insertRow(0);
-				for (let i = 0; i < 10; i++) {
+				for (let i = 0; i < 12; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -1234,6 +1234,7 @@
 				}
 				el.setAttribute('onclick','setCfgVCLink(this);');				
 				thiscell.appendChild(el);
+				
 				thiscell = valvesControlTable.rows[row].cells[4];
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCValue' + row);
@@ -1268,6 +1269,7 @@
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
 				thiscell.appendChild(el);
+				
 				thiscell = valvesControlTable.rows[row].cells[7];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
@@ -1275,6 +1277,7 @@
 				el.setAttribute('id', 'cfgVCOffs' + row);
 				el.setAttribute('style','width:50px;');
 				thiscell.appendChild(el);
+				
 				thiscell = valvesControlTable.rows[row].cells[8];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
@@ -1283,6 +1286,7 @@
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
 				thiscell.appendChild(el);
+				
 				thiscell = valvesControlTable.rows[row].cells[9];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
@@ -1290,6 +1294,28 @@
 				el.setAttribute('id', 'cfgVCTs' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','1');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[10];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCScheme-' + row);
+				el.setAttribute('id', 'cfgVCScheme-' + row);
+				el.setAttribute('style','width:80px;');
+				option = new Option('dyn ki', 0);
+				el.options[0] = option;
+				option = new Option('static ki', 1);
+				el.options[1] = option;
+				el.setAttribute('onclick','setCfgVCScheme(this);');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[11];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('step', 'any');
+				el.setAttribute('name', 'cfgVCKi' + row);
+				el.setAttribute('id', 'cfgVCKi' + row);
+				el.setAttribute('style','width:70px;');
+				el.setAttribute('min','0');
 				thiscell.appendChild(el);
 			}
 			valvesControlTable.rows[0].cells[0].textContent = 'No';
@@ -1309,6 +1335,10 @@
 			valvesControlTable.rows[0].cells[8].title = 'Enter integral time in seconds';
 			valvesControlTable.rows[0].cells[9].textContent = 'Ts(s)';
 			valvesControlTable.rows[0].cells[9].title = 'Enter sampling time in seconds';
+			valvesControlTable.rows[0].cells[10].textContent = 'Scheme';
+			valvesControlTable.rows[0].cells[10].title = 'Enter scheme for control calculation';
+			valvesControlTable.rows[0].cells[11].textContent = 'ki';
+			valvesControlTable.rows[0].cells[11].title = 'Value ki for constant integral control calculation';
 		}
 		
 		function showBrokerIP(){
@@ -1695,8 +1725,9 @@
 		}
 		
 		async function postValvesControlCfg() {
-			await postChunkValvesControlCfg(1,6);
-			await postChunkValvesControlCfg(7,12);
+			await postChunkValvesControlCfg(1,4);
+			await postChunkValvesControlCfg(5,8);
+			await postChunkValvesControlCfg(9,12);
 		}
 		
 		async function postChunkValvesControlCfg(chunkStart,chunkEnd) {
@@ -1712,6 +1743,8 @@
 				valveValues.offset = id('cfgVCOffs'+row).value;
 				valveValues.ti = id('cfgVCTi'+row).value;
 				valveValues.ts = id('cfgVCTs'+row).value;
+			 	valveValues.scheme = id('cfgVCScheme-'+row).value;
+				valveValues.ki = id('cfgVCKi'+row).value;
 				valvesItemsCfg.push(valveValues);
 			}
 			let valvesControlCfg={};
@@ -1773,7 +1806,19 @@
 			id('cfgVCOffs'+linkNo).style.display=display;
 			id('cfgVCTi'+linkNo).style.display=display;
 			id('cfgVCTs'+linkNo).style.display=display;
+			id('cfgVCScheme-'+linkNo).style.display=display;
+			id('cfgVCKi'+linkNo).style.display=display;
 		}
+				
+		function setCfgVCScheme(thisLink){
+			const linkId= thisLink.id;
+			let linkNo = linkId.slice(linkId.indexOf("-")+1);
+			let display = 'block';
+			if (thisLink.value==0) {
+				display = 'none';
+			}  
+			id('cfgVCKi'+linkNo).style.display=display;
+		}		
 				
 		function getStatus() {
 			getSystemDynInfo();
@@ -1852,7 +1897,9 @@
 				id('cfgVCOffs'+row).value = cfgValvesControlJson[row-1].offset;
 				id('cfgVCTi'+row).value = cfgValvesControlJson[row-1].ti;
 				id('cfgVCTs'+row).value = cfgValvesControlJson[row-1].ts;
-				setCfgVCLink(id('cfgVCLink-'+row));
+				id('cfgVCScheme-'+row).value= cfgValvesControlJson[row-1].scheme;
+				id('cfgVCKi'+row).value= cfgValvesControlJson[row-1].ki;
+				setCfgVCScheme(id('cfgVCScheme-'+row));
 			}
 		}
 		

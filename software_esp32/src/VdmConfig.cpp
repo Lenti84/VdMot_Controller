@@ -114,6 +114,8 @@ void CVdmConfig::clearConfig()
     configFlash.valvesControlConfig.valveControlConfig[i].valueSource=0;
     configFlash.valvesControlConfig.valveControlConfig[i].ti=3600;
     configFlash.valvesControlConfig.valveControlConfig[i].ts=900;
+    configFlash.valvesControlConfig.valveControlConfig[i].scheme=0;
+    configFlash.valvesControlConfig.valveControlConfig[i].ki=0.01;
    }
   
   for (uint8_t i=0; i<TEMP_SENSORS_COUNT; i++) {
@@ -377,7 +379,9 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
     if (!doc["valves"][idx]["offset"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].offset=doc["valves"][idx]["offset"];
     if (!doc["valves"][idx]["ti"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ti=doc["valves"][idx]["ti"];
     if (!doc["valves"][idx]["ts"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ts=doc["valves"][idx]["ts"];  
-    idx++;
+    if (!doc["valves"][idx]["ki"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ki=doc["valves"][idx]["ki"];  
+    if (!doc["valves"][idx]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].scheme=doc["valves"][idx]["scheme"];  
+     idx++;
   }  
 }
 

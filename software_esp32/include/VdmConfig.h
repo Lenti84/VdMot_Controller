@@ -103,6 +103,8 @@ typedef struct {
   int8_t offset;
   uint16_t ti;
   uint16_t ts;
+  float ki;
+  uint8_t scheme;
 } VDM_VALVE_CONTROL_CONFIG;
 
 typedef struct {
