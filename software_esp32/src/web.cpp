@@ -143,7 +143,10 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
               "\"ti\":"+String(valvesControlConfig.valveControlConfig[x].ti) + ","+
               "\"ts\":"+String(valvesControlConfig.valveControlConfig[x].ts) + ","+
               "\"ki\":"+String(valvesControlConfig.valveControlConfig[x].ki) + ","+
-              "\"scheme\":"+String(valvesControlConfig.valveControlConfig[x].scheme)+ "}"; 
+              "\"scheme\":"+String(valvesControlConfig.valveControlConfig[x].scheme) + ","+
+              "\"startAZ\":"+String(valvesControlConfig.valveControlConfig[x].startActiveZone) + ","+
+              "\"endAZ\":"+String(valvesControlConfig.valveControlConfig[x].endActiveZone)+ "}";
+
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
   result += "]"; 

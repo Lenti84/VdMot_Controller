@@ -102,13 +102,19 @@ uint8_t CPiControl::calcValve()
 
 void CPiControl::controlValve() 
 {
+  uint8_t valvePosition;
   if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==1) {
     value=((float)StmApp.actuators[valveIndex].temp1)/10;
   }
   if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==2) {
     value=((float)StmApp.actuators[valveIndex].temp2)/10;
   }
-  uint8_t valvePosition=calcValve(); 
+  float newValveValue=calcValve();
+  if (endActiveZone>startActiveZone) {
+    valvePosition=round(((endActiveZone-startActiveZone)*newValveValue/100)+startActiveZone); 
+  } else valvePosition=round(newValveValue);
+  if (valvePosition>100) valvePosition=100;
+
   StmApp.actuators[valveIndex].target_position=valvePosition;
   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
     syslog.log(LOG_DEBUG, "pic:valve position has changed : "+String(valveIndex)+" = "+String(valvePosition)+" Ttarget "+String(target)+" Tvalue "+String(value));

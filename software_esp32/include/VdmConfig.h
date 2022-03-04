@@ -105,6 +105,8 @@ typedef struct {
   uint16_t ts;
   float ki;
   uint8_t scheme;
+  uint8_t startActiveZone;
+  uint8_t endActiveZone;
 } VDM_VALVE_CONTROL_CONFIG;
 
 typedef struct {

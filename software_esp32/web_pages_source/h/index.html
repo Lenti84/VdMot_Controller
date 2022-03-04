@@ -1203,7 +1203,7 @@
 			const valvesControlTable = id('cfgValvesControlTable');	  
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesControlTable.insertRow(0);
-				for (let i = 0; i < 12; i++) {
+				for (let i = 0; i < 14; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -1300,7 +1300,7 @@
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCScheme-' + row);
 				el.setAttribute('id', 'cfgVCScheme-' + row);
-				el.setAttribute('style','width:80px;');
+				el.setAttribute('style','width:90px;');
 				option = new Option('dynamic ki', 0);
 				el.options[0] = option;
 				option = new Option('static ki', 1);
@@ -1316,6 +1316,26 @@
 				el.setAttribute('id', 'cfgVCKi' + row);
 				el.setAttribute('style','width:70px;');
 				el.setAttribute('min','0');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[12];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCSZ' + row);
+				el.setAttribute('id', 'cfgVCSZ' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','0');
+				el.setAttribute('max','99');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[13];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCEZ' + row);
+				el.setAttribute('id', 'cfgVCEZ' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','1');
+				el.setAttribute('max','100');
 				thiscell.appendChild(el);
 			}
 			valvesControlTable.rows[0].cells[0].textContent = 'No';
@@ -1339,6 +1359,10 @@
 			valvesControlTable.rows[0].cells[10].title = 'Enter scheme for control calculation';
 			valvesControlTable.rows[0].cells[11].textContent = 'ki';
 			valvesControlTable.rows[0].cells[11].title = 'Value ki for constant integral control calculation';
+			valvesControlTable.rows[0].cells[12].textContent = 'Start AZ';
+			valvesControlTable.rows[0].cells[12].title = 'Start active zone (%)';
+			valvesControlTable.rows[0].cells[13].textContent = 'End AZ';
+			valvesControlTable.rows[0].cells[13].title = 'End active zone (%)';
 		}
 		
 		function showBrokerIP(){
@@ -1745,6 +1769,8 @@
 				valveValues.ts = id('cfgVCTs'+row).value;
 			 	valveValues.scheme = id('cfgVCScheme-'+row).value;
 				valveValues.ki = id('cfgVCKi'+row).value;
+				valveValues.startAZ = id('cfgVCSZ'+row).value;
+				valveValues.endAZ = id('cfgVCEZ'+row).value;
 				valvesItemsCfg.push(valveValues);
 			}
 			let valvesControlCfg={};
@@ -1808,6 +1834,8 @@
 			id('cfgVCTs'+linkNo).style.display=display;
 			id('cfgVCScheme-'+linkNo).style.display=display;
 			id('cfgVCKi'+linkNo).style.display=display;
+			id('cfgVCSZ'+linkNo).style.display=display;
+			id('cfgVCEZ'+linkNo).style.display=display;
 		}
 				
 		function setCfgVCScheme(thisLink){
@@ -1899,6 +1927,8 @@
 				id('cfgVCTs'+row).value = cfgValvesControlJson[row-1].ts;
 				id('cfgVCScheme-'+row).value= cfgValvesControlJson[row-1].scheme;
 				id('cfgVCKi'+row).value= cfgValvesControlJson[row-1].ki;
+				id('cfgVCSZ'+row).value= cfgValvesControlJson[row-1].startAZ;
+				id('cfgVCEZ'+row).value= cfgValvesControlJson[row-1].endAZ;
 				setCfgVCScheme(id('cfgVCScheme-'+row));
 			}
 		}

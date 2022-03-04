@@ -49,6 +49,8 @@ public:
     start=false;
     dynOffset=0;
     scheme=0;
+    startActiveZone=0;
+    endActiveZone=100;
   };
   void exec() override {
     controlValve();
@@ -66,6 +68,8 @@ public:
   volatile float value;
   uint8_t valveIndex;
   uint8_t scheme;
+  uint8_t startActiveZone;
+  uint8_t endActiveZone;
 private:
   float iProp;
   time_t ts;

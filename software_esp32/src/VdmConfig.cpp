@@ -116,6 +116,8 @@ void CVdmConfig::clearConfig()
     configFlash.valvesControlConfig.valveControlConfig[i].ts=900;
     configFlash.valvesControlConfig.valveControlConfig[i].scheme=0;
     configFlash.valvesControlConfig.valveControlConfig[i].ki=0.01;
+    configFlash.valvesControlConfig.valveControlConfig[i].startActiveZone=0;
+    configFlash.valvesControlConfig.valveControlConfig[i].endActiveZone=100;
    }
   
   for (uint8_t i=0; i<TEMP_SENSORS_COUNT; i++) {
@@ -381,7 +383,9 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
     if (!doc["valves"][idx]["ts"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ts=doc["valves"][idx]["ts"];  
     if (!doc["valves"][idx]["ki"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ki=doc["valves"][idx]["ki"];  
     if (!doc["valves"][idx]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].scheme=doc["valves"][idx]["scheme"];  
-     idx++;
+    if (!doc["valves"][idx]["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].startActiveZone=doc["valves"][idx]["startAZ"];  
+    if (!doc["valves"][idx]["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].endActiveZone=doc["valves"][idx]["endAZ"];  
+    idx++;
   }  
 }
 
