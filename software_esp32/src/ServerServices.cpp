@@ -88,6 +88,7 @@ CServerServices ServerServices;
 
 void restart (JsonObject doc)
 {  
+  Services.restartSTM=true;
   Services.restartSystem();
 }
 

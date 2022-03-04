@@ -106,6 +106,7 @@ void CServices::restartSystem() {
     } else {
       UART_DBG.println("normal restart");
       VdmTask.taskIdResetSystem = taskManager.scheduleOnce(2000, [] {
+                if (Services.restartSTM) Stm32.ResetSTM32(true);
                 ESP.restart();
             });
     }
