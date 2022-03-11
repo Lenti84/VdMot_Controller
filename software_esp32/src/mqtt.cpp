@@ -108,7 +108,7 @@ void CMqtt::reconnect()
         mqttPwd = VdmConfig.configFlash.protConfig.userPwd;
     }
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
-        syslog.log(LOG_INFO, "Reconnecting MQTT...");
+        syslog.log(LOG_DEBUG, "MQTT reconnecting ...");
     }
     UART_DBG.println("Reconnecting MQTT...");
     if (!mqtt_client.connect(VdmConfig.configFlash.systemConfig.stationName,mqttUser,mqttPwd)) {
@@ -159,7 +159,7 @@ void CMqtt::reconnect()
         }
     }
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
-        syslog.log(LOG_INFO, "MQTT Connected...");
+        syslog.log(LOG_DEBUG, "MQTT Connected...");
     }
    
 }
@@ -173,6 +173,9 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
     uint8_t i;
     uint8_t idx;
    
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+               syslog.log(LOG_DEBUG, "MQTT: callback "+String(topic));
+    }
     if (length>0) {
         if (memcmp(mqtt_valvesTopic,(const char*) topic, strlen(mqtt_valvesTopic))==0) {
             memset(item,0x0,sizeof(item));
@@ -203,9 +206,12 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                 }
             }
 
+            memset(value,0x0,sizeof(value));
+            memcpy(value,payload,length);
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+               syslog.log(LOG_DEBUG, "MQTT: payload "+String(topic)+" : "+String(value));
+            }  
             if (found) {
-                memset(value,0x0,sizeof(value));
-                memcpy(value,payload,length);
                
                 if (isFloat(value)) {
                     if (strncmp(pt,"/target",7)==0) {
@@ -226,17 +232,17 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                                 PiControl[idx].dynOffset=atoi(value);
                         }
                     }
-                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-                        syslog.log(LOG_INFO, "MQTT: found target topic "+String(item)+" : "+String(value));
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                        syslog.log(LOG_DEBUG, "MQTT: found target topic "+String(item)+" : "+String(value));
                     }
                 } else {
-                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-                        syslog.log(LOG_INFO, "MQTT: found target topic, but not a number "+String(item)+" : "+String(value));
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                        syslog.log(LOG_DEBUG, "MQTT: found target topic, but not a number "+String(item)+" : "+String(value));
                     }  
                 }
             } else {
-                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-                    syslog.log(LOG_INFO, "MQTT: not found target topic "+String(item));
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG, "MQTT: not found target topic "+String(item));
                 }   
             }
             
