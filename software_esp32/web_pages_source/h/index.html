@@ -1203,7 +1203,7 @@
 			const valvesControlTable = id('cfgValvesControlTable');	  
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesControlTable.insertRow(0);
-				for (let i = 0; i < 14; i++) {
+				for (let i = 0; i < 13; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -1328,7 +1328,6 @@
 				el.setAttribute('max','99');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[13];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCEZ' + row);
@@ -1359,10 +1358,8 @@
 			valvesControlTable.rows[0].cells[10].title = 'Enter scheme for control calculation';
 			valvesControlTable.rows[0].cells[11].textContent = 'ki';
 			valvesControlTable.rows[0].cells[11].title = 'Value ki for constant integral control calculation';
-			valvesControlTable.rows[0].cells[12].textContent = 'Start AZ';
-			valvesControlTable.rows[0].cells[12].title = 'Start active zone (%)';
-			valvesControlTable.rows[0].cells[13].textContent = 'End AZ';
-			valvesControlTable.rows[0].cells[13].title = 'End active zone (%)';
+			valvesControlTable.rows[0].cells[12].textContent = 'Active zone';
+			valvesControlTable.rows[0].cells[12].title = 'Active zone of the valve (0-100 %)';
 		}
 		
 		function showBrokerIP(){
