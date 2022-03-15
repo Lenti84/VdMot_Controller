@@ -771,6 +771,19 @@
 				<td>
 				<input type="button" class="buttonclass" id="saveVCtrlConfig" value="Save valve control settings" title="Save settings for valves control."/>
 				</td>
+				<td>
+					<label>Heat Control</label>
+					<select id="VCtrlConfigHeatControl" title="Heat valves control manual/on/off.">
+					<option>Manual</option>
+					<option>On</option>
+					<option>Off</option>
+					</select>
+				
+				</td>
+				<td>
+					<label>Park Position</label>
+					<input type="number" class="form-input" style="width:50px;" min="0" max="100" id="VCtrlConfigParkPosition" title="Park position if Heat Control is off."/>
+				</td>
 			</tr>
 			</table>
 		</div>
@@ -1471,6 +1484,10 @@
 			id ("vCfg-movCalib").onchange = function (){
 				movCalibHasChanged=true;
 			}
+			id ("VCtrlConfigHeatControl").onchange = function (){
+				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
+			}
+			
 			
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
@@ -1771,6 +1788,10 @@
 				valvesItemsCfg.push(valveValues);
 			}
 			let valvesControlCfg={};
+			let commonValues={};
+			commonValues.heatControl=id('VCtrlConfigHeatControl').selectedIndex;
+			commonValues.parkPosition=id('VCtrlConfigParkPosition').value;
+			valvesControlCfg.common=commonValues;
 			valvesControlCfg.valves=valvesItemsCfg;
 			valvesControlCfg.chunkStart=chunkStart;
 			valvesControlCfg.chunkEnd=chunkEnd;
@@ -1912,20 +1933,23 @@
 		
 		function fillCfgValvesControlTable (cfgValvesControlJson) {
 			const cfgValvesControlTable = id('cfgValvesControlTable');
+			id ('VCtrlConfigHeatControl').selectedIndex=cfgValvesControlJson.common.heatControl;
+			id ('VCtrlConfigParkPosition').value=cfgValvesControlJson.common.parkPosition;
+			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
 			for (let row = 1; row<13; row++) {
-				cfgValvesControlTable.rows[row].cells[1].textContent = cfgValvesControlJson[row-1].name;
-				id('cfgVCActive'+row).checked = cfgValvesControlJson[row-1].active;
-				id('cfgVCLink-'+row).value = cfgValvesControlJson[row-1].link;
-				id('cfgVCValue'+row).value = cfgValvesControlJson[row-1].vSource;
-				id('cfgVCTarget'+row).value = cfgValvesControlJson[row-1].tSource;
-				id('cfgVCXp'+row).value = cfgValvesControlJson[row-1].xp;
-				id('cfgVCOffs'+row).value = cfgValvesControlJson[row-1].offset;
-				id('cfgVCTi'+row).value = cfgValvesControlJson[row-1].ti;
-				id('cfgVCTs'+row).value = cfgValvesControlJson[row-1].ts;
-				id('cfgVCScheme-'+row).value= cfgValvesControlJson[row-1].scheme;
-				id('cfgVCKi'+row).value= cfgValvesControlJson[row-1].ki;
-				id('cfgVCSZ'+row).value= cfgValvesControlJson[row-1].startAZ;
-				id('cfgVCEZ'+row).value= cfgValvesControlJson[row-1].endAZ;
+				cfgValvesControlTable.rows[row].cells[1].textContent = cfgValvesControlJson.valves[row-1].name;
+				id('cfgVCActive'+row).checked = cfgValvesControlJson.valves[row-1].active;
+				id('cfgVCLink-'+row).value = cfgValvesControlJson.valves[row-1].link;
+				id('cfgVCValue'+row).value = cfgValvesControlJson.valves[row-1].vSource;
+				id('cfgVCTarget'+row).value = cfgValvesControlJson.valves[row-1].tSource;
+				id('cfgVCXp'+row).value = cfgValvesControlJson.valves[row-1].xp;
+				id('cfgVCOffs'+row).value = cfgValvesControlJson.valves[row-1].offset;
+				id('cfgVCTi'+row).value = cfgValvesControlJson.valves[row-1].ti;
+				id('cfgVCTs'+row).value = cfgValvesControlJson.valves[row-1].ts;
+				id('cfgVCScheme-'+row).value= cfgValvesControlJson.valves[row-1].scheme;
+				id('cfgVCKi'+row).value= cfgValvesControlJson.valves[row-1].ki;
+				id('cfgVCSZ'+row).value= cfgValvesControlJson.valves[row-1].startAZ;
+				id('cfgVCEZ'+row).value= cfgValvesControlJson.valves[row-1].endAZ;
 				setCfgVCScheme(id('cfgVCScheme-'+row));
 			}
 		}

@@ -107,7 +107,7 @@ void CVdmConfig::clearConfig()
 
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesControlConfig.valveControlConfig[i].active = false;
-    configFlash.valvesControlConfig.valveControlConfig[i].xp=50;
+    configFlash.valvesControlConfig.valveControlConfig[i].xp=20;
     configFlash.valvesControlConfig.valveControlConfig[i].link=0;
     configFlash.valvesControlConfig.valveControlConfig[i].offset=0;
     configFlash.valvesControlConfig.valveControlConfig[i].targetSource=0;
@@ -118,8 +118,10 @@ void CVdmConfig::clearConfig()
     configFlash.valvesControlConfig.valveControlConfig[i].ki=0.01;
     configFlash.valvesControlConfig.valveControlConfig[i].startActiveZone=0;
     configFlash.valvesControlConfig.valveControlConfig[i].endActiveZone=100;
-   }
-  
+  }
+  configFlash.valvesControlConfig.heatControl=0;
+  configFlash.valvesControlConfig.parkingPosition=10;
+
   for (uint8_t i=0; i<TEMP_SENSORS_COUNT; i++) {
     configFlash.tempsConfig.tempConfig[i].active = false;
     configFlash.tempsConfig.tempConfig[i].offset = 0;
@@ -200,8 +202,11 @@ void CVdmConfig::readConfig()
   }
 
   if (prefs.begin(nvsValvesControlCfg,false)) {
-    if (prefs.isKey(nvsValvesControl))
+    if (prefs.isKey(nvsValvesControl)) {
       prefs.getBytes(nvsValvesControl, (void *) configFlash.valvesControlConfig.valveControlConfig, sizeof(configFlash.valvesControlConfig.valveControlConfig));
+      configFlash.valvesControlConfig.heatControl=prefs.getUChar (nvsValvesControlHeatControl,0);
+      configFlash.valvesControlConfig.parkingPosition=prefs.getUChar (nvsValvesControlParkPos,10);
+    }
     prefs.end();
   }
  
@@ -275,6 +280,8 @@ void CVdmConfig::writeValvesControlConfig(bool reboot)
   prefs.begin(nvsValvesControlCfg,false);
   prefs.clear();
   prefs.putBytes(nvsValvesControl, (void *) configFlash.valvesControlConfig.valveControlConfig, sizeof(configFlash.valvesControlConfig.valveControlConfig));
+  prefs.putUChar (nvsValvesControlHeatControl,configFlash.valvesControlConfig.heatControl);
+  prefs.putUChar (nvsValvesControlParkPos,configFlash.valvesControlConfig.parkingPosition);
   prefs.end();
   if (reboot) Services.restartSystem();
 }
@@ -386,7 +393,14 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
     if (!doc["valves"][idx]["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].startActiveZone=doc["valves"][idx]["startAZ"];  
     if (!doc["valves"][idx]["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].endActiveZone=doc["valves"][idx]["endAZ"];  
     idx++;
-  }  
+  } 
+
+  if (!doc["common"]["heatControl"].isNull()) {
+    configFlash.valvesControlConfig.heatControl=doc["common"]["heatControl"];
+  } 
+  if (!doc["common"]["parkPosition"].isNull()) {
+    configFlash.valvesControlConfig.parkingPosition=doc["common"]["parkPosition"];
+  } 
 }
 
 void CVdmConfig::postTempsCfg (JsonObject doc)

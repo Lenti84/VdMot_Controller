@@ -69,11 +69,23 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
     mqtt_client.setServer(brokerIP, brokerPort);
     mqtt_client.setCallback(mcallback);
 
-    strcpy(mqtt_mainTopic, DEFAULT_MAINTOPIC);
-    strcpy(mqtt_valvesTopic, DEFAULT_MAINTOPIC);
+    if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
+        strcpy(mqtt_mainTopic,"/");
+        strncat(mqtt_mainTopic, VdmConfig.configFlash.systemConfig.stationName,sizeof(mqtt_mainTopic));
+        strncat(mqtt_mainTopic, "/",sizeof(mqtt_mainTopic));
+    } else  strcpy(mqtt_mainTopic, DEFAULT_MAINTOPIC);
+
+    strcpy(mqtt_commonTopic, mqtt_mainTopic);
+    strncat(mqtt_commonTopic, DEFAULT_COMMONTOPIC,sizeof(mqtt_commonTopic));
+    strcpy(mqtt_valvesTopic, mqtt_mainTopic);
     strncat(mqtt_valvesTopic, DEFAULT_VALVESTOPIC,sizeof(mqtt_valvesTopic));
-    strcpy(mqtt_tempsTopic, DEFAULT_MAINTOPIC);
+    strcpy(mqtt_tempsTopic, mqtt_mainTopic);
     strncat(mqtt_tempsTopic, DEFAULT_TEMPSTOPIC,sizeof(mqtt_tempsTopic));
+
+    if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
+        strncpy(stationName, VdmConfig.configFlash.systemConfig.stationName,sizeof(stationName));
+    } else strncpy(stationName, DEVICE_HOSTNAME,sizeof(stationName));
+
 }
 
 CMqtt::CMqtt()
@@ -102,6 +114,7 @@ void CMqtt::reconnect()
     char* mqttUser = NULL;
     char* mqttPwd = NULL;
     uint8_t len;
+    
 
     if ((strlen(VdmConfig.configFlash.protConfig.userName)>0) && (strlen(VdmConfig.configFlash.protConfig.userPwd)>0)) {
         mqttUser = VdmConfig.configFlash.protConfig.userName;
@@ -111,7 +124,7 @@ void CMqtt::reconnect()
         syslog.log(LOG_DEBUG, "MQTT reconnecting ...");
     }
     UART_DBG.println("Reconnecting MQTT...");
-    if (!mqtt_client.connect(VdmConfig.configFlash.systemConfig.stationName,mqttUser,mqttPwd)) {
+    if (!mqtt_client.connect(stationName,mqttUser,mqttPwd)) {
         UART_DBG.print("failed, rc=");
         UART_DBG.print(mqtt_client.state());
         UART_DBG.println(" retrying");
@@ -124,6 +137,15 @@ void CMqtt::reconnect()
     }
     
     // make some subscriptions
+    memset(topicstr,0x0,sizeof(topicstr));
+    strncat(topicstr,mqtt_commonTopic,sizeof(topicstr));
+    len = strlen(topicstr);
+    strncat(topicstr, "heatControl",sizeof(topicstr));
+    mqtt_client.subscribe(topicstr);    
+    topicstr[len] = '\0';
+    strncat(topicstr, "parkPosition",sizeof(topicstr));
+    mqtt_client.subscribe(topicstr);    
+
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
             memset(topicstr,0x0,sizeof(topicstr));
@@ -177,7 +199,23 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                syslog.log(LOG_DEBUG, "MQTT: callback "+String(topic));
     }
     if (length>0) {
-        if (memcmp(mqtt_valvesTopic,(const char*) topic, strlen(mqtt_valvesTopic))==0) {
+        memset(value,0x0,sizeof(value));
+        memcpy(value,payload,length);
+        if (memcmp(mqtt_commonTopic,(const char*) topic, strlen(mqtt_commonTopic))==0) {
+            memset(item,0x0,sizeof(item));
+            pt= (char*) topic;
+            pt+= strlen(mqtt_commonTopic);
+            if (strncmp(pt,"heatControl",sizeof("heatControl"))==0) {
+               VdmConfig.configFlash.valvesControlConfig.heatControl=atoi(value);
+               VdmConfig.writeValvesControlConfig(false); 
+            } 
+            if (strncmp(pt,"parkPosition",sizeof("parkPosition"))==0) {
+               VdmConfig.configFlash.valvesControlConfig.parkingPosition=atoi(value); 
+               VdmConfig.writeValvesControlConfig(false); 
+            }    
+        }
+
+        else if (memcmp(mqtt_valvesTopic,(const char*) topic, strlen(mqtt_valvesTopic))==0) {
             memset(item,0x0,sizeof(item));
             pt= (char*) topic;
             pt+= strlen(mqtt_valvesTopic);
@@ -258,6 +296,20 @@ void CMqtt::publish_valves ()
     int8_t tempIdx;
     uint8_t len;
     
+    if (VdmConfig.configFlash.protConfig.publishTarget) {
+        memset(topicstr,0x0,sizeof(topicstr));
+        strncat(topicstr,mqtt_commonTopic,sizeof(topicstr));
+        len = strlen(topicstr);
+        strncat(topicstr, "heatControl",sizeof(topicstr));
+        itoa(VdmConfig.configFlash.valvesControlConfig.heatControl, valstr, 10);        
+        mqtt_client.publish(topicstr, valstr);  
+
+        topicstr[len] = '\0';
+        strncat(topicstr, "parkPosition",sizeof(topicstr));
+        itoa(VdmConfig.configFlash.valvesControlConfig.parkingPosition, valstr, 10);        
+        mqtt_client.publish(topicstr, valstr);   
+    }  
+
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
             memset(topicstr,0x0,sizeof(topicstr));

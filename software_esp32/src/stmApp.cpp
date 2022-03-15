@@ -285,6 +285,14 @@ void CStmApp::setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2)
 
 void  CStmApp::app_check_data() 
 {
+    #ifdef STMSimulation
+        #warning STMSimulation active
+        appState=APP_IDLE;  
+        stmStatus=STM_READY; 
+        cmd_buffer=""; 
+        return;
+    #endif
+
     if (!UART_STM32.available()) return;
                 
     while (UART_STM32.available()) {

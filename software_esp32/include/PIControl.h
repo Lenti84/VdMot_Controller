@@ -41,6 +41,10 @@
 #include <ExecWithParameter.h>
 #include "globals.h"
 
+#define piControlManual 0
+#define piControlOn     1
+#define piControlOff    2
+
 class CPiControl: public Executable
 {
 public:

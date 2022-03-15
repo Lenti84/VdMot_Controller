@@ -131,7 +131,10 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorCo
 
 String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConfig)
 {
-  String result = "[" ;
+  String result = "{\"common\":{\"heatControl\":"+String(valvesControlConfig.heatControl) + "," +
+                    "\"parkPosition\":"+String(valvesControlConfig.parkingPosition)+ "}," +
+                   "\"valves\":[" ;
+
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
     result += "{\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) + "\"," +
               "\"active\":"+String(valvesControlConfig.valveControlConfig[x].active) + ","+
@@ -149,7 +152,7 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
 
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
-  result += "]"; 
+  result += "]}"; 
   return result;  
 }
 

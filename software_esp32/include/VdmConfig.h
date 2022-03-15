@@ -111,6 +111,8 @@ typedef struct {
 
 typedef struct {
   VDM_VALVE_CONTROL_CONFIG valveControlConfig[ACTUATOR_COUNT];
+  uint8_t heatControl;
+  uint8_t parkingPosition;
 } VDM_VALVES_CONTROL_CONFIG;
 
 
@@ -167,6 +169,8 @@ typedef struct
 #define nvsValvesControlCfg         "valvesCtrlCfg"
 #define nvsValves                   "valves"
 #define nvsValvesControl            "valvesCtrl"
+#define nvsValvesControlHeatControl "vCtrlHeat"
+#define nvsValvesControlParkPos     "vCtrlParkPos"
 
 #define nvsTempsCfg                 "tempsCfg"
 #define nvsTemps                    "temps"
