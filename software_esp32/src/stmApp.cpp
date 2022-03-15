@@ -285,28 +285,48 @@ void CStmApp::setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2)
 
 void  CStmApp::app_check_data() 
 {
-    if (!UART_STM32.available()) return;
-                
-    while (UART_STM32.available()) {
-        *bufptr = (char) UART_STM32.read();
-        if (buflen>=sizeof(buffer)-1) {
-            *bufptr='\r';   
-        }
-        if (*bufptr == '\r') {
-            *bufptr='\0';
-            found = true;
-            buflen = 0;         // reset counter
-            bufptr = buffer;    // reset ptr       
-            break;
-        }
+    int availcnt;
 
-        bufptr++;
-        buflen++;
+    availcnt = UART_STM32.available();
+   
+    if (availcnt > 0) {
+
+        for (int c = 0; c < availcnt; c++)
+        {           
+            *bufptr++ = (char) UART_STM32.read();
+            buflen++;
+        }
+        if (buflen>=sizeof(buffer)-1) {
+            *bufptr='\r';
+        }        
     }
 
-    while (UART_STM32.available()) UART_STM32.read(); // clear rx buffer
+    // if there is a little in the buffer
+    if(buflen >= 5) 
+    {
+        for (unsigned int c = 0; c < buflen; c++)
+        {     
+            if (buffer[c] == '\r') {
+                buffer[c] = '\0';
+                found = true;
+                buflen = 0;         // reset counter
+                bufptr = buffer;    // reset ptr    
+                UART_STM32.read();  // read possible \n
+                syslog.log(LOG_DEBUG, "found new data packet: >" + String(buffer) + "<");
+            }
+        }
+    }
    
-    if (found) {
+
+//    if (found) {
+    if(!found) 
+    {
+        //syslog.log(LOG_DEBUG, "incomplete buffer : >" + String(buffer) + "<");
+    }
+    else 
+    {
+        found = false;
+
         if (stmStatus==STM_NOT_READY) stmStatus=STM_READY;
         // devide buffer into command and data
 		// ****************************************
@@ -571,7 +591,15 @@ void  CStmApp::app_check_data()
             }
             appState=APP_IDLE;
         }
+
+        // very important to reset to idle if no valid command was found
+        else {
+            syslog.log(LOG_DEBUG, "unknown command: >" + String(cmd) + "<");
+            appState=APP_IDLE;
+        }
+
         cmd_buffer="";
+        buffer[0] = '\0';
     }
 }
 
@@ -734,6 +762,10 @@ void  CStmApp::app_comm_machine()
                     UART_STM32.println(sendbuffer);
                     checkTempsCount=20;
                     appState=APP_PENDING;
+
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                        syslog.log(LOG_DEBUG,"get one wire count");
+                    } 
                 }    
                 checkTempsCount--;
                 break;
@@ -752,6 +784,10 @@ void  CStmApp::app_comm_machine()
 
                     UART_STM32.println(sendbuffer);
                     appState=APP_PENDING;
+
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                        syslog.log(LOG_DEBUG,"get one wire data: " + String(sendbuffer));
+                    } 
                 }
                 break;
 

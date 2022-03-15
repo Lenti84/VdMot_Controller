@@ -70,77 +70,82 @@ int16_t app_setup (void) {
 }
 
 int16_t app_loop (void) {
-
+  static byte firstchange = 0;
   static unsigned int lastvalve = 0;
   static unsigned int testvlvindex = 0;
 
     // if valve machine is idle search for new tasks
-    if(valve_getstate() == A_IDLE) {
-
-        // find unknown states and try to find out whats on with the valve
-        // this will rattle the relay - fix needed
-        // if(myvalvemots[lastvalve].status == VLV_STATE_UNKNOWN) 
-        // {
-        //   COMM_DBG.print("App: valve "); COMM_DBG.print(lastvalve, 10);
-        //   COMM_DBG.println(" unknown, try to find out...");
-        //   appsetaction(CMD_A_LEARN,lastvalve,0);    
-        // }
-        
-
+    if(valve_getstate() == A_IDLE) 
+    {
         // find unknown states and try to find out whats on with the valve        
         if(myvalvemots[testvlvindex].status == VLV_STATE_UNKNOWN) 
-        //if(0)
         {
           #ifdef appDebug
             COMM_DBG.print("App: valve "); COMM_DBG.print(testvlvindex, 10);
             COMM_DBG.println(" unknown, try to find out...");
           #endif
           appsetaction(CMD_A_TEST,testvlvindex,0);    
-          testvlvindex += 2;
+        }
+        
+        else
+        {        
+          // fully open valves if needed
+          if(myvalvemots[lastvalve].status == VLV_STATE_FULLOPEN) {
+            appsetaction(CMD_A_OPEN_END,lastvalve,(byte)0);        
+          }
 
-          // vary startindexes to always get the even and the odd valves in one flow
-          // helps reducing relay rattle
-          if (testvlvindex == 12) testvlvindex = 1;
-          else if (testvlvindex >= 13) testvlvindex = 0;
-        }       
-
-        // handle first found difference then break
-        else if(myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
-        {
+          // learn present valves if some target changed happened before
+          else if(firstchange > 0 && myvalvemots[lastvalve].status == VLV_STATE_PRESENT) {
             #ifdef appDebug
-              COMM_DBG.print("App: target pos changed for valve "); 
+              COMM_DBG.print("App: learning started for valve "); 
               COMM_DBG.println(lastvalve, 10);
             #endif
-            // check if valve was learned before
-            //if(myvalvemots[lastvalve].status == VLV_STATE_UNKNOWN || myvalvemots[lastvalve].status == VLV_STATE_OPENCIR) 
-            if(myvalvemots[lastvalve].status == VLV_STATE_PRESENT)             
-            {
+            appsetaction(CMD_A_LEARN,lastvalve,0);        
+          }
+
+          // handle first found difference then break
+          if(myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
+          {
+              firstchange = 1;
+
               #ifdef appDebug
-                COMM_DBG.print("App: learning started for valve "); 
+                COMM_DBG.print("App: target pos changed for valve "); 
                 COMM_DBG.println(lastvalve, 10);
               #endif
-              appsetaction(CMD_A_LEARN,lastvalve,0);                  
-            }
-            else // valve was learned before
-            {
-              // reset full open command
-              if(myvalvemots[lastvalve].status == VLV_STATE_FULLOPEN) myvalvemots[lastvalve].status = VLV_STATE_UNKNOWN;
 
-              // should valve be opened
-              if(myvalvemots[lastvalve].target_position > myvalvemots[lastvalve].actual_position) {                  
-                if(myvalvemots[lastvalve].target_position == 100) appsetaction(CMD_A_OPEN_END,lastvalve,(byte)0);
-                else appsetaction(CMD_A_OPEN,lastvalve,myvalvemots[lastvalve].target_position-myvalvemots[lastvalve].actual_position);
+              // check if valve was learned before              
+              if(myvalvemots[lastvalve].status == VLV_STATE_PRESENT)             
+              {
+                #ifdef appDebug
+                  COMM_DBG.print("App: learning started for valve "); 
+                  COMM_DBG.println(lastvalve, 10);
+                #endif
+                appsetaction(CMD_A_LEARN,lastvalve,0);                  
               }
-              // valve should be closed
-              else {
-                if(myvalvemots[lastvalve].target_position == 0) appsetaction(CMD_A_CLOSE_END,lastvalve,(byte)0);
-                else appsetaction(CMD_A_CLOSE,lastvalve,myvalvemots[lastvalve].actual_position-myvalvemots[lastvalve].target_position);
+              else
+              {
+                // should valve be opened
+                if(myvalvemots[lastvalve].target_position > myvalvemots[lastvalve].actual_position) {                  
+                  if(myvalvemots[lastvalve].target_position == 100) appsetaction(CMD_A_OPEN_END,lastvalve,(byte)0);
+                  else appsetaction(CMD_A_OPEN,lastvalve,myvalvemots[lastvalve].target_position-myvalvemots[lastvalve].actual_position);
+                }
+                // valve should be closed
+                else {
+                  if(myvalvemots[lastvalve].target_position == 0) appsetaction(CMD_A_CLOSE_END,lastvalve,(byte)0);
+                  else appsetaction(CMD_A_CLOSE,lastvalve,myvalvemots[lastvalve].actual_position-myvalvemots[lastvalve].target_position);
+                }
               }
-            }
+          }
+
+          lastvalve++;
+          if (lastvalve>=ACTUATOR_COUNT) lastvalve = 0;
         }
 
-        lastvalve++;
-        if (lastvalve>=ACTUATOR_COUNT) lastvalve = 0;
+        testvlvindex += 2;
+        // vary startindexes to always get the even and the odd valves in one flow
+        // helps reducing relay rattle
+        if (testvlvindex == ACTUATOR_COUNT) testvlvindex = 1;
+        else if (testvlvindex >= ACTUATOR_COUNT + 1) testvlvindex = 0;
 
     }
 
@@ -162,7 +167,7 @@ byte app_10s_loop () {
     for (x=0; x< ACTUATOR_COUNT; x++) { 
       if(myvalves[x].learn_time <= 10) {
         myvalves[x].learn_time = learning_time;
-        myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, next set target req will do a learning cycle
+        myvalvemots[x].status = VLV_STATE_PRESENT;     // mark state as unknown, next set target req will do a learning cycle
         #ifdef appDebug
           COMM_DBG.print("App: Valve "); 
           COMM_DBG.print(x, 10); 
@@ -178,7 +183,7 @@ byte app_10s_loop () {
     for (x=0; x< ACTUATOR_COUNT; x++) {  
       if(myvalves[x].learn_movements == 0) {
         myvalves[x].learn_movements = learning_movements;
-        myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
+        myvalvemots[x].status = VLV_STATE_PRESENT;     // mark state as unknown, net set target req will do a learning cycle
         #ifdef appDebug
           COMM_DBG.print("App: Valve "); 
           COMM_DBG.print(x, 10); 
