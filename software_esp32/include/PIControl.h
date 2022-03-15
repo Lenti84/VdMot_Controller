@@ -37,43 +37,48 @@
 
 *END************************************************************************/
 
+#include <Arduino.h>
+#include <ExecWithParameter.h>
+#include "globals.h"
 
-#include "helper.h"
+#define piControlManual 0
+#define piControlOn     1
+#define piControlOff    2
 
-String ip2String (IPAddress ipv4addr)
+class CPiControl: public Executable
 {
-  return ipv4addr.toString();
-}
+public:
+  CPiControl() {
+    valveIndex=255;
+    start=false;
+    dynOffset=0;
+    scheme=0;
+    startActiveZone=0;
+    endActiveZone=100;
+  };
+  void exec() override {
+    controlValve();
+	}
+  float piCtrl(float e);
+  uint8_t calcValve();
+  void controlValve();
+  uint32_t ta;
+  uint32_t ti;
+  volatile uint16_t xp;
+  volatile float ki;
+  volatile int8_t offset;
+  volatile int8_t dynOffset;
+  volatile float target;
+  volatile float value;
+  uint8_t valveIndex;
+  uint8_t scheme;
+  uint8_t startActiveZone;
+  uint8_t endActiveZone;
+private:
+  float iProp;
+  time_t ts;
+  bool start;
+  float esum;
+};
 
-String ConvBinUnits(size_t bytes, byte resolution) 
-{
-  if  (bytes < 1024) {
-    return String(bytes) + " B";
-  }
-  else if (bytes < 1024 * 1024) {
-    return String(bytes / 1024.0, resolution) + " KB";
-  }
-  else if (bytes < (1024 * 1024 * 1024)) {
-    return String(bytes / 1024.0 / 1024.0, resolution) + " MB";
-  }
-  else return "";
-}
-
-bool isNumber(const String& str)
-{
-    for (char const &c : str) {
-        if (std::isdigit(c) == 0) return false;
-    }
-    return true;
-}
-
-
-bool isFloat(const std::string& str)
-{
-    if (str.empty())
-        return false;
-
-    char* ptr;
-    strtof(str.c_str(), &ptr);
-    return (*ptr) == '\0';
-}
+extern CPiControl PiControl[ACTUATOR_COUNT];

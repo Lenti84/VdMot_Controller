@@ -40,10 +40,11 @@
 
 #pragma once
 
-#define MAINTOPIC_LEN 30
+#define MAINTOPIC_LEN 50
 
 // MQTT settings
 #define DEFAULT_MAINTOPIC    "/VdMotFBH/"           //  /VdMotFBH/valve/1/actual
+#define DEFAULT_COMMONTOPIC  "common/"
 #define DEFAULT_VALVESTOPIC  "valves/"
 #define DEFAULT_TEMPSTOPIC   "temps/"
 
@@ -61,9 +62,11 @@ class CMqtt
     void publish_valves ();
 
     char mqtt_mainTopic[MAINTOPIC_LEN];
+    char mqtt_commonTopic[MAINTOPIC_LEN];
     char mqtt_valvesTopic[MAINTOPIC_LEN];
     char mqtt_tempsTopic[MAINTOPIC_LEN];
     char mqtt_callbackTopic[MAINTOPIC_LEN];
+    char stationName[MAINTOPIC_LEN];
 };
 
 extern CMqtt Mqtt;

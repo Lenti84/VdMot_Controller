@@ -128,6 +128,34 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorCo
   return result;  
 }
 
+
+String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConfig)
+{
+  String result = "{\"common\":{\"heatControl\":"+String(valvesControlConfig.heatControl) + "," +
+                    "\"parkPosition\":"+String(valvesControlConfig.parkingPosition)+ "}," +
+                   "\"valves\":[" ;
+
+  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
+    result += "{\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) + "\"," +
+              "\"active\":"+String(valvesControlConfig.valveControlConfig[x].active) + ","+
+              "\"link\":"+String(valvesControlConfig.valveControlConfig[x].link) + ","+
+              "\"vSource\":"+String(valvesControlConfig.valveControlConfig[x].valueSource) + ","+
+              "\"tSource\":"+String(valvesControlConfig.valveControlConfig[x].targetSource) + ","+
+              "\"xp\":"+String(valvesControlConfig.valveControlConfig[x].xp) + ","+
+              "\"offset\":"+String(valvesControlConfig.valveControlConfig[x].offset) + ","+
+              "\"ti\":"+String(valvesControlConfig.valveControlConfig[x].ti) + ","+
+              "\"ts\":"+String(valvesControlConfig.valveControlConfig[x].ts) + ","+
+              "\"ki\":"+String(valvesControlConfig.valveControlConfig[x].ki) + ","+
+              "\"scheme\":"+String(valvesControlConfig.valveControlConfig[x].scheme) + ","+
+              "\"startAZ\":"+String(valvesControlConfig.valveControlConfig[x].startActiveZone) + ","+
+              "\"endAZ\":"+String(valvesControlConfig.valveControlConfig[x].endActiveZone)+ "}";
+
+    if (x<ACTUATOR_COUNT-1) result += ",";
+  }  
+  result += "]}"; 
+  return result;  
+}
+
 String CWeb::getTempsConfig (VDM_TEMPS_CONFIG tempsConfig)
 {
   String result = "[";
