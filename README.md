@@ -13,28 +13,27 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
   - so positioning accuracy should be (very) good
 - valve current is evaluated and can be monitored
 - interfaces
-  - actual: MQTT
-  - future: MODBUS, CAN
+  - actual: MQTT, JSON
+  - optional: MODBUS-RTU via RS485, CAN via external MCP2515
 - integrated 1-wire master
   - a lot of additional temperature sensors like DS18B20 could be connected
   - sensor values can be linked to a valve for combined data evaluation
   - usefull for hydraulic balancing ("Hydraulischer Abgleich")
   
 ## Status
-- b-sample hardware is working with original HmIP-VdMot actuator
-- c-sample hardware samples ordered (see hardware section)
+- b-sample hardware is working
+- c-sample hardware is working
 - valve learning, opening and closing is working
 - connection to [FHEM](https://fhem.de/) or [IOBroker] established via MQTT
 - read and set values via JSON
-- first productive test still pending
-- tests of 2 actuators done, see [system/actuators.md](./system/actuators.md)
+- first productive test passed
+- tests of 2 different actuators done, see [system/actuators.md](./system/actuators.md)
 - one wire sensors working
-  - each sensor temperature can be coupled to a valve
+  - sensors can be coupled to a valve
   - therefore the sensor adresses are stored and assigned at startup
-- eeprom working (and changed to I2C type)
-- programming of STM32 by ESP32 first tests successfully performed
-- change from STM32F103 to STM32F401 due to procurement issues
-- simple test of RS485 interface with modbus master sucessfully performed
+- eeprom working
+- STM32 can be flashed by ESP32 via WebUI without additional hardware
+- simple test of RS485 interface with modbus-rtu master sucessfully performed
 - simple test of CAN interface via MCP2515 sucessfully performed
 
 ## Hardware
@@ -45,20 +44,21 @@ For details please see [software.md](./software.md)
 - written in C / C++
 - uses great arduino libraries
 - developed using PlatformIO
-- STM32 BluePill
+- STM32 BlackPill
   - controls the valves / dc-motors
     - endstop by real current measurement
     - counting motor revolutions by back-EMF
-  - controlls DS2482-100 1-wire bus master ic
-  - serving simple terminal for debugging purposes
-  - future
-    - so many things, tbd
-- ESP32
+    - state detection
+  - controlls 1-wire devices via GPIO
+    - optional via DS2482-100 1-wire bus master ic
+  - 
+- ESP32 / WT32-ETH01
   - communication with MQTT broker or JSON interface
   - visualize system status
-  - OTA software update
-  - flash STM32
-
+    - valve state
+    - temperature sensors
+    - optional: integrated control algorithm 
+  - OTA software update (of ESP32 and STM32)
 
 ## License
 This project is licensed under the terms of the GNU General Public License v3.0 license.
