@@ -271,16 +271,16 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                         }
                     }
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                        syslog.log(LOG_DEBUG, "MQTT: found target topic "+String(item)+" : "+String(value));
+                        syslog.log(LOG_DEBUG, "MQTT: found topic "+String(item)+String(pt)+" : "+String(value));
                     }
                 } else {
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                        syslog.log(LOG_DEBUG, "MQTT: found target topic, but not a number "+String(item)+" : "+String(value));
+                        syslog.log(LOG_DEBUG, "MQTT: found topic, but not a number "+String(item)+String(pt)+" : "+String(value));
                     }  
                 }
             } else {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG, "MQTT: not found target topic "+String(item));
+                    syslog.log(LOG_DEBUG, "MQTT: not found topic "+String(item));
                 }   
             }
             

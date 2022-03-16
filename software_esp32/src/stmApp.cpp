@@ -296,6 +296,7 @@ void  CStmApp::app_check_data()
     #endif
 
     availcnt = UART_STM32.available();
+    found=false;
    
     if (availcnt > 0) {
 
@@ -307,7 +308,7 @@ void  CStmApp::app_check_data()
         if (buflen>=sizeof(buffer)-1) {
             *bufptr='\r';
         }        
-    }
+    }  
 
     // if there is a little in the buffer
     if(buflen >= 5) 
@@ -320,7 +321,9 @@ void  CStmApp::app_check_data()
                 buflen = 0;         // reset counter
                 bufptr = buffer;    // reset ptr    
                 UART_STM32.read();  // read possible \n
-                syslog.log(LOG_DEBUG, "found new data packet: >" + String(buffer) + "<");
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_DEBUG, "STMApp:found new data packet: >" + String(buffer) + "<");
+                }
             }
         }
     }
@@ -496,7 +499,6 @@ void  CStmApp::app_check_data()
         }
 
 		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
-            syslog.log(LOG_DEBUG,"STMApp:one wire data "+String(argcnt)+" "+String(arg0ptr)+":"+String(arg1ptr));
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG,"STMApp:one wire data "+String(arg0ptr)+":"+String(arg1ptr));
@@ -602,7 +604,9 @@ void  CStmApp::app_check_data()
 
         // very important to reset to idle if no valid command was found
         else {
-            syslog.log(LOG_DEBUG, "unknown command: >" + String(cmd) + "<");
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                syslog.log(LOG_DEBUG, "unknown command: >" + String(cmd) + "<");
+            }
             appState=APP_IDLE;
         }
 
@@ -708,14 +712,7 @@ void  CStmApp::app_comm_machine()
                         }   
                     }
                 }
-                /*
-                // update target position mirror - 
-                for (uint8_t x = 0; x<ACTUATOR_COUNT; x++) {
-                    if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
-                        target_position_mirror[x] = actuators[x].target_position;
-                    }
-                }
-                */
+                
                 break;
 
         // check correct transmission of target value
