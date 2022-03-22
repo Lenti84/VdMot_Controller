@@ -53,6 +53,8 @@ void setup(void) {
   disableLoopWDT(); 
 
   UART_DBG.begin(115200);
+  UART_DBG.println("VdMot_Controller");
+
   Stm32.STM32ota_setup();
   UART_DBG.println("Start Config");
 
@@ -64,7 +66,7 @@ void setup(void) {
 }
 
 void loop(void) {
-  taskManager.runLoop();
+  taskManager.runLoop(); 
 }
 
 

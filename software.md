@@ -30,6 +30,8 @@
   ![-](./software_esp32/media/network.png "network page")
 - config page  
   ![-](./software_esp32/media/config.png "config page")
+- setup valve control page  
+  ![-](./software_esp32/media/ValvesControl.PNG "valves control page")
 - about page  
   ![-](./software_esp32/media/about.png "about page")
 - update page  

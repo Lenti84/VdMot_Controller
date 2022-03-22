@@ -46,8 +46,10 @@
 #include "ServerServices.h"
 #include "VdmConfig.h"
 #include <BasicInterruptAbstraction.h>
+#include "PiControl.h"
 
 CVdmTask VdmTask;
+
 
 CVdmTask::CVdmTask()
 {
@@ -114,7 +116,6 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
     }
 }
 
-
 void CVdmTask::startServices()
 {
     taskIdRunOnce = taskManager.scheduleOnce(1000, [] {
@@ -126,6 +127,23 @@ void CVdmTask::startServices()
     taskIdServices = taskManager.scheduleFixedRate(60*1000, [] {
         Services.servicesLoop();
     });
+
+    for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) { 
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].active) {
+            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].link==0) { 
+                PiControl[picIdx].valveIndex=picIdx;
+                PiControl[picIdx].ti=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ti;
+                PiControl[picIdx].xp=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].xp;
+                PiControl[picIdx].offset=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].offset; 
+                PiControl[picIdx].ki=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ki; 
+                PiControl[picIdx].scheme=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].scheme;
+                PiControl[picIdx].startActiveZone=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].startActiveZone;
+                PiControl[picIdx].endActiveZone=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].endActiveZone;
+
+                taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts, &PiControl[picIdx], TIME_SECONDS);
+            }
+        }
+    }
 }
 
 void CVdmTask::deleteTask (taskid_t taskId)

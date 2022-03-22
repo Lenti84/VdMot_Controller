@@ -104,6 +104,24 @@ void CVdmConfig::clearConfig()
     configFlash.valvesConfig.valveConfig[i].active = false;
     memset (configFlash.valvesConfig.valveConfig[i].name,0,sizeof(configFlash.valvesConfig.valveConfig[i].name));
   }
+
+  for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
+    configFlash.valvesControlConfig.valveControlConfig[i].active = false;
+    configFlash.valvesControlConfig.valveControlConfig[i].xp=20;
+    configFlash.valvesControlConfig.valveControlConfig[i].link=0;
+    configFlash.valvesControlConfig.valveControlConfig[i].offset=0;
+    configFlash.valvesControlConfig.valveControlConfig[i].targetSource=0;
+    configFlash.valvesControlConfig.valveControlConfig[i].valueSource=0;
+    configFlash.valvesControlConfig.valveControlConfig[i].ti=3600;
+    configFlash.valvesControlConfig.valveControlConfig[i].ts=900;
+    configFlash.valvesControlConfig.valveControlConfig[i].scheme=0;
+    configFlash.valvesControlConfig.valveControlConfig[i].ki=0.01;
+    configFlash.valvesControlConfig.valveControlConfig[i].startActiveZone=0;
+    configFlash.valvesControlConfig.valveControlConfig[i].endActiveZone=100;
+  }
+  configFlash.valvesControlConfig.heatControl=0;
+  configFlash.valvesControlConfig.parkingPosition=10;
+
   for (uint8_t i=0; i<TEMP_SENSORS_COUNT; i++) {
     configFlash.tempsConfig.tempConfig[i].active = false;
     configFlash.tempsConfig.tempConfig[i].offset = 0;
@@ -182,13 +200,21 @@ void CVdmConfig::readConfig()
     configFlash.valvesConfig.hourOfCalib=prefs.getUChar(nvsHourOfCalib); 
     prefs.end();
   }
+
+  if (prefs.begin(nvsValvesControlCfg,false)) {
+    if (prefs.isKey(nvsValvesControl)) {
+      prefs.getBytes(nvsValvesControl, (void *) configFlash.valvesControlConfig.valveControlConfig, sizeof(configFlash.valvesControlConfig.valveControlConfig));
+      configFlash.valvesControlConfig.heatControl=prefs.getUChar (nvsValvesControlHeatControl,0);
+      configFlash.valvesControlConfig.parkingPosition=prefs.getUChar (nvsValvesControlParkPos,10);
+    }
+    prefs.end();
+  }
  
  if (prefs.begin(nvsTempsCfg,false)) {
   if (prefs.isKey(nvsTemps))
     prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
  }
-
 }
 
 void CVdmConfig::writeConfig(bool reboot)
@@ -245,8 +271,18 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
   
-  
-  
+  if (reboot) Services.restartSystem();
+}
+
+
+void CVdmConfig::writeValvesControlConfig(bool reboot)
+{
+  prefs.begin(nvsValvesControlCfg,false);
+  prefs.clear();
+  prefs.putBytes(nvsValvesControl, (void *) configFlash.valvesControlConfig.valveControlConfig, sizeof(configFlash.valvesControlConfig.valveControlConfig));
+  prefs.putUChar (nvsValvesControlHeatControl,configFlash.valvesControlConfig.heatControl);
+  prefs.putUChar (nvsValvesControlParkPos,configFlash.valvesControlConfig.parkingPosition);
+  prefs.end();
   if (reboot) Services.restartSystem();
 }
 
@@ -335,6 +371,36 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
     Services.restartSTM=true;
     StmApp.setTempIdxActive=false;
   }
+}
+
+void CVdmConfig::postValvesControlCfg (JsonObject doc)
+{
+  uint8_t chunkStart=doc["chunkStart"];
+  uint8_t chunkEnd=doc["chunkEnd"];
+  uint8_t idx=0;
+   
+  for (uint8_t i=chunkStart-1; i<chunkEnd; i++) {
+    if (!doc["valves"][idx]["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].active=doc["valves"][idx]["active"];
+    if (!doc["valves"][idx]["link"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].link=doc["valves"][idx]["link"];
+    if (!doc["valves"][idx]["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].valueSource=doc["valves"][idx]["vSource"];
+    if (!doc["valves"][idx]["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].targetSource=doc["valves"][idx]["tSource"];
+    if (!doc["valves"][idx]["xp"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].xp=doc["valves"][idx]["xp"];
+    if (!doc["valves"][idx]["offset"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].offset=doc["valves"][idx]["offset"];
+    if (!doc["valves"][idx]["ti"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ti=doc["valves"][idx]["ti"];
+    if (!doc["valves"][idx]["ts"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ts=doc["valves"][idx]["ts"];  
+    if (!doc["valves"][idx]["ki"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ki=doc["valves"][idx]["ki"];  
+    if (!doc["valves"][idx]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].scheme=doc["valves"][idx]["scheme"];  
+    if (!doc["valves"][idx]["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].startActiveZone=doc["valves"][idx]["startAZ"];  
+    if (!doc["valves"][idx]["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].endActiveZone=doc["valves"][idx]["endAZ"];  
+    idx++;
+  } 
+
+  if (!doc["common"]["heatControl"].isNull()) {
+    configFlash.valvesControlConfig.heatControl=doc["common"]["heatControl"];
+  } 
+  if (!doc["common"]["parkPosition"].isNull()) {
+    configFlash.valvesControlConfig.parkingPosition=doc["common"]["parkPosition"];
+  } 
 }
 
 void CVdmConfig::postTempsCfg (JsonObject doc)

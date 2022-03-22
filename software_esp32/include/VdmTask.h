@@ -76,6 +76,7 @@ public:
   taskid_t taskIdRunOnce;
   taskid_t taskIdRunOnceDelayed;
   taskid_t taskIdwaitForFinishQueue;
+  taskid_t taskIdPiControl[ACTUATOR_COUNT];
   
   TsetFactoryCfgState setFactoryCfgState;
 

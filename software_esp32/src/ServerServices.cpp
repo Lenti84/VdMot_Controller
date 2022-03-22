@@ -62,6 +62,7 @@
 #include "VdmTask.h"
 #include "Services.h"
 #include "stmApp.h"
+#include "PiControl.h"
 
 extern "C" {
   #include "tfs_data.h"
@@ -87,6 +88,7 @@ CServerServices ServerServices;
 
 void restart (JsonObject doc)
 {  
+  Services.restartSTM=true;
   Services.restartSystem();
 }
 
@@ -137,13 +139,30 @@ void valvesDetect (JsonObject doc)
   StmApp.valvesDetect();
 }
 
+void writeValvesControl (JsonObject doc)
+{  
+  VdmConfig.writeValvesControlConfig(true);
+}
 
 void CServerServices::postSetValve (JsonObject doc)
 {
   uint8_t index;
   if (!doc["valve"].isNull()) {
     index=(doc["valve"].as<uint8_t>())-1;
-    if (!doc["value"].isNull()) StmApp.actuators[index].target_position = doc["value"];
+    if (index<ACTUATOR_COUNT) {
+      if (VdmConfig.configFlash.valvesConfig.valveConfig[index].active) {
+        if (!doc["value"].isNull()) StmApp.actuators[index].target_position = doc["value"];
+      }
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].active) {
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].valueSource==1) {
+          if (!doc["ctrlValue"].isNull()) PiControl[index].value = doc["ctrlValue"];
+        }
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].targetSource==1) {
+          if (!doc["ctrlTarget"].isNull()) PiControl[index].target = doc["ctrlTarget"];
+          if (!doc["ctrlDynOffs"].isNull()) PiControl[index].dynOffset = doc["ctrlDynOffs"];
+        }
+      }
+    }
   }
 }
 
@@ -257,9 +276,15 @@ void handleProtConfig(AsyncWebServerRequest *request)
 {
   request->send(200,aj,Web.getProtConfig(VdmConfig.configFlash.protConfig));
 }
+
 void handleValvesConfig(AsyncWebServerRequest *request)
 {
   request->send(200,aj,Web.getValvesConfig (VdmConfig.configFlash.valvesConfig, StmApp.motorChars));
+}
+
+void handleValvesControlConfig(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,Web.getValvesControlConfig (VdmConfig.configFlash.valvesControlConfig));
 }
 
 void handleTempsConfig(AsyncWebServerRequest *request)
@@ -302,10 +327,10 @@ bool handleCmd(JsonObject doc)
 { 
   typedef void (*fp)(JsonObject doc);
   fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,
-                  &clearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect} ;
+                  &clearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl} ;
 
   char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete",
-                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect", NULL};
+                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave",NULL};
   char const **p;
   bool found = false;
 
@@ -384,6 +409,7 @@ void  CServerServices::initServer()
   server.on("/netconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleNetConfig(request);});
   server.on("/protconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleProtConfig(request);});
   server.on("/valvesconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesConfig(request);});
+  server.on("/valvesctrlconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesControlConfig(request);});
   server.on("/tempsconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleTempsConfig(request);});
   server.on("/sysinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysInfo(request);});
   server.on("/sysdyninfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysDynInfo(request);});
@@ -442,6 +468,16 @@ void  CServerServices::initServer()
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(valvesCfgHandler);
+  
+AsyncCallbackJsonWebHandler* valvesControlCfgHandler = new AsyncCallbackJsonWebHandler("/valvesctrlconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postValvesControlCfg (jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(valvesControlCfgHandler);
+  
   
   AsyncCallbackJsonWebHandler* tempsCfgHandler = new AsyncCallbackJsonWebHandler("/tempsconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
     if (json.is<JsonObject>()) {

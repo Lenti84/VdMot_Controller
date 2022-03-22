@@ -49,9 +49,9 @@
 
 #define TIMER0_INTERVAL_MS        1
 
-#define TIMEOUT_OVERCURRENT     10           // cycles of "byte motorcycle (byte valvenr, byte cmd)"
+#define TIMEOUT_OVERCURRENT     5            // cycles of "byte motorcycle (byte valvenr, byte cmd)"
 
-#define TIMEOUT_UNDERCURRENT    20           // cycles of "byte motorcycle (byte valvenr, byte cmd)"
+#define TIMEOUT_UNDERCURRENT    50           // cycles of "byte motorcycle (byte valvenr, byte cmd)"
 #define THRESHOLD_UNDERCURRENT  20           // threshold for detecting undercurrent in 1/10 mA
 
 
@@ -465,6 +465,7 @@ byte valve_loop () {
                   motorcycle (valveindex, CMD_M_CLOSE);
                   myvalvemots[valveindex].status = VLV_STATE_CLOSING;
                   valvestate = A_LEARN2;
+                  waittimer = 20;
                   m_meancurrent = myvalvemots[valveindex].meancurrent;
                   isr_target = 65535;       // max value to disable stopping
                 
@@ -485,7 +486,7 @@ byte valve_loop () {
                       isr_target = 65535;       // max value to disable stopping
                       valvestate = A_LEARN3;
                       m_meancurrent = myvalvemots[valveindex].meancurrent;
-                      waittimer = 10;
+                      waittimer = 20;
                     }
                     else if (temp == M_RES_NOCURRENT) {
                       #ifdef motDebug
@@ -522,7 +523,7 @@ byte valve_loop () {
                       isr_target = 65535;       // max value to disable stopping
                       m_meancurrent = 20;
                       valvestate = A_LEARN4;
-                      waittimer = 10;
+                      waittimer = 20;
                     }          
                     else if (temp == M_RES_NOCURRENT) {
                       #ifdef motDebug
@@ -586,8 +587,7 @@ byte valve_loop () {
                   }           
                   break;
 
-
-     case A_TEST:  // test if a valve is connected
+     case A_TEST:  // test if a valve is connected                  
                   if (!waittimer) {
                     
                     temp = motorcycle (valveindex, CMD_M_TEST);
@@ -647,6 +647,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
   static int testcnt = 0;
   static byte undercurrcnt = 0;
   static byte overcurrcnt = 0;
+  static byte normalcurrcnt = 0;
 
   static int currentbound_low;              // lower current limit for detection of end stop
   static int currentbound_high;             // upper current limit for detection of end stop
@@ -757,6 +758,10 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     meancurrent_mem = 0;
                     meancurrent_cnt = 0;
 
+                    analog_current_old = 0;
+                    undercurrcnt = 0;
+                    overcurrcnt = 0;
+
                     // check if pwm is finished
                     if(isr_timer_fin) {
                       motorstate = M_TURNING;
@@ -778,7 +783,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     if(debouncecnt<255) debouncecnt++;
                     if(testcnt<255) testcnt++;
 
-                    if (debouncecnt > 7) {
+                    if (debouncecnt > 10) {
 
                       // calc current in 1/10 mA
                       analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
@@ -921,6 +926,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
                 
                     cyclecnt = 0;
                     undercurrcnt = 0;
+                    normalcurrcnt = 0;
+                    overcurrcnt=0;
                     debouncecnt = 0;
 
                     analog_current_old = 0;
@@ -940,7 +947,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     // calc current in 1/10 mA
                     analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
 
-                    analog_current = (int) (((int32_t) analog_current_old * 500 + (int32_t) analog_current * 500) / 1000);
+                    analog_current = (int) (((int32_t) analog_current_old * 800 + (int32_t) analog_current * 200) / 1000);
                     analog_current_old = analog_current;
 
                     current_mA = analog_current;
@@ -955,9 +962,9 @@ byte motorcycle (int mvalvenr, byte cmd) {
                       // under current detection
                       if(current_mA < THRESHOLD_UNDERCURRENT && current_mA > -THRESHOLD_UNDERCURRENT) 
                       {
-                        // undercurrcnt++;
-                        // if (undercurrcnt > TIMEOUT_UNDERCURRENT)
-                        // {
+                        undercurrcnt++;
+                        if (undercurrcnt > TIMEOUT_UNDERCURRENT)
+                        {
                           #ifdef motDebug
                             COMM_DBG.println("test: undercurrent!");
                           #endif
@@ -965,16 +972,16 @@ byte motorcycle (int mvalvenr, byte cmd) {
                           motorstate = M_IDLE;
                           result = M_RES_NOCURRENT;
                           ena_motor(0, 0);
-                        //}                        
+                        }                        
                       }
 
                       // overcurrent detection
                       else if(current_mA > currentbound_high || current_mA < currentbound_low ||  
                         current_mA > 1000 || current_mA < -1000)         // safety mechanism, limit at +- 100 mA
                       {
-                        // overcurrcnt++;
-                        // if (overcurrcnt > TIMEOUT_OVERCURRENT)
-                        // {
+                        overcurrcnt++;
+                        if (overcurrcnt > TIMEOUT_OVERCURRENT)
+                        {
                           #ifdef motDebug
                             COMM_DBG.println("test: overcurrent!");
                           #endif
@@ -983,17 +990,20 @@ byte motorcycle (int mvalvenr, byte cmd) {
                           result = M_RES_ENDSTOP;
                           ena_motor(0, 0);
                         
-                        //}
+                        }
                       }
 
                       // normal turning
                       else  {
-                        #ifdef motDebug          
-                          COMM_DBG.println("test: normal turning!");            
-                         #endif
-                         motorstate = M_IDLE;
-                         result = M_RES_OPENS;
-                         ena_motor(0, 0);                      
+                        normalcurrcnt++;
+                        if(normalcurrcnt > 5) {
+                          #ifdef motDebug          
+                            COMM_DBG.println("test: normal turning!");            
+                          #endif
+                          motorstate = M_IDLE;
+                          result = M_RES_OPENS;
+                          ena_motor(0, 0);      
+                        }                
                       }
                     }
 
