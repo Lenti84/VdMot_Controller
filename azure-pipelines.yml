@@ -18,7 +18,7 @@ resources:
 container: platformio
 steps:
 
-- script: platformio run -e esp32dev -d ./software_esp32/
+- script: platformio run -e esp32_dev -d ./software_esp32/
   displayName: 'Build firmware'
 
 - task: CopyFiles@2
