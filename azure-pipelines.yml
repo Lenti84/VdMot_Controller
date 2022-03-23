@@ -1,0 +1,35 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- developer
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+resources:
+  containers:
+  - container: platformio
+    image: infinitecoding/platformio-for-ci:latest
+    endpoint: personal-docker-hub-connection
+
+container: platformio
+steps:
+
+- script: platformio run -d ./software_esp32/
+  displayName: 'Build firmware'
+
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)/software_esp32/.pio/build/esp32dev/'
+    Contents: 'firmware.bin'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    ArtifactName: 'Firmware $(Build.BuildNumber)'
+    PathtoPublish: $(Build.ArtifactStagingDirectory)
+    publishLocation: Container
+    TargetPath: .
