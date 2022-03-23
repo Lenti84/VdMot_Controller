@@ -12,8 +12,8 @@ pool:
 resources:
   containers:
   - container: platformio
-    image: infinitecoding/platformio-for-ci:latest
-    endpoint: personal-docker-hub-connection
+    image: infinitecoding/platformio-for-ci:latest   
+    options: -u root     
 
 container: platformio
 steps:
