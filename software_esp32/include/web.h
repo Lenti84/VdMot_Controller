@@ -44,7 +44,7 @@
 #include "VdmNet.h"
 #include "VdmConfig.h"
 #include "globals.h"
-#include "StmApp.h"
+#include "stmApp.h"
 
 class CWeb
 {
