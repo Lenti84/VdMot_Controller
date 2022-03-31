@@ -14,7 +14,7 @@ steps:
     python -m pip install --upgrade pip
     pip install platformio
     export PATH=$PATH:~/.local/bin
-    platformio run
+    platformio run -d ./software_esp32/
   displayName: Install and run platformio
 
 - script: |  
