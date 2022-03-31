@@ -46,7 +46,7 @@
 #include "ServerServices.h"
 #include "VdmConfig.h"
 #include <BasicInterruptAbstraction.h>
-#include "PiControl.h"
+#include "PIControl.h"
 
 CVdmTask VdmTask;
 
