@@ -25,14 +25,14 @@ steps:
     zip -r ../$(Build.BuildNumber).zip .
   displayName: Rename output
 - task: CopyFiles@2
-  inputs:
-    SourceFolder: '$(Build.SourcesDirectory)/software_esp32/.pio/build/esp32dev/'
-    Contents: 'firmware.bin'
-    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+  inputs:    
+    contents: '$(Build.BuildNumber).zip'
+    targetFolder: $(Build.ArtifactStagingDirectory)    
+  displayName: Copy firmware to artifact staging directory
 
 - task: PublishBuildArtifacts@1
+  displayName: Publish artifacts
   inputs:
-    ArtifactName: 'Firmware $(Build.BuildNumber)'
-    PathtoPublish: $(Build.ArtifactStagingDirectory)
-    publishLocation: Container
-    TargetPath: .
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'firmware'
+    publishLocation: 'Container'
