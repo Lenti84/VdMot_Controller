@@ -43,7 +43,7 @@
 #include "VdmTask.h"
 #include "web.h"
 #include "Services.h"
-#include "StmApp.h"
+#include "stmApp.h"
 
 CVdmConfig VdmConfig;
 
