@@ -28,7 +28,7 @@
   Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
 *END************************************************************************/
 
-#include "arduino.h"
+#include "Arduino.h"
 #include "stm32.h"
 #include "stm32ota.h"
 #include "globals.h"
