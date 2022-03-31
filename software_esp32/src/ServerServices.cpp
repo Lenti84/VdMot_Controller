@@ -62,7 +62,7 @@
 #include "VdmTask.h"
 #include "Services.h"
 #include "stmApp.h"
-#include "PiControl.h"
+#include "PIControl.h"
 
 extern "C" {
   #include "tfs_data.h"
