@@ -19,7 +19,7 @@ steps:
 
 - script: |  
     mkdir package
-    cp .pio/build/esp32dev/firmware.bin package
+    cp ./software_esp32/.pio/build/esp32dev/firmware.bin package
     cp -r data package
     cd package
     zip -r ../$(Build.BuildNumber).zip .
