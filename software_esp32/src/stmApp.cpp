@@ -644,6 +644,7 @@ void CStmApp::appHandler()
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {		
                     syslog.log(LOG_DEBUG,"STMApp:Max app timeouts reached, reset STM");
                 } 
+                VdmSystem.setSystemState(systemStateError,systemMsgSTMReset);
                 appTimeOuts=0; 
                 Stm32.ResetSTM32(true); 
                 appState=APP_IDLE; 

@@ -48,6 +48,7 @@
 #include "stmApp.h"
 #include "VdmNet.h"
 #include "VdmConfig.h"
+#include "VdmSystem.h"
 #include "VdmTask.h"
 #include "helper.h"
 #include "web.h"
@@ -309,6 +310,17 @@ void CMqtt::publish_valves ()
         itoa(VdmConfig.configFlash.valvesControlConfig.parkingPosition, valstr, 10);        
         mqtt_client.publish(topicstr, valstr);   
     }  
+
+    memset(topicstr,0x0,sizeof(topicstr));
+    strncat(topicstr,mqtt_commonTopic,sizeof(topicstr));
+    len = strlen(topicstr);
+    strncat(topicstr, "state",sizeof(topicstr));
+    itoa(VdmSystem.systemState , valstr, 10);        
+    mqtt_client.publish(topicstr, valstr);  
+
+    topicstr[len] = '\0';
+    strncat(topicstr, "message",sizeof(topicstr));       
+    mqtt_client.publish(topicstr,((const char*) &VdmSystem.systemMessage));   
 
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {

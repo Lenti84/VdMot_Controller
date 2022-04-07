@@ -235,6 +235,7 @@ void CVdmNet::setupNtp()
   configTime(VdmConfig.configFlash.netConfig.timeOffset, 
              VdmConfig.configFlash.netConfig.daylightOffset, 
              VdmConfig.configFlash.netConfig.timeServer);
+  getLocalTime(&startTimeinfo);
 }
 
 void CVdmNet::startBroker()

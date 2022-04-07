@@ -117,9 +117,14 @@ void CPiControl::controlValve()
     }
     float newValveValue=calcValve();
     if (endActiveZone>startActiveZone) {
-      valvePosition=round(((endActiveZone-startActiveZone)*newValveValue/100)+startActiveZone); 
+      valvePosition=round((((float)(endActiveZone-startActiveZone))*newValveValue/100)+startActiveZone); 
     } else valvePosition=round(newValveValue);
-    if (valvePosition>100) valvePosition=100;
+    if (valvePosition>100) {
+      if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+        syslog.log(LOG_DEBUG, "pic:valve position exceeds 100 : (#"+String(valveIndex+1)+") = "+String(valvePosition));
+      }
+      valvePosition=100;
+    }
 
     StmApp.actuators[valveIndex].target_position=valvePosition;
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
