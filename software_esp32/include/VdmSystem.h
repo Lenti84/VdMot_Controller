@@ -46,6 +46,12 @@
 #include "esp_system.h"
 #include "helper.h"
 
+#define systemMsgSTMReset "stm not working. reset stm"
+
+#define systemStateOK       0
+#define systemStateInfo     1 
+#define systemStateError    2 
+
 #define  maxFiles  100
 
 typedef struct
@@ -64,13 +70,14 @@ public:
   void getFSDirectory();
   void fileDelete(String fName);
   void clearFS();
-
+  void setSystemState(uint8_t thisSystemState,String thisSystemMsg);
   esp_chip_info_t chip_info;
   fileinfo Filenames[maxFiles]; // Enough for most purposes!
   uint8_t numfiles;
   String stmVersion;
   time_t stmBuild;
-
+  uint8_t systemState;
+  String systemMessage;
 private:
   bool spiffsStarted;
 };

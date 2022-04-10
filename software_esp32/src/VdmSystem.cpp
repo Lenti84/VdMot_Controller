@@ -51,6 +51,9 @@ CVdmSystem::CVdmSystem()
   spiffsStarted=false;
   numfiles  = 0;
   stmBuild = 0;
+  systemMessage = "";
+  systemState = systemStateOK;
+
 }
 
 void CVdmSystem::getSystemInfo()
@@ -102,4 +105,10 @@ void CVdmSystem::fileDelete (String fileName)
   String thisFileName=fileName;
   if (!fileName.startsWith("/")) thisFileName="/"+fileName;
   SPIFFS.remove(thisFileName);
+}
+
+void CVdmSystem::setSystemState(uint8_t thisSystemState,String thisSystemMsg)
+{
+  systemState=thisSystemState; 
+  systemMessage=thisSystemMsg;
 }

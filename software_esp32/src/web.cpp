@@ -224,14 +224,25 @@ String CWeb::getSysDynInfo()
   struct tm timeinfo;
   char buf[50];
   String time;
- 
+  String upTime;
+
   if(!getLocalTime(&timeinfo)) {
     time = "Failed to obtain time";
   } else {
     strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
     time = String(buf);
+    uint64_t seconds=difftime(mktime(&timeinfo),mktime(&VdmNet.startTimeinfo));
+    int hr=(int)(seconds/3600);
+    int min=((int)(seconds/60))%60;
+    int sec=(int)(seconds%60);
+    String sMin = String(min);
+    if (min<10) sMin = "0"+sMin;
+    String sSec = String(sec);
+    if (sec<10) sSec = "0"+sSec;
+    upTime=String(hr)+":"+sMin+":"+sSec;
   }
   String result = "{\"locTime\":\""+time+"\"," +
+                  "\"upTime\":\""+upTime+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
                   "\"minheap\":\""+ConvBinUnits(ESP.getMinFreeHeap(),1)+ "\"," +
                   "\"wifirssi\":"+WiFi.RSSI()+ "," +

@@ -105,6 +105,7 @@ public:
   VDM_NETWORK_INFO networkInfo;
   bool serverIsStarted;
   bool dataBrokerIsStarted;
+  struct tm startTimeinfo;
 };
 
 extern CVdmNet VdmNet;

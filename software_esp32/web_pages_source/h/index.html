@@ -309,6 +309,10 @@
 				<td id="locTime"></td>
 			</tr>
 			<tr>
+				<th>Up Time</th>
+				<td id="upTime"></td>
+			</tr>
+			<tr>
 				<td>
 				<input type="button" class="buttonclass" id="login-button" style ="display:none" value="Login" title="Login" />
 				</td>
@@ -896,6 +900,7 @@
 		var dataTempSensorsID=null;
 		const NoOfMaxSensors = 34;
 		var stmStatus = 0;
+		const cfgVCKiCol= 12;
 		
 		// Get the modal
 		var modal = id("pwdModal");
@@ -911,8 +916,6 @@
 				x.className = "topNav";
 			}
 		}
-		
-		
 		
 		function showThisTab(pageName)
 		{
@@ -958,6 +961,14 @@
 				return typeof json[key] === 'object' ? 
 				_isContains(json[key], keyname, value) : key === keyname;
 			});
+		}
+		
+		function show_hide_column(tableId,col_no, do_show) {
+		   let tbl = id(tableId);
+		   let col = tbl.col[col_no];
+		   if (col) {
+			 col.visible=do_show;
+		   }
 		}
 		
 		window.onload = function() {
@@ -1245,7 +1256,7 @@
 						idx++;
 					}
 				}
-				el.setAttribute('onclick','setCfgVCLink(this);');				
+				el.setAttribute('onchange','setCfgVCLink(this);');				
 				thiscell.appendChild(el);
 				
 				thiscell = valvesControlTable.rows[row].cells[4];
@@ -1837,6 +1848,17 @@
 			}
 		}
 		
+		function setCfgVCScheme(thisLink){
+			const linkId= thisLink.id;
+			let linkNo = linkId.slice(linkId.indexOf("-")+1);
+			let display = 'block';
+			if (thisLink.value==0) {
+				display = 'none';
+			}  
+			id('cfgVCKi'+linkNo).style.display=display;
+			//show_hide_column('cfgValvesControlTable',cfgVCKiCol, (display == 'block'));
+		}		
+		
 		function setCfgVCLink(thisLink){
 			const linkId= thisLink.id;
 			let linkNo = linkId.slice(linkId.indexOf("-")+1);
@@ -1854,17 +1876,18 @@
 			id('cfgVCKi'+linkNo).style.display=display;
 			id('cfgVCSZ'+linkNo).style.display=display;
 			id('cfgVCEZ'+linkNo).style.display=display;
+			if (display=='block') setCfgVCScheme(id('cfgVCScheme-'+linkNo));
 		}
 				
-		function setCfgVCScheme(thisLink){
-			const linkId= thisLink.id;
-			let linkNo = linkId.slice(linkId.indexOf("-")+1);
-			let display = 'block';
-			if (thisLink.value==0) {
-				display = 'none';
-			}  
-			id('cfgVCKi'+linkNo).style.display=display;
-		}		
+		function checkVCScheme()
+		{
+			let kiStatics=false;
+			for (let i=1;i<13;i++) {
+				let vcScheme=id('cfgVCScheme-'+i);
+				if (vcScheme.selectedIndex=1) kiStatics=true;
+			}
+			return (kiStatics);
+		}
 				
 		function getStatus() {
 			getSystemDynInfo();
@@ -1950,8 +1973,9 @@
 				id('cfgVCKi'+row).value= cfgValvesControlJson.valves[row-1].ki;
 				id('cfgVCSZ'+row).value= cfgValvesControlJson.valves[row-1].startAZ;
 				id('cfgVCEZ'+row).value= cfgValvesControlJson.valves[row-1].endAZ;
-				setCfgVCScheme(id('cfgVCScheme-'+row));
+				setCfgVCLink(id('cfgVCLink-'+row));
 			}
+			//show_hide_column('cfgValvesControlTable',cfgVCKiCol, checkVCScheme());
 		}
 		
 		function fillTempsTable (tempsJson) {
@@ -2059,6 +2083,7 @@
 			const dataSystemDynInfo=await getJson("sysdyninfo");
 			if (dataSystemDynInfo) {
 				id("locTime").textContent = dataSystemDynInfo["locTime"];
+				id("upTime").textContent = dataSystemDynInfo["upTime"];
 				id("heap").textContent = dataSystemDynInfo["heap"];
 				id("min-heap").textContent = dataSystemDynInfo["minheap"];
 				id("rssi").textContent = dataSystemDynInfo["wifirssi"];
