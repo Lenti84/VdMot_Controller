@@ -23,6 +23,7 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 ## Status
 - b-sample hardware is working
 - c-sample hardware is working
+- c2-sample hardware finished and working
 - valve learning, opening and closing is working
 - connection to [FHEM](https://fhem.de/) or [IOBroker] established via MQTT
 - read and set values via JSON
@@ -35,6 +36,7 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 - STM32 can be flashed by ESP32 via WebUI without additional hardware
 - simple test of RS485 interface with modbus-rtu master sucessfully performed
 - simple test of CAN interface via MCP2515 sucessfully performed
+- replaced relay with fet transistors
 
 ## Hardware
 - find description of hardware here [hardware/hardware.md](./hardware/hardware.md)
