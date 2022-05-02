@@ -38,16 +38,12 @@
 
 struct valve myvalves[ACTUATOR_COUNT];
 
-unsigned char target_position_mirror[ACTUATOR_COUNT];
+//unsigned char target_position_mirror[ACTUATOR_COUNT];
+unsigned int learning_time = LEARN_AFTER_TIME_DEFAULT;
+unsigned int learning_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
 
 
 int16_t app_setup (void) { 
-
-  uint8_t   numberOfDevices;
-  DeviceAddress currAddress;
-  uint8_t   found1, found2;
-  uint8_t   valveindexlast;
-
 
   // init valve data
   for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {    
@@ -61,9 +57,242 @@ int16_t app_setup (void) {
       myvalves[x].learn_time = (unsigned int) (((long)LEARN_AFTER_TIME_DEFAULT * ((long)x+1)) / (long)ACTUATOR_COUNT);
   }
 
- 
   // match sensor address from eeprom with found sensors and set index/slot to valve struct
-  COMM_DBG.println("Read 1-wire sensor addresses from eeprom");
+  app_match_sensors();
+
+  if ((eep_content.numberOfMovements>=50) && (eep_content.numberOfMovements<65535))
+    learning_movements=eep_content.numberOfMovements;
+  #ifdef appDebug
+    COMM_DBG.print("learning_movements: "); 
+    COMM_DBG.println(learning_movements, DEC);
+  #endif
+  return 0;
+}
+
+int16_t app_loop (void) {
+  static byte firstchange = 0;
+  static unsigned int lastvalve = 0;
+  static unsigned int testvlvindex = 0;
+
+    // if valve machine is idle search for new tasks
+    if(valve_getstate() == A_IDLE) 
+    {
+        // find unknown states and try to find out whats on with the valve        
+        if(myvalvemots[testvlvindex].status == VLV_STATE_UNKNOWN) 
+        {
+          #ifdef appDebug
+            COMM_DBG.print("App: valve "); COMM_DBG.print(testvlvindex, 10);
+            COMM_DBG.println(" unknown, try to find out...");
+          #endif
+          appsetaction(CMD_A_TEST,testvlvindex,0);    
+        }
+        
+        else
+        {        
+          // fully open valves if needed
+          if(myvalvemots[lastvalve].status == VLV_STATE_FULLOPEN) {
+            appsetaction(CMD_A_OPEN_END,lastvalve,(byte)0);        
+          }
+
+          // learn all present valves if any target change happened before
+          // this keeps controller calm right after startup, otherwise controller would be busy for up to 12 valve learning times (10 min ?!)
+          else if(firstchange > 0 && myvalvemots[lastvalve].status == VLV_STATE_PRESENT) {
+            #ifdef appDebug
+              COMM_DBG.print("App: learning started for valve "); 
+              COMM_DBG.println(lastvalve, 10);
+            #endif
+            appsetaction(CMD_A_LEARN,lastvalve,0);        
+          }
+
+          // handle first found difference then break
+          if(myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
+          {
+              firstchange = 1;
+
+              #ifdef appDebug
+                COMM_DBG.print("App: target pos changed for valve "); 
+                COMM_DBG.println(lastvalve, 10);
+              #endif
+
+              // check if valve was learned before              
+              if(myvalvemots[lastvalve].status == VLV_STATE_PRESENT)             
+              {
+                #ifdef appDebug
+                  COMM_DBG.print("App: learning started for valve "); 
+                  COMM_DBG.println(lastvalve, 10);
+                #endif
+                appsetaction(CMD_A_LEARN,lastvalve,0);                  
+              }
+              else if(myvalvemots[lastvalve].status != VLV_STATE_BLOCKS)
+              {
+                // should valve be opened
+                if(myvalvemots[lastvalve].target_position > myvalvemots[lastvalve].actual_position) {                  
+                  if(myvalvemots[lastvalve].target_position == 100) appsetaction(CMD_A_OPEN_END,lastvalve,(byte)0);
+                  else appsetaction(CMD_A_OPEN,lastvalve,myvalvemots[lastvalve].target_position-myvalvemots[lastvalve].actual_position);
+                }
+                // valve should be closed
+                else {
+                  if(myvalvemots[lastvalve].target_position == 0) appsetaction(CMD_A_CLOSE_END,lastvalve,(byte)0);
+                  else appsetaction(CMD_A_CLOSE,lastvalve,myvalvemots[lastvalve].actual_position-myvalvemots[lastvalve].target_position);
+                }
+              }
+              else {
+                // do nothing and clear request
+                myvalvemots[lastvalve].actual_position = myvalvemots[lastvalve].target_position;
+              }
+          }
+
+          lastvalve++;
+          if (lastvalve>=ACTUATOR_COUNT) lastvalve = 0;
+        }
+
+        testvlvindex += 2;
+        // vary startindexes to always get the even and the odd valves in one flow
+        // helps reducing relay rattle (only C1 revision)
+        if (testvlvindex == ACTUATOR_COUNT) testvlvindex = 1;
+        else if (testvlvindex >= ACTUATOR_COUNT + 1) testvlvindex = 0;
+
+    }
+
+return 0;
+}
+
+
+
+
+
+byte app_10s_loop () {
+
+  unsigned int x = 0;
+
+  // walk through valves and evaluate learning values
+
+  // learning times
+  if (learning_time > 0) {
+    for (x=0; x< ACTUATOR_COUNT; x++) { 
+      if(myvalves[x].learn_time <= 10) {
+        myvalves[x].learn_time = learning_time;
+        myvalvemots[x].status = VLV_STATE_PRESENT;     // mark state as unknown, next set target req will do a learning cycle
+        #ifdef appDebug
+          COMM_DBG.print("App: Valve "); 
+          COMM_DBG.print(x, 10); 
+          COMM_DBG.println(" will be learned soon");
+        #endif
+      }
+      else myvalves[x].learn_time -= 10;    
+    }
+  }
+
+  // learning movements
+  if (learning_movements > 0) { 
+    for (x=0; x< ACTUATOR_COUNT; x++) {  
+      if(myvalves[x].learn_movements == 0) {
+        myvalves[x].learn_movements = learning_movements;
+        myvalvemots[x].status = VLV_STATE_PRESENT;     // mark state as unknown, net set target req will do a learning cycle
+        #ifdef appDebug
+          COMM_DBG.print("App: Valve "); 
+          COMM_DBG.print(x, 10); 
+          COMM_DBG.println(" will be learned soon");
+        #endif
+      }   
+    } 
+  }
+
+return 0;
+}
+
+
+// sets learning movements
+// after number of movements a learning cycle will be executed
+int16_t app_set_learnmovements(uint16_t movements) {
+
+  // update reload value
+  learning_movements = movements;
+    
+  // update all valve memories 
+  for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {          
+    myvalves[x].learn_movements = learning_movements;
+  }
+
+  return 0;
+
+}
+
+
+// sets learning time
+// after time seconds a learning cycle will be executed
+int16_t app_set_learntime(uint32_t time) {
+ 
+  // update reload value
+  learning_time = time;
+    
+  // update all valve memories 
+  for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {          
+    // distribute learn timing equaly over valve slots
+    myvalves[x].learn_time = (unsigned int) (((long)learning_time * ((long)x+1)) / (long)ACTUATOR_COUNT);
+  }
+
+  return 0;
+
+}
+
+
+// sets learning of valve 
+// a learning cycle for valve will be executed
+// if valve = 255, all valves will be learned
+int16_t app_set_valvelearning(uint16_t valve) {
+
+  if(valve < ACTUATOR_COUNT) {
+    myvalvemots[valve].actual_position = 0;     // fake some position deviation
+    myvalvemots[valve].status = VLV_STATE_UNKNOWN;
+    return 0;
+  }
+  else if (valve == 255) {
+    // update all valves
+    for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+      myvalvemots[xx].actual_position = 0;      // fake some position deviation
+      myvalvemots[xx].status = VLV_STATE_UNKNOWN;
+    }
+    return 0;
+  }
+
+  return -1;
+}
+
+
+// sets valve full open
+// valve will be opened fully
+// if valve = 255, all valves will be opened fully
+int16_t app_set_valveopen(int16_t valve) {
+
+  if(valve < ACTUATOR_COUNT) {
+    myvalvemots[valve].target_position = 100;
+		myvalvemots[valve].status = VLV_STATE_FULLOPEN;
+    return 0;
+  }
+  else if (valve == 255) {
+    // update all valves
+    for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+      myvalvemots[xx].target_position = 100;
+			myvalvemots[xx].status = VLV_STATE_FULLOPEN;
+    }
+    return 0;
+  }
+
+  return -1;
+}
+
+
+// match sensor address from eeprom with found sensors and set index/slot to valve struct
+int16_t app_match_sensors() {
+  
+  uint8_t   numberOfDevices;
+  DeviceAddress currAddress;
+  uint8_t   found1, found2;
+  uint8_t   valveindexlast;
+  #ifdef appDebug
+    COMM_DBG.println("Read 1-wire sensor addresses from eeprom");
+  #endif
   numberOfDevices = sensors.getDeviceCount();  
     
   for (unsigned int owsensorindex=0; owsensorindex<numberOfDevices; owsensorindex++)
@@ -73,9 +302,11 @@ int16_t app_setup (void) {
 
       //COMM_DBG.print("owsensorindex ");
       //COMM_DBG.println(owsensorindex, DEC);
-      printAddress(currAddress);
-      //COMM_DBG.println("");
-      
+      #ifdef appDebug
+        printAddress(currAddress);
+        //COMM_DBG.println("");
+      #endif
+
       // first sensor of valve
       // step through all possible valves
       for (unsigned int valveindex1 = 0;valveindex1<ACTUATOR_COUNT;valveindex1++) {
@@ -102,10 +333,14 @@ int16_t app_setup (void) {
       }
       if (found1 == 7)
       {
-          COMM_DBG.print(" found as 1st sensor at valve: ");
-          // COMM_DBG.print(owsensorindex, DEC);
-          COMM_DBG.println(valveindexlast, DEC);
+          #ifdef appDebug
+            COMM_DBG.print(" found as 1st sensor at valve: ");
+            // COMM_DBG.print(owsensorindex, DEC);
+            COMM_DBG.println(valveindexlast, DEC);
+          #endif
           myvalves[valveindexlast].sensorindex1 = owsensorindex;
+      } else {
+        myvalves[valveindexlast].sensorindex1 = VALVE_SENSOR_UNKNOWN;
       }
       // else 
       // {
@@ -135,11 +370,15 @@ int16_t app_setup (void) {
         }
       }
       if (found2 == 7)
-      {          
-          COMM_DBG.print(" found as 2nd sensor at valve: ");
-          // COMM_DBG.print(owsensorindex, DEC);
-          COMM_DBG.println(valveindexlast, DEC);
+      {     
+          #ifdef appDebug     
+            COMM_DBG.print(" found as 2nd sensor at valve: ");
+            // COMM_DBG.print(owsensorindex, DEC);
+            COMM_DBG.println(valveindexlast, DEC);
+          #endif
           myvalves[valveindexlast].sensorindex2 = owsensorindex;
+      }  else {
+        myvalves[valveindexlast].sensorindex2 = VALVE_SENSOR_UNKNOWN;
       }
       // else 
       // {
@@ -148,7 +387,9 @@ int16_t app_setup (void) {
       // }
 
       if(found1==0 && found2==0) {
-        COMM_DBG.println(" not found");
+        #ifdef appDebug
+          COMM_DBG.println(" not found");
+        #endif
       }
 
       
@@ -162,92 +403,5 @@ int16_t app_setup (void) {
   }
 
   return 0;
-}
 
-
-
-int16_t app_loop (void) {
-
-  static unsigned int lastvalve = 0;
-
-    // if valve machine is idle search for new tasks
-    if(valve_getstate() == A_IDLE) {
-
-      // check all valves
-      // for(unsigned int x=0; x<ACTUATOR_COUNT; x++)
-      // {
-          // handle first found difference then break
-          //if(target_position_mirror[x] != myvalves[x].target_position)
-          if(myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
-          {
-              COMM_DBG.print("M: target pos changed for valve "); COMM_DBG.println(lastvalve, 10);
-              
-              // check if valve was learned before
-              if(myvalvemots[lastvalve].status == VLV_STATE_UNKNOWN || myvalvemots[lastvalve].status == VLV_STATE_OPENCIR) 
-              {
-                COMM_DBG.print("M: learning started for valve "); COMM_DBG.println(lastvalve, 10);
-                appsetaction(CMD_A_LEARN,lastvalve,0);    
-                //myvalves[lastvalve].status = VLV_STATE_IDLE;   // for test
-              }
-              // check if valve is not open circuit
-              //else if(myvalves[lastvalve].status == VLV_STATE_OPENCIR) 
-              //{
-                //COMM_DBG.print("M: valve "); COMM_DBG.print(lastvalve, 10); COMM_DBG.println(" open circuit");
-                //myvalves[lastvalve].target_position = myvalves[lastvalve].actual_position;
-              //}
-              else // valve was learned before
-              {
-                // reset full open command
-                if(myvalvemots[lastvalve].status == VLV_STATE_FULLOPEN) myvalvemots[lastvalve].status = VLV_STATE_UNKNOWN;
-
-                // should valve be opened
-                //if(myvalves[lastvalve].target_position > target_position_mirror[lastvalve]) {
-                if(myvalvemots[lastvalve].target_position > myvalvemots[lastvalve].actual_position) {                  
-                  if(myvalvemots[lastvalve].target_position == 100) appsetaction(CMD_A_OPEN_END,lastvalve,(byte)0);
-                  else appsetaction(CMD_A_OPEN,lastvalve,myvalvemots[lastvalve].target_position-myvalvemots[lastvalve].actual_position);
-                }
-                // valve should be closed
-                else {
-                  if(myvalvemots[lastvalve].target_position == 0) appsetaction(CMD_A_CLOSE_END,lastvalve,(byte)0);
-                  else appsetaction(CMD_A_CLOSE,lastvalve,myvalvemots[lastvalve].actual_position-myvalvemots[lastvalve].target_position);
-                }
-              }
-          }
-
-          lastvalve++;
-          if (lastvalve>=ACTUATOR_COUNT) lastvalve = 0;
-      //}
-    }
-
-return 0;
-}
-
-
-
-
-
-byte app_10s_loop () {
-
-  unsigned int x = 0;
-
-  // walk through valves and evaluate learning values
-  for (x=0; x< ACTUATOR_COUNT; x++)
-  { 
-    // learning times
-    if(myvalves[x].learn_time <= 10) {
-      myvalves[x].learn_time = LEARN_AFTER_TIME_DEFAULT;
-      myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, next set target req will do a learning cycle
-      COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
-    }
-    else myvalves[x].learn_time -= 10;    
-
-    // learning movements
-    if(myvalves[x].learn_movements == 0) {
-      myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
-      myvalvemots[x].status = VLV_STATE_UNKNOWN;     // mark state as unknown, net set target req will do a learning cycle
-      COMM_DBG.print("Valve "); COMM_DBG.print(x, 10); COMM_DBG.println(" will be learned soon");
-    }    
-  }
-
-return 0;
 }

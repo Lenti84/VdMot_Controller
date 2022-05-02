@@ -1,6 +1,13 @@
 # Hardware
 
-## C-sample -in progress-
+## C2-sample -in progress-
+- replaced relay K1 with fet transistors
+- corrected button S1 connection, a push now pulls-up STM32 pin voltage to 3V3
+- added some filtering for analog signals
+
+You can find the c2-sample/revision schematic here: [schematic_c2-sample_V02.pdf](./schematic_c2-sample_V02.pdf)
+
+## C1-sample
 - uC STM32F401CCU on BlackPill board
   - I ran out of flash on STM32F103 nor it is available as a genuine part anywhere
 - WT32-ETH01 module for Ethernet (RJ45) or wifi connection
@@ -17,7 +24,7 @@
 - power savings: all three L293 can be switched off by software 
   - with only STM32 running approx. 300 mW 
 
-You can find the c-sample schematic here: [schematic_b-sample_V02.pdf](./schematic_c-sample_V02.pdf)
+You can find the c-sample schematic here: [schematic_c-sample_V02.pdf](./schematic_c-sample_V02.pdf)
 
 PCB 3D teaser: ![-](./c-sample_pcb_3D.png "c-sample pcb 3D teaser")
 

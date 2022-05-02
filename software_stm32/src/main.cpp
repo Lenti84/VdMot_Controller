@@ -40,7 +40,7 @@
 #include "eeprom.h"
 #include "mycan.h"
 #include "rs485.h"
-
+#include "otasupport.h"
 
 
 //using Matthias Hertel driver https://github.com/mathertel/LiquidCrystal_PCF8574
@@ -52,7 +52,32 @@
 // --> increased tx buffer size from default 64 to 1024
 
 
+void setup_system();
+void loop_system();
+
+
 void setup() {
+  BootSetup();
+}
+
+
+void loop() {
+
+  BootLoop();
+
+  if (bootstate) {
+    setup_system() ;
+
+    while(1) {
+      loop_system();
+    }
+  }
+}
+
+
+void setup_system() {
+
+  //JumpToBootloader();
 
   Wire.begin();
   Wire.setSDA(I2C_SDA_PIN); // 
@@ -106,19 +131,16 @@ void setup() {
   // valve app setup
   app_setup();
   valve_setup();
-  //valve_setup(myvalves);
 
   // can
   //mycan_setup();          // can hardware testcode setup
 
   // rs485
   //rs485_setup();          // rs485 hardware testcode setup
-
-  // just for testing
-  //myvalves[0].sensorindex = 0;
 }
 
-void loop() {
+
+void loop_system() {
   //static int x = 0;
   static int time10s = 0;
   static uint32_t loop_10ms = 0;
@@ -137,16 +159,13 @@ void loop() {
     if(time10s>=10) {
       time10s = 0;
       app_10s_loop();
+      // todo sync with comm COMM_SER.println("STMalive ");   // send alive to ESP32
     }
     else time10s++;
 
-    digitalWrite(LED, !digitalRead(LED));   // toggle LED
-    
-    //Serial.println("help");
-    //Serial.println("gactp 0 14 ");
+    digitalWrite(LED, !digitalRead(LED));   // toggle LED    
+    eepromloop();
 
-    Serial.println("STMalive ");   // send alive to ESP32   
-    //Serial.println("help ");   // send alive to ESP32  
   }
 
 
@@ -179,7 +198,7 @@ void loop() {
 
     temperature_loop();
 
-    eepromloop();
+    //eepromloop();
 
     //mycan_loop();         // can hardware testcode
 
