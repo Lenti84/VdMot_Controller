@@ -129,8 +129,16 @@
 #define DIR_ON()     digitalWrite(CTRL_DIRECTION, HIGH)
 #define DIR_OFF()    digitalWrite(CTRL_DIRECTION, LOW)
 
-#define MUX_ON()     digitalWrite(CTRL_MUX, HIGH)
-#define MUX_OFF()    digitalWrite(CTRL_MUX, LOW)
+
+#ifdef HARDWARE_REVISION_C1
+  // MUX pin definition for C1-sample
+  #define MUX_ON()     digitalWrite(CTRL_MUX, HIGH)
+  #define MUX_OFF()    digitalWrite(CTRL_MUX, LOW)
+#elif HARDWARE_REVISION_C2
+  // MUX pin definition for C2-sample
+  #define MUX_ON()     digitalWrite(CTRL_MUX, LOW)
+  #define MUX_OFF()    digitalWrite(CTRL_MUX, HIGH)
+#endif
 
 #define PSU_ON()     digitalWrite(POWER_ENA, LOW);   // enable PSU for valves   
 #define PSU_OFF()    digitalWrite(POWER_ENA, HIGH);   // disable PSU for valves   

@@ -94,7 +94,8 @@ int16_t app_loop (void) {
             appsetaction(CMD_A_OPEN_END,lastvalve,(byte)0);        
           }
 
-          // learn present valves if some target changed happened before
+          // learn all present valves if any target change happened before
+          // this keeps controller calm right after startup, otherwise controller would be busy for up to 12 valve learning times (10 min ?!)
           else if(firstchange > 0 && myvalvemots[lastvalve].status == VLV_STATE_PRESENT) {
             #ifdef appDebug
               COMM_DBG.print("App: learning started for valve "); 
@@ -122,7 +123,7 @@ int16_t app_loop (void) {
                 #endif
                 appsetaction(CMD_A_LEARN,lastvalve,0);                  
               }
-              else
+              else if(myvalvemots[lastvalve].status != VLV_STATE_BLOCKS)
               {
                 // should valve be opened
                 if(myvalvemots[lastvalve].target_position > myvalvemots[lastvalve].actual_position) {                  
@@ -135,6 +136,10 @@ int16_t app_loop (void) {
                   else appsetaction(CMD_A_CLOSE,lastvalve,myvalvemots[lastvalve].actual_position-myvalvemots[lastvalve].target_position);
                 }
               }
+              else {
+                // do nothing and clear request
+                myvalvemots[lastvalve].actual_position = myvalvemots[lastvalve].target_position;
+              }
           }
 
           lastvalve++;
@@ -143,7 +148,7 @@ int16_t app_loop (void) {
 
         testvlvindex += 2;
         // vary startindexes to always get the even and the odd valves in one flow
-        // helps reducing relay rattle
+        // helps reducing relay rattle (only C1 revision)
         if (testvlvindex == ACTUATOR_COUNT) testvlvindex = 1;
         else if (testvlvindex >= ACTUATOR_COUNT + 1) testvlvindex = 0;
 

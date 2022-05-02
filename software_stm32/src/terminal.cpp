@@ -68,7 +68,16 @@ int16_t Terminal_Init (void) {
 	COMM_DBG.begin(115200);
 	while(!COMM_DBG);
 	COMM_DBG.print("VdMot Controller "); 
-	COMM_DBG.println(FIRMWARE_VERSION);
+	COMM_DBG.print(FIRMWARE_VERSION);
+
+	#ifdef HARDWARE_REVISION_C1
+		COMM_DBG.println("_C1");
+	#elif HARDWARE_REVISION_C2
+		COMM_DBG.println("_C2");
+	#else
+		error "no hardware revision defined"
+	#endif
+
 	COMM_DBG.flush();
 
 	testmode = 0;
@@ -189,7 +198,7 @@ int16_t Terminal_Serve (void) {
 
 			if(argcnt == 1) {				
 				//COMM_DBG.println("learn valve x");				
-				if (appsetaction(CMD_A_LEARN,x,0)!=0) COMM_DBG.println("valve machine not idle");				
+				if (appsetaction(CMD_A_LEARN,x,0)!=0) COMM_DBG.println("valve machine command not accepted");				
 			}
 			else COMM_DBG.println("to few arguments");
 
@@ -233,7 +242,7 @@ int16_t Terminal_Serve (void) {
 			if(argcnt == 2)
 			{								
 				//if (appsetaction(CMD_A_CLOSE,x,y)!=0) COMM_DBG.println("valve machine not idle");
-				if(y<=100 && y>=0)
+				if(x < ACTUATOR_COUNT && y<=100 && y>=0)
 				{
 					myvalvemots[x].target_position = y;
 					COMM_DBG.print("set valve "); COMM_DBG.print(x, 10); COMM_DBG.print(" to "); COMM_DBG.println(y);
