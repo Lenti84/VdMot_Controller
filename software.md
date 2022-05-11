@@ -1,52 +1,266 @@
-This page will document the software part of the VdMot_Controller.
+# This page will document the software part of the VdMot_Controller
 
-# ESP32
+## ESP32
+
 ## Feature list software
-- login page
+
+- responsive design
+- user login
 - status page
-  - valves: index, description, position, mean current, status, assigned temperature sensor with temperature value, calibration counter
+  - valves: index, description, position, mean current, status, assigned temperature sensor with temperature value
   - temperature sensors: description, temperature, index
 - setup page
   - network interface: wifi or ethernet (RJ45)
   - wifi: user and password
   - valves: description/name, assignment of temperature sensor, calibration request
   - temperature sensors: description/name
-  - mqtt: server ip, server port, main topic
+  - mqtt: server ip, server port, user name and password
   - settings: save, recover
-- debug page
-  - log communication stm32 and esp32
-  - log internal messages
-  - test command interface
 - flash / ota page
   - flash STM32 by file upload
-  - flash ESP32 by file upload or direct communication to PlatformIO
+  - flash ESP32 by direct send chunks
 
-## Status
-- simple status page  
+## ESP32 user interface
+
+- home page  
+  ![-](./software_esp32/media/home.png "home page")
+- status page  
   ![-](./software_esp32/media/status_page.png "status page")
-- simple logger page  
-  ![-](./software_esp32/media/logger_page.png "logger page")
+- network page  
+  ![-](./software_esp32/media/network.png "network page")
+- config page  
+  ![-](./software_esp32/media/config.png "config page")
+- setup valve control page  
+  ![-](./software_esp32/media/ValvesControl.PNG "valves control page")
+- about page  
+  ![-](./software_esp32/media/about.png "about page")
+- update page  
+  ![-](./software_esp32/media/update.png "update page")
+- esp32 update page  
+  ![-](./software_esp32/media/wt32Update.png "update esp32 page")
+- stm32 update page  
+  ![-](./software_esp32/media/stm32Update.png "update stm32 page")
 
+## JSON Interface WTH32
 
+### WTH32 supports following commands
 
-# command list
+### Get
+
+#### "/valves" : read the values of all connected valves
+
+|command|description|units|
+|---|---|---|
+|"idx"|Index of the valve|0..11
+|"name"|Name of the valve defined in config
+|"state"|State of the config
+|"pos"|Actual position|0..100%
+|"meanCur"|Average current of the valve|mA
+|"targetPos"|Target position|0..100%
+|"temp1"|Temperature of assigned channel 1, send only if assigned|°C
+|"temp2"|Temperature of assigned channel 2, send only if assigned|°C
+
+#### "/temps" : read all the temperatures values, except assigned to a valve
+
+|command|description|units|
+|---|---|---|
+|"id"|Index of the valve|0..33
+|"name"|Name of the sensor defined in config
+|"temp"|Temperature of the sensor|°C
+
+#### "/netinfo" : read the network info
+
+|command|description|units|
+|---|---|---|
+|"ethWifi"|detected lan interface| 0 = eth, 1 = wifi
+|"dhcp"|DHCP detected| 0 = no, 1 = yes
+|"ip"|Ip address of the system
+|"mac"|MAC address of the system
+|"mask"|Mask Ip of the system
+|"gw"|Gateway of the system
+|"dns"|DNS Server of the system
+
+#### "/sysinfo" : read the static system info
+
+|command|description|units|
+|---|---|---|
+|"wt32version"|Version of the WTH32 software
+|"wt32cores"|Number of WTH32 cores
+|"wt32coreRev"|Revision of the WTH32 cores
+|"stm32version"|Version of the STM32 software
+
+#### "/sysdyninfo" : read the dynamic system info
+
+|command|description|units|
+|---|---|---|
+|"locTime"|Location time
+|"heap"|Free heap memory|KBytes
+|"wifirssi"|RSSI of wifi
+|"wifich"|WiFi channel
+|"stmStatus"|Status of the STM32
+
+#### "/netconfig" : read the network configuration
+
+|command|description|units|
+|---|---|---|
+|"ethWifi"|Configuration lan interface|0 = Auto, 1= Eth, 2=Wifi
+|"dhcp"|DHCP enable|0 = disable, 1 = enable
+|"ip"|Local Ip address if dhcp not enabled
+|"mask"|Mask Ip of the system
+|"gw"|Gateway of the system
+|"dns"|Dns server of the system
+|"userName"|Username if login required
+|"ssid"|SSID if wifi selected
+|"timeServer"|Url of the sntp server or pool
+|"timeOffset"|Time offset of zone|seconds
+|"timeDST"|Daylight saving time|0 = off, 1 = on
+|"syslogLevel"|Level of the syslog|0 = Off, 1 = Small, 2 = Detail, 3 = Atomic
+|"syslogIp"!Ip address of the syslog client
+|"syslogPort"|:Port of the syslog client
+
+#### "/protconfig" : read the protocol configuration
+
+|command|description|units|
+|---|---|---|
+|"prot"|Kind of protocol|0 = off, 1 = Mqtt
+|"ip"|Ip address of protocol client
+|"port"|Port of the protocol client
+|"interval"|Interval transfer data|ms
+|"pubTarget|Transfer target data|0  = no, 1 = yes
+|"user"|Username if authorization required
+
+#### "/valvesconfig" : read the valves configuration
+
+|command|description|units|
+|---|---|---|
+|"calib"|Calibration data
+|"dayOfCalib"|Days of calibration|Bit 0 = Sunday, Bit 1 = Monday, Bit 2 = Tuesday, Bit 3 = Wednesday, Bit 4 = Thursday, Bit 6 = Friday, Bit 7 = Saturday
+|"hourOfCalib"|Hour of calibration
+|"cycles"|Number of movements of the motor to start the calibration
+|"motor"|Characteristics of the motor
+|"lowC"|Max. current value of low position
+|"highC"|Max. current value of high position
+|"valves"|Array of valve configuration
+|"name"|Name of the valve
+|"active"|Activate the valve
+|"tIdx1"|Index 1 of the assigned temperature sensor|1..34, 0 = not assigned
+|"tIdx1"|Index 2 of the assigned temperature sensor1..34, 0 = not assigned
+
+#### "/tempsconfig" : read the temps configuration
+
+|command|description|units|
+|---|---|---|
+|"name"|Name of the sensor
+|"active"|Activate the sensor
+|"id"|Sensor id
+|"offset"|Offset, will be added to the measured value|°C
+
+### Post
+
+#### "/netconfig" : saves the network configuration
+
+|command|description|units|
+|---|---|---|
+|"ethWifi"|Configuration lan interface|0 = Auto, 1= Eth, 2=Wifi
+|"dhcp"|DHCP enable|0 = disable, 1 = enable
+|"ip"|Local Ip address if dhcp not enabled
+|"mask"|Mask Ip of the system
+|"gw"|Gateway of the system
+|"dns"|Dns server of the system
+|"userName"|Username if login required
+|"pwd"|Password if login required
+|"ssid"|SSID if wifi selected
+|"timeServer"|Url of the sntp server or pool
+|"timeOffset"|Time offset of zone|seconds
+|"timeDST"|Daylight saving time|0 = off, 1 = on
+|"syslogLevel"|Level of the syslog|0 = Off, 1 = Small, 2 = Detail, 3 = Atomic
+|"syslogIp"|Ip address of the syslog client
+|"syslogPort"|:Port of the syslog client
+
+#### "/protconfig" : saves the protocol configuration
+
+|command|description|units|
+|---|---|---|
+|"prot"|Kind of protocol|0 = off, 1 = Mqtt
+|"ip"|Ip address of protocol client
+|"port"|Port of the protocol client
+|"interval"|Interval transfer data|ms
+|"pubTarget|Transfer target data|0  = no, 1 = yes
+|"user"|Username if authorization required
+|"pwd"|Password if authorization required
+
+#### "/valvesconfig" : saves the valves configuration
+
+|command|description|units|
+|---|---|---|
+|"calib"|Calibration data
+|"dayOfCalib"|Days of calibration|Bit 0 = Sunday, Bit 1 = Monday, Bit 2 = Tuesday, Bit 3 = Wednesday, Bit 4 = Thursday, Bit 6 = Friday, Bit 7 = Saturday
+|"hourOfCalib"|Hour of calibration
+|"cycles"|Number of movements of the motor to start the calibration
+|"motor"|Characteristics of the motor
+|"lowC"|Max. current value of low position
+|"highC"|Max. current value of high position
+|"valves"|Array of valve configuration
+|"name"|Name of the valve
+|"active"|Activate the valve
+|"tIdx1"|Index 1 of the assigned temperature sensor|1..34, 0 = not assigned
+|"tIdx1"|Index 2 of the assigned temperature sensor1..34, 0 = not assigned
+
+#### "/tempsconfig" : saves the temps configuration
+
+|command|description|units|
+|---|---|---|
+|"name"|Name of the sensor
+|"active"|Activate the sensor
+|"id"|Sensor id
+|"offset"|Offset, will be added to the measured value|°C
+
+#### "/cmd" : execute a command
+
+|command|description|units|
+|---|---|---|
+|example payload : {"action":"reboot"}
+|"action"|
+|"reboot"|reboots the system
+|"saveCfg"|saves the configuration
+|"resetCfg"|resets the configuration except network settings
+|"restoreCfg"|restore factory settings
+|"fDelete":filename|deletes a file
+|"clearFS"|delete all files
+|"scanTempSensors"|scans the temperature sensors
+|"vCalib"|execute the valve calibration
+|"vAssembly"|sets all valves to assembly position
+
+***
+
+## command list STM32
+
 ## STM32 supports following commands
+
 |command|description|answer|units|comment|
 |---|---|---|---|---|
 |stgtp x y|set target position of valve *x* to *y* %|-|x=0...11, y=0...100%||
 |gtgtp x|get target position of valve *x*|gtgtp *target_position*|0...100%||
-|gvlvd x|get data of valve *x*|gvlvd *position meancurrent status 1st_temperature 2nd_temperature*|*% mA - 1/10°C 1/10°C*||
+|gvlvd x|get data of valve *x*|gvlvd *valve_index position meancurrent status 1st_temperature 2nd_temperature*|*% mA - 1/10°C 1/10°C*||
+|stons|start new 1-wire search|-|-|get result via *gonec* and *goned*|
 |gonec|get count of 1-wire devices|gonec *count*|*-*||
-|goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *6ByteHexAddress temperature*|*0x 0x 0x 0x 0x 0x 1/10°C*||
-|gvlon x|get 1-wire settings for valve *x*|gvlon *6ByteHexAddressFirstSensor* - *6ByteHexAddressSecondSensor*|*0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x 0x*||
-|stsnx x y|set first 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35||
-|stsny x y|set second 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...35||
-|staop|set all valves open|-|-|usefull for installation, opens quickly all valves so they can be mounted|
+|goned x|get data (adress and temperature) of 1-wire sensor with index *x*|goned *8ByteHexAddress temperature*|*hex 1/10°C*||
+|gvlon x|get 1-wire settings for valve *x*|gvlon *x 8ByteHexAddressFirstSensor 8ByteHexAddressSecondSensor*|*- hex hex*|example: 'gvlon 2 28-84-37-94-97-FF-03-23 00-00-00-00-00-00-00-00 '|
+|stsnx x y|set first 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...33|will be saved in eeprom|
+|stsny x y|set second 1-wire sensor index *y* to valve *x*|-|x=0...11, y=0...33|will be saved in eeprom|
+|staop x|set valve *x* open|-|0...11, 255|usefull for installation, opens quickly one (x) or all valves (x=255) so they can be mounted|
+|staln x|set learning for valve *x*|-|0...11, 255|performs learning cycle for one (x) or all valves (x=255)|
+|stlnm x|set learning movement counter|-|0...32000|after x movement requests to valve a new learning cycle will be perfomed|
+|stlnt x|set learning time|-|0...1000000|after x seconds a new learning cycle will be perfomed|
 |gvers|get version|gvers *version_string*|tbd||
+|smotc x y|set motor characteristics: *x* endpoint threshold low (inv), *y* endpoint threshold high|-|x=5...50 y=5...50|endpoint detection will be performed with these current values, will be saved in eeprom|
+|gmotc|get motor characteristics|-|*x* endpoint threshold low (inv), *y* endpoint threshold high|see *smotc*|
+|stvls|set valve sensors to valve *x*|-|-|example: 'stvls 1 00-00-00-00-00-00-00-00 00-00-00-00-00-00-00-00 '|
 
+## OTA update of ESP32 and STM32
 
-# OTA update of ESP32 and STM32
 ## STM32 OTA
+
 - STM32 can be reset via ESP32 pin
 - STM32 BOOT0 pin is not accessible by ESP32 cause of BlackPill board design
 - the alternative approach: STM32 jumps to internal bootloader after receiving a magic sequence from ESP32 right after start-up

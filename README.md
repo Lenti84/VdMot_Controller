@@ -13,35 +13,30 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
   - so positioning accuracy should be (very) good
 - valve current is evaluated and can be monitored
 - interfaces
-  - actual: MQTT
-  - future: MODBUS, CAN
+  - actual: MQTT, JSON
+  - optional: MODBUS-RTU via RS485, CAN via external MCP2515
 - integrated 1-wire master
   - a lot of additional temperature sensors like DS18B20 could be connected
   - sensor values can be linked to a valve for combined data evaluation
   - usefull for hydraulic balancing ("Hydraulischer Abgleich")
   
 ## Status
-- b-sample hardware is working with original HmIP-VdMot actuator
-- c-sample hardware samples ordered (see hardware section)
+- b-sample hardware is working
+- c-sample hardware is working
+- c2-sample hardware finished and working
 - valve learning, opening and closing is working
-- connection to [FHEM](https://fhem.de/) established via MQTT
-  - topics:
-    - /VdMotFBH/valve/x/target      --> set target position for valve (0...100 %)
-    - /VdMotFBH/valve/x/actual      --> get actual position of valve (0...100 %) 
-    - /VdMotFBH/valve/x/state       --> get actual state of valve (IDLE, OPENING, CLOSING, BLOCKING, OPENCIRCUIT, UNKNOWN)
-    - /VdMotFBH/valve/x/meancur     --> get mean current of valve (mA)
-    - /VdMotFBH/valve/x/temperature --> get temperature of linked 1-wire sensor (1/10 °C)
-    - x = valve number
-- first productive test still pending
-- tests of 2 actuators done, see [system/actuators.md](./system/actuators.md)
+- connection to [FHEM](https://fhem.de/) or [IOBroker] established via MQTT
+- read and set values via JSON
+- first productive test passed
+- tests of 2 different actuators done, see [system/actuators.md](./system/actuators.md)
 - one wire sensors working
-  - each sensor temperature can be coupled to a valve
+  - sensors can be coupled to a valve
   - therefore the sensor adresses are stored and assigned at startup
-- eeprom working (and changed to I2C type)
-- programming of STM32 by ESP32 first tests successfully performed
-- change from STM32F103 to STM32F401 due to procurement issues
-- simple test of RS485 interface with modbus master sucessfully performed
+- eeprom working
+- STM32 can be flashed by ESP32 via WebUI without additional hardware
+- simple test of RS485 interface with modbus-rtu master sucessfully performed
 - simple test of CAN interface via MCP2515 sucessfully performed
+- replaced relay with fet transistors
 
 ## Hardware
 - find description of hardware here [hardware/hardware.md](./hardware/hardware.md)
@@ -49,25 +44,23 @@ I wanted a pure offline system (no cloud connection) and to be free of the const
 ## Software
 For details please see [software.md](./software.md)
 - written in C / C++
-- not pretty (yet) ... i'm more the hardware guy ;-)
 - uses great arduino libraries
 - developed using PlatformIO
-- STM32 BluePill
+- STM32 BlackPill
   - controls the valves / dc-motors
     - endstop by real current measurement
     - counting motor revolutions by back-EMF
-  - controlls DS2482-100 1-wire bus master ic
-  - serving simple terminal for debugging purposes
-  - future
-    - so many things, tbd
-- ESP32
-  - communication with MQTT broker
-  - future
-    - visualize system status
-    - json interface
-    - OTA software update
-    - flash STM32
-
+    - state detection
+  - controlls 1-wire devices via GPIO
+    - optional via DS2482-100 1-wire bus master ic
+  - 
+- ESP32 / WT32-ETH01
+  - communication with MQTT broker or JSON interface
+  - visualize system status
+    - valve state
+    - temperature sensors
+    - optional: integrated control algorithm 
+  - OTA software update (of ESP32 and STM32)
 
 ## License
 This project is licensed under the terms of the GNU General Public License v3.0 license.

@@ -87,6 +87,8 @@ int16_t eepromsetup () {
 	// EEPROM_DEBUG("Finish to write:");
 	// EEPROM_DEBUG(millis());
 	// EEPROM_DEBUG("\r\n");
+
+	eep_content.status = E_INIT;
 	
   return 0;
 }
@@ -97,6 +99,7 @@ int16_t eepromloop() {
     #define E_INIT      0
     #define E_IDLE      1
     #define E_READCFG   2
+	#define E_WRITECFG  3
 
     static int eepromstate = E_INIT;
 
@@ -124,7 +127,10 @@ int16_t eepromloop() {
                     break;
 
         case E_IDLE:                  
-                    eepromstate = E_IDLE;
+                    if (eep_content.status == E_CHANGED) {
+						eepromstate = E_WRITECFG;
+					}
+					
                     break;
 
 
@@ -132,6 +138,17 @@ int16_t eepromloop() {
 
 
                     break;
+
+
+		case E_WRITECFG:
+					
+					eeprom_write_layout (&eep_content);
+
+					eep_content.status = E_VALID;					
+					eepromstate = E_IDLE;
+
+                    break;
+
 
         default:    eepromstate = E_IDLE;
                     break;
@@ -207,6 +224,7 @@ uint8_t eeprom_mark (void) {
 int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 
 	uint8_t buf[100];
+	uint16_t* pb;
 	uint16_t x, y;
 	uint16_t scnt;
 	uint16_t address;
@@ -226,6 +244,13 @@ int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 		buf[x] = (uint8_t) (lay->OneWireCfg[y]);
 		x++;
 	}
+
+	// current bounds
+	buf[x++] =  lay->currentbound_low_fac;
+	buf[x++] =  lay->currentbound_high_fac;
+	pb=(uint16_t*) &buf[x];
+	*pb = lay->numberOfMovements;
+	x+=2; 
 
   	//eep.write(address, buf, x);
 	eeprom.writeBlock(address, buf, x);
@@ -298,6 +323,7 @@ int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 
 	uint8_t buf[100];
+	uint16_t* pb;
 	uint16_t x, y;
 	uint16_t scnt;
 	uint16_t address;
@@ -307,7 +333,7 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 	address = EE_GENERALDATA_ADR;
 
 	// first read base layout
-	x = 1 + sizeof(lay->descr) + sizeof(lay->OneWireCfg);
+	x = 1 + sizeof(lay->descr) + sizeof(lay->OneWireCfg) + sizeof(lay->currentbound_low_fac) + sizeof(lay->currentbound_high_fac)+ sizeof(lay->numberOfMovements);
 	//eep.readByteArray(address, buf, x);
 	eeprom.readBlock(address, buf, x);
 
@@ -321,7 +347,12 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 		lay->OneWireCfg[y] = buf[x];
 		x++;
 	}
-
+		// current bounds
+	lay->currentbound_low_fac =  buf[x++];
+	lay->currentbound_high_fac = buf[x++];
+	pb=(uint16_t*) &buf[x];
+	lay->numberOfMovements = *pb;
+	x+=2; 
 	// then read sensor data
 	address = EE_GENERALDATA_ADR + x;
 	
@@ -380,7 +411,16 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 		address += x;
 	}
 
+	eep_content.status = E_VALID;
+
 	EEPROM_DEBUG("finished\r\n");
 
 	return 0;
+}
+
+// call everytime some eeprom content was changed
+void eeprom_changed () {
+
+	eep_content.status = E_CHANGED;
+
 }

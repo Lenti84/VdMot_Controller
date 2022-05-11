@@ -1,0 +1,2251 @@
+
+<!DOCTYPE html>
+
+<html>
+<head>
+<link rel="icon" href="data:,">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+	body {
+	  font-family: sans-serif;
+	  margin:0;
+	}
+	/* Add a black background color to the top navigation */
+	.topNav {
+		background-color: #333;
+		overflow: hidden;
+	}
+
+	/* Style the links inside the navigation bar */
+	.topNav a {
+		float: left;
+		display: block;
+		color: #f2f2f2;
+		text-align: center;
+		padding: 14px 16px;
+		text-decoration: none;
+		font-size: 17px;
+	}
+
+	/* Change the color of links on hover */
+	.topNav a:hover {
+		background-color: #ddd;
+		color: black;
+	}
+
+	/* Hide the link that should open and close the topNav on small screens */
+	.topNav .icon {
+		display: none;
+	}
+
+	/* When the screen is less than 600 pixels wide, hide all links, except for the first one ("Home"). Show the link that contains should open and close the topNav (.icon) */
+	@media screen and (max-width: 600px) {
+	  .topNav a:not(:first-child) {display: none;}
+	  .topNav a.icon {
+		float: right;
+		display: block;
+	  }
+	}
+
+	/* The "responsive" class is added to the topNav with JavaScript when the user clicks on the icon. This class makes the topNav look good on small screens (display the links vertically instead of horizontally) */
+	@media screen and (max-width: 600px) {
+	  .topNav.responsive {position: relative;}
+	  .topNav.responsive a.icon {
+		position: absolute;
+		right: 0;
+		top: 0;
+	  }
+	  .topNav.responsive a {
+		float: none;
+		display: block;
+		text-align: left;
+	  }
+	}
+	
+	/* Style the tab content (and add height:100% for full page content) */
+	.tabContent {
+	  color: white;
+	  display: none;
+	  padding: 10px 20px;
+	  height:100%;
+	}
+	
+	/* Style tab links */
+	.tabLink {
+	  background-color: #555;
+	  color: white;
+	  float: left;
+	  border: none;
+	  outline: none;
+	  cursor: pointer;
+	  padding: 14px 16px;
+	  font-size: 17px;
+	  width: 12%;
+	}
+
+	.tabLink:hover {
+	  background-color: #777;
+	}
+
+	.tabLink:hover {
+	  background-color: #777;
+	}
+	
+	.tabframe {
+	  border: white 2px solid;
+	  padding: 5px;
+	  border-radius: 5px;
+	  text-align: center;
+	}
+	
+	.tabiframe {
+	  border-top: white 1px solid;
+	  padding: 5px;
+	  text-align: center;
+	}
+	
+	.form-input{
+		width: 100px;
+	}
+	.form-input1{
+		width: 300px;
+	}
+	
+	.rtabframe {
+		border: white 2px solid;
+		padding: 5px;
+		border-radius: 5px;
+		text-align: center;
+	}
+	.rtabframe2 {
+		border: white 2px solid;
+		padding: 5px;
+		border-radius: 5px;
+		text-align: center;
+		grid-column : span 2;
+	}
+	
+	.rtabframe3 {
+		border: white 2px solid;
+		padding: 5px;
+		border-radius: 5px;
+		text-align: center;
+		grid-column : span 3;
+	}
+	
+	table.tabTable td {
+		padding-left: 5px;
+		height:21px;
+	}
+	
+	table.tabTable1 {
+		width : 100%
+	}
+	
+	table.tabTable1 td {
+		padding-left: 5px;
+		height:21px;
+		text-align: center;
+		width : 200px;
+	}
+	
+	table.tabTable1 th {
+		padding-left: 5px;
+		height:21px;
+		text-align: center;
+		width : 140px;
+	}
+	
+	.hide {
+		display: none;
+	}
+	
+	.show {
+		display: block;
+		text-align: center;
+		padding-left: 5px;
+	}
+	
+   .buttonclass:hover {
+		padding: 0.6em;
+		font-weight: bold;
+		background-color: #fff;
+		color: green;
+	}
+
+	.buttonclass {
+		font-weight: bold;
+		background-color: #79B935;
+		color: #fff;
+		margin: 2px;
+		padding: 0.6em;
+		border-radius: 5px;
+
+	}
+	.buttonclass:disabled {
+		font-weight: bold;
+		background-color: #79B900;
+		color: #c0c0c0;
+	}
+
+	.checkboxgroup{
+		width: 11em;
+		height : 12em;
+		overflow-y: auto;
+		text-align: left;
+	}
+	.checkboxgroup p{
+		width: 10em;
+		text-align: left;
+	}
+	.checkboxgroup label{
+		width: 10em;
+		float: left;
+	}
+
+	/* The Modal (background) */
+	.modal {
+	  display: none; /* Hidden by default */
+	  position: fixed; /* Stay in place */
+	  z-index: 1; /* Sit on top */
+	  padding-top: 100px; /* Location of the box */
+	  left: 0;
+	  top: 0;
+	  width: 100%; /* Full width */
+	  height: 100%; /* Full height */
+	  overflow: auto; /* Enable scroll if needed */
+	  background-color: rgb(0,0,0); /* Fallback color */
+	  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+	}
+
+	/* Modal Content */
+	.modal-content {
+	  background-color: #fefefe;
+	  margin: auto;
+	  padding: 20px;
+	  border: 1px solid #888;
+	  width: 80%;
+	}
+
+	/* The Close Button */
+	.close {
+	  color: #aaaaaa;
+	  float: right;
+	  font-size: 28px;
+	  font-weight: bold;
+	}
+
+	.close:hover,
+	.close:focus {
+	  color: #000;
+	  text-decoration: none;
+	  cursor: pointer;
+	}
+	
+   .container {  
+		display: grid;  
+		grid-gap: 2px;  
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+		grid-template-rows:  masonry;
+	}
+	
+	.container1 {  
+		display: grid;  
+		grid-gap: 2px;  
+		grid-template-columns: repeat(auto-fit, 300px);
+		grid-template-rows:  masonry;
+	}
+	
+	.container2 {  
+		display: grid;  
+		grid-gap: 2px;  
+		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+		grid-template-rows:  masonry;
+	}
+	
+	.container3 {  
+		display: grid;  
+		grid-gap: 2px;  
+		grid-template-columns: repeat(auto-fit, 200px);
+		grid-template-rows:  masonry;
+	}
+	
+	#Home {background-color: gray;}
+	#Status {background-color: gray;}
+	#Network {background-color: gray;}
+	#Config {background-color: gray;}
+	#Control {background-color: gray;}
+	#Update {background-color: gray;}
+	#About {background-color: gray;}
+
+</style>
+
+</head>
+<body>
+
+	<div class="topNav" id="mytopNav">
+	  <a href="#home" class="tabLink" id="defaultOpen" name="Home" onclick="openPage('Home', this, 'red')">Home</a>
+	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green')">Status</a>
+	  <a href="#network" class="tabLink" id="networkOpen" name="Network" style ="display:none" onclick="openPage('Network', this, 'blue')">Network</a>
+	  <a href="#config" class="tabLink" id="configOpen" name="Config" style ="display:none" onclick="openPage('Config', this, 'gray')">Config</a>
+	  <a href="#control" class="tabLink" id="controlOpen" name="Control" style ="display:none" onclick="openPage('Control', this, 'gray')">Control</a>
+	  <a href="#update" class="tabLink" id="updateOpen" name="Update" style ="display:none" onclick="openPage('Update', this, 'cyan')">Update</a>
+	  <a href="#about" class="tabLink" id="aboutOpen" name="About" onclick="openPage('About', this, 'darkgray')">About</a>
+	  <a href="javascript:void(0);" class="icon" onclick="resptopNav()">&#9776;</a>
+	</div>
+
+	<div id="Home" class="tabContent">
+	<div class="container1">
+		<div class="rtabframe">
+		<h3>VDMot Controller</h3>
+		<table id="homeInfo" class="tabTable">
+			<tr>
+				<th>Station</th>
+				<td id="sysStation"></td>
+			</tr>
+			<tr>
+				<th>Time</th>
+				<td id="locTime"></td>
+			</tr>
+			<tr>
+				<th>Up Time</th>
+				<td id="upTime"></td>
+			</tr>
+			<tr>
+				<td>
+				<input type="button" class="buttonclass" id="login-button" style ="display:none" value="Login" title="Login" />
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div class="rtabframe">
+		<h3>WT32 Controller</h3>
+		<table id="homeInfo" class="tabTable">
+			<tr>
+				<th>Version</th>
+				<td id="sysWt32-Version"></td>
+			</tr>
+			<tr>
+				<th>Heap</th>
+				<td id="heap"></td>
+				<th>min</th>
+				<td id="min-heap"></td>
+			</tr>	
+			<tr id="tr-rssi" class="hide">
+				<th>RSSI</th>
+				<td id="rssi"></td>
+			</tr>
+		</table>
+		</div>
+		<div class="rtabframe">
+		<h3>STM32 Controller</h3>
+		<table id="homeInfo" class="tabTable">
+			<tr>
+				<th>Version</th>
+				<td id="sysSTM32-Version"></td>
+			</tr>
+		</table>
+		</div>
+	</div>
+	</div>
+	
+	<div id="Status" class="tabContent">
+	<div class="container3">
+		<div class="rtabframe3">  
+		<h3>Valves</h3>	
+		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		</table>
+		</div>
+		
+		<div class="rtabframe" style="overflow-y:auto" id="tempStatusTabFrame">  
+		<h3>Temperature</h3>
+		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		</table>
+		</div>
+	</div>
+	</div>
+	
+	<div id="Network" class="tabContent">
+		<div class="tabframe" style="width: 300px;"> 
+		<h3>Network</h3>
+		<table id="netInfo" class="tabTable1">
+			<tr>
+				<th>Eth/Wifi</th>
+				<td id="net-EthWifi"></td>
+			</tr>
+			<tr>
+				<th>DHCP</th>
+				<td id="net-dhcp"></td>
+			</tr>
+			<tr>
+				<th>IP</th>
+				<td id="net-ip"></td>
+			</tr>
+			<tr>
+				<th>MAC</th>
+				<td id="net-MAC"></td>
+			</tr>
+			<tr>
+				<th>Subnet Mask</th>
+				<td id="net-mask"></td>
+			</tr>
+			<tr>
+				<th>Gateway</th>
+				<td id="net-gw"></td>
+			</tr>
+			<tr>
+				<th>DNS</th>
+				<td id="net-dns"></td>
+			</tr>
+			</table>
+			<table id="net-broker" class="tabTable1" style="display:none">
+			<tr>
+				<th>MQTT</th>
+				<td id="net-broker-status"></td>
+			</tr>
+			
+		</table>
+		</div>
+	</div>
+	
+	<div id="Config" class="tabContent">
+	<div class="container">
+		<div class="rtabframe">
+		<h3>Network</h3>
+		<table id="netConfig" class="tabTable1">
+			<tr>
+				<th>Station</th>
+				<td>
+				<input type="text" maxlength="20" class="form-input" id="sysCfg-StationName" name="sysCfg-StationName" />
+				</td>
+			</tr>
+			<tr>
+				<th>User name</th>
+				<td>
+				<input type="text" maxlength="64" class="form-input" id="netcfg-UserName" name="netcfg-UserName" />
+				</td>
+			</tr>
+			<tr>
+				<th>User password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="netcfg-UserPwd" name="netcfg-UserPwd"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Re-type user password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="netcfg-UserPwd2" name="netcfg-UserPwd2"/>
+				</td>
+			</tr>
+			<tr>
+				<th>DHCP</th>
+				<td>
+				<select id="netcfg-dhcp" style="width: 50px;">
+                    <option>OFF</option>
+                    <option>ON</option>
+				</select>
+				</td>
+            </tr>                    
+			<tr>
+				<th>IP</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-ip" name="netcfg-ip" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Subnet Mask</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-mask" name="netcfg-mask" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Gateway</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-gw" name="netcfg-gw" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>DNS</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-dns" name="netcfg-dns" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr></tr>
+			<tr> 
+				<th>Eth/Wifi</th>
+				<td>
+				<select id="netcfg-EthWifi" style="width: 50px;">
+					<option>Auto</option>
+                    <option>Eth</option>
+                    <option>Wifi</option>
+				</select>
+				</td>
+            </tr>  
+		</table>
+		
+		<table id="netcfg-wifi" style="display:none;" class="tabTable1">
+				<tr>
+				<th>Wifi SSID</th>
+				<td>
+				<input type="text" maxlength="64" class="form-input" id="netcfg-WifiSSID" name="netcfg-WifiSSID" />
+				</td>
+			</tr>
+			<tr>
+				<th>Wifi password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="netcfg-WifiPwd" name="netcfg-WifiPwd"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Re-type wifi password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="netcfg-WifiPwd2" name="netcfg-WifiPwd2"/>
+				</td>
+			</tr>
+		</table>
+		<tr><th></th></tr>
+		
+		<div class="tabiframe"> 
+		<table id="netcfg-time" class="tabTable1">
+			
+			<tr><th>Time server</th></tr>
+			<tr>
+				<th>Name</th>
+				<td>
+				<input type="text" maxlength="64" class="form-input" id="netcfg-TimeServer" name="netcfg-TimeServer" />
+				</td>
+			</tr>
+			<tr>
+				<th>Time offset (s)</th>
+				<td>
+				<input type="number" class="form-input" id="netcfg-timeOffset" name="netcfg-timeOffset" placeholder="xxxxxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>DST offset (s)</th>
+				<td>
+				<input type="number" class="form-input" id="netcfg-daySTOffset" name="netcfg-daySTOffset" placeholder="xxxxxx"/>
+				</td>
+			</tr>
+		</table>
+		</div>
+		
+		<div class="tabiframe"> 
+		<table id="netcfg-syslog" class="tabTable1">		
+			<tr>
+				<th>Syslog server</th>
+				<td>
+				<select id="netcfg-syslog-select">
+                    <option>Off</option>
+                    <option>Small</option>
+					<option>Detail</option>
+                    <option>Atomic</option>
+				</select>
+				</td>
+            </tr> 
+		</table>
+		<table id="netcfg-syslog-table" style="display:none;" class="tabTable1">
+				<tr>
+				<th>Client IP</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-syslog-ip" name="netcfg-syslog-ip" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Port</th>
+				<td>
+				<input type="text" class="form-input" id="netcfg-syslog-port" name="netcfg-syslog-port" placeholder="xxxx"/>
+				</td>
+			</tr>
+
+		</table>
+		</div>
+		</div>
+
+		<div class="rtabframe" style="height:300px;">
+		<h3>Protocol</h3>
+
+		<table id="protConfig" class="tabTable1">		
+			<tr>
+				<th>Data protocol</th>
+				<td>
+				<select id="protcfg-dataProt">
+                    <option>none</option>
+                    <option>MQTT</option>
+				</select>
+				</td>
+            </tr> 
+		</table>
+		<table id="protcfg-Broker" style="display:none;" class="tabTable1">
+				<tr>
+				<th>Broker IP</th>
+				<td>
+				<input type="text" class="form-input" id="protcfg-Ip" name="protcfg-Ip" placeholder="xxx.xxx.xxx.xxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Broker Port</th>
+				<td>
+				<input type="text" class="form-input" id="protcfg-Port" name="protcfg-Port" placeholder="xxxxx"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Interval (ms)</th>
+				<td>
+				<input type="number" class="form-input" min="100" id="protcfg-Interval" name="protcfg-Interval"/>
+				</td>
+			</tr>
+			<tr>
+				<th>User name</th>
+				<td>
+				<input type="text" class="form-input" id="protcfg-User" name="protcfg-User"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="protcfg-Pwd" name="protcfg-Pwd"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Re-type password</th>
+				<td>
+				<input type="password" maxlength="64" class="form-input" id="protcfg-Pwd2" name="protcfg-Pwd2"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Publish target</th>
+				<td>
+				<input type="checkbox" id="protcfg-pubTarget" name="protcfg-pubTarget"/>
+				</td>
+			</tr>
+		</table>
+		</div>
+
+		<div class="rtabframe" style="height:460px;">
+		<h3>Valves</h3>
+		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		
+		</table>
+		<table class="tabTable"
+			<tr>
+			<td>
+			<input type="button" class="buttonclass" id="valvesDetect" value="Scan" title="Detect valves" />
+			</td>
+			</tr>
+		</table>
+		</div>
+		
+		<div class="rtabframe" id ="motorTabFrame" style="height:400px">
+			<h3>Motor</h3>
+		
+			<table id="cfgValvesTable1" class="tabTable"
+			<tr>
+				<th>Calibration</th>
+			</tr>
+			</table>
+			<table>
+			<tr>
+			<fieldset class="checkboxgroup" title="Next Calibration">
+				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
+				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour of next calibration"> h</label>
+				<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
+				<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
+				<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
+				<label><input type="checkbox" id="vCfg-d3" name="theGroup">Wednesday </label>
+				<label><input type="checkbox" id="vCfg-d4" name="theGroup">Thursday </label>
+				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
+				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
+			</fieldset>
+			</tr>
+			</table>
+			<table class="tabTable">
+			<tr>
+				<th>Max.current factor</th>
+			</tr>
+			</table>
+			<table>
+			<tr>
+			<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low </label>
+			<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
+			</tr>
+			<tr></tr>
+			</table>
+			
+			<table id="cfgValvesTable2" class="tabTable"
+			<tr>
+				<td>
+                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start manual calibration of all valves" />
+                </td>
+				<td>
+                <input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set all valves to assembly position" />
+                </td>
+			</tr>
+			</table>
+		</div>
+		
+			<div class="rtabframe2" style="height:495px">
+			<h3>Temperature sensor</h3>
+			<div style="height:390px;overflow-y:scroll">
+			<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
+			
+			</table>
+			</div>
+			<div class="tabiframe">	
+				<table id="cfgTSensorTable1" class="tabTable">
+				<tr>
+					<td>
+					<input type="button" class="buttonclass" id="tempSensorScan" value="Scan" title="Scan temperature sensors" />
+					</td>
+					<td>
+					<select id="sysCfg-CF">
+						<option>Celsius</option>
+						<option>Fahrenheit</option>
+					</select>
+					</td>
+				</tr>
+				</table>
+			</div>
+		</div>
+		
+		<div class="rtabframe" id ="fileTabFrame" style="height:250px">
+		<h3>Files</h3>
+		<table id="filesConfig" class="tabTable">
+			<tr>
+			<td>
+			<label>Please select one file:
+			<tr>
+			<td>
+			<select id="fileSelect" size="5">
+			  
+			</select>
+			</td>
+			</label>
+			</tr>
+			</tr>
+			<tr>
+				<td>
+				<input type="button" class="buttonclass" id="fileDelete" value="Delete file" title="Delete selected file"/>
+				
+				<input type="button" class="buttonclass" id="fileAllDelete" value="Delete all files" title="Delete all files"/>
+				</td>
+
+			</tr>
+		</table>
+		</div>
+		
+		<div class="rtabframe" style="height:250px">
+		<h3>System</h3>
+		<table id="sysConfig" class="tabTable">
+			<tr>
+				<td>
+                <input type="button" class="buttonclass" id="sysReboot" value="Reboot system" title="Reboot system" />
+                </td>
+			</tr>
+			<tr>
+                <td>
+                <input type="button" class="buttonclass" id="saveConfig" value="Save config" title="Save all settings."/>
+                </td>
+            </tr>
+			<tr></tr>
+			<tr>
+                <td>
+                <input type="button" class="buttonclass" id="factoryRestore" value="Restore factory default settings" title="Reset config including network settings."/>
+                </td>
+            </tr>
+			<tr>
+				<td>
+                <input type="button" class="buttonclass" id="resetConfig" value="Reset config" title="Reset config excluding network settings." />
+                </td>
+			</tr>	
+		</table>
+		</div>
+		</div>
+	</div>
+	
+	<div id="Control" class="tabContent">
+	<div class="container">
+		<div class="rtabframe">  
+			<h3>Valves</h3>	
+			<table id="cfgValvesControlTable" class="tabTable" border="3" frame="box" style="text-align:center">
+			</table>
+			<table class="tabTable">
+			<tr>
+				<td>
+				<input type="button" class="buttonclass" id="saveVCtrlConfig" value="Save valve control settings" title="Save settings for valves control."/>
+				</td>
+				<td>
+					<label>Heat Control</label>
+					<select id="VCtrlConfigHeatControl" title="Heat valves control manual/on/off.">
+					<option>Manual</option>
+					<option>On</option>
+					<option>Off</option>
+					</select>
+				
+				</td>
+				<td>
+					<label>Park Position</label>
+					<input type="number" class="form-input" style="width:50px;" min="0" max="100" id="VCtrlConfigParkPosition" title="Park position if Heat Control is off."/>
+				</td>
+			</tr>
+			</table>
+		</div>
+	</div>
+	</div>
+	
+	<div id="Update" class="tabContent">
+		<div class="rtabframe" style="width: 250px;">
+		<h3>Update</h3>
+		<table id="sysUpdate" class="tabTable">
+			<tr>
+				<td>
+                <input type="button" class="buttonclass" id="update-WT32" value="Update WT32" title="Update WT32" />
+                </td>
+			</tr>
+			<tr>
+				<td>
+                <input type="button" class="buttonclass" id="update-STM32" value="Update STM32" title="Update WT32" />
+                </td>
+			</tr>
+		</table>
+		</div>
+	</div>
+	
+	<div id="About" class="tabContent">
+		<div class="tabframe" style="width: 450px;">
+		<h3>About this VDMot controller</h3>
+		<table id="aboutInfo" class="tabTable">
+		<p> 
+		THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR
+		IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+		OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+		IN NO EVENT SHALL THE DEVELOPER OR ANY CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+		INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+		(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+		SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+		HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+		STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+		IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+		THE POSSIBILITY OF SUCH DAMAGE. 
+		</p>
+		<p> 	
+		This program is free software: you can redistribute it and/or modify
+		it under the terms of the GNU General Public License as published by
+		the Free Software Foundation, either version 3 of the License.
+		</p>
+		<p> 
+		See the GNU General Public License for more details.
+
+		You should have received a copy of the GNU General Public License
+		along with this program.  If not, see http://www.gnu.org/licenses/.
+		</p>
+		<p>
+		Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+		</p>	
+		<p>
+		Contributor : SurfGargano
+		</p>
+		</table>
+		</div>
+	</div>
+
+	<div id="pwdModal" class="modal">
+	  <div class="modal-content">
+		<span class="close">&times;</span>
+		<p>Please type user and password</p>
+		<table>
+			<th>User name</th>
+				<td colspan='10'>
+				<input type="text" maxlength="64" class="form-input1" id="dialogUserInput" name="dialogUserInput" />
+				</td>
+			</tr>
+			<tr>
+				<th>User password</th>
+				<td colspan='10'>
+				<input type="password" maxlength="64" class="form-input1" id="dialogPwdInput" name="dialogPwdInput"/>
+				</td>
+			</tr>
+			<tr>
+			<td></td><td>
+	          <input type="button" class="buttonclass" id="dialogOk" value="ok" title="Please enter user name" />
+			</td><td>
+			 <input type="button" class="buttonclass" id="dialogCancel" value="cancel" title="Please enter password" />
+			</td>
+			</tr>
+		</table>
+	  </div>
+
+	</div>
+
+
+	<script>		
+				
+		var id = function(elid) {
+					var ret = document.getElementById(elid);
+                    if(!ret){
+                        console.log('No element found with id ' + elid);
+                    }
+                    return ret;
+                };		
+				
+		var WifiPwdHasChanged=false;
+		var UserPwdHasChanged=false;
+		var brokerPwdHasChanged=false;
+		var TIdxHasChanged=false;
+		var motorCharsHasChanged=false;
+		var movCalibHasChanged=false;
+		var showAllTabs=window.location.href.startsWith('file');
+		var getStatusInterval;
+		var dataTempSensorsID=null;
+		const NoOfMaxSensors = 34;
+		var stmStatus = 0;
+		const cfgVCKiCol= 12;
+		
+		// Get the modal
+		var modal = id("pwdModal");
+		// Get the <span> element that closes the modal
+		var span = document.getElementsByClassName("close")[0];
+				
+		/* Toggle between adding and removing the "responsive" class to topNav when the user clicks on the icon */
+		function resptopNav() {
+			var x = id("mytopNav");
+			if (x.className === "topNav") {
+				x.className += " responsive";
+			} else {
+				x.className = "topNav";
+			}
+		}
+		
+		function showThisTab(pageName)
+		{
+			let showTab = (pageName=="Home") || (pageName=="About") || showAllTabs;
+			return showTab
+		}
+		
+		function showAllTabsNow ()
+		{
+			let tabLinks = document.getElementsByClassName("tabLink");
+			for (i = 0; i < tabLinks.length; i++) {
+				if ((showThisTab(tabLinks[i].name)))
+				{
+					tabLinks[i].style.display = "block";
+				} else 
+				{
+					tabLinks[i].style.display = "none";
+				}
+			}
+		}
+		
+		function openPage(pageName,elmnt,color) {
+		  let i, tabContent, tabLinks;
+		  tabContent = document.getElementsByClassName("tabContent");
+		  for (i = 0; i < tabContent.length; i++) {
+			tabContent[i].style.display = "none";
+		  }
+		  tabLinks = document.getElementsByClassName("tabLink");
+		  for (i = 0; i < tabLinks.length; i++) {
+			tabLinks[i].style.backgroundColor = "";
+		  }
+		  if (showThisTab(pageName)===true) {
+			  id(pageName).style.display = "block";
+			  elmnt.style.backgroundColor = color;
+		  }
+		}
+				
+		// Get the element with id="defaultOpen" and click on it
+		id("defaultOpen").click();
+				
+		function _isContains(json, keyname) {
+			return Object.keys(json).some(key => {
+				return typeof json[key] === 'object' ? 
+				_isContains(json[key], keyname, value) : key === keyname;
+			});
+		}
+		
+		function show_hide_column(tableId,col_no, do_show) {
+		   let tbl = id(tableId);
+		   let col = tbl.col[col_no];
+		   if (col) {
+			 col.visible=do_show;
+		   }
+		}
+		
+		window.onload = function() {
+			OnStart();
+		}
+		
+		function OnStart() {
+			getSystemConfig();
+			makeTempsTable(0);
+			makeCfgValvesTable();
+			makeValvesControlTable();
+			makeCfgTempTable();
+			getSystemInfo();
+			getSystemDynInfo();
+			getNetInfo();
+			getNetConfig();
+			getProtConfig();
+			getTempsConfig();
+			getValvesStatus();
+			getValvesControlConfig();
+			
+			getFSDir();
+			getStatusInterval = window.setInterval(getStatus, 2000);
+			generateOnClick();
+			showAllTabsNow();
+		}		
+		
+		function loadStmData() {
+			console.log("load stm data");
+			getTempSensorsID();
+			getTempsStatus();
+			getSystemInfo();
+			getValvesConfig();
+		}
+				
+		async function checkLogin() {
+			let login = {};
+			login.user = id("dialogUserInput").value;
+			login.pwd = id("dialogPwdInput").value;
+			res = await postJson("auth",JSON.stringify(login));
+			switch (res.auth) {
+				case 0 : alert ("User name and password wrong"); break;
+				case 1 : alert ("User name wrong"); break;
+				case 2 : alert ("Password wrong"); break;
+				case 3 : {	
+							showAllTabs= true;
+							showAllTabsNow();
+							break;
+						 }
+			}
+		}
+				
+		function ValidateIPaddress(inputText) {
+			var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+			if (inputText.value.match(ipformat)) {
+			  document.form1.text1.focus();
+			  return true;
+			} else {
+			  alert("You have entered an invalid IP address!");
+			  document.form1.text1.focus();
+			  return false;
+			}
+		}
+		
+		function makeValvesTable(valvesJson) {
+			const ValvesTable = id('valvesTable');
+			ValvesTable.innerHTML="";
+			for (let row=0; row<valvesJson.length+1; row++) { 
+				const thisRow = valvesTable.insertRow(0);
+				for (let i = 0; i < 9; i++) {
+					cell = thisRow.insertCell();
+				}
+			}
+			for (row=1;row<valvesJson.length+1;row++) {
+				let thiscell = ValvesTable.rows[row].cells[5];
+				let el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'setValveP' + row);
+				el.setAttribute('id', 'setValveP' + row);
+				el.setAttribute('size', '3');
+				el.setAttribute('maxlength' , '3');
+				el.setAttribute('min' , '0');
+				el.setAttribute('max' , '100');
+				el.setAttribute('style','height:15px');
+				el.setAttribute('readonly','true');
+				thiscell.appendChild(el);
+				thiscell = ValvesTable.rows[row].cells[6];
+				el = document.createElement('input');
+				el.setAttribute('type', 'button');
+				el.setAttribute('name', 'setValveButton-' + valvesJson[row-1].idx);
+				el.setAttribute('id', 'setValveButton-' + row);
+				el.setAttribute('style','height:20px;width:35px;visibility:hidden;');
+				el.setAttribute('value', 'Set');
+				el.setAttribute('onclick','setValve(this);');
+				thiscell.appendChild(el);
+				valvesTable.rows[row].cells[0].innerHTML = row;
+			}
+			valvesTable.rows[0].cells[0].textContent = 'No';
+			valvesTable.rows[0].cells[1].textContent = 'Name';
+			valvesTable.rows[0].cells[2].textContent = '%';
+			valvesTable.rows[0].cells[3].textContent = 'mA';
+			valvesTable.rows[0].cells[4].textContent = 'State';
+			valvesTable.rows[0].cells[5].innerHTML = 'Target %';
+			valvesTable.rows[0].cells[7].innerHTML = 'Temp1';
+			valvesTable.rows[0].cells[8].innerHTML = 'Temp2';
+			
+			thiscell = ValvesTable.rows[0].cells[5];
+			el = document.createElement('input');
+			el.setAttribute('type', 'checkbox');
+			el.setAttribute('name', 'activeSetValves');
+			el.setAttribute('id', 'activeSetValves');
+			el.setAttribute('onclick','activateSetValves();');
+			thiscell.appendChild(el);
+		}
+		
+		function makeTempsTable(NoOfSensors) {
+			const tempsTable = id('tempsTable');			
+			while (tempsTable.rows.length>0) { 
+					tempsTable.deleteRow(0);
+			}
+			for (row=0; row<NoOfSensors+1; row++) { 
+				const thisRow = tempsTable.insertRow(0);
+				
+				for (let i = 0; i < 3; i++) {
+					cell = thisRow.insertCell();
+					cell.innerHTML = '--';	
+				}
+			}
+			for (let row=1;row<NoOfSensors+1;row++) tempsTable.rows[row].cells[0].innerHTML = row;
+			tempsTable.rows[0].cells[0].textContent = 'No';
+			tempsTable.rows[0].cells[1].textContent = 'Name';
+			if (id("sysCfg-CF").selectedIndex==0)
+				tempsTable.rows[0].cells[2].textContent = 'C';
+			else
+				tempsTable.rows[0].cells[2].textContent = 'F';
+			if (NoOfSensors>12) tempsTable.style.height="430px";
+		}
+		
+		function makeCfgValvesTable() {
+			const cfgValvesTable = id('cfgValvesTable');	  
+			for (let row=0; row<13; row++) { 
+				const thisRow = cfgValvesTable.insertRow(0);
+				for (let i = 0; i < 5; i++) {
+					cell = thisRow.insertCell();
+				}
+			}
+			for (row=1;row<13;row++) {
+				cfgValvesTable.rows[row].cells[0].innerHTML = row;
+				let thiscell = cfgValvesTable.rows[row].cells[1];
+				let el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgVName' + row);
+				el.setAttribute('id', 'cfgVName' + row);
+				el.setAttribute('style','width:70px;');
+				el.setAttribute('maxlength' , '10');
+				thiscell.appendChild(el);
+				thiscell = cfgValvesTable.rows[row].cells[2];
+				el = document.createElement('input');
+				el.setAttribute('type', 'checkbox');
+				el.setAttribute('name', 'cfgVActive' + row);
+				el.setAttribute('id', 'cfgVActive' + row);
+				thiscell.appendChild(el);
+				thiscell = cfgValvesTable.rows[row].cells[3];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVTIdx1-' + row);
+				el.setAttribute('id', 'cfgVTIdx1-' + row);
+				el.setAttribute('style','width:35px;');
+				el.setAttribute('min','0');
+				el.setAttribute('max','34');
+				el.setAttribute('onchange', 'SetTIdxHasChanged()');
+				thiscell.appendChild(el);
+				thiscell = cfgValvesTable.rows[row].cells[4];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVTIdx2-' + row);
+				el.setAttribute('id', 'cfgVTIdx2-' + row);
+				el.setAttribute('style','width:35px;');
+				el.setAttribute('min','0');
+				el.setAttribute('max','34');
+				el.setAttribute('onchange', 'SetTIdxHasChanged()');
+				thiscell.appendChild(el);
+			}
+			cfgValvesTable.rows[0].cells[0].textContent = 'No';
+			cfgValvesTable.rows[0].cells[1].textContent = 'Name';
+			cfgValvesTable.rows[0].cells[2].textContent = 'Active';
+			cfgValvesTable.rows[0].cells[3].textContent = 'TIdx1';
+			cfgValvesTable.rows[0].cells[4].textContent = 'TIdx2';
+		}
+		
+		function makeCfgTempTable() {
+			const cfgTempTable = id('cfgTSensorTable');	  
+			for (let row=0; row<NoOfMaxSensors+1; row++) { 
+				const thisRow = cfgTempTable.insertRow(0);
+				for (let i = 0; i < 5; i++) {
+					cell = thisRow.insertCell();
+				}
+			}
+			for (let row=1;row<NoOfMaxSensors+1;row++) {
+				cfgTempTable.rows[row].cells[0].innerHTML = row;
+				let thiscell = cfgTempTable.rows[row].cells[1];
+				let el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgTName' + row);
+				el.setAttribute('id', 'cfgTName' + row);
+				el.setAttribute('style','width:80px;');
+				el.setAttribute('maxlength' , '10');
+				thiscell.appendChild(el);
+				thiscell = cfgTempTable.rows[row].cells[2];
+				el = document.createElement('input');
+				el.setAttribute('type', 'checkbox');
+				el.setAttribute('name', 'cfgTActive' + row);
+				el.setAttribute('id', 'cfgTActive' + row);
+				thiscell.appendChild(el);
+				thiscell = cfgTempTable.rows[row].cells[3];
+				el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgTOffset' + row);
+				el.setAttribute('id', 'cfgTOffset' + row);
+				el.setAttribute('size', '5');
+				el.setAttribute('maxlength' , '5');
+				el.setAttribute('style','width:40px;');
+				thiscell.appendChild(el);
+				thiscell = cfgTempTable.rows[row].cells[4];
+				el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgTID' + row);
+				el.setAttribute('id', 'cfgTID' + row);
+				el.setAttribute('style','width:150px;');
+				el.setAttribute('onchange', 'fillSensorIDSelect()');
+				thiscell.appendChild(el);
+				el = document.createElement('input');
+				el.setAttribute('type', 'button');
+				el.setAttribute('name', 'cfgTBtn' + row);
+				el.setAttribute('id', 'cfgTBtn' + row);
+				el.setAttribute('style','width:20px;');
+				el.setAttribute('value','x');
+				el.setAttribute('onclick', 'deleteID(this.id)');
+				thiscell.appendChild(el);
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgTSel' + row);
+				el.setAttribute('id', 'cfgTSel' + row);
+				el.setAttribute('style','width:20px;');
+				el.setAttribute('onchange', 'copyIDFromSelect(this.id)');
+				thiscell.appendChild(el);
+			}
+			
+			cfgTempTable.rows[0].cells[0].textContent = 'No';
+			cfgTempTable.rows[0].cells[1].textContent = 'Name';
+			cfgTempTable.rows[0].cells[2].textContent = 'Active';
+			cfgTempTable.rows[0].cells[3].textContent = 'Offset';
+			cfgTempTable.rows[0].cells[4].textContent = 'ID';
+		}
+		
+		function makeValvesControlTable () {
+			const valvesControlTable = id('cfgValvesControlTable');	  
+			for (let row=0; row<13; row++) { 
+				const thisRow = valvesControlTable.insertRow(0);
+				for (let i = 0; i < 13; i++) {
+					cell = thisRow.insertCell();
+				}
+			}
+			for (row=1;row<13;row++) {
+				valvesControlTable.rows[row].cells[0].innerHTML = row;
+				
+				thiscell = valvesControlTable.rows[row].cells[2];
+				el = document.createElement('input');
+				el.setAttribute('type', 'checkbox');
+				el.setAttribute('name', 'cfgVCActive' + row);
+				el.setAttribute('id', 'cfgVCActive' + row);
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[3];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCLink-' + row);
+				el.setAttribute('id', 'cfgVCLink-' + row);
+				el.setAttribute('style','width:60px;');
+				let option = new Option('none', 0);
+				el.options[0] = option;
+				let idx=1;
+				for (i=1; i<13;i++) {
+					if (i!=row) {
+						option = new Option(i, i);
+						el.options[idx] = option;
+						idx++;
+					}
+				}
+				el.setAttribute('onchange','setCfgVCLink(this);');				
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[4];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCValue' + row);
+				el.setAttribute('id', 'cfgVCValue' + row);
+				el.setAttribute('style','width:60px;');
+				option = new Option('mqtt', 0);
+				el.options[0] = option;
+				option = new Option('TIdx1', 1);
+				el.options[1] = option;
+				option = new Option('TIdx2', 2);
+				el.options[2] = option;
+				option = new Option('json', 3);
+				el.options[3] = option;
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[5];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCTarget' + row);
+				el.setAttribute('id', 'cfgVCTarget' + row);
+				el.setAttribute('style','width:60px;');
+				option = new Option('mqtt', 0);
+				el.options[0] = option;
+				option = new Option('json', 1);
+				el.options[1] = option;
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[6];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCXp' + row);
+				el.setAttribute('id', 'cfgVCXp' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','0');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[7];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCOffs' + row);
+				el.setAttribute('id', 'cfgVCOffs' + row);
+				el.setAttribute('style','width:50px;');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[8];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCTi' + row);
+				el.setAttribute('id', 'cfgVCTi' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','0');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[9];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCTs' + row);
+				el.setAttribute('id', 'cfgVCTs' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','1');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[10];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCScheme-' + row);
+				el.setAttribute('id', 'cfgVCScheme-' + row);
+				el.setAttribute('style','width:90px;');
+				option = new Option('dynamic ki', 0);
+				el.options[0] = option;
+				option = new Option('static ki', 1);
+				el.options[1] = option;
+				el.setAttribute('onclick','setCfgVCScheme(this);');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[11];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('step', 'any');
+				el.setAttribute('name', 'cfgVCKi' + row);
+				el.setAttribute('id', 'cfgVCKi' + row);
+				el.setAttribute('style','width:70px;');
+				el.setAttribute('min','0');
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[12];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCSZ' + row);
+				el.setAttribute('id', 'cfgVCSZ' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','0');
+				el.setAttribute('max','99');
+				thiscell.appendChild(el);
+				
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCEZ' + row);
+				el.setAttribute('id', 'cfgVCEZ' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','1');
+				el.setAttribute('max','100');
+				thiscell.appendChild(el);
+			}
+			valvesControlTable.rows[0].cells[0].textContent = 'No';
+			valvesControlTable.rows[0].cells[1].textContent = 'Name';
+			valvesControlTable.rows[0].cells[2].textContent = 'Active';
+			valvesControlTable.rows[0].cells[3].textContent = 'Link';
+			valvesControlTable.rows[0].cells[3].title = 'Select link for this valve';
+			valvesControlTable.rows[0].cells[4].textContent = 'Value';
+			valvesControlTable.rows[0].cells[4].title = 'Select value source for this valve';
+			valvesControlTable.rows[0].cells[5].textContent = 'Target';
+			valvesControlTable.rows[0].cells[5].title = 'Select target source for this valve';
+			valvesControlTable.rows[0].cells[6].textContent = 'Xp';
+			valvesControlTable.rows[0].cells[6].title = 'Enter band (xp). Kp=100/xp';
+			valvesControlTable.rows[0].cells[7].textContent = 'Offset(%)';
+			valvesControlTable.rows[0].cells[7].title = 'Enter offset';
+			valvesControlTable.rows[0].cells[8].textContent = 'Ti(s)';
+			valvesControlTable.rows[0].cells[8].title = 'Enter integral time in seconds';
+			valvesControlTable.rows[0].cells[9].textContent = 'Ts(s)';
+			valvesControlTable.rows[0].cells[9].title = 'Enter sampling time in seconds';
+			valvesControlTable.rows[0].cells[10].textContent = 'Scheme';
+			valvesControlTable.rows[0].cells[10].title = 'Enter scheme for control calculation';
+			valvesControlTable.rows[0].cells[11].textContent = 'ki';
+			valvesControlTable.rows[0].cells[11].title = 'Value ki for constant integral control calculation';
+			valvesControlTable.rows[0].cells[12].textContent = 'Active zone';
+			valvesControlTable.rows[0].cells[12].title = 'Active zone of the valve (0-100 %)';
+		}
+		
+		function showBrokerIP(){
+			let x = id("protcfg-Broker");
+			let select = id("protcfg-dataProt").selectedIndex;
+			if (select === 0) {
+				x.style.display = "none";
+			} else {
+				x.style.display = "block";
+			}
+		}
+		
+		function showWifi(){
+			let x = id("netcfg-wifi");
+			let e = id("tr-rssi");
+			let select = id("netcfg-EthWifi").selectedIndex;
+			if (select === 1) {
+				x.style.display = "none";
+				e.style.display = "none";
+			} else {
+				x.style.display = "block";
+				e.className = 'tabTable';
+			}
+		}
+		
+		function showSyslogIP(){
+			let x = id("netcfg-syslog-table");
+			let select = id("netcfg-syslog-select").selectedIndex;
+			if (select === 0) {
+				x.style.display = "none";
+			} else {
+				x.style.display = "block";
+			}
+		}
+		
+			
+		function generateOnClick() {
+			id("netcfg-EthWifi").onclick = function(){
+				showWifi();
+			}
+			id("netcfg-syslog-select").onclick = function(){
+				showSyslogIP();
+			}
+			id("protcfg-dataProt").onclick = function(){
+			  showBrokerIP();
+			}
+			id("valvesStartCalib").onclick = function(){
+				valvesStartCalib();
+			};
+			id("valvesAssembly").onclick = function(){
+				valvesAssembly();
+			};
+			id("valvesDetect").onclick = function(){
+				valvesDetect();
+			};
+			id("factoryRestore").onclick = function(){
+				factoryRestore();
+			};
+			id("resetConfig").onclick = function(){
+				resetConfig();
+			};
+			id("sysReboot").onclick = function(){
+				reboot();
+			};
+			id("saveConfig").onclick = function(){
+				saveConfig();
+			};
+			id("update-WT32").onclick = function(){
+				updateWT32();
+			};
+			id("update-STM32").onclick = function(){
+				updateSTM32();
+			};
+			
+			id("netcfg-WifiPwd").onchange = function(){
+				WifiPwdHasChanged=true;
+			};
+			
+			id("netcfg-UserPwd").onchange = function(){
+				UserPwdHasChanged=true;
+			};
+			
+			id("protcfg-Pwd").onchange = function(){
+				brokerPwdHasChanged=true;
+			};
+			
+			id("tempSensorScan").onclick = function(){
+				scanTSensors();
+			};
+			
+			id("login-button").onclick = function(){
+				doLogin();
+			};
+			
+			id("fileDelete").onclick = function(){
+				fileDelete();
+			};
+			
+			id("fileAllDelete").onclick = function(){
+				fileAllDelete();
+			};
+			
+			id ("vCfg-lowC").onchange = function (){
+				motorCharsHasChanged=true;
+			}
+			id ("vCfg-highC").onchange = function (){
+				motorCharsHasChanged=true;
+			}
+			id ("vCfg-movCalib").onchange = function (){
+				movCalibHasChanged=true;
+			}
+			id ("VCtrlConfigHeatControl").onchange = function (){
+				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
+			}
+			
+			
+			// When the user clicks on <span> (x), close the modal
+			span.onclick = function() {
+			  modal.style.display = "none";
+			}
+			
+			id("dialogOk").onclick = function () {
+				checkLogin();
+				modal.style.display = "none";
+			};
+			id("dialogCancel").onclick = function () {
+				modal.style.display = "none";
+			};
+			
+			id("saveVCtrlConfig").onclick = async function(){
+				if (confirm('Are you sure you want to save control settings ?')) {
+					await postValvesControlCfg();
+					postCmd('{"action":"vCtrlSave"}');
+					reloadDoc("http:/#home",4000,true);
+				}
+			};
+		}
+		
+		function SetTIdxHasChanged() {
+			TIdxHasChanged=true;
+		}
+		
+		function activateSetValves(){
+			let checked=id("activeSetValves").checked ;
+			const valvesTable = id('valvesTable');
+			const valvesCfgTable = id('cfgValvesTable');
+			for (i=1; i<valvesTable.rows.length;i++){
+				let idx = valvesTable.rows[i].cells[0].textContent;
+				let active=id('cfgVActive'+idx).checked; 
+				id('setValveP'+i).readOnly=!(checked && active);
+				if (checked && active) 
+					id('setValveButton-'+i).style.visibility="visible"
+				else
+					id('setValveButton-'+i).style.visibility="hidden";
+			}
+		}
+		
+		function valvesStartCalib(){
+			if (confirm('Are you sure you want to start calibration of all valves ?')) {
+				postCmd('{"action":"vCalib"}');
+			}
+		}
+		
+		function valvesAssembly(){
+			if (confirm('Are you sure you want to set all valves to assembly position ?')) {
+				postCmd('{"action":"vAssembly"}');
+			}
+		}
+		
+		function valvesDetect(){
+			if (confirm('Are you sure you want to detect valves ?')) {
+				postCmd('{"action":"valvesDetect"}');
+			}
+		}
+		
+		async function fileDelete() {
+			let fSelect = id("fileSelect");
+			if (fSelect.value) {
+				if (confirm('Are you sure you want to delete the file '+fSelect.value+' ?')) {
+					await postCmd('{"action":"fDelete","file":"'+fSelect.value+'"}');
+					getFSDir();
+				}
+			}
+		}
+		
+		async function fileAllDelete() {
+			if (confirm('Are you sure you want to delete all files ?')) {
+					await postCmd('{"action":"clearFS"}');
+					getFSDir();
+			}
+		}
+		
+		function generateFilesList (filesList) {
+			let selectBox = id("fileSelect");
+			let fileTabFrame=id("fileTabFrame")
+			if (filesList.length==0) {
+				fileTabFrame.style.display="none"; 
+			} else {
+				fileTabFrame.style.display="block"; 
+				while (selectBox.options.length > 0) {                
+					selectBox.remove(0);
+				}     
+				filesList.forEach((item) => {
+					let newOption = new Option(item.fName,item.fName);
+					selectBox.add(newOption,undefined);
+				});
+			}
+		}
+		
+		function scanTSensors(){
+			if (confirm('Are you sure you want to scan temperature sensors ?')) {
+				postCmd('{"action":"scanTempSensors"}');
+				setTimeout(function() {
+					getTempSensorsID();	
+				},5000);
+			}
+		}
+
+		function doLogin() {
+			modal.style.display = "block";
+		}
+		
+		function reloadDoc (path,timeOut,clear=false,reLoad=true) {
+			if ((clear===true) && getStatusInterval) clearInterval(getStatusInterval);
+			document.body.style.cursor = 'wait';
+			setTimeout(function() {
+					location.assign(path);
+					if (reLoad===true){
+						location.reload(true);					
+					}
+					document.body.style.cursor = 'default';
+				},timeOut);
+		}
+		
+		function factoryRestore(){
+			if (confirm('Are you sure you want to restore configuration to factory settings ?')) {
+				postCmd('{"action":"restoreCfg"}');
+				reloadDoc("http:/#home",4000,true);
+			}
+		}
+		
+		function resetConfig(){
+			if (confirm('Are you sure you want to reset configuration to factory settings except network ?')) {
+				postCmd('{"action":"resetCfg"}');
+				reloadDoc("http:/#home",4000,true);
+			}
+		}
+		
+		function reboot(){
+			if (confirm('Are you sure you want to reboot ?')) {
+				postCmd('{"action":"reboot"}');
+				reloadDoc("http:/#home",4000,true);
+			}
+		}
+			
+		async function saveConfig(){
+			if (confirm('Are you sure you want to save configuration ?')) {
+				if (!(await postNetCfg())) return;
+				if (!(await postProtCfg())) return;
+				await postSystemConfig();
+				await postValvesCfg();
+				await postValvesControlCfg();
+				await postTempsCfg(1,11);
+				await postTempsCfg(12,23);
+				await postTempsCfg(24,34);
+				await postCmd('{"action":"saveCfg"}');
+				WifiPwdHasChanged=false;
+				UserPwdHasChanged=false;
+				brokerPwdHasChanged=false;
+				reloadDoc("http:/#home",4000,true);
+			}
+		}
+		
+		async function postSystemConfig() {
+			let sysCfg = {};
+			sysCfg.CF = id("sysCfg-CF").selectedIndex;
+			sysCfg.station=id("sysCfg-StationName").value;
+			await postJson("sysconfig",JSON.stringify(sysCfg));
+		}
+		
+		async function postNetCfg() {
+			var netCfg = {};
+			netCfg.ethWifi = id("netcfg-EthWifi").selectedIndex;
+			netCfg.dhcp = id("netcfg-dhcp").selectedIndex;
+			netCfg.ip =	id("netcfg-ip").value;
+			netCfg.mask = id("netcfg-mask").value;
+			netCfg.gw =	id("netcfg-gw").value;
+			netCfg.dns = id("netcfg-dns").value;
+			netCfg.ssid = id("netcfg-WifiSSID").value;
+			if (WifiPwdHasChanged===true) {
+				netCfg.pwd = id("netcfg-WifiPwd").value;
+				if (id("netcfg-WifiPwd").value!=id("netcfg-WifiPwd2").value) {
+					alert ("Wifi password does not compare ! Please re-type");
+					return (false);
+				}
+			}
+			netCfg.userName = id("netcfg-UserName").value;
+			if (UserPwdHasChanged===true) {
+				netCfg.userPwd = id("netcfg-UserPwd").value;
+				if (id("netcfg-UserPwd").value!=id("netcfg-UserPwd2").value) {
+					alert ("User password does not compare ! Please re-type");
+					return (false);
+				}
+			}
+			netCfg.timeServer = id("netcfg-TimeServer").value;
+			netCfg.timeOffset =	parseInt(id("netcfg-timeOffset").value);
+			netCfg.timeDST = parseInt(id("netcfg-daySTOffset").value);
+			netCfg.syslogLevel=id("netcfg-syslog-select").selectedIndex;
+			netCfg.syslogIp=id("netcfg-syslog-ip").value;
+			netCfg.syslogPort=id("netcfg-syslog-port").value;
+			WifiPwdHasChanged=false;
+			UserPwdHasChanged=false;
+			await postJson("netconfig",JSON.stringify(netCfg));
+			return (true);
+		}
+		
+		async function postProtCfg() {
+			let protCfg = {};
+			protCfg.prot = id("protcfg-dataProt").selectedIndex;
+			if (id("protcfg-dataProt").selectedIndex==1) {
+				protCfg.ip = id("protcfg-Ip").value;
+				protCfg.port = id("protcfg-Port").value;
+				protCfg.interval = id("protcfg-Interval").value;
+				protCfg.user = id("protcfg-User").value;
+				protCfg.pubTarget = id("protcfg-pubTarget").checked ? 1 : 0;
+			}
+			if (brokerPwdHasChanged===true) {
+				protCfg.pwd = id("protcfg-Pwd").value;
+				if (id("protcfg-Pwd").value!=id("protcfg-Pwd2").value) {
+					alert ("Broker password does not compare ! Please re-type");
+					return (false);
+				}
+			}
+			brokerPwdHasChanged=false;
+			await postJson("protconfig",JSON.stringify(protCfg));
+			return (true);
+		}
+		
+		async function postValvesCfg() {
+			await postChunkValvesCfg(1,6,true);
+			await postChunkValvesCfg(7,12);
+		}
+		
+		async function postChunkValvesCfg(chunkStart,chunkEnd,postMotor=false) {
+			const cfgValvesTable = id('cfgValvesTable');
+			let valvesItemsCfg = [];
+			for (let row = chunkStart; row<chunkEnd+1; row++) {
+				let valveValues={};
+				valveValues.name = id('cfgVName'+row).value; 
+				valveValues.active = id('cfgVActive'+row).checked  ? 1 : 0;
+				if (TIdxHasChanged) {
+					valveValues.tIdx1= id('cfgVTIdx1-'+row).value;
+					valveValues.tIdx2= id('cfgVTIdx2-'+row).value;
+				}
+				valvesItemsCfg.push(valveValues);
+			}
+			let valvesCfg={};
+			let valvesCalib={};
+			let motor={};
+			
+			valvesCalib.hourOfCalib=id('vCfg-hCalib').value;
+			let dCalib=0;	
+			for (let i=0; i<7; i++) {
+				let x = Number(id('vCfg-d'+i).checked);
+				dCalib|=x<<i;
+			}
+			valvesCfg.valves=valvesItemsCfg;
+			valvesCfg.chunkStart=chunkStart;
+			valvesCfg.chunkEnd=chunkEnd;
+			if (postMotor===true) {
+				valvesCalib.dayOfCalib=dCalib;
+				if (movCalibHasChanged===true){
+					valvesCalib.cycles=id('vCfg-movCalib').value;
+					valvesCfg.calib=valvesCalib;
+				}
+				if (motorCharsHasChanged===true) {
+					if (id("vCfg-lowC").value<0.5) id("vCfg-lowC").value=0.5;
+					if (id("vCfg-lowC").value>5) id("vCfg-lowC").value=5;
+					if (id("vCfg-highC").value<0.5) id("vCfg-highC").value=0.5;
+					if (id("vCfg-highC").value>5) id("vCfg-highC").value=5;
+					
+					motor.lowC=Math.round(id("vCfg-lowC").value*10);
+					motor.highC=Math.round(id("vCfg-highC").value*10);
+					valvesCfg.motor=motor;
+				}
+			}
+			await postJson("valvesconfig",JSON.stringify(valvesCfg));
+		}
+		
+		async function postValvesControlCfg() {
+			await postChunkValvesControlCfg(1,4);
+			await postChunkValvesControlCfg(5,8);
+			await postChunkValvesControlCfg(9,12);
+		}
+		
+		async function postChunkValvesControlCfg(chunkStart,chunkEnd) {
+			const cfgValvesControlTable = id('cfgValvesControlTable');
+			let valvesItemsCfg = [];
+			for (let row = chunkStart; row<chunkEnd+1; row++) {
+				let valveValues={};
+				valveValues.active = id('cfgVCActive'+row).checked  ? 1 : 0;
+				valveValues.link = id('cfgVCLink-'+row).value;
+				valveValues.vSource = id('cfgVCValue'+row).value;
+				valveValues.tSource = id('cfgVCTarget'+row).value;
+				valveValues.xp = id('cfgVCXp'+row).value;
+				valveValues.offset = id('cfgVCOffs'+row).value;
+				valveValues.ti = id('cfgVCTi'+row).value;
+				valveValues.ts = id('cfgVCTs'+row).value;
+			 	valveValues.scheme = id('cfgVCScheme-'+row).value;
+				valveValues.ki = id('cfgVCKi'+row).value;
+				valveValues.startAZ = id('cfgVCSZ'+row).value;
+				valveValues.endAZ = id('cfgVCEZ'+row).value;
+				valvesItemsCfg.push(valveValues);
+			}
+			let valvesControlCfg={};
+			let commonValues={};
+			commonValues.heatControl=id('VCtrlConfigHeatControl').selectedIndex;
+			commonValues.parkPosition=id('VCtrlConfigParkPosition').value;
+			valvesControlCfg.common=commonValues;
+			valvesControlCfg.valves=valvesItemsCfg;
+			valvesControlCfg.chunkStart=chunkStart;
+			valvesControlCfg.chunkEnd=chunkEnd;
+			await postJson("valvesctrlconfig",JSON.stringify(valvesControlCfg));
+		}
+				
+		async function postTempsCfg(chunkStart,chunkEnd) {
+			const cfgTempsTable = id('cfgTSensorTable');
+			let tempsItemsCfg = [];
+			for (let row = chunkStart; row<chunkEnd+1; row++) {
+				let tempValues={};
+				tempValues.name = id('cfgTName'+row).value; 
+				tempValues.id = id('cfgTID'+row).value; 
+				tempValues.active = id('cfgTActive'+row).checked  ? 1 : 0;
+				let f = id('cfgTOffset'+row).value.replace(/ /g, "");
+				f  = f.replace(/,/g, '.');
+				f = parseFloat(f).toFixed(1)
+				tempValues.offset = parseFloat(f);
+				tempsItemsCfg.push(tempValues);
+			}
+			let tempsCfg={};
+			tempsCfg.temps=tempsItemsCfg;
+			tempsCfg.chunkStart=chunkStart;
+			tempsCfg.chunkEnd=chunkEnd;
+			await postJson("tempsconfig",JSON.stringify(tempsCfg));
+		}
+		
+		async function postCmd (cmd) {
+			await postJson("cmd",cmd);
+		}
+		
+		async function setValve(thisButton){
+			const buttonName = thisButton.name;
+			const buttonId= thisButton.id;
+			let valveNo = buttonName.slice(buttonName.indexOf("-")+1);
+			let valveRow=buttonId.slice(buttonId.indexOf("-")+1);
+			const value = id('setValveP'+valveRow).value;
+			if (value){
+				let setThisValve = {};
+				setThisValve.valve = valveNo;
+				setThisValve.value = value;
+				await postJson("setvalve",JSON.stringify(setThisValve));
+			}
+		}
+		
+		function setCfgVCScheme(thisLink){
+			const linkId= thisLink.id;
+			let linkNo = linkId.slice(linkId.indexOf("-")+1);
+			let display = 'block';
+			if (thisLink.value==0) {
+				display = 'none';
+			}  
+			id('cfgVCKi'+linkNo).style.display=display;
+			//show_hide_column('cfgValvesControlTable',cfgVCKiCol, (display == 'block'));
+		}		
+		
+		function setCfgVCLink(thisLink){
+			const linkId= thisLink.id;
+			let linkNo = linkId.slice(linkId.indexOf("-")+1);
+			let display = 'block';
+			if (thisLink.value>0) {
+				display = 'none';
+			}  
+			id('cfgVCValue'+linkNo).style.display=display;
+			id('cfgVCTarget'+linkNo).style.display=display;
+			id('cfgVCXp'+linkNo).style.display=display;
+			id('cfgVCOffs'+linkNo).style.display=display;
+			id('cfgVCTi'+linkNo).style.display=display;
+			id('cfgVCTs'+linkNo).style.display=display;
+			id('cfgVCScheme-'+linkNo).style.display=display;
+			id('cfgVCKi'+linkNo).style.display=display;
+			id('cfgVCSZ'+linkNo).style.display=display;
+			id('cfgVCEZ'+linkNo).style.display=display;
+			if (display=='block') setCfgVCScheme(id('cfgVCScheme-'+linkNo));
+		}
+				
+		function checkVCScheme()
+		{
+			let kiStatics=false;
+			for (let i=1;i<13;i++) {
+				let vcScheme=id('cfgVCScheme-'+i);
+				if (vcScheme.selectedIndex=1) kiStatics=true;
+			}
+			return (kiStatics);
+		}
+				
+		function getStatus() {
+			getSystemDynInfo();
+			getValvesStatus();
+			getTempsStatus();
+		}
+		
+		function checkValvesConnected (valvesJson){
+			const cfgValvesTable = id('cfgValvesTable');
+			const cfgValvesControlTable = id('cfgValvesControlTable');
+			for (let row = 1; row<13; row++) {
+				cfgValvesTable.rows[row].cells[0].style.backgroundColor = "";
+				cfgValvesControlTable.rows[row].cells[0].style.backgroundColor = "";
+			}
+			valvesJson.forEach(function(item, index){
+				cfgValvesTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+				cfgValvesControlTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+			});
+		}
+		
+		function fillValvesTable (valvesJson) {
+			const ValvesTable = id('valvesTable');
+			if (ValvesTable.rows.length != valvesJson.length+1) {
+				makeValvesTable(valvesJson);
+			}
+			const States = ["---","idle","opens","closes","blocked","unknown","no valve","full open","connected"];
+			valvesJson.forEach(function(item, index){
+				ValvesTable.rows[index+1].cells[0].textContent = item.idx;	
+				ValvesTable.rows[index+1].cells[1].textContent = item.name;	
+				ValvesTable.rows[index+1].cells[2].textContent = item.pos;	
+				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
+				ValvesTable.rows[index+1].cells[4].textContent = States[item.state];
+				if (item.temp1)
+					ValvesTable.rows[index+1].cells[7].textContent = item.temp1;
+				else ValvesTable.rows[index+1].cells[7].textContent = "";
+				if (item.temp2)
+					ValvesTable.rows[index+1].cells[8].textContent = item.temp2;
+				else ValvesTable.rows[index+1].cells[8].textContent = "";
+				if (!(id('activeSetValves').checked)) {
+					id('setValveP'+(index+1)).value=item.targetPos;
+				}
+			});
+			checkValvesConnected (valvesJson);
+		}
+		
+		function fillCfgValvesTable (cfgValvesJson) {
+			const ValvesTable = id('valvesTable');
+			const cfgValvesTable = id('cfgValvesTable');
+			for (let row = 1; row<13; row++) {
+				id('cfgVName'+row).value = cfgValvesJson.valves[row-1].name;
+				id('cfgVActive'+row).checked = cfgValvesJson.valves[row-1].active;
+				id('cfgVTIdx1-'+row).value = cfgValvesJson.valves[row-1].tIdx1;
+				id('cfgVTIdx2-'+row).value = cfgValvesJson.valves[row-1].tIdx2;
+			}
+			
+			id('vCfg-hCalib').value = cfgValvesJson.calib.hourOfCalib;
+			let dCalib=0;	
+			for (let i=0; i<7; i++) {
+				dCalib=cfgValvesJson.calib.dayOfCalib & (1<<i);
+				if (dCalib==0) id('vCfg-d'+i).checked=false; else id('vCfg-d'+i).checked=true; 
+			}
+			id('vCfg-movCalib').value=cfgValvesJson.calib.cycles;
+			id("vCfg-lowC").value=cfgValvesJson.motor.lowC/10;
+			id("vCfg-highC").value=cfgValvesJson.motor.highC/10;
+		}
+		
+		function fillCfgValvesControlTable (cfgValvesControlJson) {
+			const cfgValvesControlTable = id('cfgValvesControlTable');
+			id ('VCtrlConfigHeatControl').selectedIndex=cfgValvesControlJson.common.heatControl;
+			id ('VCtrlConfigParkPosition').value=cfgValvesControlJson.common.parkPosition;
+			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
+			for (let row = 1; row<13; row++) {
+				cfgValvesControlTable.rows[row].cells[1].textContent = cfgValvesControlJson.valves[row-1].name;
+				id('cfgVCActive'+row).checked = cfgValvesControlJson.valves[row-1].active;
+				id('cfgVCLink-'+row).value = cfgValvesControlJson.valves[row-1].link;
+				id('cfgVCValue'+row).value = cfgValvesControlJson.valves[row-1].vSource;
+				id('cfgVCTarget'+row).value = cfgValvesControlJson.valves[row-1].tSource;
+				id('cfgVCXp'+row).value = cfgValvesControlJson.valves[row-1].xp;
+				id('cfgVCOffs'+row).value = cfgValvesControlJson.valves[row-1].offset;
+				id('cfgVCTi'+row).value = cfgValvesControlJson.valves[row-1].ti;
+				id('cfgVCTs'+row).value = cfgValvesControlJson.valves[row-1].ts;
+				id('cfgVCScheme-'+row).value= cfgValvesControlJson.valves[row-1].scheme;
+				id('cfgVCKi'+row).value= cfgValvesControlJson.valves[row-1].ki;
+				id('cfgVCSZ'+row).value= cfgValvesControlJson.valves[row-1].startAZ;
+				id('cfgVCEZ'+row).value= cfgValvesControlJson.valves[row-1].endAZ;
+				setCfgVCLink(id('cfgVCLink-'+row));
+			}
+			//show_hide_column('cfgValvesControlTable',cfgVCKiCol, checkVCScheme());
+		}
+		
+		function fillTempsTable (tempsJson) {
+			const tempsTable = id('tempsTable');
+			const tempStatusTabFrame = id("tempStatusTabFrame")
+			if (tempsJson.length==0) {
+				tempStatusTabFrame.style.display="none";
+			} else {
+				tempStatusTabFrame.style.display="block";
+				if (tempsJson.length!=tempsTable.rows.length-1) {
+					makeTempsTable(tempsJson.length);
+				}
+				tempsJson.forEach(function (item, index) {            
+					tempsTable.rows[index+1].cells[1].textContent = item.name;
+					tempsTable.rows[index+1].cells[2].textContent = item.temp;
+				});
+			}
+		}
+		
+		function fillCfgTempsTable (cfgTempsJson) {
+			const cfgTempsTable = id('cfgTSensorTable');
+			for (let row = 1; row<NoOfMaxSensors+1; row++) {				
+				id('cfgTName'+row).value = cfgTempsJson[row-1].name;
+				id('cfgTActive'+row).checked = cfgTempsJson[row-1].active;
+				id('cfgTOffset'+row).value = cfgTempsJson[row-1].offset;
+				id('cfgTID'+row).value = cfgTempsJson[row-1].id;
+			}
+		}
+		
+		function findTID(TId){
+			let retVal=false;
+			if (dataTempSensorsID) {
+				dataTempSensorsID.forEach(function(item) {
+					if (TId===item.id) {
+						retVal=true;
+						return;
+					}
+				});
+			}
+			return (retVal);
+		}
+		
+		function checkCfgTempsID (){
+			for (let row = 1; row<NoOfMaxSensors+1; row++) {
+				let TID = id('cfgTID'+row);
+				if (TID.value!="") {
+					if (!findTID(TID.value)) TID.style.backgroundColor = "red"; else TID.style.backgroundColor = "";
+				}
+			}
+		}
+		
+		function findID (SensorID) {
+			for (let row = 1; row<NoOfMaxSensors+1; row++) {	
+				let selectElement=id('cfgTID'+row);
+				if (selectElement.value===SensorID) return (true);
+			}
+			return (false);
+		}
+		
+		function deleteID (thisButton) {
+			const button=id(thisButton);
+			let thisRow=button.id.slice(7);
+			const thisInput=id('cfgTID' + thisRow);
+			thisInput.value="";	
+			fillSensorIDSelect();
+		}
+		
+		function copyIDFromSelect (thisSelect) {
+			const select=id(thisSelect);
+			let thisRow=select.id.slice(7);
+			const thisInput=id('cfgTID' + thisRow);
+			thisInput.value=select.value;
+			fillSensorIDSelect();
+		}
+		
+		function fillSensorIDSelect() {
+			for (let row = 1; row<NoOfMaxSensors+1; row++) {	
+				let selectElement=id('cfgTSel'+row);
+				while (selectElement.options.length > 0) {                
+					selectElement.remove(0);
+				}   
+				let option = new Option(' -Select-', 0);
+				selectElement.options[0] = option;
+				let i=1;
+				dataTempSensorsID.forEach(function (item, index) { 
+					if (!findID(item.id)) {
+						option = new Option(item.id, item.id);
+						selectElement.options[i] = option;
+						i++;
+					}
+				});
+			}
+			checkCfgTempsID();
+		}
+		
+		async function getSystemInfo() {
+			const dataSystemInfo=await getJson("sysinfo");
+			if (dataSystemInfo) {
+				id("sysWt32-Version").textContent = dataSystemInfo["wt32version"];
+				id("sysSTM32-Version").textContent = dataSystemInfo["stm32version"];
+			}
+		}
+		
+		async function getSystemDynInfo() {
+			const dataSystemDynInfo=await getJson("sysdyninfo");
+			if (dataSystemDynInfo) {
+				id("locTime").textContent = dataSystemDynInfo["locTime"];
+				id("upTime").textContent = dataSystemDynInfo["upTime"];
+				id("heap").textContent = dataSystemDynInfo["heap"];
+				id("min-heap").textContent = dataSystemDynInfo["minheap"];
+				id("rssi").textContent = dataSystemDynInfo["wifirssi"];
+				if (_isContains(dataSystemDynInfo, "brokerConnected")) {
+					id("net-broker").style.display="block";
+					id("net-broker-status").textContent=dataSystemDynInfo["brokerConnected"] ? "Connected" : "Not connected"; 
+				}
+				var newStmStatus=dataSystemDynInfo["stmStatus"];
+				if (newStmStatus!=stmStatus) {
+					stmStatus=newStmStatus;
+					if (stmStatus===2) {
+						setTimeout(function() {
+							loadStmData();	
+						},3000);
+					}
+				}
+			}
+		}
+		
+		
+		async function getSystemConfig() {
+			const dataSysCfg=await getJson("sysconfig");
+			if (dataSysCfg) {
+				id("sysCfg-CF").selectedIndex = dataSysCfg["CF"];
+				id("sysCfg-StationName").value=dataSysCfg["station"];
+				id("sysStation").textContent=dataSysCfg["station"];
+			}
+		}
+		
+		async function getNetInfo() {
+			const dataNet=await getJson("netinfo");
+			if (dataNet) {
+				id("net-EthWifi").textContent = dataNet["ethWifi"] ? "Wifi" : "Eth";
+				id("net-dhcp").textContent = dataNet["dhcp"] ? "On" : "Off";
+				id("net-ip").textContent = dataNet["ip"];
+				id("net-MAC").textContent = dataNet["mac"];
+				id("net-mask").textContent = dataNet["mask"];
+				id("net-gw").textContent = dataNet["gw"];
+				id("net-dns").textContent = dataNet["dns"];
+			}
+		}
+		
+		async function getNetConfig() {
+			const dataNetConfig=await getJson("netconfig");
+			if (dataNetConfig) {
+				id("netcfg-EthWifi").selectedIndex = dataNetConfig["ethWifi"];
+				id("netcfg-dhcp").selectedIndex = dataNetConfig["dhcp"];
+				id("netcfg-ip").value = dataNetConfig["ip"];
+				id("netcfg-mask").value = dataNetConfig["mask"];
+				id("netcfg-gw").value = dataNetConfig["gw"];
+				id("netcfg-dns").value = dataNetConfig["dns"];
+				id("netcfg-WifiSSID").value = dataNetConfig["ssid"];
+				id("netcfg-UserName").value = dataNetConfig["userName"];
+				id("netcfg-TimeServer").value = dataNetConfig["timeServer"];
+				id("netcfg-timeOffset").value = dataNetConfig["timeOffset"];
+				id("netcfg-daySTOffset").value = dataNetConfig["timeDST"];
+				id("netcfg-syslog-select").selectedIndex=dataNetConfig.syslogLevel;
+				id("netcfg-syslog-ip").value=dataNetConfig.syslogIp;
+				id("netcfg-syslog-port").value=dataNetConfig.syslogPort;
+				showWifi();
+				showSyslogIP();
+				if (id("netcfg-UserName").value==="") {
+					showAllTabs=true;
+					showAllTabsNow();
+				} else id("login-button").style.display = "block";
+			}
+		}
+		
+		async function getProtConfig() {
+			const dataProtConfig=await getJson("protconfig");
+			if (dataProtConfig) {
+				id("protcfg-dataProt").selectedIndex = dataProtConfig["prot"];
+				id("protcfg-Ip").value = dataProtConfig["ip"];
+				id("protcfg-Port").value = dataProtConfig["port"];
+				id("protcfg-Interval").value = dataProtConfig["interval"];
+				id("protcfg-User").value = dataProtConfig["user"];
+				id("protcfg-pubTarget").checked = dataProtConfig["pubTarget"];
+				showBrokerIP();
+			}
+		}
+		
+		async function getValvesConfig() {
+			const dataValvesConfig=await getJson("valvesconfig");
+			if (dataValvesConfig) fillCfgValvesTable(dataValvesConfig);
+		}
+		
+		async function getValvesControlConfig() {
+			const dataValvesControlConfig=await getJson("valvesctrlconfig");
+			if (dataValvesControlConfig) fillCfgValvesControlTable(dataValvesControlConfig);
+		}
+		
+		async function getValvesStatus() {
+			const dataValvesStatus=await getJson("valves");
+			if (dataValvesStatus) fillValvesTable(dataValvesStatus);
+		}
+		
+		async function getTempsConfig() {
+			const dataTempsConfig=await getJson("tempsconfig");
+			if (dataTempsConfig) fillCfgTempsTable(dataTempsConfig);
+			checkCfgTempsID();
+		}
+		
+		async function getTempSensorsID() {
+			const thisDataTempSensorsID=await getJson("tempsensorsid");
+			if (thisDataTempSensorsID) {
+				dataTempSensorsID = thisDataTempSensorsID;
+				fillSensorIDSelect(); 
+			}
+		}
+		
+		async function getTempsStatus() {
+			const dataTempsStatus=await getJson("temps");
+			if (dataTempsStatus) fillTempsTable(dataTempsStatus);
+		}
+			
+		async function updateWT32() {
+			reloadDoc("http:/update",100,false,false);
+		}	
+			
+		async function updateSTM32() {
+			reloadDoc("http:/stmupdate",100,false,false);
+		}	
+		
+		async function getFSDir() {
+			var fsDir= await this.getJson("fsdir");
+			if (fsDir) generateFilesList (fsDir);
+		}
+		
+		async function postJson(link,postData){
+			const data = await (await (fetch('http:/'+link,
+			{
+			 headers: {
+				'Content-Type': 'application/json'
+				},
+				method: 'POST',
+				body: postData
+			})
+			.then(res => {
+			  return res.json()
+			})
+			.catch(err => {
+			  console.log('Error: ','link: '+link+' '+err)
+			})
+		  ))
+		  return data
+		}
+			
+		async function getJson(link){
+			const data = await (await (fetch('http:/'+link)
+			.then(res => {
+			  return res.json()
+			})
+			.catch(err => {
+			  console.log('Error: ', 'link: '+link+' '+err)
+			})
+		  ))
+		  return data
+		}
+		
+
+	</script>
+
+</body>
+</html>
+
