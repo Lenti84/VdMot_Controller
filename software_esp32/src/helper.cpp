@@ -51,10 +51,10 @@ String ConvBinUnits(size_t bytes, byte resolution)
     return String(bytes) + " B";
   }
   else if (bytes < 1024 * 1024) {
-    return String(bytes / 1024.0, resolution) + " KB";
+    return String(bytes / 1024.0, (int)(resolution)) + " KB";
   }
   else if (bytes < (1024 * 1024 * 1024)) {
-    return String(bytes / 1024.0 / 1024.0, resolution) + " MB";
+    return String(bytes / 1024.0 / 1024.0, (int)(resolution)) + " MB";
   }
   else return "";
 }
