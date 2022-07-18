@@ -33,8 +33,12 @@ You will need a USB2UART converter for that step. For example a converter with F
 
 Following configuration of the flash download tool is needed:
 
-    TBD
-    
+![-](./esp32_flash_download_tool_config.png "ESP32 Flash Download Tool Configuration")
+
+Needed files can be found here:<br>
+https://github.com/Lenti84/VdMot_Controller/blob/master/software_esp32/boot_app0.bin<br>
+https://github.com/Lenti84/VdMot_Controller/blob/master/software_esp32/bootloader_dio_40m.bin<br>
+https://github.com/Lenti84/VdMot_Controller/tree/master/releases/
     
 Please proceed according following steps:
 
