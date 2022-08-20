@@ -104,6 +104,7 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"port\":\""+String(protConfig.brokerPort)+"\","+
                     "\"interval\":"+String(protConfig.brokerInterval)+","+
                     "\"pubTarget\":"+String(protConfig.publishTarget)+","+
+                    "\"pubAllTemps\":"+String(protConfig.publishAllTemps)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
 }

@@ -563,7 +563,7 @@
 		</div>
 		</div>
 
-		<div class="rtabframe" style="height:300px;">
+		<div class="rtabframe" style="height:330px;">
 		<h3>Protocol</h3>
 
 		<table id="protConfig" class="tabTable1">		
@@ -618,6 +618,12 @@
 				<th>Publish target</th>
 				<td>
 				<input type="checkbox" id="protcfg-pubTarget" name="protcfg-pubTarget"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Publish all temps</th>
+				<td>
+				<input type="checkbox" id="protcfg-pubAllTemps" name="protcfg-pubAllTemps"/>
 				</td>
 			</tr>
 		</table>
@@ -1709,6 +1715,7 @@
 				protCfg.interval = id("protcfg-Interval").value;
 				protCfg.user = id("protcfg-User").value;
 				protCfg.pubTarget = id("protcfg-pubTarget").checked ? 1 : 0;
+				protCfg.pubAllTemps = id("protcfg-pubAllTemps").checked ? 1 : 0;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -2161,6 +2168,7 @@
 				id("protcfg-Interval").value = dataProtConfig["interval"];
 				id("protcfg-User").value = dataProtConfig["user"];
 				id("protcfg-pubTarget").checked = dataProtConfig["pubTarget"];
+				id("protcfg-pubAllTemps").checked = dataProtConfig["pubAllTemps"];
 				showBrokerIP();
 			}
 		}
