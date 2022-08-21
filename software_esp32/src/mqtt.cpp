@@ -324,7 +324,7 @@ void CMqtt::publish_valves ()
 
     topicstr[len] = '\0';
     strncat(topicstr, "message",sizeof(topicstr) - strlen (topicstr) - 1);       
-    mqtt_client.publish(topicstr,((const char*) &VdmSystem.systemMessage));   
+    mqtt_client.publish(topicstr,VdmSystem.systemMessage);   
 
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {

@@ -51,7 +51,7 @@ CVdmSystem::CVdmSystem()
   spiffsStarted=false;
   numfiles  = 0;
   stmBuild = 0;
-  systemMessage = "";
+  memset (systemMessage,0,sizeof(systemMessage));
   systemState = systemStateOK;
 
 }
@@ -107,8 +107,10 @@ void CVdmSystem::fileDelete (String fileName)
   SPIFFS.remove(thisFileName);
 }
 
-void CVdmSystem::setSystemState(uint8_t thisSystemState,String thisSystemMsg)
+void CVdmSystem::setSystemState(uint8_t thisSystemState,char const *thisSystemMsg)
 {
   systemState=thisSystemState; 
-  systemMessage=thisSystemMsg;
+  strncpy (systemMessage,thisSystemMsg,sizeof(systemMessage));
+  UART_DBG.print("SystemMsg: ");
+  UART_DBG.println(systemMessage);
 }
