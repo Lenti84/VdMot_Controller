@@ -43,7 +43,7 @@
 #define MAINTOPIC_LEN 50
 
 // MQTT settings
-#define DEFAULT_MAINTOPIC    "/VdMotFBH/"           //  /VdMotFBH/valve/1/actual
+#define DEFAULT_MAINTOPIC    "VdMotFBH/"           //  /VdMotFBH/valve/1/actual
 #define DEFAULT_COMMONTOPIC  "common/"
 #define DEFAULT_VALVESTOPIC  "valves/"
 #define DEFAULT_TEMPSTOPIC   "temps/"

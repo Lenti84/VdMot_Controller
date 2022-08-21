@@ -82,6 +82,7 @@ typedef struct {
   char userPwd[65];
   bool publishTarget;
   bool publishAllTemps;
+  bool publishPathAsRoot;
 } VDM_PROTOCOL_CONFIG;
 
 typedef struct {
@@ -166,6 +167,7 @@ typedef struct
 #define nvsProtBrokerPwd            "brokerPwd"
 #define nvsProtBrokerPublishTarget  "brokerPT"
 #define nvsProtBrokerPublishAllTemps  "brokerPAT"
+#define nvsProtBrokerPublishPathAsRoot  "brokerPaR"
 
 #define nvsValvesCfg                "valvesCfg"
 #define nvsValvesControlCfg         "valvesCtrlCfg"

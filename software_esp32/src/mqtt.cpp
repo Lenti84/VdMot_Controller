@@ -70,11 +70,15 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
     mqtt_client.setServer(brokerIP, brokerPort);
     mqtt_client.setCallback(mcallback);
 
+    memset (mqtt_mainTopic,0,sizeof(mqtt_mainTopic));
+    if (VdmConfig.configFlash.protConfig.publishPathAsRoot) strcpy(mqtt_mainTopic,"/");
+
     if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
-        strcpy(mqtt_mainTopic,"/");
         strncat(mqtt_mainTopic, VdmConfig.configFlash.systemConfig.stationName,sizeof(mqtt_mainTopic) - strlen (mqtt_mainTopic) - 1);
         strncat(mqtt_mainTopic, "/",sizeof(mqtt_mainTopic) - strlen (mqtt_mainTopic) - 1);
-    } else  strcpy(mqtt_mainTopic, DEFAULT_MAINTOPIC);
+    } else  {
+        strncat(mqtt_mainTopic, DEFAULT_MAINTOPIC,sizeof(mqtt_mainTopic) - strlen (mqtt_mainTopic) - 1);
+    }
 
     strcpy(mqtt_commonTopic, mqtt_mainTopic);
     strncat(mqtt_commonTopic, DEFAULT_COMMONTOPIC,sizeof(mqtt_commonTopic) - strlen (mqtt_commonTopic) - 1);

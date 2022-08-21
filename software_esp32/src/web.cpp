@@ -105,6 +105,7 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"interval\":"+String(protConfig.brokerInterval)+","+
                     "\"pubTarget\":"+String(protConfig.publishTarget)+","+
                     "\"pubAllTemps\":"+String(protConfig.publishAllTemps)+","+
+                    "\"pubPathAsRoot\":"+String(protConfig.publishPathAsRoot)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
 }
