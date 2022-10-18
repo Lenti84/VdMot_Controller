@@ -157,6 +157,11 @@
 
 ### Post
 
+You can use curl to test the communication or set parameters by hand. Example: 
+```
+curl -H "Content-Type: application/json" -X POST -d '{"pubTarget":0}' http://192.168.123.123/protconfig
+```
+
 #### "/netconfig" : saves the network configuration
 
 |command|description|units|
