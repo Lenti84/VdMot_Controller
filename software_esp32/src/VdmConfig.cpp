@@ -99,6 +99,8 @@ void CVdmConfig::clearConfig()
   memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
   memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
   configFlash.protConfig.publishTarget = false;
+  configFlash.protConfig.publishAllTemps = false;
+  configFlash.protConfig.publishPathAsRoot = false;
   
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesConfig.valveConfig[i].active = false;
@@ -190,6 +192,8 @@ void CVdmConfig::readConfig()
     if (prefs.isKey(nvsProtBrokerPwd))
       prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd));
     configFlash.protConfig.publishTarget = prefs.getUChar(nvsProtBrokerPublishTarget);
+    configFlash.protConfig.publishAllTemps = prefs.getUChar(nvsProtBrokerPublishAllTemps);
+    configFlash.protConfig.publishPathAsRoot = prefs.getUChar(nvsProtBrokerPublishPathAsRoot);
     prefs.end();
   }
 
@@ -256,6 +260,8 @@ void CVdmConfig::writeConfig(bool reboot)
     prefs.putString(nvsProtBrokerUser,configFlash.protConfig.userName);
     prefs.putString(nvsProtBrokerPwd,configFlash.protConfig.userPwd);
     prefs.putUChar(nvsProtBrokerPublishTarget,configFlash.protConfig.publishTarget);
+    prefs.putUChar(nvsProtBrokerPublishAllTemps,configFlash.protConfig.publishAllTemps);
+    prefs.putUChar(nvsProtBrokerPublishPathAsRoot,configFlash.protConfig.publishPathAsRoot);
   }
   prefs.end();
  
@@ -323,6 +329,8 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["user"].isNull()) strncpy(configFlash.protConfig.userName,doc["user"].as<const char*>(),sizeof(configFlash.netConfig.userName));
   if (!doc["pwd"].isNull()) strncpy(configFlash.protConfig.userPwd,doc["pwd"].as<const char*>(),sizeof(configFlash.netConfig.userPwd));
   if (!doc["pubTarget"].isNull()) configFlash.protConfig.publishTarget = doc["pubTarget"];
+  if (!doc["pubAllTemps"].isNull()) configFlash.protConfig.publishAllTemps = doc["pubAllTemps"];
+  if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.publishPathAsRoot = doc["pubPathAsRoot"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)

@@ -106,12 +106,12 @@ void CVdmNet::setup()
     UART_DBG.print("Interface type ");
     UART_DBG.println(VdmConfig.configFlash.netConfig.eth_wifi);
   #endif
- 
+  
   switch (VdmConfig.configFlash.netConfig.eth_wifi) {
     case interfaceAuto :
       {
         setupEth(); 
-        setupWifi();
+        if (wifiState!=wifiDisabled) setupWifi();
         break;
       }
       case interfaceEth :
@@ -139,6 +139,7 @@ void CVdmNet::setupEth()
     switch (ethState) {
       case wifiIdle :
       {  
+        WT32_ETH01_onEvent();
         ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
         if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) {
           ETH.config(VdmConfig.configFlash.netConfig.staticIp, 
@@ -146,13 +147,15 @@ void CVdmNet::setupEth()
           VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
         }
         if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) ETH.setHostname(VdmConfig.configFlash.systemConfig.stationName);
-        WT32_ETH01_onEvent();
         ethState=ethIsStarting;
         break;
       }
       case ethIsStarting :
       {
         if (WT32_ETH01_isConnected()) {
+          #ifdef netDebug
+            UART_DBG.println("Setup Eth cable is connected");
+          #endif
           ServerServices.initServer();
           setupNtp();
           UART_DBG.println(ETH.localIP());
@@ -267,9 +270,6 @@ void CVdmNet::checkNet()
       UART_DBG.println("MDNS responder started");
     }
 
-    // todo   
-    //telnet_setup();
-
     // prepare syslog configuration here (can be anywhere before first call of 
     // log/logf method)
     if (VdmConfig.configFlash.netConfig.syslogLevel>0) {
@@ -283,7 +283,7 @@ void CVdmNet::checkNet()
     VdmTask.startServices();
   } else {
     // check if net is connected
-    VdmNet.setup();
+    setup();
   }
 }
 

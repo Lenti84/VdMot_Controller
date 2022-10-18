@@ -563,7 +563,7 @@
 		</div>
 		</div>
 
-		<div class="rtabframe" style="height:300px;">
+		<div class="rtabframe" style="height:360px;">
 		<h3>Protocol</h3>
 
 		<table id="protConfig" class="tabTable1">		
@@ -614,13 +614,21 @@
 				<input type="password" maxlength="64" class="form-input" id="protcfg-Pwd2" name="protcfg-Pwd2"/>
 				</td>
 			</tr>
-			<tr>
-				<th>Publish target</th>
-				<td>
-				<input type="checkbox" id="protcfg-pubTarget" name="protcfg-pubTarget"/>
-				</td>
-			</tr>
 		</table>
+		
+		<div class="tabiframe"> 
+		<table id="protcfg-Broker1" style="display:none;" class="tabTable">
+			<tr>
+			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:5em;display:none;">
+				<legend>Publish</legend>
+				<label><input type="checkbox" id="protcfg-pubTarget" name="theGroupP">Target </label>
+				<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
+				<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
+			</fieldset>
+			</tr>
+	
+		</table>
+		</div>
 		</div>
 
 		<div class="rtabframe" style="height:460px;">
@@ -642,12 +650,8 @@
 		
 			<table id="cfgValvesTable1" class="tabTable"
 			<tr>
-				<th>Calibration</th>
-			</tr>
-			</table>
-			<table>
-			<tr>
-			<fieldset class="checkboxgroup" title="Next Calibration">
+			<fieldset class="checkboxgroup">
+				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
 				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour of next calibration"> h</label>
 				<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
@@ -1394,6 +1398,8 @@
 			} else {
 				x.style.display = "block";
 			}
+			id("protcfg-Broker1").style.display=x.style.display;
+			id("protcfg-Broker2").style.display=x.style.display;
 		}
 		
 		function showWifi(){
@@ -1709,6 +1715,8 @@
 				protCfg.interval = id("protcfg-Interval").value;
 				protCfg.user = id("protcfg-User").value;
 				protCfg.pubTarget = id("protcfg-pubTarget").checked ? 1 : 0;
+				protCfg.pubAllTemps = id("protcfg-pubAllTemps").checked ? 1 : 0;
+				protCfg.pubPathAsRoot = id("protcfg-pubPathAsRoot").checked ? 1 : 0;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -2161,6 +2169,8 @@
 				id("protcfg-Interval").value = dataProtConfig["interval"];
 				id("protcfg-User").value = dataProtConfig["user"];
 				id("protcfg-pubTarget").checked = dataProtConfig["pubTarget"];
+				id("protcfg-pubAllTemps").checked = dataProtConfig["pubAllTemps"];
+				id("protcfg-pubPathAsRoot").checked = dataProtConfig["pubPathAsRoot"];
 				showBrokerIP();
 			}
 		}
