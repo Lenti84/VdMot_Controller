@@ -55,7 +55,7 @@ CStmOta::CStmOta()
 
 }
 
-const String STM32_CHIPNAME[9] = {
+const String STM32_CHIPNAME[10] = {
   "Unknown Chip",
   "STM32F03xx4/6",
   "STM32F030x8/05x",
@@ -64,7 +64,8 @@ const String STM32_CHIPNAME[9] = {
   "STM32F103x8/B",
   "STM32F103xC/D/E",
   "STM32F105/107",
-  "STM32F401xB/C"
+  "STM32F401xB/C",
+  "STM32F411xx”
 };
 
 void CStmOta::stm32SendCommand(unsigned char commd) 
@@ -284,6 +285,8 @@ unsigned char CStmOta::stm32GetId()
           return 7;
         if (getid == 0x423)
           return 8;  
+        if (getid == 0x431)
+          return 9;
       }
       else {
         Serial.println("Error: wrong answer");
