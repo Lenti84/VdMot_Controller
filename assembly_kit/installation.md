@@ -1,13 +1,19 @@
-# Software installation
+# Board overview
 
-This picture shows essential connectors and jumpers of the VdMot Controller Board:
-![-](./hardware/tht_assembly_C2-sample.png "tht assembly drawing C2 revision")
+This picture shows essential connectors and jumpers of the VdMot Controller C2 revision Board:
+![-](../hardware/tht_assembly_C2-sample.png "tht assembly drawing C2 revision")
 
     B1 - BlackPill Board
     B2 - WT32-ETH01 Board
 
+## board versions
+Following board versions does exist. The number can be found on the bottom side of the board.
 
-# Initial ESP32 / WT32 Flash via direct upload in Platformio / Visual Studio Code
+    D-H0044-01-02 - C1 sample board - board with 5V relay
+    D-H0044-01-03 - C2 sample board - board without need for relay
+
+# Software installation
+## Initial ESP32 / WT32 Flash via direct upload in Platformio / Visual Studio Code
 You will need a USB2UART converter for that step. For example a converter with FTDI FT232 or CH340.
 
 Following configuration of platformio.ini is needed:
@@ -28,7 +34,7 @@ Please proceed according following steps:
 
 
 
-# Initial ESP32 / WT32 Flash via Flash Download Tool
+## Initial ESP32 / WT32 Flash via Flash Download Tool
 You will need a USB2UART converter for that step. For example a converter with FTDI FT232 or CH340.
 
 Following configuration of the flash download tool is needed:
@@ -51,7 +57,7 @@ Please proceed according following steps:
     4. Click start
     
 
-# Initial STM32 Flash via VdMot Controller
+## Initial STM32 Flash via VdMot Controller
 The STM32 can be flashed directly by the ESP32 VdMot Controller.
 
 Please proceed according following steps:
