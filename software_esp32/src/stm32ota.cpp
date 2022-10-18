@@ -55,7 +55,7 @@ CStmOta::CStmOta()
 
 }
 
-const String STM32_CHIPNAME[9] = {
+const String STM32_CHIPNAME[10] = {
   "Unknown Chip",
   "STM32F03xx4/6",
   "STM32F030x8/05x",
@@ -65,7 +65,7 @@ const String STM32_CHIPNAME[9] = {
   "STM32F103xC/D/E",
   "STM32F105/107",
   "STM32F401xB/C",
-  "STM32F411xx"
+  "STM32F411xE"
 };
 
 void CStmOta::stm32SendCommand(unsigned char commd) 
@@ -265,7 +265,7 @@ unsigned char CStmOta::stm32GetId()
       if (sbuf[0] == STM32ACK) {
         UART_STM32.readBytesUntil(STM32ACK, sbuf, 4);
         getid = sbuf[1];
-        getid = (getid << 8) + sbuf[2];
+        getid = (getid << 9) + sbuf[2];
         Serial.print("- Id: ");
         Serial.print(getid, HEX); 
         Serial.println(""); 
@@ -285,7 +285,7 @@ unsigned char CStmOta::stm32GetId()
           return 7;
         if (getid == 0x423)
           return 8;  
-        if (getid == 0x431)  
+        if (getid == 0x831)  
           return 9;
       }
       else {
