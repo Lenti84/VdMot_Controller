@@ -57,16 +57,10 @@ CStmOta::CStmOta()
 }
 
 const TIdChipName idChipNames[] = {
-        {"STM32F03xx4/6",   0x444},
-        {"STM32F030x8/05x", 0x440},
-        {"STM32F030xC",     0x442},
-        {"STM32F103x4/6",   0x412},
-        {"STM32F103x8/B",   0x410},
-        {"STM32F103xC/D/E", 0x414},
-        {"STM32F105/107",   0x418},
+        {"STM32F40xx/41xx", 0x413},
         {"STM32F401xB/C",   0x423},
-        {"STM32F411x",      0x431},
-        {"STM32F401CC",     0x433},
+        {"STM32F411xx",     0x431},
+        {"STM32F401xD/E",   0x433},
         {"",                0}
   };
 
@@ -295,7 +289,7 @@ uint8_t CStmOta::stm32GetId()
         chipId = sbuf[1];
         chipId = (chipId << 8) + sbuf[2];
         chipName = checkChipName (chipId);
-        UART_DBG.print("- Id: ");
+        UART_DBG.print("- Id: 0x");
         UART_DBG.print(chipId, HEX); 
         UART_DBG.println(""); 
         UART_DBG.print("--> type is ");

@@ -332,7 +332,7 @@ String CWeb::getStmUpdStatus()
 {
   String result = "{\"percent\":"+String(Stm32.stmUpdPercent)+","+
                     "\"status\":"+String(Stm32.stmUpdateStatus)+","+
-                    "\"chipId\":"+String(StmOta.chipId,HEX)+","+
+                    "\"chipId\":\"0x"+String(StmOta.chipId,HEX)+"\","+
                     "\"chipName\":\""+String(StmOta.chipName)+"\""+"}";
   return result;
 }

@@ -213,7 +213,7 @@ void CStm32::STM32ota_loop()
                 if (timeout == 0) UART_DBG.println("STM32 ota: erasing in progress");
 
                 if(timeout>1000) {
-                  UART_DBG.print("--> timeout");
+                  UART_DBG.println("--> timeout");
                   stm32ota_state = STM32OTA_ERROR;
                 }
                 else {
