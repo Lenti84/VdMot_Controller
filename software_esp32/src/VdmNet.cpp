@@ -97,11 +97,12 @@ void CVdmNet::init()
     return;
   }
   UART_DBG.println("SPIFFS booted");
-
+  //VdmSystem.clearFS();
 }
 
 void CVdmNet::setup() 
 {
+  
   #ifdef netDebug
     UART_DBG.print("Interface type ");
     UART_DBG.println(VdmConfig.configFlash.netConfig.eth_wifi);

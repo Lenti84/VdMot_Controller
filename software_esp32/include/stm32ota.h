@@ -68,23 +68,33 @@
 #define STM32OK         0xFF
 
 
+typedef struct Tid_Chip_Name {
+  String  chipName;
+  uint32_t id;
+} TIdChipName;
+
+
 class CStmOta 
 {
 public:
   CStmOta();
-  unsigned char stm32GetId();
-  unsigned char stm32ErasenStart();
-  unsigned char getChecksum( unsigned char * data, unsigned char datalen);
-  unsigned char stm32Address(unsigned long addr);
-  void stm32SendCommand(unsigned char commd);
-  const String STM32_CHIPNAME[9];
+  uint8_t stm32GetId();
+  uint8_t stm32ErasenStart();
+  uint8_t getChecksum( uint8_t * data, uint8_t datalen);
+  uint8_t stm32Address(uint32_t addr);
+  void stm32SendCommand(uint8_t commd);
+  uint8_t stm32SendData(uint8_t * data, uint8_t wrlen);
+  uint32_t chipId;
+  String chipName;
+
 private:
   char stm32Version();
-  unsigned char stm32Erase();
-  unsigned char stm32Erasen();
-  unsigned char stm32Read(unsigned char * rdbuf, unsigned long rdaddress, unsigned int rdlen);
-  unsigned char stm32SendData(unsigned char * data, unsigned char wrlen);
-  unsigned char stm32Run();
+  uint8_t stm32Erase();
+  uint8_t stm32Erasen();
+  uint8_t stm32Read(uint8_t * rdbuf, uint32_t rdaddress, uint16_t rdlen);
+  
+  uint8_t stm32Run();
+  String checkChipName (uint32_t thisID);
 };
 
 extern CStmOta StmOta;

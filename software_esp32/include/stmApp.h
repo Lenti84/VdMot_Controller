@@ -43,10 +43,10 @@
 #pragma once
 
 typedef struct  {
-	unsigned char actual_position;      // from controller
-  unsigned char target_position;      // to controller
-  unsigned char state;                // from controller
-  unsigned int  meancurrent;          // from controller
+	uint8_t actual_position;      // from controller
+  uint8_t target_position;      // to controller
+  uint8_t state;                // from controller
+  uint16_t  meancurrent;          // from controller
   uint8_t       tIdx1;
   int           temp1;                // temperature of 1st assigned sensor
   uint8_t       tIdx2;

@@ -49,6 +49,7 @@
 #include "helper.h"
 #include "stm32.h"
 #include "stmApp.h"
+#include "stm32ota.h"
 #include "mqtt.h"
 
 CWeb Web;
@@ -329,7 +330,10 @@ String CWeb::getFSDir()
 
 String CWeb::getStmUpdStatus()
 {
-  String result = "{\"percent\":"+String(Stm32.stmUpdPercent)+",\"status\":"+String(Stm32.stmUpdateStatus)+"}";
+  String result = "{\"percent\":"+String(Stm32.stmUpdPercent)+","+
+                    "\"status\":"+String(Stm32.stmUpdateStatus)+","+
+                    "\"chipId\":"+String(StmOta.chipId,HEX)+","+
+                    "\"chipName\":\""+String(StmOta.chipName)+"\""+"}";
   return result;
 }
 
