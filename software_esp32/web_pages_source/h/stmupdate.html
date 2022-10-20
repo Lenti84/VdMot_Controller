@@ -123,12 +123,28 @@
 	<tr>
 		<th>STM32 is updating</th>
 	</tr>
+	
+	<tr>
+		<th>Chip Id</th>
+        <td id="chipId">	
+			unknown
+		</td>
+	</tr>
+
+	<tr>
+		<th>Chip Name</th>
+        <td id="chipName">	
+			unknown
+		</td>
+	</tr>
+	
 	<tr>
 		<td><progress id="progressBar" min="0" max="100" value="0"></progress></td>
 	</tr>
 	<tr>
         <td id="progressValue"></td>		
 	</tr>
+	
 	<tr>
 		<td>
         <input type="button" class="buttonclass" style="display:none;" id="back" value="< Back" title="Back to home" onclick="app.methods.back()"/>
@@ -182,6 +198,7 @@ var getUpdateStatusInterval = null;
 				});
 			var fsDir= await this.getJson("fsdir");
 			if (fsDir) this.generateFilesList (fsDir);
+			
 		}
 	,
 		uploadNow() {
@@ -203,8 +220,10 @@ var getUpdateStatusInterval = null;
 			var	stmUpdStatus=await app.methods.getJson("stmupdstatus");
 			if (stmUpdStatus) {
 				id("progressBar").value = stmUpdStatus.percent;
-				
 				id("progressValue").textContent = stmUpdStatus.percent+" % " + updStatus[stmUpdStatus.status] ;
+				id("chipId").textContent = stmUpdStatus.chipId;
+				id("chipName").textContent = stmUpdStatus.chipName;
+
 				if (stmUpdStatus.status==4) {
 					id("progressValue").textContent="Error";
 					if (getUpdateStatusInterval) getUpdateStatusInterval.clear;
@@ -236,10 +255,10 @@ var getUpdateStatusInterval = null;
 				selectBox.remove(0);
 			}     
 			filesList.forEach((item) => {
-				if (item.fName.startsWith("stm/")) {
+				//if (item.fName.startsWith("stm/")) {
 					let newOption = new Option(item.fName,item.fName);
 					selectBox.add(newOption,undefined);
-				}
+				//}
 			});
 		}
 	,

@@ -53,9 +53,9 @@
 
 typedef struct {
   File fsfile;
-  unsigned long size;
-  unsigned int blockcnt;
-  unsigned int lastbytes;
+  uint32_t size;
+  uint16_t blockcnt;
+  uint16_t lastbytes;
   uint32_t crc;
 } flashfile;
 
@@ -80,6 +80,8 @@ public:
   void FlashMode();
   void RunMode();
   void ResetSTM32(bool useTask = false);
+  bool waitForSTMResponse (uint32_t timeout_ms);
+  void clearUART_STM32Buffer();
 
   volatile uint8_t stmUpdPercent;
   volatile otaUpdateStatus stmUpdateStatus;
@@ -91,14 +93,14 @@ public:
 private:
   int PrepareFile(String FileName);
   int FlashBytes(int Block, int Bytes);
-  unsigned char stm32StartRead(unsigned long rdaddress, unsigned int rdlen);
+  uint8_t stm32StartRead(uint32_t rdaddress, uint16_t rdlen);
   int stm32ota_command;
   ota_state stm32ota_state;
   
   int timeout;
   int count;
-  unsigned char buffer[STM32OTA_BLOCKSIZE];
-  unsigned char id;
+  uint8_t buffer[STM32OTA_BLOCKSIZE];
+ // uint8_t id;
   uint8_t skipsigning;
   int blockcounter;
   uint32_t timer;

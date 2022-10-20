@@ -83,6 +83,7 @@ void BootLoop(void) {
   }
   else if(state == 1) {
       digitalWrite(LED, HIGH);
+      delay(10);        // delay for init
       Serial1.println("BEEFIT");
       Serial1.flush();
       delay(200);        // wait for send

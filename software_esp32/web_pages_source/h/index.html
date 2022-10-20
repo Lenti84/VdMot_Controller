@@ -732,7 +732,7 @@
 				<td>
 				<input type="button" class="buttonclass" id="fileDelete" value="Delete file" title="Delete selected file"/>
 				
-				<input type="button" class="buttonclass" id="fileAllDelete" value="Delete all files" title="Delete all files"/>
+				<input type="button" class="buttonclass" id="formatFS" value="Format FS" title="Format FS"/>
 				</td>
 
 			</tr>
@@ -1488,8 +1488,8 @@
 				fileDelete();
 			};
 			
-			id("fileAllDelete").onclick = function(){
-				fileAllDelete();
+			id("formatFS").onclick = function(){
+				formatFS();
 			};
 			
 			id ("vCfg-lowC").onchange = function (){
@@ -1575,10 +1575,10 @@
 			}
 		}
 		
-		async function fileAllDelete() {
-			if (confirm('Are you sure you want to delete all files ?')) {
-					await postCmd('{"action":"clearFS"}');
-					getFSDir();
+		async function formatFS() {
+			if (confirm('Are you sure you want to format the file system ?')) {
+					postCmd('{"action":"clearFS"}');
+					reloadDoc("http:/#home",15000,true);
 			}
 		}
 		

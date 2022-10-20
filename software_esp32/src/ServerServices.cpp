@@ -359,7 +359,8 @@ void handleUploadFile(AsyncWebServerRequest *request, const String& filename, si
     UART_DBG.println("file has arguments : "+String(request->args()));
     if (request->args()) {
         UART_DBG.println("file has argument "+request->arg("dir"));
-        thisFileName = "/"+request->arg("dir")+"/"+filename; 
+        //thisFileName = "/"+request->arg("dir")+"/"+filename; 
+        thisFileName = "/"+filename; 
     }
 
      UART_DBG.println("filename : "+thisFileName);
@@ -391,7 +392,7 @@ void CServerServices::stmDoUpdate(JsonObject doc)
     String thisFileName = doc["file"].as<const char*>();
     if (!thisFileName.startsWith("/")) thisFileName = "/"+thisFileName;
     uint8_t command = doc["cmd"];
-    UART_DBG.println("file : "+thisFileName + "Comand "+ String(command));
+    UART_DBG.println("file : "+thisFileName + " Command "+ String(command));
     if (command==0) VdmTask.startStm32Ota(STM32OTA_START,thisFileName);
     if (command==1) VdmTask.startStm32Ota(STM32OTA_STARTBLANK,thisFileName);
   }
