@@ -530,7 +530,12 @@ int CStm32::FlashBytes(int Block, int Bytes)
       UART_DBG.println(response,HEX);
       if (response == STM32ACK) {
         UART_STM32.write(Bytes-1);                 // length of data
-        UART_STM32.write(binbuffer, Bytes + 1);    // data + checksum
+        for (int x = 0; x<Bytes+1; x++) {
+          UART_STM32.write(binbuffer[x]);  
+          UART_STM32.flush();
+          delayMicroseconds(20);
+        }
+        //UART_STM32.write(binbuffer, Bytes + 1);    // data + checksum
         return 0;
       } else {
         UART_DBG.println(" OTA Error stm32Address ");

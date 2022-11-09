@@ -197,7 +197,7 @@ void CVdmNet::setupWifi()
           UART_DBG.println("wifi : no ssid or no pathword");
           break;
         }
-        WiFi.mode(WIFI_AP_STA);
+        WiFi.mode(WIFI_MODE_STA);
         if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) {
           WiFi.config(VdmConfig.configFlash.netConfig.staticIp, 
           VdmConfig.configFlash.netConfig.gateway, 
