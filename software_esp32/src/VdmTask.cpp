@@ -45,6 +45,7 @@
 #include "stm32.h"
 #include "ServerServices.h"
 #include "VdmConfig.h"
+#include "VdmSystem.h"
 #include <BasicInterruptAbstraction.h>
 #include "PIControl.h"
 
@@ -60,6 +61,8 @@ CVdmTask::CVdmTask()
   taskIdServices=TASKMGR_INVALIDID;
   taskIdSetFactoryCfgTimeOut=TASKMGR_INVALIDID;
   taskIdSetFactoryCfgInProgress=TASKMGR_INVALIDID;
+  taskIdRunOnceClearFS=TASKMGR_INVALIDID;
+  taskIdRunOnceGetFS=TASKMGR_INVALIDID;
   setFactoryCfgState=idle;
 }
 
@@ -124,9 +127,9 @@ void CVdmTask::startServices()
     taskIdRunOnceDelayed = taskManager.scheduleOnce(10000, [] {
                 Services.runOnceDelayed();
     });
-    taskIdServices = taskManager.scheduleFixedRate(60*1000, [] {
+    taskIdServices = taskManager.scheduleFixedRate(60, [] {
         Services.servicesLoop();
-    });
+    },TIME_SECONDS);
 
     for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) { 
         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].active) {
@@ -145,6 +148,22 @@ void CVdmTask::startServices()
         }
     }
 }
+
+
+void CVdmTask::startClearFS()
+{
+    taskIdRunOnceClearFS = taskManager.scheduleOnce(100, [] {
+                VdmSystem.clearFS();
+    });
+}
+
+void CVdmTask::startGetFS()
+{
+    taskIdRunOnceGetFS = taskManager.scheduleOnce(100, [] {
+                VdmSystem.getFSDirectory();
+    });
+}
+
 
 void CVdmTask::deleteTask (taskid_t taskId)
 {

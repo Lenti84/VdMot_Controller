@@ -107,9 +107,14 @@ void restoreConfig (JsonObject doc)
   VdmConfig.restoreConfig(true);
 }
 
-void clearFS (JsonObject doc)
+void setClearFS (JsonObject doc)
 {  
-  VdmSystem.clearFS();
+  VdmTask.startClearFS();
+}
+
+void setGetFS (JsonObject doc)
+{  
+  VdmTask.startGetFS();
 }
 
 void fileDelete (JsonObject doc)
@@ -326,10 +331,10 @@ void handleStmUpdStatus(AsyncWebServerRequest *request)
 bool handleCmd(JsonObject doc) 
 { 
   typedef void (*fp)(JsonObject doc);
-  fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,
-                  &clearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl} ;
+  fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,&setGetFS,
+                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl} ;
 
-  char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete",
+  char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete","getFS",
                         "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave",NULL};
   char const **p;
   bool found = false;

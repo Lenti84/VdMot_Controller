@@ -69,6 +69,12 @@ typedef struct {
 } VDM_NETWORK_CONFIG;
 
 typedef struct {
+  char tz[50];
+  char tzCode[50];
+} VDM_SYSTEM_TIME_ZONE_CONFIG;
+
+
+typedef struct {
   uint8_t celsiusFahrenheit;
   char stationName[21];
 } VDM_SYSTEM_CONFIG;
@@ -137,6 +143,7 @@ typedef struct
   VDM_TEMPS_CONFIG tempsConfig;
   VDM_SYSTEM_CONFIG systemConfig;
   VDM_VALVES_CONTROL_CONFIG valvesControlConfig;
+  VDM_SYSTEM_TIME_ZONE_CONFIG timeZoneConfig;
 } CONFIG_FLASH;
 
 
@@ -157,6 +164,10 @@ typedef struct
 #define nvsNetSysLogEnable          "syslogEnable"
 #define nvsNetSysLogIp              "sysLogIp"
 #define nvsNetSysLogPort            "sysLogPort"
+
+#define nvsTZCfg                    "tZCfg"
+#define nvsTZ                       "tZ"
+#define nvsTZCode                   "tZCode"
 
 #define nvsProtCfg                  "protCfg"
 #define nvsProtDataProt             "dataProt"

@@ -77,8 +77,8 @@ String CWeb::getNetConfig (VDM_NETWORK_CONFIG netConfig)
                   "\"userName\":\""+String(netConfig.userName)+"\","+
                   "\"ssid\":\""+String(netConfig.ssid)+"\","+
                   "\"timeServer\":\""+String(netConfig.timeServer)+"\","+
-                  "\"timeOffset\":"+String(netConfig.timeOffset)+","+
-                  "\"timeDST\":"+String(netConfig.daylightOffset)+","+
+                  "\"tz\":\""+String(VdmConfig.configFlash.timeZoneConfig.tz)+"\","+
+                  "\"tzCode\":\""+String(VdmConfig.configFlash.timeZoneConfig.tzCode)+"\","+
                   "\"syslogLevel\":"+String(netConfig.syslogLevel)+","+
                   "\"syslogIp\":\""+ip2String(netConfig.syslogIp)+"\","+
                   "\"syslogPort\":"+String(netConfig.syslogPort)+  
@@ -312,19 +312,22 @@ String CWeb::getFSDir()
 {
   String result;
   String item;
-  VdmSystem.getFSDirectory();
-  if (VdmSystem.numfiles>0) {
-    result = "[";
-    for (uint8_t x=0; x<VdmSystem.numfiles; x++) {
-      item = "{\"fName\":\"" + VdmSystem.Filenames[x].filename+"\","+
-              "\"ftype\":\"" + VdmSystem.Filenames[x].ftype+"\","+
-              "\"fsize\":\"" + VdmSystem.Filenames[x].fsize+"\""+
-              "}";
-      result+=item;
-      if (x<VdmSystem.numfiles-1) result += ",";
-    }  
-    result += "]";
-  } else result ="[]";
+  //VdmSystem.getFSDirectory();
+  
+  if (!VdmSystem.getFSInProgress) {
+    if (VdmSystem.numfiles>0) {
+      result = "[";
+      for (uint8_t x=0; x<VdmSystem.numfiles; x++) {
+        item = "{\"fName\":\"" + VdmSystem.Filenames[x].filename+"\","+
+                "\"ftype\":\"" + VdmSystem.Filenames[x].ftype+"\","+
+                "\"fsize\":\"" + VdmSystem.Filenames[x].fsize+"\""+
+                "}";
+        result+=item;
+        if (x<VdmSystem.numfiles-1) result += ",";
+      }  
+      result += "]";
+    } else result ="[]";
+  }
   return result;
 }
 
