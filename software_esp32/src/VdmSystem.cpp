@@ -53,7 +53,7 @@ CVdmSystem::CVdmSystem()
   stmBuild = 0;
   memset (systemMessage,0,sizeof(systemMessage));
   systemState = systemStateOK;
-
+  getFSInProgress = false;
 }
 
 void CVdmSystem::getSystemInfo()
@@ -63,6 +63,7 @@ void CVdmSystem::getSystemInfo()
 
 void CVdmSystem::getFSDirectory() 
 {
+  getFSInProgress = true;
   if (!spiffsStarted) SPIFFS.begin(true);
   spiffsStarted=true;
   numfiles  = 0; // Reset number of FS files counter
@@ -82,18 +83,21 @@ void CVdmSystem::getFSDirectory()
     }
     root.close();
   }
+  getFSInProgress = false;
 }
 
 void CVdmSystem::clearFS() 
 {
   if (!spiffsStarted) SPIFFS.begin(true);
   spiffsStarted=true;
-  esp_task_wdt_init(30, false);
+  //esp_task_wdt_init(30, false);
   bool formatSuccess = SPIFFS.format();
 
   UART_DBG.print("Format success: ");
   UART_DBG.println(formatSuccess);
-  ESP.restart();
+  getFSDirectory();
+
+  //ESP.restart();
 }
 
 void CVdmSystem::fileDelete (String fileName)

@@ -44,6 +44,9 @@
 #include "globals.h"
 #include "VdmConfig.h" 
 
+#define getNtpHour  3
+#define getNtpMin   5
+
 class CServices
 {
 public:
@@ -55,10 +58,12 @@ public:
   void restartStmApp(uint32_t ms);
   void checkServiceValves();
   void valvesSetLearn();
+  void checkGetNtp();
 
   bool serviceValvesStarted;
   bool restartSTM;
-
+private:
+  
 };
 
 extern CServices Services;

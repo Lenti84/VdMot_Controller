@@ -197,8 +197,15 @@ void CVdmNet::setupWifi()
           UART_DBG.println("wifi : no ssid or no pathword");
           break;
         }
-        WiFi.mode(WIFI_MODE_STA);
-        if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) {
+        
+        #ifdef netDebugWIFI
+        UART_DBG.print("wifi : ssid ");
+        UART_DBG.println(VdmConfig.configFlash.netConfig.ssid);
+        UART_DBG.print("wifi : pw ");
+        UART_DBG.println(VdmConfig.configFlash.netConfig.pwd);
+        #endif
+        WiFi.mode(WIFI_MODE_STA); 
+		    if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) {
           WiFi.config(VdmConfig.configFlash.netConfig.staticIp, 
           VdmConfig.configFlash.netConfig.gateway, 
           VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
@@ -236,9 +243,11 @@ void CVdmNet::setupWifi()
 void CVdmNet::setupNtp() 
 {
   // Init and get the time
-  configTime(VdmConfig.configFlash.netConfig.timeOffset, 
-             VdmConfig.configFlash.netConfig.daylightOffset, 
-             VdmConfig.configFlash.netConfig.timeServer);
+  
+  //configTime(VdmConfig.configFlash.netConfig.timeOffset, 
+  //           VdmConfig.configFlash.netConfig.daylightOffset, 
+  //           VdmConfig.configFlash.netConfig.timeServer);
+  configTzTime(VdmConfig.configFlash.timeZoneConfig.tzCode ,VdmConfig.configFlash.netConfig.timeServer);
   getLocalTime(&startTimeinfo);
 }
 
@@ -266,11 +275,11 @@ void CVdmNet::checkNet()
     VdmTask.deleteTask(VdmTask.taskIdCheckNet);
 
     VdmSystem.getSystemInfo();
-
-    if (MDNS.begin("esp32")) {
-      UART_DBG.println("MDNS responder started");
-    }
-
+    #ifdef netUseMDNS
+      if (MDNS.begin("esp32")) {
+        UART_DBG.println("MDNS responder started");
+      }
+    #endif
     // prepare syslog configuration here (can be anywhere before first call of 
     // log/logf method)
     if (VdmConfig.configFlash.netConfig.syslogLevel>0) {

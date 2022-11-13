@@ -67,8 +67,10 @@ class CVdmSystem
 public:
   CVdmSystem();
   void getSystemInfo();
+  void setGetFS();
   void getFSDirectory();
   void fileDelete(String fName);
+  void setClearFS();
   void clearFS();
   void setSystemState(uint8_t thisSystemState,char const *thisSystemMsg);
   esp_chip_info_t chip_info;
@@ -78,8 +80,10 @@ public:
   time_t stmBuild;
   uint8_t systemState;
   char systemMessage[50];
+  bool getFSInProgress;
 private:
   bool spiffsStarted;
+  
 };
 
 extern CVdmSystem VdmSystem;

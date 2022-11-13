@@ -42,6 +42,7 @@
 #include "globals.h"
 #include "VdmTask.h"
 #include "VdmConfig.h"
+#include "VdmSystem.h"
 #include "stmApp.h"
 #include "Queue.h"
 
@@ -70,9 +71,19 @@ void CServices::checkServiceValves()
   }
 }
 
+void CServices::checkGetNtp()
+{
+  // check if time is 3:05 pm
+  getLocalTime(&VdmNet.startTimeinfo);
+  if ((VdmNet.startTimeinfo.tm_hour==getNtpHour) && (VdmNet.startTimeinfo.tm_min==getNtpMin)) {
+    VdmNet.setupNtp();
+  }
+}
+
 void CServices::servicesLoop()
 {
   checkServiceValves();  
+  checkGetNtp();
 }
 
 void CServices::runOnce() 
