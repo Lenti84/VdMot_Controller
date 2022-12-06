@@ -49,6 +49,7 @@
 #include "helper.h"
 #include "stm32.h"
 #include "stmApp.h"
+#include "stm32ota.h"
 #include "mqtt.h"
 
 CWeb Web;
@@ -76,8 +77,8 @@ String CWeb::getNetConfig (VDM_NETWORK_CONFIG netConfig)
                   "\"userName\":\""+String(netConfig.userName)+"\","+
                   "\"ssid\":\""+String(netConfig.ssid)+"\","+
                   "\"timeServer\":\""+String(netConfig.timeServer)+"\","+
-                  "\"timeOffset\":"+String(netConfig.timeOffset)+","+
-                  "\"timeDST\":"+String(netConfig.daylightOffset)+","+
+                  "\"tz\":\""+String(VdmConfig.configFlash.timeZoneConfig.tz)+"\","+
+                  "\"tzCode\":\""+String(VdmConfig.configFlash.timeZoneConfig.tzCode)+"\","+
                   "\"syslogLevel\":"+String(netConfig.syslogLevel)+","+
                   "\"syslogIp\":\""+ip2String(netConfig.syslogIp)+"\","+
                   "\"syslogPort\":"+String(netConfig.syslogPort)+  
@@ -104,6 +105,8 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"port\":\""+String(protConfig.brokerPort)+"\","+
                     "\"interval\":"+String(protConfig.brokerInterval)+","+
                     "\"pubTarget\":"+String(protConfig.publishTarget)+","+
+                    "\"pubAllTemps\":"+String(protConfig.publishAllTemps)+","+
+                    "\"pubPathAsRoot\":"+String(protConfig.publishPathAsRoot)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
 }
@@ -309,25 +312,31 @@ String CWeb::getFSDir()
 {
   String result;
   String item;
-  VdmSystem.getFSDirectory();
-  if (VdmSystem.numfiles>0) {
-    result = "[";
-    for (uint8_t x=0; x<VdmSystem.numfiles; x++) {
-      item = "{\"fName\":\"" + VdmSystem.Filenames[x].filename+"\","+
-              "\"ftype\":\"" + VdmSystem.Filenames[x].ftype+"\","+
-              "\"fsize\":\"" + VdmSystem.Filenames[x].fsize+"\""+
-              "}";
-      result+=item;
-      if (x<VdmSystem.numfiles-1) result += ",";
-    }  
-    result += "]";
-  } else result ="[]";
+  //VdmSystem.getFSDirectory();
+  
+  if (!VdmSystem.getFSInProgress) {
+    if (VdmSystem.numfiles>0) {
+      result = "[";
+      for (uint8_t x=0; x<VdmSystem.numfiles; x++) {
+        item = "{\"fName\":\"" + VdmSystem.Filenames[x].filename+"\","+
+                "\"ftype\":\"" + VdmSystem.Filenames[x].ftype+"\","+
+                "\"fsize\":\"" + VdmSystem.Filenames[x].fsize+"\""+
+                "}";
+        result+=item;
+        if (x<VdmSystem.numfiles-1) result += ",";
+      }  
+      result += "]";
+    } else result ="[]";
+  }
   return result;
 }
 
 String CWeb::getStmUpdStatus()
 {
-  String result = "{\"percent\":"+String(Stm32.stmUpdPercent)+",\"status\":"+String(Stm32.stmUpdateStatus)+"}";
+  String result = "{\"percent\":"+String(Stm32.stmUpdPercent)+","+
+                    "\"status\":"+String(Stm32.stmUpdateStatus)+","+
+                    "\"chipId\":\"0x"+String(StmOta.chipId,HEX)+"\","+
+                    "\"chipName\":\""+String(StmOta.chipName)+"\""+"}";
   return result;
 }
 

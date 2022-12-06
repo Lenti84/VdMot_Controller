@@ -47,6 +47,7 @@ Credits to https://github.com/csnol/1CHIP-Programmers
 
 #include "globals.h"
 #include "stm32ota.h"
+#include "stm32.h"
 
 CStmOta StmOta;
 
@@ -55,26 +56,40 @@ CStmOta::CStmOta()
 
 }
 
-const String STM32_CHIPNAME[9] = {
-  "Unknown Chip",
-  "STM32F03xx4/6",
-  "STM32F030x8/05x",
-  "STM32F030xC",
-  "STM32F103x4/6",
-  "STM32F103x8/B",
-  "STM32F103xC/D/E",
-  "STM32F105/107",
-  "STM32F401xB/C"
-};
+const TIdChipName idChipNames[] = {
+        {"STM32F40xx/41xx", 0x413},
+        {"STM32F401xB/C",   0x423},
+        {"STM32F411xx",     0x431},
+        {"STM32F401xD/E",   0x433},
+        {"",                0}
+  };
 
-void CStmOta::stm32SendCommand(unsigned char commd) 
-{    // Tested
-  UART_STM32.write(commd);
-  UART_STM32.write(~commd);
+String CStmOta::checkChipName (uint32_t thisID) 
+{
+  TIdChipName *entry = (TIdChipName*) idChipNames;
+ 
+  while (entry->chipName != "") {
+      if (entry->id == thisID) {
+        return(entry->chipName);
+      }
+      entry++;
+  }
+  
+  return("Unknown Chip");
 }
 
-unsigned char CStmOta::stm32Erase() 
+void CStmOta::stm32SendCommand(uint8_t commd) 
+{    // Tested
+  delayMicroseconds(1000);
+  UART_STM32.write(commd);
+  delayMicroseconds(50);
+  UART_STM32.write(~commd);
+  delayMicroseconds(50);
+}
+
+uint8_t CStmOta::stm32Erase() 
 {     // Tested
+  Stm32.clearUART_STM32Buffer();
   stm32SendCommand(STM32ERASE);
   while (!UART_STM32.available());
   if (UART_STM32.read() == STM32ACK)
@@ -87,8 +102,9 @@ unsigned char CStmOta::stm32Erase()
   return UART_STM32.read();
 }
 
-unsigned char CStmOta::stm32Erasen() 
+uint8_t CStmOta::stm32Erasen() 
 {     // Tested
+  Stm32.clearUART_STM32Buffer();
   stm32SendCommand(STM32ERASEN);
   while (!UART_STM32.available());
   if (UART_STM32.read() == STM32ACK)
@@ -102,9 +118,9 @@ unsigned char CStmOta::stm32Erasen()
   return UART_STM32.read();
 }
 
-unsigned char CStmOta::stm32ErasenStart() 
+uint8_t CStmOta::stm32ErasenStart() 
 {     // Tested
-  int x;
+  uint8_t x;
 
   stm32SendCommand(STM32ERASEN);
 
@@ -125,8 +141,9 @@ unsigned char CStmOta::stm32ErasenStart()
 }
 
 // No test yet
-unsigned char CStmOta::stm32Run()   
+uint8_t CStmOta::stm32Run()   
 {
+  Stm32.clearUART_STM32Buffer();
   stm32SendCommand(STM32RUN);
   while (!UART_STM32.available());
   if (UART_STM32.read() == STM32ACK) {
@@ -138,13 +155,14 @@ unsigned char CStmOta::stm32Run()
 }
 
 // Tested
-unsigned char CStmOta::stm32Read(unsigned char * rdbuf, unsigned long rdaddress, unsigned int rdlen) 
+uint8_t CStmOta::stm32Read(uint8_t * rdbuf, uint32_t rdaddress, uint16_t rdlen) 
 {
-  unsigned int timer = 0;
+  uint16_t timer = 0;
   size_t getlen;
   
   // send read request
   //UART_DBG.println("send STM32RD");
+  Stm32.clearUART_STM32Buffer();
   stm32SendCommand(STM32RD);  
 
   // wait for ACK
@@ -187,10 +205,12 @@ unsigned char CStmOta::stm32Read(unsigned char * rdbuf, unsigned long rdaddress,
   return STM32ERR;
 }
 
-unsigned char CStmOta::stm32Address(unsigned long addr) 
+uint8_t CStmOta::stm32Address(uint32_t addr) 
 {    // Tested
-  unsigned char sendaddr[4];
-  unsigned char addcheck = 0;
+  Stm32.clearUART_STM32Buffer();
+
+  uint8_t sendaddr[4];
+  uint8_t addcheck = 0;
   sendaddr[0] = addr >> 24;
   sendaddr[1] = (addr >> 16) & 0xFF;
   sendaddr[2] = (addr >> 8) & 0xFF;
@@ -204,22 +224,25 @@ unsigned char CStmOta::stm32Address(unsigned long addr)
   return UART_STM32.read();
 }
 
-unsigned char CStmOta::stm32SendData(unsigned char * data, unsigned char wrlen) 
+uint8_t CStmOta::stm32SendData(uint8_t * data, uint8_t wrlen) 
 {     // Tested
-  UART_STM32.write(wrlen);
+  UART_STM32.write(wrlen-1);
   for (int i = 0; i <= wrlen; i++) {
-    UART_STM32.write(data[i]);
+    UART_STM32.write(*data);
+    data++;
     delayMicroseconds(20);
   }
-  UART_STM32.write(getChecksum(data, wrlen));
-  while (!UART_STM32.available());
-  return UART_STM32.read();
+  //Stm32.clearUART_STM32Buffer();
+  //UART_STM32.write(getChecksum(data, wrlen));
+  //while (!UART_STM32.available());
+  //return UART_STM32.read();
+  return 0;
 }
 
 char CStmOta::stm32Version() 
 {     // Tested
   int x;
-  unsigned char vsbuf[14];
+  uint8_t vsbuf[14];
 
   while(UART_STM32.available()) UART_STM32.read();
 
@@ -246,11 +269,11 @@ char CStmOta::stm32Version()
   return STM32ERR;  
 }
 
-unsigned char CStmOta::stm32GetId() 
+uint8_t CStmOta::stm32GetId() 
 {     // Tested
-  int x;
-  int getid = 0;
-  unsigned char sbuf[5];
+  uint8_t x;
+  chipId = 0;
+  uint8_t sbuf[5];
 
   while(UART_STM32.available()) UART_STM32.read();
 
@@ -263,27 +286,15 @@ unsigned char CStmOta::stm32GetId()
       sbuf[0] = UART_STM32.read();
       if (sbuf[0] == STM32ACK) {
         UART_STM32.readBytesUntil(STM32ACK, sbuf, 4);
-        getid = sbuf[1];
-        getid = (getid << 8) + sbuf[2];
-        Serial.print("- Id: ");
-        Serial.print(getid, HEX); 
-        Serial.println(""); 
-        if (getid == 0x444)
-          return 1;
-        if (getid == 0x440)
-          return 2;
-        if (getid == 0x442)
-          return 3;
-        if (getid == 0x412)
-          return 4;
-        if (getid == 0x410)
-          return 5;
-        if (getid == 0x414)
-          return 6;
-        if (getid == 0x418)
-          return 7;
-        if (getid == 0x423)
-          return 8;  
+        chipId = sbuf[1];
+        chipId = (chipId << 8) + sbuf[2];
+        chipName = checkChipName (chipId);
+        UART_DBG.print("- Id: 0x");
+        UART_DBG.print(chipId, HEX); 
+        UART_DBG.println(""); 
+        UART_DBG.print("--> type is ");
+        UART_DBG.println(chipName);
+        return 1;
       }
       else {
         Serial.println("Error: wrong answer");
@@ -297,8 +308,8 @@ unsigned char CStmOta::stm32GetId()
   return 0;
 }
 
-unsigned char CStmOta::getChecksum( unsigned char * data, unsigned char datalen) {    // Tested
-  unsigned char lendata = datalen;
+uint8_t CStmOta::getChecksum( uint8_t * data, uint8_t datalen) {    // Tested
+  uint8_t lendata = datalen;
   for (int i = 0; i <= datalen; i++)
     lendata ^= data[i];
   return lendata;

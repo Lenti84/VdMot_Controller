@@ -67,19 +67,23 @@ class CVdmSystem
 public:
   CVdmSystem();
   void getSystemInfo();
+  void setGetFS();
   void getFSDirectory();
   void fileDelete(String fName);
+  void setClearFS();
   void clearFS();
-  void setSystemState(uint8_t thisSystemState,String thisSystemMsg);
+  void setSystemState(uint8_t thisSystemState,char const *thisSystemMsg);
   esp_chip_info_t chip_info;
   fileinfo Filenames[maxFiles]; // Enough for most purposes!
   uint8_t numfiles;
   String stmVersion;
   time_t stmBuild;
   uint8_t systemState;
-  String systemMessage;
+  char systemMessage[50];
+  bool getFSInProgress;
 private:
   bool spiffsStarted;
+  
 };
 
 extern CVdmSystem VdmSystem;

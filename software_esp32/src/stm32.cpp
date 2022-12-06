@@ -52,6 +52,22 @@ CStm32::CStm32()
   tempcrc = 0;
 }
 
+bool CStm32::waitForSTMResponse (uint32_t timeout_ms)
+{
+  uint32_t start=millis();
+ 
+  while ((millis() - start) < timeout_ms) {
+    if (UART_STM32.available()) return true;
+  }
+  UART_DBG.println("STM32 ota: Time out");
+  return false;
+}
+
+void CStm32::clearUART_STM32Buffer()
+{
+   while(UART_STM32.available()) UART_STM32.read();
+}
+
 void CStm32::STM32ota_setup() 
 {
 
@@ -109,9 +125,7 @@ void CStm32::STM32ota_loop()
                 ResetSTM32(true);           
                 VdmTask.yieldTask(1500); // stm32 is a little slow
                 UART_STM32.flush();     // flush garbage in rx buffer
-                while (UART_STM32.available()) {
-                  UART_STM32.read();
-                }
+                clearUART_STM32Buffer();
                 if (!skipsigning) {                 
                   UART_STM32.println("DEADBEEF");
                   timeout = 0;
@@ -139,8 +153,13 @@ void CStm32::STM32ota_loop()
                 if (count >= 4) stm32ota_state = STM32OTA_ERROR;
 
                 if (UART_STM32.available() >= 6) {
+                   UART_DBG.print("STM32 ota sign received: ") ;
+                   UART_DBG.println(UART_STM32.available());
+                   memset(buffer,0x0,sizeof(buffer));
                    UART_STM32.readBytes(buffer,6);                  
-                   UART_DBG.println("STM32 ota: got answer");
+                   UART_DBG.print("STM32 ota sign: got answer ");
+                   UART_DBG.print((char*) buffer);
+                   UART_DBG.println();
                    
                    if (memcmp("BEEFIT",&buffer[0],6) == 0) {                     
                      stm32ota_state = STM32OTA_INITSTM;
@@ -166,13 +185,9 @@ void CStm32::STM32ota_loop()
                 if (timeout==0) UART_DBG.println("STM32 ota: get id");
                 if (timeout >= 3) {
                                     
-                  id = StmOta.stm32GetId();
+                 // id = StmOta.stm32GetId();
 
-                  tempstr = StmOta.STM32_CHIPNAME[id];
-                  UART_DBG.print("--> type is ");
-                  UART_DBG.println(tempstr);
-
-                  if (id > 0) {
+                  if (StmOta.stm32GetId()) {
                     stm32ota_state = STM32OTA_ERASE_START;
                     stmUpdPercent = 15;
                   }
@@ -198,7 +213,7 @@ void CStm32::STM32ota_loop()
                 if (timeout == 0) UART_DBG.println("STM32 ota: erasing in progress");
 
                 if(timeout>1000) {
-                  UART_DBG.print("--> timeout");
+                  UART_DBG.println("--> timeout");
                   stm32ota_state = STM32OTA_ERROR;
                 }
                 else {
@@ -274,9 +289,7 @@ void CStm32::STM32ota_loop()
         case STM32OTA_VERIFY:
                 if( blockcounter==0 ) {
                   UART_DBG.println("STM32 ota: verify");
-                  while (UART_STM32.available()) {
-                    UART_STM32.read();            // empty the buffer
-                  }
+                  clearUART_STM32Buffer();
                 }
 
                 stmUpdPercent = 60 + (uint8_t) ((400 * (uint32_t) blockcounter) / (uint32_t) myflashfile.blockcnt / 10); 
@@ -401,7 +414,7 @@ void CStm32::STM32ota_begin()
   // flash interface
   // ATTENTION: on WT32-ETH01 use for UART_STM32 pins: RX2 IO35 and TX2 IO17
   UART_STM32.begin(115200, SERIAL_8E1, STM32_RX, STM32_TX, false, 20000UL);
-  while(UART_STM32.available()) UART_STM32.read();
+  clearUART_STM32Buffer();
   UART_DBG.println("STM32 ota: init state machine");
 }
 
@@ -449,10 +462,7 @@ int CStm32::PrepareFile(String FileName)
   CRC32 crc;
   uint8_t buffer;
   
-  dir = SPIFFS.open("/");
-  
-  UART_DBG.print("file found: ");
-  UART_DBG.println(FileName);
+  //dir = SPIFFS.open("/");
 
   myflashfile.fsfile = SPIFFS.open(FileName, "r");
 
@@ -462,7 +472,8 @@ int CStm32::PrepareFile(String FileName)
  
     myflashfile.blockcnt = myflashfile.size / STM32OTA_BLOCKSIZE;
     myflashfile.lastbytes = myflashfile.size % STM32OTA_BLOCKSIZE;
-
+    UART_DBG.print("--> filename: "); UART_DBG.println(FileName);
+    UART_DBG.print("--> size: "); UART_DBG.println(myflashfile.size,DEC);
     UART_DBG.print("--> blocks: "); UART_DBG.println(myflashfile.blockcnt,DEC);
     UART_DBG.print("--> and bytes: "); UART_DBG.println(myflashfile.lastbytes,DEC);
 
@@ -477,14 +488,12 @@ int CStm32::PrepareFile(String FileName)
 
     myflashfile.crc = crc.finalize();
     UART_DBG.print("--> crc32: 0x"); UART_DBG.println(myflashfile.crc,HEX);
-
     return 0;
   }
   else {    
     UART_DBG.println("error opening");
     return -1;
   }
-
 }
 
 
@@ -493,25 +502,47 @@ int CStm32::FlashBytes(int Block, int Bytes)
   uint8_t binbuffer[STM32OTA_BLOCKSIZE+1];
   uint8_t cflag;
   size_t readlen;
+  uint8_t response;
 
   myflashfile.fsfile.seek(STM32OTA_BLOCKSIZE*Block);
   readlen = myflashfile.fsfile.read(binbuffer, (size_t) Bytes);
-
+  
+  #ifdef OTADebug
+    UART_DBG.print("Flash STM : Readlen = ");
+    UART_DBG.print(readlen,DEC);
+    UART_DBG.print(" Bytes = ");
+    UART_DBG.println(Bytes,DEC);
+  #endif
+  
   // append checksum to buffer
   binbuffer[Bytes] = StmOta.getChecksum(binbuffer, Bytes-1);
 
   if (readlen == Bytes) {
+    clearUART_STM32Buffer();
     StmOta.stm32SendCommand(STM32WR);
 
-    while (!UART_STM32.available()) ;
+    if (!waitForSTMResponse(10000)) return -1;
     cflag = UART_STM32.read();
 
     if (cflag == STM32ACK) {
-      if (StmOta.stm32Address(STM32STADDR + (STM32OTA_BLOCKSIZE * Block)) == STM32ACK) {
+      response = StmOta.stm32Address(STM32STADDR + (STM32OTA_BLOCKSIZE * Block));
+      UART_DBG.print(" OTA stm32Address response : 0x");
+      UART_DBG.println(response,HEX);
+      if (response == STM32ACK) {
         UART_STM32.write(Bytes-1);                 // length of data
-        UART_STM32.write(binbuffer, Bytes + 1);    // data + checksum
+        for (int x = 0; x<Bytes+1; x++) {
+          UART_STM32.write(binbuffer[x]);  
+          UART_STM32.flush();
+          delayMicroseconds(20);
+        }
+        //UART_STM32.write(binbuffer, Bytes + 1);    // data + checksum
         return 0;
+      } else {
+        UART_DBG.println(" OTA Error stm32Address ");
       }
+    } else {
+      UART_DBG.print(" OTA Error cflag = ");
+      UART_DBG.println(cflag,DEC);  
     }
   }
 
@@ -521,7 +552,7 @@ int CStm32::FlashBytes(int Block, int Bytes)
 
 
 // unTested
-unsigned char CStm32::stm32StartRead(unsigned long rdaddress, unsigned int rdlen) 
+uint8_t CStm32::stm32StartRead(uint32_t rdaddress, uint16_t rdlen) 
 {
   // send read request
   //UART_DBG.println("send STM32RD");
@@ -530,7 +561,7 @@ unsigned char CStm32::stm32StartRead(unsigned long rdaddress, unsigned int rdlen
   delayMicroseconds(50);  
 
   // wait for ACK
-  while (!UART_STM32.available());
+  if (!waitForSTMResponse(10000)) return STM32ERR;
   if (UART_STM32.read() == STM32ACK) {
 
     // send read address
@@ -543,8 +574,7 @@ unsigned char CStm32::stm32StartRead(unsigned long rdaddress, unsigned int rdlen
       StmOta.stm32SendCommand(rdlen - 1);
 
       delayMicroseconds(50);  
-
-      while (!UART_STM32.available());
+      if (!waitForSTMResponse(10000)) return STM32ERR;
       if (UART_STM32.read() == STM32ACK) return STM32OK;
       else return STM32ERR;
       
@@ -556,7 +586,8 @@ unsigned char CStm32::stm32StartRead(unsigned long rdaddress, unsigned int rdlen
     return STM32ERR;
   }
   // wait for ACK
-  while (!UART_STM32.available());
+  
+  if (!waitForSTMResponse(10000)) return STM32ERR;
   if (UART_STM32.read() == STM32ACK) {
     return STM32OK;    
   }

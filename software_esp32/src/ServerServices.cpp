@@ -107,9 +107,14 @@ void restoreConfig (JsonObject doc)
   VdmConfig.restoreConfig(true);
 }
 
-void clearFS (JsonObject doc)
+void setClearFS (JsonObject doc)
 {  
-  VdmSystem.clearFS();
+  VdmTask.startClearFS();
+}
+
+void setGetFS (JsonObject doc)
+{  
+  VdmTask.startGetFS();
 }
 
 void fileDelete (JsonObject doc)
@@ -326,10 +331,10 @@ void handleStmUpdStatus(AsyncWebServerRequest *request)
 bool handleCmd(JsonObject doc) 
 { 
   typedef void (*fp)(JsonObject doc);
-  fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,
-                  &clearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl} ;
+  fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,&setGetFS,
+                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl} ;
 
-  char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete",
+  char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete","getFS",
                         "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave",NULL};
   char const **p;
   bool found = false;
@@ -359,7 +364,8 @@ void handleUploadFile(AsyncWebServerRequest *request, const String& filename, si
     UART_DBG.println("file has arguments : "+String(request->args()));
     if (request->args()) {
         UART_DBG.println("file has argument "+request->arg("dir"));
-        thisFileName = "/"+request->arg("dir")+"/"+filename; 
+        //thisFileName = "/"+request->arg("dir")+"/"+filename; 
+        thisFileName = "/"+filename; 
     }
 
      UART_DBG.println("filename : "+thisFileName);
@@ -391,7 +397,7 @@ void CServerServices::stmDoUpdate(JsonObject doc)
     String thisFileName = doc["file"].as<const char*>();
     if (!thisFileName.startsWith("/")) thisFileName = "/"+thisFileName;
     uint8_t command = doc["cmd"];
-    UART_DBG.println("file : "+thisFileName + "Comand "+ String(command));
+    UART_DBG.println("file : "+thisFileName + " Command "+ String(command));
     if (command==0) VdmTask.startStm32Ota(STM32OTA_START,thisFileName);
     if (command==1) VdmTask.startStm32Ota(STM32OTA_STARTBLANK,thisFileName);
   }

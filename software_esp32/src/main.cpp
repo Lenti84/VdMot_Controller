@@ -41,6 +41,7 @@
 #include "globals.h"
 
 #include "VdmConfig.h"
+#include "VdmSystem.h"
 #include "VdmNet.h"
 #include "VdmTask.h"
 #include "stm32.h"
@@ -63,6 +64,7 @@ void setup(void) {
   VdmConfig.checkToResetCfg();
   VdmNet.init();
   VdmTask.init();
+  VdmSystem.getFSDirectory();
 }
 
 void loop(void) {

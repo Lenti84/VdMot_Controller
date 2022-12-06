@@ -97,21 +97,22 @@ void CVdmNet::init()
     return;
   }
   UART_DBG.println("SPIFFS booted");
-
+  //VdmSystem.clearFS();
 }
 
 void CVdmNet::setup() 
 {
+  
   #ifdef netDebug
     UART_DBG.print("Interface type ");
     UART_DBG.println(VdmConfig.configFlash.netConfig.eth_wifi);
   #endif
- 
+  
   switch (VdmConfig.configFlash.netConfig.eth_wifi) {
     case interfaceAuto :
       {
         setupEth(); 
-        setupWifi();
+        if (wifiState!=wifiDisabled) setupWifi();
         break;
       }
       case interfaceEth :
@@ -139,6 +140,7 @@ void CVdmNet::setupEth()
     switch (ethState) {
       case wifiIdle :
       {  
+        WT32_ETH01_onEvent();
         ETH.begin(ETH_PHY_ADDR, ETH_PHY_POWER);
         if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) {
           ETH.config(VdmConfig.configFlash.netConfig.staticIp, 
@@ -146,13 +148,15 @@ void CVdmNet::setupEth()
           VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
         }
         if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) ETH.setHostname(VdmConfig.configFlash.systemConfig.stationName);
-        WT32_ETH01_onEvent();
         ethState=ethIsStarting;
         break;
       }
       case ethIsStarting :
       {
         if (WT32_ETH01_isConnected()) {
+          #ifdef netDebug
+            UART_DBG.println("Setup Eth cable is connected");
+          #endif
           ServerServices.initServer();
           setupNtp();
           UART_DBG.println(ETH.localIP());
@@ -193,8 +197,15 @@ void CVdmNet::setupWifi()
           UART_DBG.println("wifi : no ssid or no pathword");
           break;
         }
-        WiFi.mode(WIFI_AP_STA);
-        if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) {
+        
+        #ifdef netDebugWIFI
+        UART_DBG.print("wifi : ssid ");
+        UART_DBG.println(VdmConfig.configFlash.netConfig.ssid);
+        UART_DBG.print("wifi : pw ");
+        UART_DBG.println(VdmConfig.configFlash.netConfig.pwd);
+        #endif
+        WiFi.mode(WIFI_MODE_STA); 
+		    if (VdmConfig.configFlash.netConfig.dhcpEnabled==0) {
           WiFi.config(VdmConfig.configFlash.netConfig.staticIp, 
           VdmConfig.configFlash.netConfig.gateway, 
           VdmConfig.configFlash.netConfig.mask,VdmConfig.configFlash.netConfig.dnsIp);
@@ -232,9 +243,11 @@ void CVdmNet::setupWifi()
 void CVdmNet::setupNtp() 
 {
   // Init and get the time
-  configTime(VdmConfig.configFlash.netConfig.timeOffset, 
-             VdmConfig.configFlash.netConfig.daylightOffset, 
-             VdmConfig.configFlash.netConfig.timeServer);
+  
+  //configTime(VdmConfig.configFlash.netConfig.timeOffset, 
+  //           VdmConfig.configFlash.netConfig.daylightOffset, 
+  //           VdmConfig.configFlash.netConfig.timeServer);
+  configTzTime(VdmConfig.configFlash.timeZoneConfig.tzCode ,VdmConfig.configFlash.netConfig.timeServer);
   getLocalTime(&startTimeinfo);
 }
 
@@ -262,14 +275,11 @@ void CVdmNet::checkNet()
     VdmTask.deleteTask(VdmTask.taskIdCheckNet);
 
     VdmSystem.getSystemInfo();
-
-    if (MDNS.begin("esp32")) {
-      UART_DBG.println("MDNS responder started");
-    }
-
-    // todo   
-    //telnet_setup();
-
+    #ifdef netUseMDNS
+      if (MDNS.begin("esp32")) {
+        UART_DBG.println("MDNS responder started");
+      }
+    #endif
     // prepare syslog configuration here (can be anywhere before first call of 
     // log/logf method)
     if (VdmConfig.configFlash.netConfig.syslogLevel>0) {
@@ -283,7 +293,7 @@ void CVdmNet::checkNet()
     VdmTask.startServices();
   } else {
     // check if net is connected
-    VdmNet.setup();
+    setup();
   }
 }
 

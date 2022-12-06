@@ -63,6 +63,8 @@ public:
   void startApp();
   void startStm32Ota(uint8_t command,String thisFileName);
   void startServices();
+  void startClearFS();
+  void startGetFS();
   
   taskid_t taskIdCheckNet;
   taskid_t taskIdMqtt;
@@ -77,6 +79,8 @@ public:
   taskid_t taskIdRunOnceDelayed;
   taskid_t taskIdwaitForFinishQueue;
   taskid_t taskIdPiControl[ACTUATOR_COUNT];
+  taskid_t taskIdRunOnceClearFS;
+  taskid_t taskIdRunOnceGetFS;
   
   TsetFactoryCfgState setFactoryCfgState;
 

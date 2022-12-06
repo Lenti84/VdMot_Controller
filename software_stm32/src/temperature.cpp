@@ -31,7 +31,7 @@
 #include <Arduino.h>
 #include "hardware.h"
 #include <Wire.h>
-#include <OneWire.h>
+#include "..\lib\OneWire\OneWire.cpp"
 #include <DallasTemperature.h>
 #include <ArduinoJson.h>            // library https://github.com/bblanchon/ArduinoJson
 #include "temperature.h"

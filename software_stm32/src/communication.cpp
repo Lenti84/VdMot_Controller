@@ -132,7 +132,7 @@ void communication_setup (void) {
 	// UART to ESP32
 	COMM_SER.setRx(PA10);			//STM32F401 blackpill USART1 RX PA10
 	COMM_SER.setTx(PA9);			//STM32F401 blackpill USART1 TX PA9
-	COMM_SER.begin(115200);
+	COMM_SER.begin(115200, SERIAL_8N1);
 	while(!COMM_SER);
 	//COMM_SER.println("alive");COMM_SER.flush();
 }
@@ -871,6 +871,10 @@ int16_t communication_loop (void) {
 			COMM_SER.print(APP_PRE_GETVERSION);
 			COMM_SER.print(" ");			
 			COMM_SER.print(FIRMWARE_VERSION);
+			#ifdef HARDWARE_VERSION
+				COMM_SER.print("_");
+				COMM_SER.print(HARDWARE_VERSION);
+			#endif
 			COMM_SER.println(" ");	
 		}
 

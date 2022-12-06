@@ -51,9 +51,9 @@ CVdmSystem::CVdmSystem()
   spiffsStarted=false;
   numfiles  = 0;
   stmBuild = 0;
-  systemMessage = "";
+  memset (systemMessage,0,sizeof(systemMessage));
   systemState = systemStateOK;
-
+  getFSInProgress = false;
 }
 
 void CVdmSystem::getSystemInfo()
@@ -63,6 +63,7 @@ void CVdmSystem::getSystemInfo()
 
 void CVdmSystem::getFSDirectory() 
 {
+  getFSInProgress = true;
   if (!spiffsStarted) SPIFFS.begin(true);
   spiffsStarted=true;
   numfiles  = 0; // Reset number of FS files counter
@@ -74,28 +75,29 @@ void CVdmSystem::getFSDirectory()
       Filenames[numfiles].filename = (String(file.name()).startsWith("/") ? String(file.name()).substring(1) : file.name());
       Filenames[numfiles].ftype    = (file.isDirectory() ? "Dir" : "File");
       Filenames[numfiles].fsize    = ConvBinUnits(file.size(), 1);
+      UART_DBG.print("get file : ");
+      UART_DBG.println(file.name());
       file = root.openNextFile();
       numfiles++;
       if (numfiles>maxFiles) break;
     }
     root.close();
   }
+  getFSInProgress = false;
 }
 
 void CVdmSystem::clearFS() 
 {
   if (!spiffsStarted) SPIFFS.begin(true);
   spiffsStarted=true;
-  File root = SPIFFS.open("/");
-  if (root) {
-    root.rewindDirectory();
-    File file = root.openNextFile();
-    while (file) {
-      SPIFFS.remove(String(file.name()));
-      file = root.openNextFile();
-    }
-    root.close();
-  }
+  //esp_task_wdt_init(30, false);
+  bool formatSuccess = SPIFFS.format();
+
+  UART_DBG.print("Format success: ");
+  UART_DBG.println(formatSuccess);
+  getFSDirectory();
+
+  //ESP.restart();
 }
 
 void CVdmSystem::fileDelete (String fileName)
@@ -107,8 +109,10 @@ void CVdmSystem::fileDelete (String fileName)
   SPIFFS.remove(thisFileName);
 }
 
-void CVdmSystem::setSystemState(uint8_t thisSystemState,String thisSystemMsg)
+void CVdmSystem::setSystemState(uint8_t thisSystemState,char const *thisSystemMsg)
 {
   systemState=thisSystemState; 
-  systemMessage=thisSystemMsg;
+  strncpy (systemMessage,thisSystemMsg,sizeof(systemMessage));
+  UART_DBG.print("SystemMsg: ");
+  UART_DBG.println(systemMessage);
 }

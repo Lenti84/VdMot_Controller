@@ -104,8 +104,9 @@ CStmApp::CStmApp()
 }
 
 void  CStmApp::app_setup() {
-    UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL); 
     UART_STM32.setRxBufferSize (2000);
+    UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL); 
+    
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         actuators[x].actual_position = 100;
         actuators[x].target_position = 0;
@@ -313,7 +314,7 @@ void  CStmApp::app_check_data()
     // if there is a little in the buffer
     if(buflen >= 5) 
     {
-        for (unsigned int c = 0; c < buflen; c++)
+        for (uint16_t c = 0; c < buflen; c++)
         {     
             if (buffer[c] == '\r') {
                 buffer[c] = '\0';

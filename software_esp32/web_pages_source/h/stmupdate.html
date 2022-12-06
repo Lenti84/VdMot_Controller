@@ -123,12 +123,28 @@
 	<tr>
 		<th>STM32 is updating</th>
 	</tr>
+	
+	<tr>
+		<th>Chip Id</th>
+        <td id="chipId">	
+			unknown
+		</td>
+	</tr>
+
+	<tr>
+		<th>Chip Name</th>
+        <td id="chipName">	
+			unknown
+		</td>
+	</tr>
+	
 	<tr>
 		<td><progress id="progressBar" min="0" max="100" value="0"></progress></td>
 	</tr>
 	<tr>
         <td id="progressValue"></td>		
 	</tr>
+	
 	<tr>
 		<td>
         <input type="button" class="buttonclass" style="display:none;" id="back" value="< Back" title="Back to home" onclick="app.methods.back()"/>
@@ -141,6 +157,8 @@
 
 const updStatus = ["Not started","Started","In progress","Finished","Error"];
 var getUpdateStatusInterval = null;
+var getFSIntervalID = null;
+//var loopGetFSCnt=0;
 
 	var id = function(elid) {
 		var ret = document.getElementById(elid);
@@ -150,7 +168,8 @@ var getUpdateStatusInterval = null;
 		return ret;
 	};
 	
-	const uploadFile = (file) => {
+	
+	const uploadFile = async (file) => {
 		let selectTable=id("selectTable");
 		selectTable.className = "hide";
 		let upLoadTable=id("uploadTable");
@@ -159,16 +178,26 @@ var getUpdateStatusInterval = null;
 		const fd = new FormData();
 		fd.append('STMFiles', file);
 		// send `POST` request
-		fetch('/fupload?dir=stm', {
+		await (await (fetch('/fupload?dir=stm', {
 			method: 'POST',
 			body: fd
 		})
 		.then(res => res.json())
 		.then(json => app.methods.generateFilesList (json))
-		.catch(err => console.error(err));
+		.catch(err => console.error(err))
+		))
 	}
 
 	var app = {
+		
+		data() {
+			return {
+				//getUpdateStatusInterval : null,
+				//getFSIntervalID : null,
+				loopGetFSCnt : 0,
+				//updStatus : ["Not started","Started","In progress","Finished","Error"]
+			};
+		},
 
 	methods: {
 	
@@ -180,13 +209,32 @@ var getUpdateStatusInterval = null;
 				const button = id("uploadSTMButton"); 
 				button.style.display = "block";
 				});
-			var fsDir= await this.getJson("fsdir");
-			if (fsDir) this.generateFilesList (fsDir);
+			await this.getFSDir();
+			//var fsDir= await this.getJson("fsdir");
+			//if (fsDir) this.generateFilesList (fsDir);
+			
 		}
 	,
-		uploadNow() {
+		async  getFSDir() {
+			await this.postCmd('{"action":"getFS"}');
+			if (getFSIntervalID == null) {
+				this.loopGetFSCnt = 0;
+				getFSIntervalID = setInterval(async function() {
+					this.loopGetFSCnt++;
+					let fsDir = await app.methods.getJson("fsdir");
+					if ((fsDir) || (this.loopGetFSCnt>=30)) {
+						if (fsDir) app.methods.generateFilesList (fsDir);	
+						clearInterval(getFSIntervalID);
+						getFSIntervalID = null;
+						this.loopGetFSCnt = 0;
+					}
+				},1000);
+			}
+		}
+	,
+		async uploadNow() {
 			const input = id('STMFiles');
-			uploadFile(input.files[0]);
+			await uploadFile(input.files[0]);
 		}
 	,
 		async updateNow() {
@@ -200,17 +248,21 @@ var getUpdateStatusInterval = null;
 		}
 	,
 		async getUpdateStatus() {
-			var	stmUpdStatus=await app.methods.getJson("stmupdstatus");
+			let	stmUpdStatus=await app.methods.getJson("stmupdstatus");
 			if (stmUpdStatus) {
 				id("progressBar").value = stmUpdStatus.percent;
-				
 				id("progressValue").textContent = stmUpdStatus.percent+" % " + updStatus[stmUpdStatus.status] ;
+				id("chipId").textContent = stmUpdStatus.chipId;
+				id("chipName").textContent = stmUpdStatus.chipName;
+
 				if (stmUpdStatus.status==4) {
 					id("progressValue").textContent="Error";
-					if (getUpdateStatusInterval) getUpdateStatusInterval.clear;
+					if (getUpdateStatusInterval!=null) {
+						window.clearInterval(getUpdateStatusInterval);
+					}
 				}
 				if (stmUpdStatus.status==3) {
-					if (getUpdateStatusInterval) getUpdateStatusInterval.clear;
+					if (getUpdateStatusInterval!=null) window.clearInterval(getUpdateStatusInterval);
 					id("progressValue").textContent = "Update finished"
 					const button = id("back"); 
 					button.style.display = "block";
@@ -236,11 +288,15 @@ var getUpdateStatusInterval = null;
 				selectBox.remove(0);
 			}     
 			filesList.forEach((item) => {
-				if (item.fName.startsWith("stm/")) {
+				//if (item.fName.startsWith("stm/")) {
 					let newOption = new Option(item.fName,item.fName);
 					selectBox.add(newOption,undefined);
-				}
+				//}
 			});
+		}
+	,
+		async postCmd (cmd) {
+			await this.postJson("cmd",cmd);
 		}
 	,
 		async postJson(link,postData){
@@ -276,12 +332,10 @@ var getUpdateStatusInterval = null;
 	}
 	};
 
-	window.onload = function() {
-		app.methods.start();
+	window.onload = async function() {
+		await app.methods.start();
 	}
-	
-
-			
+				
 
 </script>
 
