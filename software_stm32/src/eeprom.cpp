@@ -309,6 +309,17 @@ int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 		address += x;
 	}
 
+// current bounds
+	x=0;
+	buf[x++] =  lay->startOnPower;
+	pb=(uint16_t*) &buf[x];
+	*pb = lay->numberOfMovements;
+	x++; 
+  	//eep.write(address, buf, x);
+	eeprom.writeBlock(address, buf, x);
+
+
+
 	EEPROM_DEBUG("finished\r\n");
 
 	return 0;
@@ -410,6 +421,9 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 
 		address += x;
 	}
+
+	eeprom.readBlock(address, buf, 1);
+	lay->startOnPower = buf[0];
 
 	eep_content.status = E_VALID;
 

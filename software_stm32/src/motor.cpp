@@ -121,6 +121,7 @@ unsigned int m_meancurrent;           // mean current in mA
 
 uint8_t currentbound_low_fac = 20;     // lower current limit factor for detection of end stop
 uint8_t currentbound_high_fac = 20;    // upper current limit factor for detection of end stop
+uint8_t startOnPower = 50;
 
 //volatile uint32_t revcounter;
 
@@ -148,10 +149,22 @@ byte valve_setup () {
   //attachInterrupt(digitalPinToInterrupt(REVINPIN),isr_counter,RISING);
 
 
-  // init valve data
+ if ((eep_content.currentbound_low_fac>=10) && (eep_content.currentbound_low_fac<=50))
+    currentbound_low_fac = eep_content.currentbound_low_fac;
+  if ((eep_content.currentbound_high_fac>=10) && (eep_content.currentbound_high_fac<=50))
+    currentbound_high_fac = eep_content.currentbound_high_fac;
+  if (eep_content.startOnPower<=100) startOnPower=eep_content.startOnPower; else startOnPower=50;
+  #ifdef motDebug
+    COMM_DBG.print("Current end stop factor low: ");
+    COMM_DBG.println((float) (currentbound_low_fac)/10,DEC);
+    COMM_DBG.print("Current end stop factor high: ");
+    COMM_DBG.println((float) (currentbound_high_fac)/10,DEC);
+  #endif
+
+// init valve data
   for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {
-    myvalvemots[x].actual_position = 50;
-    myvalvemots[x].target_position = 50;
+    myvalvemots[x].actual_position = startOnPower;
+    myvalvemots[x].target_position = startOnPower;
     myvalvemots[x].meancurrent = 20;       // 20 mA
     myvalvemots[x].scaler = 89;
   }
@@ -171,16 +184,8 @@ byte valve_setup () {
     #endif
   }
 
-  if ((eep_content.currentbound_low_fac>=10) && (eep_content.currentbound_low_fac<=50))
-    currentbound_low_fac = eep_content.currentbound_low_fac;
-  if ((eep_content.currentbound_high_fac>=10) && (eep_content.currentbound_high_fac<=50))
-    currentbound_high_fac = eep_content.currentbound_high_fac;
-  #ifdef motDebug
-    COMM_DBG.print("Current end stop factor low: ");
-    COMM_DBG.println((float) (currentbound_low_fac)/10,DEC);
-    COMM_DBG.print("Current end stop factor high: ");
-    COMM_DBG.println((float) (currentbound_high_fac)/10,DEC);
-  #endif
+ 
+
   return 0;
 }
 

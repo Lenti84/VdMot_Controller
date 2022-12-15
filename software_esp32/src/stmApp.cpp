@@ -90,6 +90,7 @@ CStmApp::CStmApp()
     setTempIdxActive=false;
     waitForFinishQueue=false;
     setMotorCharsActive=false;
+    motorChars.startOnPower=50;
     fastQueueMode=false;
     stmStatus=STM_NOT_READY;
     getindex = 0;
@@ -124,6 +125,16 @@ void  CStmApp::app_setup() {
     commstate=COMM_IDLE;
     UART_DBG.println("application setup finished");
 }
+
+void  CStmApp::setupStartPosition(uint8_t thisStartPosition) 
+{
+    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
+        actuators[x].target_position = thisStartPosition;
+        target_position_mirror[x] = actuators[x].target_position;
+   }
+   UART_DBG.println("application setup start position finished");
+}
+
 
 int16_t CStmApp::ConvertCF(int16_t cValue)
 {
@@ -232,7 +243,7 @@ void CStmApp::setLearnAfterMovements()
 void CStmApp::setMotorChars()
 {
     waitForFinishQueue=true;
-    app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent));   
+    app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent)+ARG_DELIMITER+String(motorChars.startOnPower));   
     fastQueueMode=true;
 }
 
@@ -599,6 +610,12 @@ void  CStmApp::app_check_data()
             if(argcnt == 2) {
                 motorChars.maxLowCurrent=atoi(arg0ptr);
                 motorChars.maxHighCurrent=atoi(arg1ptr);
+            }
+            if(argcnt == 3) {
+                motorChars.maxLowCurrent=atoi(arg0ptr);
+                motorChars.maxHighCurrent=atoi(arg1ptr);
+                motorChars.startOnPower=atoi(arg2ptr);
+                setupStartPosition(motorChars.startOnPower);
             }
             appState=APP_IDLE;
         }

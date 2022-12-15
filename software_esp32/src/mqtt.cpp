@@ -204,6 +204,11 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                syslog.log(LOG_DEBUG, "MQTT: callback "+String(topic));
     }
     if (length>0) {
+        if (!VdmConfig.configFlash.protConfig.publishPathAsRoot) {
+            if (topic[0]=='/') {
+                topic++;        // adjust topic 
+            }
+        }
         memset(value,0x0,sizeof(value));
         memcpy(value,payload,length);
         if (memcmp(mqtt_commonTopic,(const char*) topic, strlen(mqtt_commonTopic))==0) {

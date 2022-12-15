@@ -65,6 +65,7 @@ typedef struct  {
 typedef struct {
   uint16_t maxHighCurrent;
   uint16_t maxLowCurrent;
+  uint8_t startOnPower;
 } MOTOR_CHARS;
 
 
@@ -131,6 +132,7 @@ class CStmApp
 public:
   CStmApp();
   void app_setup();
+  void  setupStartPosition(uint8_t thisStartPosition);
   void app_loop();
   void app_check_data();
   void app_cmd(String command, String args="");

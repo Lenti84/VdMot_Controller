@@ -93,6 +93,7 @@ void CServices::runOnce()
 
 void CServices::runOnceDelayed()
 {
+  VdmTask.startPIServices();
   VdmNet.startBroker();
 }
 

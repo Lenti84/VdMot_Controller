@@ -792,16 +792,18 @@ int16_t communication_loop (void) {
 				COMM_DBG.print("got set motor characteristics request ");
 			#endif
 
-			if(argcnt == 2) {
+			if(argcnt == 3) {
 				x = atoi(arg0ptr);
 				y = atoi(arg1ptr);
 
 				if (x>=5 && x<=50 && y>=5 && y<=50) {
 					currentbound_low_fac = atoi(arg0ptr);
 					currentbound_high_fac = atoi(arg1ptr);
+					startOnPower = atoi (arg2ptr);
 
 					eep_content.currentbound_low_fac = currentbound_low_fac;
 					eep_content.currentbound_high_fac = currentbound_high_fac;
+					eep_content.startOnPower = startOnPower;
 					eeprom_changed();
 					COMM_SER.println(APP_PRE_SETMOTCHARS);
 					#ifdef commDebug 
@@ -833,6 +835,8 @@ int16_t communication_loop (void) {
 			COMM_SER.print(currentbound_low_fac, DEC);
 			COMM_SER.print(" ");		
 			COMM_SER.print(currentbound_high_fac, DEC);
+			COMM_SER.print(" ");		
+			COMM_SER.print(startOnPower, DEC);
 			COMM_SER.println(" ");			
 		} 
 
