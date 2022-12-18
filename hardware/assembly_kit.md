@@ -12,10 +12,11 @@ This site will fill with more and more infos soon...
 
 ## schematic
 You can find the C1-sample schematic here: [schematic_c-sample_V02.pdf](./schematic_c-sample_V02.pdf)
+
 You can find the C2-sample schematic here: [schematic_c2-sample_V02.pdf](./schematic_c2-sample_V02.pdf)
 
 ## pre assembled PCB
-You will get a preassembled PCB with all SMT parts assembled.
+You will get a preassembled PCB with all SMT parts assembled. C1-sample shown.
 ![-](./assembly_kit_pcb.jpg "pre assembled pcb")
 
 ## finished PCB
@@ -23,8 +24,10 @@ This is what a assembled PCB (C1-sample) can look like. The ESP32 WT32-ETH01 and
 ![-](./assembly_done.jpg "assembled pcb")
 
 ## assembly drawings
-Assembly drawing for the THT parts.
+Assembly drawing for the THT parts of C1-sample.
 ![-](./tht_assembly.png "C1-sample tht assembly drawing")
+
+Assembly drawing for the THT parts of C2-sample.
 ![-](./tht_assembly_C2-sample.png "C2-sample tht assembly drawing")
 
 ## part list for THT parts
