@@ -16,7 +16,10 @@
   - temperature sensors: description/name
   - mqtt: server ip, server port, user name and password
   - settings: save, recover
-- flash / ota page
+- control page
+  - integrated software PI-controller for valves
+  - gets target and actual temperature via MQTT/JSON/1-wire
+- update page
   - flash STM32 by file upload
   - flash ESP32 by direct send chunks
 
@@ -237,10 +240,45 @@ curl -H "Content-Type: application/json" -X POST -d '{"pubTarget":0}' http://192
 |"vAssembly"|sets all valves to assembly position
 
 ***
+## MQTT Interface WTH32
+Main topic is defined by entry *Config Site -> Network -> Station*.<br/>
+Valve Subtopic is defined by entry *Config Site -> Valves -> Name row*.<br/>
+Temperature Subtopic is defined by entry *Config Site -> Temperature sensor -> Name row*.<br/>
+example: VdMotFloor/valves/Kitchen/target
+### following MQTT topics are supported
+|topic|direction|description|
+|---|---|---|
+|maintopic/common|publish|system state of ESP32 - OK 0, Info 1, Error 2|
+|maintopic/common/heatControl|subscription|heat control switch: 0 - Manual, 1 - On, 2 - Off, default: 0|
+|maintopic/common/parkPosition|subscription|park position: 0...100, default: 10|
+|maintopic/valves/valvesubtopic/target|subscription|setpoint for valve position (0...100 %)|
+|maintopic/valves/valvesubtopic/target|publish|setpoint for valve position (0...100 %)<br/>only if *Config Site -> Protocol -> Publish -> Target* is checked|
+|maintopic/valves/valvesubtopic/tValue|subscription|actual temperature value for integrated valve position control|
+|maintopic/valves/valvesubtopic/tTarget|subscription|temperature setpoint for integrated valve position control|
+|maintopic/valves/valvesubtopic/actual|publish|actual position of valve (0...100 %)|
+|maintopic/valves/valvesubtopic/state|publish|actual state of valve (IDLE, OPENING, CLOSING, BLOCKING, OPENCIRCUIT, UNKNOWN)|
+|maintopic/valves/valvesubtopic/meancur|publish|mean current of valve (mA)|
+|maintopic/valves/valvesubtopic/temperature|publish|temperature of linked 1-wire sensor (1/10 °C)|
+|maintopic/temps/temperaturesubtopic/id|publish|id of 1-wire sensor, 8 byte hex|
+|maintopic/temps/temperaturesubtopic/value|publish|temperature of sensor (°C)|
+
+### options
+|option|description|
+|---|---|
+|*Config Site -> Protocol -> Publish -> Target*|publishes target value of valves, please see *hints*|
+|*Config Site -> Protocol -> Publish -> All temps*|publishes all 1-wire sensor values even if not linked to a valve|
+|*Config Site -> Protocol -> Publish -> Path as root*|publishes an empty topic prior to the maintopic<br/>e.g.: /maintopic/valves/valvesubtopic/...|
+
+### hints
+Some MQTT broker dont work with VdMot Controller when publishing and subcribing to the same topic.<br/>
+If such problems oocur, please try to uncheck *Config Site -> Protocol -> Publish -> Target*.
+
+***
 
 ## command list STM32
 
 ## STM32 supports following commands
+This commands are send from ESP32 to STM32. The commands can not directly be send by LAN/WiFi.
 
 |command|description|answer|units|comment|
 |---|---|---|---|---|
