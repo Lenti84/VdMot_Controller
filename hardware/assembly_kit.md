@@ -5,10 +5,11 @@ Finally a partly pre-assembled kit of the VdMot_Controller is available.
 This site will fill with more and more infos soon...
 
 ## pcb numbers
+Find pcb number on bottom side of PCB written into copper.
 |pcb number|revision|Description|
 | --- | --- | --- |
 |L-H0044-01-01|C1-sample|first batch|
-|L-H0044-01-02|C2-sample|relay replaced by transistors, added X26 (ENA and IO35 pin of ESP32), button switches to 3.3V instead of GND|
+|L-H0044-01-02|C2-sample|relay replaced by transistors,<br/>added X26 (ENA and IO35 pin of ESP32),<br/>button switches to 3.3V instead of GND|
 
 ## schematic
 You can find the C1-sample schematic here: [schematic_c-sample_V02.pdf](./schematic_c-sample_V02.pdf)
