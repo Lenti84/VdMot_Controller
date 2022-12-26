@@ -53,12 +53,12 @@ float CPiControl::piCtrl(float e) {
   float p;
   float y;
   float kp;
-  if (xp==0) return (50);
+  if (xp==0) return (startValvePos);
   kp = 100/xp;
   time_t now;
   if (!start) {
     time(&ts);
-    iProp=0;
+    iProp=startValvePos-50;
     start=true;
     esum=0;
   }
@@ -71,7 +71,7 @@ float CPiControl::piCtrl(float e) {
   p = y + 50 + offset + dynOffset;
   if (p > 100.0) p = 100.0;
   if (p < 0.0) p = 0.0;
-  if (ti==0) return (50);
+  if (ti==0) return (startValvePos);
   if (scheme==0) {
     // i - proportion
     iProp += ((float)ta / (float)ti) * y;
@@ -82,6 +82,9 @@ float CPiControl::piCtrl(float e) {
 
   // pi
   y = p + iProp;
+  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+      syslog.log(LOG_DEBUG, "pic:calc valve position : #"+String(valveIndex+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[valveIndex].name)+") tTarget = "+String(target)+" tValue = "+String(value)+" diff = "+String(e)+" iProp = "+String(iProp)+" p = "+String(p)+" y = "+String(y));
+  }
   if (y > 100.0) {
     y = 100.0;
     iProp = 100.0 - p;

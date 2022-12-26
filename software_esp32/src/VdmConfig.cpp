@@ -61,15 +61,17 @@ void CVdmConfig::init()
 
 void CVdmConfig::resetConfig (bool reboot)
 {  
-  VdmConfig.clearConfig(); 
-  VdmConfig.writeConfig();
+  clearConfig(); 
+  writeConfig();
+  writeValvesControlConfig();
   if (reboot) Services.restartSystem();
 }
 
 void CVdmConfig::restoreConfig (bool reboot)
 {  
-  VdmConfig.setDefault();
-  VdmConfig.writeConfig();
+  setDefault();
+  writeConfig();
+  writeValvesControlConfig();
   if (reboot) Services.restartSystem();
 }
 
@@ -226,6 +228,7 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsTZ,(char*) configFlash.timeZoneConfig.tz,sizeof(configFlash.timeZoneConfig.tz));
     if (prefs.isKey(nvsTZCode))
       prefs.getString(nvsTZCode,(char*) configFlash.timeZoneConfig.tzCode,sizeof(configFlash.timeZoneConfig.tzCode));
+    prefs.end();
   }
 }
 
@@ -283,11 +286,11 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
   
-
   prefs.begin(nvsTZCfg,false);
   prefs.clear();
   prefs.putString(nvsTZ,configFlash.timeZoneConfig.tz);
   prefs.putString(nvsTZCode,configFlash.timeZoneConfig.tzCode);
+  prefs.end();
 
   if (reboot) Services.restartSystem();
 }
@@ -381,6 +384,10 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
     StmApp.motorChars.maxHighCurrent=doc["motor"]["highC"];
     StmApp.setMotorCharsActive=true;
   }
+  if (!doc["motor"]["startOnPower"].isNull()) {
+    StmApp.motorChars.startOnPower=doc["motor"]["startOnPower"];
+    StmApp.setMotorCharsActive=true;
+  }
   
   if (StmApp.setMotorCharsActive) {
     StmApp.setMotorChars();
@@ -396,6 +403,7 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
 
 void CVdmConfig::postValvesControlCfg (JsonObject doc)
 {
+  
   uint8_t chunkStart=doc["chunkStart"];
   uint8_t chunkEnd=doc["chunkEnd"];
   uint8_t idx=0;
@@ -422,6 +430,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
   if (!doc["common"]["parkPosition"].isNull()) {
     configFlash.valvesControlConfig.parkingPosition=doc["common"]["parkPosition"];
   } 
+  
 }
 
 void CVdmConfig::postTempsCfg (JsonObject doc)

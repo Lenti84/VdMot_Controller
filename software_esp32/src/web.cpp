@@ -117,7 +117,8 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorCo
                    "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib)+ "," +
                     "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
                    "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
-                   "\"highC\":"+String(motorConfig.maxHighCurrent)+ "}," +
+                   "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
+                   "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}," +
                    "\"valves\":[" ;
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
@@ -234,16 +235,20 @@ String CWeb::getSysDynInfo()
   } else {
     strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
     time = String(buf);
-    uint64_t seconds=difftime(mktime(&timeinfo),mktime(&VdmNet.startTimeinfo));
-    int hr=(int)(seconds/3600);
-    int min=((int)(seconds/60))%60;
-    int sec=(int)(seconds%60);
-    String sMin = String(min);
-    if (min<10) sMin = "0"+sMin;
-    String sSec = String(sec);
-    if (sec<10) sSec = "0"+sSec;
-    upTime=String(hr)+":"+sMin+":"+sSec;
+    
+    int64_t upTimeUS = esp_timer_get_time(); // in microseconds
+    int64_t seconds = upTimeUS/1000000;
+    uint32_t days = (uint32_t)seconds/86400;
+    uint32_t hr=(uint32_t)seconds % 86400 /  3600;
+    uint32_t min=(uint32_t)seconds %  3600 / 60;
+    uint32_t sec=(uint32_t)seconds % 60;
+    snprintf (buf,sizeof(buf),"%dd %d:%02d:%02d", days, hr, min, sec);
+    upTime = String(buf);
   }
+
+  
+
+
   String result = "{\"locTime\":\""+time+"\"," +
                   "\"upTime\":\""+upTime+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +

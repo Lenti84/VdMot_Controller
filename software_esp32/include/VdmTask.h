@@ -63,6 +63,7 @@ public:
   void startApp();
   void startStm32Ota(uint8_t command,String thisFileName);
   void startServices();
+  void startPIServices();
   void startClearFS();
   void startGetFS();
   
@@ -83,7 +84,6 @@ public:
   taskid_t taskIdRunOnceGetFS;
   
   TsetFactoryCfgState setFactoryCfgState;
-
 };
 
 extern CVdmTask VdmTask;

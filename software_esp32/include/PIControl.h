@@ -74,6 +74,7 @@ public:
   uint8_t scheme;
   uint8_t startActiveZone;
   uint8_t endActiveZone;
+  uint8_t startValvePos;
 private:
   float iProp;
   time_t ts;
