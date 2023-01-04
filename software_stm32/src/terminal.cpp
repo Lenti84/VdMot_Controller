@@ -347,7 +347,7 @@ int16_t Terminal_Serve (void) {
 
 			if(argcnt == 2) {				
 			COMM_DBG.println("comm: set 1st sensor index");
-				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
+				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXONEWIRECNT) 
 				{
 					numberOfDevices = sensors.getDeviceCount();
 					if (numberOfDevices > 0) 
@@ -382,7 +382,7 @@ int16_t Terminal_Serve (void) {
 
 			if(argcnt == 2) {				
 				COMM_DBG.println("comm: set 2nd sensor index");
-				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
+				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXONEWIRECNT) 
 				{
 					numberOfDevices = sensors.getDeviceCount();
 					if (numberOfDevices > 0) 

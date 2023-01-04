@@ -270,7 +270,7 @@
 		grid-template-columns: repeat(auto-fit, 200px);
 		grid-template-rows:  masonry;
 	}
-	
+		
 	#Home {background-color: gray;}
 	#Status {background-color: gray;}
 	#Network {background-color: gray;}
@@ -643,12 +643,12 @@
 		</table>
 		</div>
 		
-		<div class="rtabframe" id ="motorTabFrame" style="height:400px">
+		<div class="rtabframe" id ="motorTabFrame" style="height:430px">
 			<h3>Motor</h3>
 		
-			<table id="cfgValvesTable1" class="tabTable"
+			<table id="cfgValvesTable1" class="tabTable">
 			<tr>
-			<fieldset class="checkboxgroup">
+			<fieldset class="checkboxgroup" style="height:13em;">
 				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
 				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour of next calibration"> h</label>
@@ -660,22 +660,15 @@
 				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
 				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
 			</fieldset>
+			<fieldset class="checkboxgroup" style="height:5em;">
+				<legend>Characteristic</legend>	
+				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low  </label>
+				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
+				<label></label><input type="number" min=0 max=100 maxlength=3 step=1 style="width:60px" id="vCfg-StartOnPower" name="vCfg-StartOnPower" title="Start valves % at power on"> Start % </label>
+			</fieldset>
 			</tr>
 			</table>
-			<table class="tabTable">
-			<tr>
-				<th>Max.current factor</th>
-			</tr>
-			</table>
-			<table>
-			<tr>
-			<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low </label>
-			<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
-			</tr>
-			<tr></tr>
-			</table>
-			
-			<table id="cfgValvesTable2" class="tabTable"
+			<table id="cfgValvesTable2" class="tabTable">
 			<tr>
 				<td>
                 <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start manual calibration of all valves" />
@@ -768,7 +761,7 @@
 	
 	<div id="Control" class="tabContent">
 	<div class="container">
-		<div class="rtabframe">  
+		<div class="rtabframe3">  
 			<h3>Valves</h3>	
 			<table id="cfgValvesControlTable" class="tabTable" border="3" frame="box" style="text-align:center">
 			</table>
@@ -1981,6 +1974,9 @@
 			id ("vCfg-highC").onchange = function (){
 				motorCharsHasChanged=true;
 			}
+			id ("vCfg-StartOnPower").onchange = function (){
+				motorCharsHasChanged=true;
+			}
 			id ("vCfg-movCalib").onchange = function (){
 				movCalibHasChanged=true;
 			}
@@ -2258,6 +2254,7 @@
 					
 					motor.lowC=Math.round(id("vCfg-lowC").value*10);
 					motor.highC=Math.round(id("vCfg-highC").value*10);
+					motor.startOnPower=id("vCfg-StartOnPower").value;
 					valvesCfg.motor=motor;
 				}
 			}
@@ -2443,6 +2440,7 @@
 			id('vCfg-movCalib').value=cfgValvesJson.calib.cycles;
 			id("vCfg-lowC").value=cfgValvesJson.motor.lowC/10;
 			id("vCfg-highC").value=cfgValvesJson.motor.highC/10;
+			id("vCfg-StartOnPower").value=cfgValvesJson.motor.startOnPower;
 		}
 		
 		function fillCfgValvesControlTable (cfgValvesControlJson) {

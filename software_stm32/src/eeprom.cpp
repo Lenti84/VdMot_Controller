@@ -88,13 +88,14 @@ int16_t eepromsetup () {
 	// EEPROM_DEBUG(millis());
 	// EEPROM_DEBUG("\r\n");
 
-	eep_content.status = E_INIT;
+	eep_content.status = EEP_INIT;
 	
   return 0;
 }
 
 
 int16_t eepromloop() {
+	static int writedelaycnt = 0;
 
     #define E_INIT      0
     #define E_IDLE      1
@@ -121,13 +122,19 @@ int16_t eepromloop() {
                     // }
                     // if (address == 256)
                     //    address = 0;    
-
-
+					
+					writedelaycnt = 0;
+					eep_content.status = EEP_INIT;
                     eepromstate = E_IDLE;
                     break;
 
         case E_IDLE:                  
-                    if (eep_content.status == E_CHANGED) {
+                    if (eep_content.status == EEP_CHANGED) {
+						writedelaycnt++;						
+					}
+
+					if (writedelaycnt > 2) {		// write to eeprom not earlier than after 5 s 
+						writedelaycnt=0;
 						eepromstate = E_WRITECFG;
 					}
 					
@@ -144,7 +151,7 @@ int16_t eepromloop() {
 					
 					eeprom_write_layout (&eep_content);
 
-					eep_content.status = E_VALID;					
+					eep_content.status = EEP_VALID;					
 					eepromstate = E_IDLE;
 
                     break;
@@ -309,6 +316,17 @@ int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 		address += x;
 	}
 
+// current bounds
+	x=0;
+	buf[x++] =  lay->startOnPower;
+	pb=(uint16_t*) &buf[x];
+	*pb = lay->numberOfMovements;
+	x++; 
+  	//eep.write(address, buf, x);
+	eeprom.writeBlock(address, buf, x);
+
+
+
 	EEPROM_DEBUG("finished\r\n");
 
 	return 0;
@@ -411,7 +429,10 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 		address += x;
 	}
 
-	eep_content.status = E_VALID;
+	eeprom.readBlock(address, buf, 1);
+	lay->startOnPower = buf[0];
+
+	eep_content.status = EEP_VALID;
 
 	EEPROM_DEBUG("finished\r\n");
 
@@ -421,6 +442,13 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 // call everytime some eeprom content was changed
 void eeprom_changed () {
 
-	eep_content.status = E_CHANGED;
+	eep_content.status = EEP_CHANGED;
 
+}
+
+
+// return 1 if eeprom is not in change
+int16_t eeprom_free () {
+	if (eep_content.status == EEP_VALID) return 1;
+	else return 0;
 }

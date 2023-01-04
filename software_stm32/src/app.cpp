@@ -42,6 +42,7 @@ struct valve myvalves[ACTUATOR_COUNT];
 unsigned int learning_time = LEARN_AFTER_TIME_DEFAULT;
 unsigned int learning_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
 
+unsigned int reset_request = 0;
 
 int16_t app_setup (void) { 
 
@@ -73,6 +74,8 @@ int16_t app_loop (void) {
   static byte firstchange = 0;
   static unsigned int lastvalve = 0;
   static unsigned int testvlvindex = 0;
+
+  reset_check();
 
     // if valve machine is idle search for new tasks
     if(valve_getstate() == A_IDLE) 
@@ -404,4 +407,21 @@ int16_t app_match_sensors() {
 
   return 0;
 
+}
+
+
+// set soft reset request
+void reset_STM32 () {
+  reset_request = 1;
+}
+
+
+// soft reset STM32
+// waits until eeprom is written completely
+void reset_check () {
+  if(reset_request && eeprom_free()) {
+    #define AIRCR_VECTKEY_MASK    (0x05FA0000)    
+      SCB->AIRCR = AIRCR_VECTKEY_MASK | 0x04;
+    while(1);   
+  }
 }

@@ -61,15 +61,17 @@ void CVdmConfig::init()
 
 void CVdmConfig::resetConfig (bool reboot)
 {  
-  VdmConfig.clearConfig(); 
-  VdmConfig.writeConfig();
+  clearConfig(); 
+  writeConfig();
+  writeValvesControlConfig();
   if (reboot) Services.restartSystem();
 }
 
 void CVdmConfig::restoreConfig (bool reboot)
 {  
-  VdmConfig.setDefault();
-  VdmConfig.writeConfig();
+  setDefault();
+  writeConfig();
+  writeValvesControlConfig();
   if (reboot) Services.restartSystem();
 }
 
@@ -226,6 +228,7 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsTZ,(char*) configFlash.timeZoneConfig.tz,sizeof(configFlash.timeZoneConfig.tz));
     if (prefs.isKey(nvsTZCode))
       prefs.getString(nvsTZCode,(char*) configFlash.timeZoneConfig.tzCode,sizeof(configFlash.timeZoneConfig.tzCode));
+    prefs.end();
   }
 }
 
@@ -283,11 +286,11 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
   prefs.end();
   
-
   prefs.begin(nvsTZCfg,false);
   prefs.clear();
   prefs.putString(nvsTZ,configFlash.timeZoneConfig.tz);
   prefs.putString(nvsTZCode,configFlash.timeZoneConfig.tzCode);
+  prefs.end();
 
   if (reboot) Services.restartSystem();
 }
@@ -351,16 +354,28 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
   uint8_t chunkStart=doc["chunkStart"];
   uint8_t chunkEnd=doc["chunkEnd"];
   uint8_t idx=0;
+
+  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+    syslog.log(LOG_DEBUG,"VdmConfig: post valve cfg - chunk start: "+String(chunkStart)+" chunk end: "+String(chunkEnd));
+  }
+
   if (!doc["calib"]["dayOfCalib"].isNull()) configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
   if (!doc["calib"]["hourOfCalib"].isNull()) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
  
   
   for (uint8_t i=chunkStart-1; i<chunkEnd; i++) {
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+      syslog.log(LOG_DEBUG,"VdmConfig: post valve cfg - idx: "+String(idx)+" i:"+String(i));
+    }
+
     if (!doc["valves"][idx]["name"].isNull()) strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][idx]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
     if (!doc["valves"][idx]["active"].isNull()) configFlash.valvesConfig.valveConfig[i].active=doc["valves"][idx]["active"];
     if (!doc["valves"][idx]["tIdx1"].isNull()) {
       StmApp.actuators[i].tIdx1=doc["valves"][idx]["tIdx1"];
       StmApp.setTempIdxActive=true;
+      if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+        syslog.log(LOG_DEBUG,"VdmConfig: post valve cfg - idx1 val: "+String(StmApp.actuators[i].tIdx1));
+      }
     }
     if (!doc["valves"][idx]["tIdx2"].isNull()) {
       StmApp.actuators[i].tIdx2=doc["valves"][idx]["tIdx2"];
@@ -381,6 +396,10 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
     StmApp.motorChars.maxHighCurrent=doc["motor"]["highC"];
     StmApp.setMotorCharsActive=true;
   }
+  if (!doc["motor"]["startOnPower"].isNull()) {
+    StmApp.motorChars.startOnPower=doc["motor"]["startOnPower"];
+    StmApp.setMotorCharsActive=true;
+  }
   
   if (StmApp.setMotorCharsActive) {
     StmApp.setMotorChars();
@@ -390,12 +409,15 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
   if ((StmApp.setTempIdxActive) && (chunkEnd==12)) {
     StmApp.setTempIdx();
     Services.restartSTM=true;
+    //StmApp.matchSensors();
+    //StmApp.matchSensorRequest = true;
     StmApp.setTempIdxActive=false;
   }
 }
 
 void CVdmConfig::postValvesControlCfg (JsonObject doc)
 {
+  
   uint8_t chunkStart=doc["chunkStart"];
   uint8_t chunkEnd=doc["chunkEnd"];
   uint8_t idx=0;
@@ -422,6 +444,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
   if (!doc["common"]["parkPosition"].isNull()) {
     configFlash.valvesControlConfig.parkingPosition=doc["common"]["parkPosition"];
   } 
+  
 }
 
 void CVdmConfig::postTempsCfg (JsonObject doc)

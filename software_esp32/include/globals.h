@@ -41,6 +41,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "compile_time.h"
 
 // #define CONFIG_ASYNC_TCP_USE_WDT 0
 
@@ -71,6 +72,10 @@
 #define STM32_RX            5
 #define STM32_TX            17
 
+// version info
+#ifndef FIRMWARE_BUILD
+  #define FIRMWARE_BUILD __TIME_UNIX__
+#endif
 
 
 

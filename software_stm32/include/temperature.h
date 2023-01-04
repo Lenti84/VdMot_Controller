@@ -42,7 +42,7 @@ extern void temp_command(int command);
 
 void printAddress(DeviceAddress deviceAddress);
 
-#define MAXSENSORCOUNT 		(unsigned int)	34
+//#define MAXSENSORCOUNT 		(unsigned int)	34
 #define CONV_INTERVALL		(unsigned int)	2000			// conversion intervall in ms
 
 #define TEMP_CMD_NONE         0x00

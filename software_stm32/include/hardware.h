@@ -31,8 +31,12 @@
 #ifndef _HARDWARE_H
 	#define _HARDWARE_H
 
+#include "compile_time.h"
 
-//#define FIRMWARE_VERSION "0.1.0+1"
+// version info
+#ifndef FIRMWARE_BUILD
+  #define FIRMWARE_BUILD __TIME_UNIX__
+#endif
 
 
 // defines used hardware
@@ -45,9 +49,7 @@
 // Serial1 - communication to ESP32 - PA9/PA10
 // Serial2 - RS485 - PA2/PA3
 // Serial6 - debug / terminal - PA11/PA12
-//
 
-//#define COMM_DBG				Serial3		// serial port for debugging
 #define COMM_DBG				Serial6		// serial port for debugging
 
 // status LED 
@@ -149,6 +151,7 @@
 
 #define ACTUATOR_COUNT      		12    	// how many valves are supported
 #define ADDITIONAL_SENSOR_COUNT		10 		// some additional sensors for x
+#define MAXONEWIRECNT		(ACTUATOR_COUNT*2)+ADDITIONAL_SENSOR_COUNT				// max count of usable 1-wire sensors
 
 #define SYSTEM_NAME         "VdMot Controller"
 
@@ -157,7 +160,6 @@
 #define EEPROM_VERS2_ADD	5		// address 1 byte Version x.2.x
 #define EEPROM_VERS3_ADD	6		// address 1 byte Version x.x.3
 
-//#define MAXONEWIRECNT		(ACTUATOR_COUNT*2)+10				// max count of usable 1-wire sensors
 
 
 // EEPROM layout
@@ -168,7 +170,7 @@
 // #error "EEPROM: adress for EE_SENSORDATA_ADR collides with EE_GENERALDATA_ADR"
 // #endif
 
-enum EEP_STATE { E_INIT, E_VALID, E_CHANGED };
+enum EEP_STATE { EEP_INIT, EEP_VALID, EEP_CHANGED };
 
 struct ds1820_eeprom_layout {
 	uint8_t		familycode;				// family code
@@ -188,6 +190,7 @@ struct eeprom_layout {
 	struct ds1820_eeprom_layout owsensors1[ACTUATOR_COUNT];	// a lot of ds1820 sensors - first sensor of valve
 	struct ds1820_eeprom_layout owsensors2[ACTUATOR_COUNT];	// a lot of ds1820 sensors - second sensor of valve
 	struct ds1820_eeprom_layout owsensors[ADDITIONAL_SENSOR_COUNT];	// some other ds1820 sensors
+  uint8_t startOnPower;
 };
 
 

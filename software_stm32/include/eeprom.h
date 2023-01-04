@@ -39,6 +39,7 @@ void eeprom_fill (void);
 int16_t eeprom_write_layout (struct eeprom_layout* lay);
 int16_t eeprom_read_layout (struct eeprom_layout* lay);
 void eeprom_changed();
+int16_t eeprom_free();
 
 extern struct eeprom_layout eep_content;
 

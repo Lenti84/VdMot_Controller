@@ -78,7 +78,7 @@ void setValveIDSensor (uint8_t idx,char* pString, uint8_t* pSensor)
 				if (sum==0) memset(pSensor,0x0,8);
 			}
 			eeprom_changed();
-			app_match_sensors();
+			//app_match_sensors();
 		}
 	}
 }
@@ -144,7 +144,7 @@ void communication_setup (void) {
   * @retval None
   */
 int16_t communication_loop (void) {
-	static char buffer[300];
+	static char buffer[1000];
     static char *bufptr = buffer;
     static unsigned int buflen = 0;
     int availcnt;
@@ -327,7 +327,7 @@ int16_t communication_loop (void) {
 					strcat(sendbuffer, valbuffer);
 					strcat(sendbuffer, " ");
                     
-					if(myvalves[x].sensorindex1<MAXSENSORCOUNT)
+					if(myvalves[x].sensorindex1<MAXONEWIRECNT)
 					{
 						itoa(tempsensors[myvalves[x].sensorindex1].temperature, valbuffer, 10);      
 						strcat(sendbuffer, valbuffer);
@@ -336,7 +336,7 @@ int16_t communication_loop (void) {
 					
 					strcat(sendbuffer, " ");
 
-					if(myvalves[x].sensorindex2<MAXSENSORCOUNT)
+					if(myvalves[x].sensorindex2<MAXONEWIRECNT)
 					{
 						itoa(tempsensors[myvalves[x].sensorindex2].temperature, valbuffer, 10);      
 						strcat(sendbuffer, valbuffer);
@@ -425,7 +425,7 @@ int16_t communication_loop (void) {
 
 			if(argcnt == 1) {
 
-				if(x<MAXSENSORCOUNT)
+				if(x<MAXONEWIRECNT)
 				{
 					memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
 					// 8 Byte adress
@@ -622,7 +622,7 @@ int16_t communication_loop (void) {
 				#ifdef commDebug 
 					COMM_DBG.println("comm: set 1st sensor index");
 				#endif
-				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
+				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXONEWIRECNT) 
 				{
 					numberOfDevices = sensors.getDeviceCount();
 					if (numberOfDevices > 0) 
@@ -666,7 +666,7 @@ int16_t communication_loop (void) {
 				#ifdef commDebug 
 					COMM_DBG.println("comm: set 2nd sensor index");
 				#endif
-				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXSENSORCOUNT) 
+				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXONEWIRECNT) 
 				{
 					numberOfDevices = sensors.getDeviceCount();
 					if (numberOfDevices > 0) 
@@ -713,7 +713,9 @@ int16_t communication_loop (void) {
 				#endif
 				setValveIDSensor (x,arg1ptr,(uint8_t*) &eep_content.owsensors1[x]);
 				setValveIDSensor (x,arg2ptr,(uint8_t*) &eep_content.owsensors2[x]);
-				COMM_SER.println(APP_PRE_SETVLVSENSOR);
+				COMM_SER.print(APP_PRE_SETVLVSENSOR);
+				COMM_SER.print(" ");
+				COMM_SER.println(x,DEC);
 			}
 			else {
 				#ifdef commDebug 
@@ -792,16 +794,18 @@ int16_t communication_loop (void) {
 				COMM_DBG.print("got set motor characteristics request ");
 			#endif
 
-			if(argcnt == 2) {
+			if(argcnt == 3) {
 				x = atoi(arg0ptr);
 				y = atoi(arg1ptr);
 
 				if (x>=5 && x<=50 && y>=5 && y<=50) {
 					currentbound_low_fac = atoi(arg0ptr);
 					currentbound_high_fac = atoi(arg1ptr);
+					startOnPower = atoi (arg2ptr);
 
 					eep_content.currentbound_low_fac = currentbound_low_fac;
 					eep_content.currentbound_high_fac = currentbound_high_fac;
+					eep_content.startOnPower = startOnPower;
 					eeprom_changed();
 					COMM_SER.println(APP_PRE_SETMOTCHARS);
 					#ifdef commDebug 
@@ -833,6 +837,8 @@ int16_t communication_loop (void) {
 			COMM_SER.print(currentbound_low_fac, DEC);
 			COMM_SER.print(" ");		
 			COMM_SER.print(currentbound_high_fac, DEC);
+			COMM_SER.print(" ");		
+			COMM_SER.print(startOnPower, DEC);
 			COMM_SER.println(" ");			
 		} 
 
@@ -870,12 +876,50 @@ int16_t communication_loop (void) {
 
 			COMM_SER.print(APP_PRE_GETVERSION);
 			COMM_SER.print(" ");			
+
 			COMM_SER.print(FIRMWARE_VERSION);
 			#ifdef HARDWARE_VERSION
 				COMM_SER.print("_");
 				COMM_SER.print(HARDWARE_VERSION);
 			#endif
+
+			#ifdef FIRMWARE_BUILD
+				COMM_SER.print(" ");
+				COMM_SER.print(FIRMWARE_BUILD);
+  			#endif
+
 			COMM_SER.println(" ");	
+		}
+
+
+		// match sensors request
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_MATCHSENS,&cmd[0],5) == 0) {
+			#ifdef commDebug 
+				COMM_DBG.println("got match sensors request");
+			#endif
+
+			app_match_sensors();
+
+			COMM_SER.print(APP_PRE_MATCHSENS);
+			COMM_SER.println(" ");
+
+		}
+
+
+		// software reset request - untested
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_SOFTRESET,&cmd[0],5) == 0) {
+			#ifdef commDebug 
+				COMM_DBG.println("got software reset request");
+			#endif
+
+			COMM_SER.print(APP_PRE_SOFTRESET);
+			COMM_SER.println(" ");
+
+			delay(200);
+
+			reset_STM32();
 		}
 
 

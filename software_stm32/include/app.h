@@ -53,7 +53,8 @@ int16_t app_set_learntime(uint32_t time);
 int16_t app_set_valvelearning(uint16_t valve);
 int16_t app_set_valveopen(int16_t valve);
 int16_t app_match_sensors();
-
+void reset_check();
+void reset_STM32();
 
 // struct valvemotor {
 // //typedef struct valves {
