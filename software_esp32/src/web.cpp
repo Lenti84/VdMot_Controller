@@ -200,19 +200,25 @@ String CWeb::getSysInfo()
   time_t t;
   struct tm *tmp ;
   char buf[50];
-  #ifdef FIRMWARE_BUILD
-    t = FIRMWARE_BUILD;
-    tmp = gmtime (&t);
-    strftime (buf, sizeof(buf), " Build %d.%m.%Y %H:%M", tmp);
-    wt32Build = String(buf);
-  #endif
+
+#ifndef FIRMWARE_BUILD 
+  t = FIRMWARE_BUILD;
+  tmp = gmtime (&t);
+  strftime (buf, sizeof(buf), " Build %d.%m.%Y %H:%M", tmp);
+  wt32Build = String(buf);
+#else
+  wt32Build = " release";
+#endif  
 
   t = VdmSystem.stmBuild;
   String stmBuild="";
-  if (t>0) {
+  if (t>1) {
     tmp = gmtime (&t);
     strftime (buf, sizeof(buf), " Build %d.%m.%Y %H:%M", tmp);
     stmBuild = String (buf);
+  }
+  else if(t==1) {
+    stmBuild = " release";
   }
 
   String result = "{\"wt32version\":\""+String(FIRMWARE_VERSION)+wt32Build+"\"," +

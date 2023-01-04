@@ -63,7 +63,8 @@ static const char* commCmds [] =
                 APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETTARGETPOS,
                 APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,APP_PRE_SETVLVSENSOR,
                 APP_PRE_GETONEWIRESETT,APP_PRE_SETLEARNMOVEM,APP_PRE_GETLEARNMOVEM,
-                APP_PRE_GETVLSTATUS,APP_PRE_SETDETECTVLV,NULL};
+                APP_PRE_GETVLSTATUS,APP_PRE_SETDETECTVLV,APP_PRE_MATCHSENS,
+                APP_PRE_SOFTRESET,NULL};
 
 
 CStmApp StmApp;
@@ -102,6 +103,7 @@ CStmApp::CStmApp()
     appRetry=0;
     appTimeOuts=0;
     commstate=COMM_IDLE;
+    matchSensorRequest=false;
 }
 
 void  CStmApp::app_setup() {
@@ -184,13 +186,25 @@ void CStmApp::valvesDetect()
 
 void CStmApp::getParametersFromSTM()
 {
-  fastQueueMode=true;  
-  app_cmd(APP_PRE_GETVERSION);
-  app_cmd(APP_PRE_GETMOTCHARS);
-  app_cmd(APP_PRE_GETLEARNMOVEM);
-  app_cmd(APP_PRE_GETONEWIRECNT,String(255));
-  app_cmd(APP_PRE_GETONEWIRESETT,String(255));
-  app_cmd(APP_PRE_GETVLSTATUS);
+    fastQueueMode=true;  
+    app_cmd(APP_PRE_GETVERSION);
+    app_cmd(APP_PRE_GETMOTCHARS);
+    app_cmd(APP_PRE_GETLEARNMOVEM);
+    app_cmd(APP_PRE_GETONEWIRECNT,String(255));
+    app_cmd(APP_PRE_GETONEWIRESETT,String(255));
+    app_cmd(APP_PRE_GETVLSTATUS);
+}
+
+// soft reset of STM32 ensures that eeprom content is saved before restart
+void CStmApp::softReset()
+{   
+    String s=APP_PRE_SOFTRESET+ARG_DELIMITER;
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+        syslog.log(LOG_DEBUG, "stmApp: soft reset of STM32");
+    }
+    #warning using app_cmd here seems to not work, but why?
+    //app_cmd(APP_PRE_SOFTRESET);
+    UART_STM32.println(s);
 }
 
 void CStmApp::scanTemps()
@@ -200,6 +214,14 @@ void CStmApp::scanTemps()
         memset(tempsId[i].id,0x0,sizeof(tempsId[i].id));
     }
     app_cmd(APP_PRE_SETONEWIRESEARCH);
+}
+
+void CStmApp::matchSensors()
+{
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+        syslog.log(LOG_DEBUG, "stmApp: send match sensor request");
+    }
+    app_cmd(APP_PRE_MATCHSENS);      
 }
 
 void CStmApp::setTempIdx()
@@ -229,6 +251,10 @@ void CStmApp::setTempIdx()
         fastQueueMode=true;
         app_cmd(APP_PRE_SETVLVSENSOR,String(i)+ARG_DELIMITER+s1+ARG_DELIMITER+s2);
         fastQueueMode=true;
+
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+            syslog.log(LOG_DEBUG,"stmApp: "+String(APP_PRE_SETVLVSENSOR)+" "+String(i)+ARG_DELIMITER+s1+ARG_DELIMITER+s2);
+        }
     }
     fastQueueMode=true;
 }
@@ -249,8 +275,20 @@ void CStmApp::setMotorChars()
 
 void  CStmApp::app_loop() 
 {
+    static int match_counter = 0;
+
     app_check_data();
     appHandler();
+
+    // maybe find a better place for this code
+    if(matchSensorRequest == true) {
+        match_counter++;
+        if (match_counter > 30) {
+            match_counter = 0;
+            matchSensorRequest = false;
+            matchSensors();
+        }
+    }
 }
 
 bool CStmApp::checkCmdIsAvailable (String thisCmd)
@@ -273,6 +311,11 @@ void  CStmApp::app_cmd(String command,String args)
         if (args!="") s+=args+ARG_DELIMITER;
         UART_DBG.println("push "+s);
         Queue.push(s);
+    }
+    else {
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+            syslog.log(LOG_DEBUG, "STMApp: app_cmd - command not found");
+        }
     }
 }
 
@@ -297,6 +340,7 @@ void CStmApp::setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2)
 
 void  CStmApp::app_check_data() 
 {
+    static int errorcnt = 0;
     int availcnt;
 
     #ifdef STMSimulation
@@ -328,6 +372,7 @@ void  CStmApp::app_check_data()
         for (uint16_t c = 0; c < buflen; c++)
         {     
             if (buffer[c] == '\r') {
+                errorcnt = 0;
                 buffer[c] = '\0';
                 found = true;
                 buflen = 0;         // reset counter
@@ -337,6 +382,16 @@ void  CStmApp::app_check_data()
                     syslog.log(LOG_DEBUG, "STMApp:found new data packet: >" + String(buffer) + "<");
                 }
             }
+        }
+        
+        // timeout incomplete recv sequences
+        if (!found) errorcnt++;
+        if (errorcnt > 5) {
+            syslog.log(LOG_DEBUG, "incomplete buffer : >" + String(buffer) + "<");
+
+            errorcnt = 0;
+            buflen = 0;
+            bufptr = buffer;            
         }
     }
    
@@ -529,6 +584,16 @@ void  CStmApp::app_check_data()
                     tempIndex=0;
                 }
             }
+            // handle incomplete messages to not block 1-wire request cycle
+            else if(argcnt == 1) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"STMApp:one wire data - only 1 arg");
+                }
+                tempIndex++;
+                if (tempIndex>=tempsCount) {  // all temp sensors read
+                    tempIndex=0;
+                }
+            }
             appState=APP_IDLE;
         }
 
@@ -619,6 +684,15 @@ void  CStmApp::app_check_data()
             }
             appState=APP_IDLE;
         }
+
+        // match sensors request
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_MATCHSENS,&cmd[0],5) == 0) {			
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                syslog.log(LOG_DEBUG, "stmApp: got match sensor answer");
+            }
+            appState=APP_IDLE;
+		}
 
         // very important to reset to idle if no valid command was found
         else {

@@ -102,14 +102,22 @@ void CServices::restartSystem() {
         UART_DBG.println("wait for finish queue");
         VdmTask.taskIdResetSystem = taskManager.scheduleOnce(30*1000, [] {
                 UART_DBG.println("wait for finish queue timeout, restart now");
-                if (Services.restartSTM) Stm32.ResetSTM32(true);
+                if (Services.restartSTM) {
+                  syslog.log(LOG_DEBUG,"Services: queue restart STM32 after 30s");
+                  //Stm32.ResetSTM32(true);
+                  StmApp.softReset();
+                }
                 ESP.restart();
             });
         VdmTask.taskIdwaitForFinishQueue = taskManager.scheduleFixedRate(500, [] {
           if (Queue.available()==0) {
             UART_DBG.println("queue finished, restart now");
-              VdmTask.taskIdResetSystem = taskManager.scheduleOnce(2000, [] {
-                if (Services.restartSTM) Stm32.ResetSTM32(true);
+              VdmTask.taskIdResetSystem = taskManager.scheduleOnce(3000, [] {
+                if (Services.restartSTM) {
+                  syslog.log(LOG_DEBUG,"Services: queue restart STM32 after 3s");
+                  //Stm32.ResetSTM32(true);
+                  StmApp.softReset();
+                }
                 ESP.restart();
               });
               VdmTask.deleteTask(VdmTask.taskIdwaitForFinishQueue);
@@ -118,7 +126,11 @@ void CServices::restartSystem() {
     } else {
       UART_DBG.println("normal restart");
       VdmTask.taskIdResetSystem = taskManager.scheduleOnce(2000, [] {
-                if (Services.restartSTM) Stm32.ResetSTM32(true);
+                if (Services.restartSTM) {
+                  syslog.log(LOG_DEBUG,"Services: normal restart STM32 after 2s");
+                  //Stm32.ResetSTM32(true);
+                  StmApp.softReset();
+                }
                 ESP.restart();
             });
     }

@@ -101,6 +101,9 @@ typedef struct {
 #define APP_PRE_SETVLVSENSOR        "stvls"
 #define APP_PRE_SETDETECTVLV        "stdet"     // new
 
+#define APP_PRE_MATCHSENS           "masns"     // new
+#define APP_PRE_SOFTRESET           "reset"     // new
+
 #define APP_PRE_UNDEFSENSOR         "00-00-00-00-00-00-00-00"
 
 #define VLV_STATE_START       0x00
@@ -142,10 +145,12 @@ public:
   void valvesDetect();
   void scanValves();
   void scanTemps();
+  void matchSensors();
   void setTempIdx();
   void setLearnAfterMovements();
   void setMotorChars();
   void getParametersFromSTM();
+  void softReset();
 
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
   TEMP_STRUC temps[TEMP_SENSORS_COUNT];
@@ -157,6 +162,7 @@ public:
   bool setMotorCharsActive;
   uint32_t learnAfterMovements;
   volatile STM_START_PROC stmStatus;
+  bool matchSensorRequest;
 
 private:
   void appHandler();
