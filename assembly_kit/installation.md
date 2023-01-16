@@ -7,10 +7,11 @@ This picture shows essential connectors and jumpers of the VdMot Controller C2 r
     B2 - WT32-ETH01 Board
 
 ## board versions
-Following board versions does exist. The number can be found on the bottom side of the board.
+Following board versions does exist. The number can be found on the bottom side of the board. For C3 sample it is printed on upper side near WT32-ETH01 module.
 
     D-H0044-01-02 - C1 sample board - board with 5V relay
-    D-H0044-01-03 - C2 sample board - board without need for relay
+    D-H0044-01-03 - C2 sample board - board without need for relay, replaced by transistors
+    D-H0044-01-04 - C3 sample board - board without relay, ready for different RJ11 PCB connectors, corrected some imprints
 
 # Software installation
 ## Initial ESP32 / WT32 Flash via direct upload in Platformio / Visual Studio Code
@@ -59,6 +60,8 @@ Please proceed according following steps:
 
 ## Initial STM32 Flash via VdMot Controller
 The STM32 can be flashed directly by the ESP32 VdMot Controller.
+Proceedure is only needed for the first/initial flashing of the STM32.
+After initial steps, flashing can be done fully remote by using the web UI. No need to crawl to the hardware.
 
 Please proceed according following steps:
 
@@ -74,3 +77,19 @@ Please proceed according following steps:
     10. Click "Upload STM32 now"
 
 ![-](./stm32_initial_flash.png "STM32 initial flash")
+
+## Regular STM32 Flash via VdMot Controller
+The STM32 can be flashed directly by the ESP32 VdMot Controller.
+Flashing can be done fully remote by using the web UI. No need to crawl to the hardware.
+
+Please proceed according following steps:
+
+    1. Jumper X20 has to be shorted
+    2. Power up VdMot Controller
+    3. Open VdMot Controller website and goto "Update"
+    4. Click on "Update STM32"
+    5. Choose the STM32 firmware file to upload
+    6. Click "Upload STM32 file"
+    7. Choose Option "Normal partition" for regular flashing
+    8. After Upload choose correct file in filelist
+    9. Click "Upload STM32 now"
