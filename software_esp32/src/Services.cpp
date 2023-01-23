@@ -100,6 +100,10 @@ void CServices::runOnceDelayed()
 void CServices::restartSystem(TRestartMode thisRestartMode,bool WaitQueueFinished) {
   restartMode=thisRestartMode;
   StmApp.waitForFinishQueue=WaitQueueFinished;
+  #ifdef forceHardReset
+    restartMode=hard;
+    StmApp.waitForFinishQueue=false;
+  #endif
   UART_DBG.println("restart System "+String(restartMode));
   if (restartMode==soft) {
     StmApp.waitForFinishQueue=true;
@@ -113,7 +117,6 @@ void CServices::restartSystem(TRestartMode thisRestartMode,bool WaitQueueFinishe
                   syslog.log(LOG_DEBUG,"Services: queue restart hard STM32 after 30s");
                   Stm32.ResetSTM32(true);
                 }
-                //VdmTask.yieldTask(3000);
                 delay (1000);
                 ESP.restart();
             });
@@ -128,10 +131,9 @@ void CServices::restartSystem(TRestartMode thisRestartMode,bool WaitQueueFinishe
                     Stm32.ResetSTM32(true);
                     delay (2000);
                   }
-                  //else
-                  //StmApp.softReset();
+                  
                 }
-                //VdmTask.yieldTask(3000);
+                
                 delay (1000);
                 ESP.restart();
               });
@@ -148,10 +150,9 @@ void CServices::restartSystem(TRestartMode thisRestartMode,bool WaitQueueFinishe
                     Stm32.ResetSTM32(true);
                     delay (2000);
                   }
-                  //else
-                  //StmApp.softReset();
+                  
                 }
-                //VdmTask.yieldTask(3000);
+                
                 delay (1000);
                 ESP.restart();
             });
