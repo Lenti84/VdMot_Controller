@@ -54,7 +54,7 @@ public:
   void servicesLoop();
   void runOnce();
   void runOnceDelayed();
-  void restartSystem();
+  void restartSystem(TRestartMode restartMode=soft,bool WaitQueueFinished=true);
   void restartStmApp(uint32_t ms);
   void checkServiceValves();
   void valvesSetLearn();
@@ -62,6 +62,7 @@ public:
 
   bool serviceValvesStarted;
   bool restartSTM;
+  TRestartMode restartMode;
 private:
   
 };

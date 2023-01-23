@@ -448,7 +448,7 @@ void eeprom_changed () {
 
 
 // return 1 if eeprom is not in change
-int16_t eeprom_free () {
-	if (eep_content.status == EEP_VALID) return 1;
-	else return 0;
+bool eeprom_free () {
+	return ((eep_content.status == EEP_VALID) || (eep_content.status == EEP_INIT));
+	
 }
