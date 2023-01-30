@@ -64,7 +64,7 @@ void CVdmConfig::resetConfig (bool reboot)
   clearConfig(); 
   writeConfig();
   writeValvesControlConfig();
-  if (reboot) Services.restartSystem();
+  if (reboot) Services.restartSystem(hard,false);
 }
 
 void CVdmConfig::restoreConfig (bool reboot)
@@ -72,7 +72,7 @@ void CVdmConfig::restoreConfig (bool reboot)
   setDefault();
   writeConfig();
   writeValvesControlConfig();
-  if (reboot) Services.restartSystem();
+  if (reboot) Services.restartSystem(hard,false);
 }
 
 void CVdmConfig::setDefault()

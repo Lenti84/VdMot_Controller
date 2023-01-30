@@ -65,6 +65,7 @@
 #include "FS.h"
 
 
+
 CWT32AsyncOTA WT32AsyncOTA;
 
 CWT32AsyncOTA::CWT32AsyncOTA()
@@ -184,7 +185,7 @@ void CWT32AsyncOTA::begin(AsyncWebServer *server, const char* userName, const ch
        
 void  CWT32AsyncOTA::restart() 
 {
-    Services.restartSystem();
+    Services.restartSystem(hard,false);
 }
 
    

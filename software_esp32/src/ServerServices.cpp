@@ -89,7 +89,7 @@ CServerServices ServerServices;
 void restart (JsonObject doc)
 {  
   Services.restartSTM=true;
-  Services.restartSystem();
+  Services.restartSystem(hard,false);
 }
 
 void writeConfig (JsonObject doc)
@@ -317,6 +317,12 @@ void handleGetSysConfig(AsyncWebServerRequest *request)
   request->send(200,aj,Web.getSysConfig(VdmConfig.configFlash.systemConfig));
 }
 
+void handleGetStm(AsyncWebServerRequest *request) 
+{ 
+  // generate callback with request parameter
+  // send request answer after getting from stm 
+}
+
 void handleGetFSDir(AsyncWebServerRequest *request) 
 { 
   request->send(200,aj,Web.getFSDir());
@@ -424,6 +430,7 @@ void  CServerServices::initServer()
   server.on("/stmupdstatus", HTTP_GET, [](AsyncWebServerRequest * request) {handleStmUpdStatus(request);});
   server.on("/tempsensorsid", HTTP_GET, [](AsyncWebServerRequest * request) {handleTempSensorsID(request);});
   server.on("/sysconfig", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetSysConfig(request);});
+  server.on("/stm?", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetStm(request);});
   
   server.on("/fupload", HTTP_POST, [](AsyncWebServerRequest *request) {},
       [](AsyncWebServerRequest *request, const String& filename, size_t index, uint8_t *data,

@@ -1980,6 +1980,12 @@
 			id ("vCfg-movCalib").onchange = function (){
 				movCalibHasChanged=true;
 			}
+			for (i=0;i<7;i++) {
+				let thisID = "vCfg-d" + i;
+				id (thisID).onchange = function (){
+					movCalibHasChanged=true;
+				}
+			}
 			id ("VCtrlConfigHeatControl").onchange = function (){
 				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
 			}
