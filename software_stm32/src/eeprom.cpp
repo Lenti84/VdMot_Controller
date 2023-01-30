@@ -39,7 +39,7 @@
 
 
 byte buffer[256];
-long address;
+//long address;
 
 #define EE24LC64MAXBYTES 		64*1024/8
 #define DEVICEADDRESS 			0x50		// A0, A1, A2 = GND
@@ -104,7 +104,7 @@ int16_t eepromloop() {
 
     static int eepromstate = E_INIT;
 
-    int x;
+    //int x;
 
     switch (eepromstate) {
         case E_INIT:

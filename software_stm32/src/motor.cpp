@@ -103,21 +103,21 @@ int analog_current_old = 0;             // filter
 // unsigned int idlecurrent = 2048;        // idle current adc value (digits)
 // unsigned int idlecurrent_old = 2048;    // filter
 
-volatile unsigned int isr_counter;      // ISR var for counting revolutions
-volatile byte         isr_turning;      // ISR var for state of motor
-volatile unsigned int isr_target;       // ISR var for valve target count
-volatile int          isr_valvenr;      // ISR var for valve nr
-volatile byte         isr_timer_go;     // ISR var for timer pwm start
-volatile byte         isr_timer_fin;    // ISR var for timer pwm finished
+volatile unsigned int isr_counter = 0;      // ISR var for counting revolutions
+volatile byte         isr_turning = 0;      // ISR var for state of motor
+volatile unsigned int isr_target = 0;       // ISR var for valve target count
+volatile int          isr_valvenr = 0;      // ISR var for valve nr
+volatile byte         isr_timer_go = 0;     // ISR var for timer pwm start
+volatile byte         isr_timer_fin = 0;    // ISR var for timer pwm finished
 
 
 valvemotor myvalvemots[ACTUATOR_COUNT];
 
 
-char command;
-int valvenr;
-byte poschangecmd;
-unsigned int m_meancurrent;           // mean current in mA
+char command = '\0';
+int valvenr = 0;
+byte poschangecmd = 0;
+unsigned int m_meancurrent = 0;           // mean current in mA
 
 uint8_t currentbound_low_fac = 20;     // lower current limit factor for detection of end stop
 uint8_t currentbound_high_fac = 20;    // upper current limit factor for detection of end stop
@@ -192,23 +192,23 @@ byte valve_setup () {
 
 byte valve_loop () {
   
-  byte temp;
+  byte temp = 0;
   //byte stateresult;
 
   //static int cyclecnt = 0;
   //static int debouncecnt = 0;
-  byte result;
+  byte result = 0;
 
-  static byte pos_change;
+  static byte pos_change = 0;
 
-  static unsigned int closing_count;  
-  static unsigned int opening_count;
-  static unsigned int deadzone_count;
+  static unsigned int closing_count = 0;  
+  static unsigned int opening_count = 0;
+  static unsigned int deadzone_count = 0;
 
   static int idlecurrenttimer = 0;
   
-  static unsigned int scaler;
-  static int valveindex;
+  static unsigned int scaler = 0;
+  static int valveindex = 0;
 
   static int waittimer = 0;
   static int psuofftimer = 0;
@@ -701,9 +701,9 @@ byte motorcycle (int mvalvenr, byte cmd) {
   static int currentbound_high;             // upper current limit for detection of end stop
 
 
-  static unsigned int meancurrent_cnt;      // counts meancurrent values
-  static long meancurrent_mem;              // memory for meancurrent values
-  byte result;
+  static unsigned int meancurrent_cnt = 0;      // counts meancurrent values
+  static long meancurrent_mem = 0;              // memory for meancurrent values
+  byte result = 0;
 
   // quickpass for isr state switching
   if(cmd==CMD_M_STOP_ISR) {
@@ -800,8 +800,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     result = M_RES_TURNING;
                     isr_timer_go = 1;
 
-                    currentbound_low = (int) (m_meancurrent * -1 * currentbound_low_fac); //10 * -3;
-                    currentbound_high = (int) (m_meancurrent * currentbound_high_fac); //10 * 3;
+                    currentbound_low = (int) (m_meancurrent) * -1 * (int) (currentbound_low_fac); //10 * -3;
+                    currentbound_high = (int) (m_meancurrent) * (int) (currentbound_high_fac); //10 * 3;
 
                     meancurrent_mem = 0;
                     meancurrent_cnt = 0;

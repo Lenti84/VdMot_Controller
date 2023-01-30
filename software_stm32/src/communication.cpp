@@ -147,7 +147,7 @@ int16_t communication_loop (void) {
 	static char buffer[1000];
     static char *bufptr = buffer;
     static unsigned int buflen = 0;
-    int availcnt;
+    int availcnt = 0;
     unsigned int found = 0;
 
 	char*       cmdptr;
@@ -161,17 +161,14 @@ int16_t communication_loop (void) {
 	char*		arg2ptr = arg2;
 	uint8_t		argcnt = 0;
     
-	uint16_t		x;
-	uint32_t		xu32;
-	uint16_t		y;
+	uint16_t		x = 0;
+	uint32_t		xu32 = 0;
+	uint16_t		y = 0;
 	char sendbuffer[30];
     char valbuffer[10];
 
-	uint8_t buff[10];
-
-	char sendbuf[SEND_BUFFER_LEN];
 	DeviceAddress currAddress;
-	uint8_t numberOfDevices;
+	uint8_t numberOfDevices = 0;
 
 	availcnt = COMM_SER.available(); 
     if(availcnt>0)
@@ -370,9 +367,9 @@ int16_t communication_loop (void) {
 			COMM_SER.print(ACTUATOR_COUNT, DEC);
 			COMM_SER.print(" ");
 
-			for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
+			for (uint8_t xx=0;xx<ACTUATOR_COUNT;xx++) {
 				memset(sendbuffer,0x0,sizeof(sendbuffer));
-				itoa(myvalvemots[x].status, sendbuffer, 10);				
+				itoa(myvalvemots[xx].status, sendbuffer, 10);				
 				COMM_SER.print(sendbuffer);
 				if (x<ACTUATOR_COUNT-1) COMM_SER.print(",");
 			}	
