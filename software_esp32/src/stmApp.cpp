@@ -201,6 +201,7 @@ void CStmApp::softReset()
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
         syslog.log(LOG_DEBUG, "stmApp: soft reset of STM32");
     }
+    UART_DBG.println("stmApp: send soft reset command");
     app_cmd(APP_PRE_SOFTRESET);
 }
 
@@ -218,6 +219,7 @@ void CStmApp::matchSensors()
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
         syslog.log(LOG_DEBUG, "stmApp: send match sensor request");
     }
+    UART_DBG.println("stmApp: send match sensor request");
     app_cmd(APP_PRE_MATCHSENS);      
 }
 
