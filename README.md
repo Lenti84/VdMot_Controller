@@ -7,6 +7,8 @@ It's an alternative to the original HmIP-FALMOT-C12 hardware.
 My intention was to create a cheap solution to operate my 18 valves (floor heating + radiators).
 I wanted a pure offline system (no cloud connection) and to be free of the constraint to use further components like CCU2/CCU3.
 
+![-](./hardware/c2-sample_pcb_soldered.jpg "C2 sample PCB with soldered components")
+
 ## Features:
 - controls up to 12 HmIP-VdMot actuators or other DC motor valves
 - learns valve movement by counting motor revolutions based on Back EMF
