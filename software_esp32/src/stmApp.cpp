@@ -198,13 +198,11 @@ void CStmApp::getParametersFromSTM()
 // soft reset of STM32 ensures that eeprom content is saved before restart
 void CStmApp::softReset()
 {   
-    String s=APP_PRE_SOFTRESET+ARG_DELIMITER;
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
         syslog.log(LOG_DEBUG, "stmApp: soft reset of STM32");
     }
-    #warning using app_cmd here seems to not work, but why?
-    //app_cmd(APP_PRE_SOFTRESET);
-    UART_STM32.println(s);
+    UART_DBG.println("stmApp: send soft reset command");
+    app_cmd(APP_PRE_SOFTRESET);
 }
 
 void CStmApp::scanTemps()
@@ -221,6 +219,7 @@ void CStmApp::matchSensors()
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
         syslog.log(LOG_DEBUG, "stmApp: send match sensor request");
     }
+    UART_DBG.println("stmApp: send match sensor request");
     app_cmd(APP_PRE_MATCHSENS);      
 }
 

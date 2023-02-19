@@ -289,10 +289,10 @@ int16_t app_set_valveopen(int16_t valve) {
 // match sensor address from eeprom with found sensors and set index/slot to valve struct
 int16_t app_match_sensors() {
   
-  uint8_t   numberOfDevices;
+  uint8_t   numberOfDevices = 0;
   DeviceAddress currAddress;
-  uint8_t   found1, found2;
-  uint8_t   valveindexlast;
+  uint8_t   found1 = 0, found2 = 0;
+  uint8_t   valveindexlast = 0;
   #ifdef appDebug
     COMM_DBG.println("Read 1-wire sensor addresses from eeprom");
   #endif
@@ -413,6 +413,7 @@ int16_t app_match_sensors() {
 // set soft reset request
 void reset_STM32 () {
   reset_request = 1;
+  COMM_DBG.println("prepare for soft reset");
 }
 
 
@@ -420,6 +421,7 @@ void reset_STM32 () {
 // waits until eeprom is written completely
 void reset_check () {
   if(reset_request && eeprom_free()) {
+    COMM_DBG.println("soft reset now");
     #define AIRCR_VECTKEY_MASK    (0x05FA0000)    
       SCB->AIRCR = AIRCR_VECTKEY_MASK | 0x04;
     while(1);   

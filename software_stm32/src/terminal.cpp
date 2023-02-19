@@ -95,7 +95,7 @@ int16_t Terminal_Serve (void) {
 	static char buffer[300];
     static char *bufptr = buffer;
     static unsigned int buflen = 0;
-    int availcnt;
+    int availcnt = 0;
     unsigned int found = 0;
 
 	char*       cmdptr;
@@ -110,15 +110,15 @@ int16_t Terminal_Serve (void) {
 	uint8_t		argcnt = 0;
 
 	//int			itempval;
-	uint16_t		x;
-	uint32_t		xu32;
-	uint16_t		y;
+	uint16_t		x = 0;
+	uint32_t		xu32 = 0;
+	uint16_t		y = 0;
 
 	char sendbuf[SEND_BUFFER_LEN];
     char valbuffer[10];
 
 	DeviceAddress currAddress;
-	uint8_t numberOfDevices;
+	uint8_t numberOfDevices = 0;
 
 	availcnt = COMM_DBG.available(); 
     if(availcnt>0)
@@ -157,14 +157,14 @@ int16_t Terminal_Serve (void) {
 		// ****************************************
 		cmdptr = buffer;
 
-		for(unsigned int x=0;x<4;x++){
+		for(unsigned int xx=0;xx<4;xx++){
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
-				if(x==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
-				else if(x==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
-				else if(x==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
-				else if(x==3) {	strncpy(arg2,cmdptr,sizeof(arg2)-1); argcnt=3;	} 	// 3rd argument
+				if(xx==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
+				else if(xx==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
+				else if(xx==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
+				else if(xx==3) {	strncpy(arg2,cmdptr,sizeof(arg2)-1); argcnt=3;	} 	// 3rd argument
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -418,6 +418,8 @@ int16_t Terminal_Serve (void) {
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		#warning handle 00-00-00... sensors explicitly
 		else if(memcmp(APP_PRE_SETVLVSENSOR,&cmd[0],5) == 0) {
+			COMM_DBG.println("set valve sensors by address");
+
 			x = atoi(arg0ptr); // valve index
 			
 			if(argcnt == 3) {				
@@ -585,22 +587,6 @@ int16_t Terminal_Serve (void) {
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETLEARNTIME,&cmd[0],5) == 0) {
 			COMM_DBG.print("set valve learning time to ");
-			x = atoi(arg0ptr);
-
-			if(argcnt == 1 && x > 0) {
-				if( app_set_learntime(x) == 0) COMM_DBG.println(x, DEC);
-				else COMM_DBG.println("- error");
-			}
-			else {
-				COMM_DBG.println("- error");
-			}
-		}
-
-
-		// set valve learning time
-		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		else if(memcmp(APP_PRE_SETLEARNTIME,&cmd[0],5) == 0) {
-			COMM_DBG.print("set valve learning time to ");
 			xu32 = atol(arg0ptr);
 
 			if(argcnt == 1 && xu32 >= 0) {
@@ -682,80 +668,6 @@ int16_t Terminal_Serve (void) {
 			COMM_DBG.println(" high: ");		
 			COMM_DBG.println(currentbound_high_fac, DEC);			
 		} 
-
-
-		// set valve sensors
-		// x - valve index
-		// arg1 - 8 byte hex address of 1st 1-wire sensor
-		// arg2 - 8 byte hex address of 2nd 1-wire sensor
-		// if hex address == 00-00-00-00-00-00-00-00 this sensor will be ignored
-		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-		else if(memcmp(APP_PRE_SETVLVSENSOR,&cmd[0],5) == 0) {
-			COMM_DBG.println("set valve sensors by address");
-
-			x = atoi(arg0ptr); // valve index
-			
-			if(argcnt == 1) {				
-				COMM_DBG.println("comm: set valve sensors");
-				if (x >= 0 && x < ACTUATOR_COUNT) 
-				{
-					// first sensor address
-					if(strlen(arg1ptr)==23) {
-
-						// from end to beginning
-						for(unsigned int xx=0;xx<=7;xx++) {
-							cmdptr=strrchr(arg1ptr,'-');
-							currAddress[7-xx] = atoi(cmdptr+1);
-							*cmdptr = '\0';
-						}
-						
-						if (sensors.validAddress(currAddress)) {
-							eep_content.owsensors1[x].familycode = currAddress[0];
-							eep_content.owsensors1[x].romcode[0] = currAddress[1];
-							eep_content.owsensors1[x].romcode[1] = currAddress[2];
-							eep_content.owsensors1[x].romcode[2] = currAddress[3];
-							eep_content.owsensors1[x].romcode[3] = currAddress[4];
-							eep_content.owsensors1[x].romcode[4] = currAddress[5];
-							eep_content.owsensors1[x].romcode[5] = currAddress[6];
-							eep_content.owsensors1[x].crc = currAddress[7];
-						
-							eeprom_changed();	
-							
-  							// match sensor address to valve struct at runtime, otherwise restart needed
-  							app_match_sensors();
-						}
-					}
-
-					// second sensor address
-					if(strlen(arg2ptr)==23) {
-
-						// from end to beginning
-						for(unsigned int xx=0;xx<=7;xx++) {
-							cmdptr=strrchr(arg2ptr,'-');
-							currAddress[7-xx] = atoi(cmdptr+1);
-							*cmdptr = '\0';
-						}
-						
-						if (sensors.validAddress(currAddress)) {
-							eep_content.owsensors2[x].familycode = currAddress[0];
-							eep_content.owsensors2[x].romcode[0] = currAddress[1];
-							eep_content.owsensors2[x].romcode[1] = currAddress[2];
-							eep_content.owsensors2[x].romcode[2] = currAddress[3];
-							eep_content.owsensors2[x].romcode[3] = currAddress[4];
-							eep_content.owsensors2[x].romcode[4] = currAddress[5];
-							eep_content.owsensors2[x].romcode[5] = currAddress[6];
-							eep_content.owsensors2[x].crc = currAddress[7];
-							
-							eeprom_changed();	
-							
-  							// match sensor address to valve struct at runtime, otherwise restart needed
-  							app_match_sensors();
-						}
-					}			
-				}
-			}
-			else COMM_DBG.println("to few arguments");
-		}
 
 
 		// detect valve status

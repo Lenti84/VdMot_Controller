@@ -38,7 +38,7 @@
 
 
 tempsensor  tempsensors[MAXONEWIRECNT];
-uint8_t     numberOfDevices;
+uint8_t     numberOfDevices = 0;
 
 //OneWire     oneWire;
 OneWire     oneWire(ONEW_PIN);
@@ -118,14 +118,14 @@ void temperature_setup() {
 void temperature_loop() {
     static enum t_state tempstate = T_INIT;
     static int substate = 0;
-    static int devcnt;
+    static int devcnt = 0;
     //static int lock = 0;
   
     //static uint8_t numberOfDevices;
     static unsigned int timer = 0;
 
     DeviceAddress currAddress;
-    float temp;
+    float temp = 0;
 
 
   switch (tempstate) {
