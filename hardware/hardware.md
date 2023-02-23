@@ -1,11 +1,21 @@
 # Hardware
 
-## C2-sample -in progress-
+## C3-sample - latest revision
+- added support for different RJ10 PCB connectors
+- corrected some imprints
+
+c3-sample/revision schematic is the same as c2-sample.
+
+PCB 3D teaser: ![-](./c3-sample_pcb_3D.png "c3-sample pcb 3D teaser")
+
+## C2-sample
 - replaced relay K1 with fet transistors
 - corrected button S1 connection, a push now pulls-up STM32 pin voltage to 3V3
 - added some filtering for analog signals
 
 You can find the c2-sample/revision schematic here: [schematic_c2-sample_V02.pdf](./schematic_c2-sample_V02.pdf)
+
+PCB 3D teaser: ![-](./c2-sample_pcb_3D.png "c2-sample pcb 3D teaser")
 
 ## C1-sample
 - uC STM32F401CCU on BlackPill board
@@ -26,7 +36,7 @@ You can find the c2-sample/revision schematic here: [schematic_c2-sample_V02.pdf
 
 You can find the c-sample schematic here: [schematic_c-sample_V02.pdf](./schematic_c-sample_V02.pdf)
 
-PCB 3D teaser: ![-](./c-sample_pcb_3D.png "c-sample pcb 3D teaser")
+PCB 3D teaser: ![-](./c-sample_pcb_3D.png "c1-sample pcb 3D teaser")
 
 ## B-sample
 - uC STM32F103C8 on BluePill board
