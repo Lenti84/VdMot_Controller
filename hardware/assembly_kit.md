@@ -10,7 +10,7 @@ Find pcb number on bottom side of PCB written into copper.
 | --- | --- | --- |
 |L-H0044-01-02|C1-sample|first batch|
 |L-H0044-01-03|C2-sample|relay replaced by transistors,<br/>added X26 (ENA and IO35 pin of ESP32),<br/>button switches to 3.3V instead of GND|
-|L-H0044-01-04|C3-sample|add support for different RJ10 PCB connectors<br/>-> no need for manual rework on suggested housing anymore<br/>corrected some imprints|
+|L-H0044-01-04|C3-sample|- added support for different RJ10 PCB connectors<br/>- corrected some imprints|
 
 ## schematic
 You can find the C1-sample schematic here: [schematic_c-sample_V02.pdf](./schematic_c-sample_V02.pdf)
