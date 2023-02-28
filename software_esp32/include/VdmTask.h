@@ -82,6 +82,7 @@ public:
   taskid_t taskIdPiControl[ACTUATOR_COUNT];
   taskid_t taskIdRunOnceClearFS;
   taskid_t taskIdRunOnceGetFS;
+  taskid_t taskIdUptime;
   
   TsetFactoryCfgState setFactoryCfgState;
 };

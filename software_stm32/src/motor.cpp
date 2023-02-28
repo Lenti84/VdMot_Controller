@@ -190,7 +190,7 @@ byte valve_setup () {
 }
 
 
-byte valve_loop () {
+void valve_loop () {
   
   byte temp = 0;
   //byte stateresult;
@@ -668,7 +668,7 @@ byte valve_loop () {
   }
   result = 0;
 
-  return result;
+  //return result;
 }
 
 

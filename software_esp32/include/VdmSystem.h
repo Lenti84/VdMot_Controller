@@ -81,6 +81,7 @@ public:
   uint8_t systemState;
   char systemMessage[50];
   bool getFSInProgress;
+  uint32_t uptime;
 private:
   bool spiffsStarted;
   

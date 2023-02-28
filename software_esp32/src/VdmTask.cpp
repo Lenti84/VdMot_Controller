@@ -64,13 +64,14 @@ CVdmTask::CVdmTask()
   taskIdRunOnceClearFS=TASKMGR_INVALIDID;
   taskIdRunOnceGetFS=TASKMGR_INVALIDID;
   setFactoryCfgState=idle;
+  taskIdUptime=TASKMGR_INVALIDID;
 }
 
 void CVdmTask::init()
 {
     if (taskIdCheckNet==TASKMGR_INVALIDID) {
-        taskIdCheckNet = taskManager.scheduleFixedRate(1000, [] {
-            VdmNet.checkNet();
+        taskIdCheckNet = taskManager.scheduleFixedRate(1000, [] {            
+            VdmNet.checkNet();           
         });
     }
 }
@@ -131,6 +132,9 @@ void CVdmTask::startServices()
     taskIdServices = taskManager.scheduleFixedRate(60, [] {
         Services.servicesLoop();
     },TIME_SECONDS);
+    taskIdUptime = taskManager.scheduleFixedRate(1, [] {
+        VdmSystem.uptime++;
+    },TIME_SECONDS);     
 }
 
 void CVdmTask::startPIServices()

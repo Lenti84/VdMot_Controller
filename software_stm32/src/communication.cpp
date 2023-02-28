@@ -173,6 +173,8 @@ int16_t communication_loop (void) {
 	availcnt = COMM_SER.available(); 
     if(availcnt>0)
     {    
+		if(availcnt>990) availcnt = 990;			// limit massive data streams, should not happen
+
         for (int c = 0; c < availcnt; c++)
         {           
             *bufptr++ = (char) COMM_SER.read();

@@ -78,7 +78,7 @@ extern enum ASTATE valvestate;
 
 
 
-byte valve_loop ();
+void valve_loop ();
 //byte valve_setup (struct valve *valvedata);
 //byte valve_setup (struct valvemotor *valvedata);
 byte valve_setup ();

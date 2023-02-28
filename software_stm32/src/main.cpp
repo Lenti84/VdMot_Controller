@@ -41,6 +41,7 @@
 #include "mycan.h"
 #include "rs485.h"
 #include "otasupport.h"
+#include "STM32TimerInterrupt.h"      
 
 
 //using Matthias Hertel driver https://github.com/mathertel/LiquidCrystal_PCF8574
@@ -51,6 +52,8 @@
 // .platformio\packages\framework-arduinoststm32\cores\arduino/HardwareSerial.h:44:4:
 // --> increased tx buffer size from default 64 to 1024
 
+// Init STM32 timer TIM2
+STM32Timer ITimer1(TIM2);
 
 void setup_system();
 void loop_system();
@@ -137,6 +140,20 @@ void setup_system() {
 
   // rs485
   //rs485_setup();          // rs485 hardware testcode setup
+
+
+  // hardware timer for motor loop
+  if (ITimer1.attachInterruptInterval(10 * 1000, valve_loop))
+  {
+    #ifdef motDebug 
+        COMM_DBG.print(F("Starting ITimer1 OK, millis() = ")); COMM_DBG.println(millis());
+    #endif
+  }
+  else {
+    #ifdef motDebug
+      COMM_DBG.println(F("Can't set ITimer1. Select another freq. or timer"));
+    #endif
+  }
 }
 
 
@@ -194,7 +211,7 @@ void loop_system() {
     
     app_loop();
 
-    valve_loop();   
+    //valve_loop();   
     
     communication_loop();
 

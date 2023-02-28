@@ -54,6 +54,7 @@ CVdmSystem::CVdmSystem()
   memset (systemMessage,0,sizeof(systemMessage));
   systemState = systemStateOK;
   getFSInProgress = false;
+  uptime = 0;
 }
 
 void CVdmSystem::getSystemInfo()

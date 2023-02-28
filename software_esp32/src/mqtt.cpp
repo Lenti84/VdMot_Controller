@@ -327,6 +327,13 @@ void CMqtt::publish_valves ()
     itoa(VdmSystem.systemState , valstr, 10);        
     mqtt_client.publish(topicstr, valstr);  
 
+    memset(topicstr,0x0,sizeof(topicstr));
+    strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
+    len = strlen(topicstr);
+    strncat(topicstr, "uptime",sizeof(topicstr) - strlen (topicstr) - 1);
+    itoa(VdmSystem.uptime , valstr, 10);        
+    mqtt_client.publish(topicstr, valstr); 
+
     topicstr[len] = '\0';
     strncat(topicstr, "message",sizeof(topicstr) - strlen (topicstr) - 1);       
     mqtt_client.publish(topicstr,VdmSystem.systemMessage);   
