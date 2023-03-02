@@ -195,7 +195,6 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
 {
     bool found;
     char item[20];
-    char value[10];
     char* pt;
     uint8_t i;
     uint8_t idx;
@@ -209,8 +208,11 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                 topic++;        // adjust topic 
             }
         }
-        memset(value,0x0,sizeof(value));
-        memcpy(value,payload,length);
+
+        // local zero terminated copy of payload
+        char value[32] = {0};
+        memcpy(value, payload, std::min<size_t>(sizeof(value) - 1, length));
+
         if (memcmp(mqtt_commonTopic,(const char*) topic, strlen(mqtt_commonTopic))==0) {
             memset(item,0x0,sizeof(item));
             pt= (char*) topic;
@@ -254,8 +256,6 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                 }
             }
 
-            memset(value,0x0,sizeof(value));
-            memcpy(value,payload,length);
             if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                syslog.log(LOG_DEBUG, "MQTT: payload "+String(topic)+" : "+String(value));
             }  
