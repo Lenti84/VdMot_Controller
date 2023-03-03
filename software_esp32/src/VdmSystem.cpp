@@ -54,13 +54,25 @@ CVdmSystem::CVdmSystem()
   memset (systemMessage,0,sizeof(systemMessage));
   systemState = systemStateOK;
   getFSInProgress = false;
-  uptime = 0;
 }
 
 void CVdmSystem::getSystemInfo()
 {   
     esp_chip_info(&chip_info);      
 }
+
+String CVdmSystem::getUpTime() {
+    char buf[50];
+    int64_t upTimeUS = esp_timer_get_time(); // in microseconds
+    int64_t seconds = upTimeUS/1000000;
+    uint32_t days = (uint32_t)seconds/86400;
+    uint32_t hr=(uint32_t)seconds % 86400 /  3600;
+    uint32_t min=(uint32_t)seconds %  3600 / 60;
+    uint32_t sec=(uint32_t)seconds % 60;
+    snprintf (buf,sizeof(buf),"%dd %d:%02d:%02d", days, hr, min, sec);
+    return String(buf);
+}
+
 
 void CVdmSystem::getFSDirectory() 
 {

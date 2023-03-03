@@ -422,8 +422,10 @@ void reset_STM32 () {
 void reset_check () {
   if(reset_request && eeprom_free()) {
     COMM_DBG.println("soft reset now");
-    #define AIRCR_VECTKEY_MASK    (0x05FA0000)    
-      SCB->AIRCR = AIRCR_VECTKEY_MASK | 0x04;
+    //NVIC_SystemReset();
+    HAL_NVIC_SystemReset();
+   // #define AIRCR_VECTKEY_MASK    (0x05FA0000)    
+   //   SCB->AIRCR = AIRCR_VECTKEY_MASK | 0x04;
     while(1);   
   }
 }

@@ -64,7 +64,6 @@ CVdmTask::CVdmTask()
   taskIdRunOnceClearFS=TASKMGR_INVALIDID;
   taskIdRunOnceGetFS=TASKMGR_INVALIDID;
   setFactoryCfgState=idle;
-  taskIdUptime=TASKMGR_INVALIDID;
 }
 
 void CVdmTask::init()
@@ -131,10 +130,7 @@ void CVdmTask::startServices()
     });
     taskIdServices = taskManager.scheduleFixedRate(60, [] {
         Services.servicesLoop();
-    },TIME_SECONDS);
-    taskIdUptime = taskManager.scheduleFixedRate(1, [] {
-        VdmSystem.uptime++;
-    },TIME_SECONDS);     
+    },TIME_SECONDS);  
 }
 
 void CVdmTask::startPIServices()

@@ -73,6 +73,8 @@ public:
   void setClearFS();
   void clearFS();
   void setSystemState(uint8_t thisSystemState,char const *thisSystemMsg);
+  String getUpTime();
+
   esp_chip_info_t chip_info;
   fileinfo Filenames[maxFiles]; // Enough for most purposes!
   uint8_t numfiles;
@@ -81,7 +83,7 @@ public:
   uint8_t systemState;
   char systemMessage[50];
   bool getFSInProgress;
-  uint32_t uptime;
+
 private:
   bool spiffsStarted;
   

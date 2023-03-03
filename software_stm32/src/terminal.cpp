@@ -730,7 +730,7 @@ void WriteEEPROMBaselayout(void) {
 	eeprom_fill ();		// write eeprom mark
 
 	eep_content.b_slave = 0;
-	strcpy(eep_content.descr, SYSTEM_NAME);
+	strncpy(eep_content.descr, SYSTEM_NAME, sizeof(eep_content.descr));
 	eep_content.OneWireCfg[0] = 0;
 	eep_content.OneWireCfg[1] = 0;
 	eep_content.OneWireCfg[2] = 0;

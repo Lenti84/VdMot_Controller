@@ -43,6 +43,7 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Syslog.h>
+#include <string.h>
 #include "mqtt.h"
 #include "globals.h"
 #include "stmApp.h"
@@ -53,6 +54,7 @@
 #include "helper.h"
 #include "web.h"
 #include "PIControl.h"
+
 
 CMqtt Mqtt;
 
@@ -71,7 +73,7 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
     mqtt_client.setCallback(mcallback);
 
     memset (mqtt_mainTopic,0,sizeof(mqtt_mainTopic));
-    if (VdmConfig.configFlash.protConfig.publishPathAsRoot) strcpy(mqtt_mainTopic,"/");
+    if (VdmConfig.configFlash.protConfig.publishPathAsRoot) strncpy(mqtt_mainTopic,"/",sizeof(mqtt_mainTopic));
 
     if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
         strncat(mqtt_mainTopic, VdmConfig.configFlash.systemConfig.stationName,sizeof(mqtt_mainTopic) - strlen (mqtt_mainTopic) - 1);
@@ -80,11 +82,11 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
         strncat(mqtt_mainTopic, DEFAULT_MAINTOPIC,sizeof(mqtt_mainTopic) - strlen (mqtt_mainTopic) - 1);
     }
 
-    strcpy(mqtt_commonTopic, mqtt_mainTopic);
+    strncpy(mqtt_commonTopic, mqtt_mainTopic, sizeof(mqtt_commonTopic));
     strncat(mqtt_commonTopic, DEFAULT_COMMONTOPIC,sizeof(mqtt_commonTopic) - strlen (mqtt_commonTopic) - 1);
-    strcpy(mqtt_valvesTopic, mqtt_mainTopic);
+    strncpy(mqtt_valvesTopic, mqtt_mainTopic,sizeof(mqtt_commonTopic));
     strncat(mqtt_valvesTopic, DEFAULT_VALVESTOPIC,sizeof(mqtt_valvesTopic)- strlen (mqtt_valvesTopic) - 1);
-    strcpy(mqtt_tempsTopic, mqtt_mainTopic);
+    strncpy(mqtt_tempsTopic, mqtt_mainTopic,sizeof(mqtt_commonTopic));
     strncat(mqtt_tempsTopic, DEFAULT_TEMPSTOPIC,sizeof(mqtt_tempsTopic)- strlen (mqtt_tempsTopic) - 1);
 
     if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
@@ -194,8 +196,8 @@ void CMqtt::reconnect()
 void CMqtt::callback(char* topic, byte* payload, unsigned int length) 
 {
     bool found;
-    char item[20];
-    char value[10];
+    char item[40];
+    //char value[20];
     char* pt;
     uint8_t i;
     uint8_t idx;
@@ -209,8 +211,12 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                 topic++;        // adjust topic 
             }
         }
-        memset(value,0x0,sizeof(value));
-        memcpy(value,payload,length);
+        //memset(value,0x0,sizeof(value));
+        //memcpy(value,payload,length);
+        // local zero terminated copy of payload
+        char value[32] = {0};
+        memcpy(value, payload, std::min<size_t>(sizeof(value) - 1, length));
+
         if (memcmp(mqtt_commonTopic,(const char*) topic, strlen(mqtt_commonTopic))==0) {
             memset(item,0x0,sizeof(item));
             pt= (char*) topic;
@@ -254,8 +260,8 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                 }
             }
 
-            memset(value,0x0,sizeof(value));
-            memcpy(value,payload,length);
+            //memset(value,0x0,sizeof(value));
+            //memcpy(value,payload,length);
             if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                syslog.log(LOG_DEBUG, "MQTT: payload "+String(topic)+" : "+String(value));
             }  
@@ -331,8 +337,9 @@ void CMqtt::publish_valves ()
     strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
     len = strlen(topicstr);
     strncat(topicstr, "uptime",sizeof(topicstr) - strlen (topicstr) - 1);
-    itoa(VdmSystem.uptime , valstr, 10);        
-    mqtt_client.publish(topicstr, valstr); 
+    
+    String upTime = VdmSystem.getUpTime();
+    mqtt_client.publish(topicstr, (const char*) (upTime.c_str())); 
 
     topicstr[len] = '\0';
     strncat(topicstr, "message",sizeof(topicstr) - strlen (topicstr) - 1);       
