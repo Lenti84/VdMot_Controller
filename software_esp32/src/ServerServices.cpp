@@ -159,11 +159,21 @@ void CServerServices::postSetValve (JsonObject doc)
         if (!doc["value"].isNull()) StmApp.actuators[index].target_position = doc["value"];
       }
       if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].active) {
-        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].valueSource==1) {
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].valueSource==3) {
           if (!doc["ctrlValue"].isNull()) PiControl[index].value = doc["ctrlValue"];
+          #ifdef EnvDevelop
+            UART_DBG.println("ctrlValue : "+String(PiControl[index].value));
+          #endif
+          jsonSetValveReceived=true;
         }
         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].targetSource==1) {
-          if (!doc["ctrlTarget"].isNull()) PiControl[index].target = doc["ctrlTarget"];
+          if (!doc["ctrlTarget"].isNull()) {
+            PiControl[index].target = doc["ctrlTarget"];
+            #ifdef EnvDevelop
+            UART_DBG.println("ctrlTarget : "+String(PiControl[index].target));
+            #endif
+            jsonSetValveReceived=true;
+          }
           if (!doc["ctrlDynOffs"].isNull()) PiControl[index].dynOffset = doc["ctrlDynOffs"];
         }
       }
@@ -284,7 +294,12 @@ void handleProtConfig(AsyncWebServerRequest *request)
 
 void handleValvesConfig(AsyncWebServerRequest *request)
 {
-  request->send(200,aj,Web.getValvesConfig (VdmConfig.configFlash.valvesConfig, StmApp.motorChars));
+  request->send(200,aj,Web.getValvesConfig (VdmConfig.configFlash.valvesConfig));
+}
+
+void handleMotorConfig(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,Web.getMotorConfig (StmApp.motorChars));
 }
 
 void handleValvesControlConfig(AsyncWebServerRequest *request)
@@ -367,32 +382,38 @@ void handleUploadFile(AsyncWebServerRequest *request, const String& filename, si
   if(!index){
     String thisFileName = filename;
     // open the file on first call and store the file handle in the request object
-    UART_DBG.println("file has arguments : "+String(request->args()));
+    #ifdef EnvDevelop
+      UART_DBG.println("file has arguments : "+String(request->args()));
+    #endif
     if (request->args()) {
-        UART_DBG.println("file has argument "+request->arg("dir"));
-        //thisFileName = "/"+request->arg("dir")+"/"+filename; 
+        #ifdef EnvDevelop      
+          UART_DBG.println("file has argument "+request->arg("dir"));
+        #endif
         thisFileName = "/"+filename; 
     }
-
-     UART_DBG.println("filename : "+thisFileName);
+    #ifdef EnvDevelop
+      UART_DBG.println("filename : "+thisFileName);
+    #endif
     request->_tempFile = SPIFFS.open(thisFileName, "w");
   }
   if(len) {
     // stream the incoming chunk to the opened file
     request->_tempFile.write(data,len);
-  //  UART_DBG.println("file chunk");
   }
   if(final){
     // close the file handle as the upload is now done
     request->_tempFile.close();
     request->send(200, aj, Web.getFSDir()); 
-    UART_DBG.println("upload finished");
+    #ifdef EnvDevelop
+      UART_DBG.println("upload finished");
+    #endif
   }
   
 }
 
 CServerServices::CServerServices()
 {
+  jsonSetValveReceived=false;
 }
 
 void CServerServices::stmDoUpdate(JsonObject doc)
@@ -403,7 +424,9 @@ void CServerServices::stmDoUpdate(JsonObject doc)
     String thisFileName = doc["file"].as<const char*>();
     if (!thisFileName.startsWith("/")) thisFileName = "/"+thisFileName;
     uint8_t command = doc["cmd"];
-    UART_DBG.println("file : "+thisFileName + " Command "+ String(command));
+    #ifdef EnvDevelop
+      UART_DBG.println("file : "+thisFileName + " Command "+ String(command));
+    #endif
     if (command==0) VdmTask.startStm32Ota(STM32OTA_START,thisFileName);
     if (command==1) VdmTask.startStm32Ota(STM32OTA_STARTBLANK,thisFileName);
   }
@@ -421,6 +444,7 @@ void  CServerServices::initServer()
   server.on("/netconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleNetConfig(request);});
   server.on("/protconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleProtConfig(request);});
   server.on("/valvesconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesConfig(request);});
+  server.on("/motorconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleMotorConfig(request);});
   server.on("/valvesctrlconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesControlConfig(request);});
   server.on("/tempsconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleTempsConfig(request);});
   server.on("/sysinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysInfo(request);});

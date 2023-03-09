@@ -45,6 +45,8 @@
 #include "VdmNet.h"
 #include "VdmConfig.h"
 #include "VdmSystem.h"
+#include "PIControl.h"
+#include "ServerServices.h"
 #include "WiFi.h"
 #include "helper.h"
 #include "stm32.h"
@@ -108,18 +110,15 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"pubTarget\":"+String(protConfig.publishTarget)+","+
                     "\"pubAllTemps\":"+String(protConfig.publishAllTemps)+","+
                     "\"pubPathAsRoot\":"+String(protConfig.publishPathAsRoot)+","+
+                    "\"pubUpTime\":"+String(protConfig.publishUpTime)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
 }
 
-String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorConfig)
+String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
 {
   String result = "{\"calib\":{\"dayOfCalib\":"+String(valvesConfig.dayOfCalib) + "," +
-                   "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib)+ "," +
-                    "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
-                   "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
-                   "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
-                   "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}," +
+                   "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib)+ "}," +
                    "\"valves\":[" ;
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
@@ -133,6 +132,16 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorCo
   return result;  
 }
 
+
+String CWeb::getMotorConfig (MOTOR_CHARS motorConfig)
+{
+  String result =   "{\"calib\":{";
+        result +=   "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
+                    "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
+                    "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
+                    "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}}";
+  return result;  
+}
 
 String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConfig)
 {
@@ -222,6 +231,7 @@ String CWeb::getSysInfo()
   String result = "{\"wt32version\":\""+String(FIRMWARE_VERSION)+wt32Build+"\"," +
                   "\"wt32cores\":"+VdmSystem.chip_info.cores+ "," +
                   "\"wt32coreRev\":"+VdmSystem.chip_info.revision+","+
+                  "\"wt32stack\":"+VdmSystem.stackSize+","+
                   "\"stm32version\":\""+VdmSystem.stmVersion+stmBuild+"\""+
                   "}";
   return result;  
@@ -247,7 +257,8 @@ String CWeb::getSysDynInfo()
                   "\"minheap\":\""+ConvBinUnits(ESP.getMinFreeHeap(),1)+ "\"," +
                   "\"wifirssi\":"+WiFi.RSSI()+ "," +
                   "\"wifich\":"+WiFi.channel()+ "," +
-                  "\"stmStatus\":"+String(StmApp.stmStatus);
+                  "\"stmStatus\":"+String(StmApp.stmStatus)+ "," +
+                  "\"stmInit\":"+String(StmApp.stmInitState);
                   if (VdmConfig.configFlash.protConfig.dataProtocol>0) {
                     result += ",\"brokerStatus\":"+String(Mqtt.mqttState);
                     result += ",\"brokerConnected\":"+String(Mqtt.mqttConnected);
@@ -259,7 +270,8 @@ String CWeb::getSysDynInfo()
 String CWeb::getValvesStatus() 
 {
   bool start=false;
-  String result = "[";
+  String result = "{";
+  result += "\"valves\":[";
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
     #ifdef ValveSimulation
       if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) StmApp.actuators[x].state=VLV_STATE_IDLE;
@@ -278,11 +290,15 @@ String CWeb::getValvesStatus()
                  if (StmApp.actuators[x].temp2>-500) {
                     result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
                  }
+                 if (Mqtt.mqttReceived || ServerServices.jsonSetValveReceived) {
+                    result +=",\"tTarget\":" + String(((float)PiControl[x].target),1);
+                    result +=",\"tValue\":" + String(((float)PiControl[x].value),1);
+                 }
                  result +="}";      
     start = true;
     }
   }  
-  result += "]";
+  result += "]}";
   return result;
 }
 

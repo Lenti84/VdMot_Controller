@@ -103,6 +103,7 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.publishTarget = false;
   configFlash.protConfig.publishAllTemps = false;
   configFlash.protConfig.publishPathAsRoot = false;
+  configFlash.protConfig.publishUpTime = false;
   
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesConfig.valveConfig[i].active = false;
@@ -197,6 +198,7 @@ void CVdmConfig::readConfig()
     configFlash.protConfig.publishTarget = prefs.getUChar(nvsProtBrokerPublishTarget);
     configFlash.protConfig.publishAllTemps = prefs.getUChar(nvsProtBrokerPublishAllTemps);
     configFlash.protConfig.publishPathAsRoot = prefs.getUChar(nvsProtBrokerPublishPathAsRoot);
+    configFlash.protConfig.publishUpTime = prefs.getUChar(nvsProtBrokerPublishUpTime);
     prefs.end();
   }
 
@@ -271,6 +273,7 @@ void CVdmConfig::writeConfig(bool reboot)
     prefs.putUChar(nvsProtBrokerPublishTarget,configFlash.protConfig.publishTarget);
     prefs.putUChar(nvsProtBrokerPublishAllTemps,configFlash.protConfig.publishAllTemps);
     prefs.putUChar(nvsProtBrokerPublishPathAsRoot,configFlash.protConfig.publishPathAsRoot);
+    prefs.putUChar(nvsProtBrokerPublishUpTime,configFlash.protConfig.publishUpTime);
   }
   prefs.end();
  
@@ -347,6 +350,7 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["pubTarget"].isNull()) configFlash.protConfig.publishTarget = doc["pubTarget"];
   if (!doc["pubAllTemps"].isNull()) configFlash.protConfig.publishAllTemps = doc["pubAllTemps"];
   if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.publishPathAsRoot = doc["pubPathAsRoot"];
+  if (!doc["pubUpTime"].isNull()) configFlash.protConfig.publishUpTime = doc["pubUpTime"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
@@ -503,14 +507,20 @@ int8_t CVdmConfig::findTempID (char* tempId)
 void CVdmConfig::checkToResetCfg() {
   pinMode(pinSetFactoryCfg, INPUT_PULLUP);
   if (digitalRead(pinSetFactoryCfg)==0) {  
-    UART_DBG.println("Entry reset config");
+    #ifdef EnvDevelop
+      UART_DBG.println("Entry reset config");
+    #endif
     delay(1000);
     if (digitalRead(pinSetFactoryCfg)==0) {
-        UART_DBG.println("Reset config, remove shortcut");
+        #ifdef EnvDevelop
+          UART_DBG.println("Reset config, remove shortcut");
+        #endif
         while (digitalRead(pinSetFactoryCfg)==0) {
           delay(100);
         }
-        UART_DBG.println("Reset config now");
+        #ifdef EnvDevelop
+          UART_DBG.println("Reset config now");
+        #endif
         VdmConfig.restoreConfig(true);
     }
   }

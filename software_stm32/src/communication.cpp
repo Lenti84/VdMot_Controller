@@ -296,8 +296,6 @@ int16_t communication_loop (void) {
 			x = atoi(arg0ptr);
 
 			if(argcnt == 1) {				
-				//COMM_DBG.println("comm: get valve data");
-				//if(0) 
 				if (x < ACTUATOR_COUNT) 
 				{
 					memset (sendbuffer,0x0,sizeof(sendbuffer));			// sendbuffer reset
@@ -313,10 +311,6 @@ int16_t communication_loop (void) {
 					itoa(myvalvemots[x].actual_position, valbuffer, 10);      
 					strcat(sendbuffer, valbuffer);
 					strcat(sendbuffer, " ");
-
-					// itoa(myvalvemots[x].target_position, valbuffer, 10);      
-					// strcat(sendbuffer, valbuffer);
-					// strcat(sendbuffer, " ");
                     
 					itoa(myvalvemots[x].meancurrent, valbuffer, 10);      
 					strcat(sendbuffer, valbuffer);
@@ -344,9 +338,7 @@ int16_t communication_loop (void) {
 
 					// end
 					strcat(sendbuffer, " ");
-                    
-					COMM_SER.println(sendbuffer);
-					//COMM_DBG.println(sendbuffer);		// debug				
+					COMM_SER.println(sendbuffer);			
 				}
 			}
 			else { 
@@ -354,7 +346,6 @@ int16_t communication_loop (void) {
 					COMM_DBG.println("to few arguments");
 				#endif
 			}
-			//return CMD_LEARN;
 		}
 
 		// get valve present
@@ -921,6 +912,17 @@ int16_t communication_loop (void) {
 			reset_STM32();
 		}
 
+		// get eeprom state
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_EEPSTATE,&cmd[0],5) == 0) {
+			#ifdef commDebug 
+				COMM_DBG.println("got get motor characteristics request ");
+			#endif
+			COMM_SER.print(APP_PRE_EEPSTATE);
+			COMM_SER.print(" ");			
+			COMM_SER.print(eeprom_free(), DEC);
+			COMM_SER.println(" ");			
+		} 
 
 		// unknown command
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

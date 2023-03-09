@@ -138,7 +138,7 @@
 		padding-left: 5px;
 		height:21px;
 	}
-	
+
 	table.tabTable1 {
 		width : 100%
 	}
@@ -267,7 +267,7 @@
 	.container3 {  
 		display: grid;  
 		grid-gap: 2px;  
-		grid-template-columns: repeat(auto-fit, 200px);
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		grid-template-rows:  masonry;
 	}
 		
@@ -332,7 +332,7 @@
 				<th>min</th>
 				<td id="min-heap"></td>
 			</tr>	
-			<tr id="tr-rssi" class="hide">
+			<tr id="tr-rssi">
 				<th>RSSI</th>
 				<td id="rssi"></td>
 			</tr>
@@ -561,7 +561,7 @@
 		</div>
 		</div>
 
-		<div class="rtabframe" style="height:360px;">
+		<div class="rtabframe" style="height:375px;">
 		<h3>Protocol</h3>
 
 		<table id="protConfig" class="tabTable1">		
@@ -614,14 +614,15 @@
 			</tr>
 		</table>
 		
-		<div class="tabiframe"> 
+		<div class="tabiframe" > 
 		<table id="protcfg-Broker1" style="display:none;" class="tabTable">
 			<tr>
-			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:5em;display:none;">
+			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:6em;display:none;">
 				<legend>Publish</legend>
 				<label><input type="checkbox" id="protcfg-pubTarget" name="theGroupP">Target </label>
 				<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
 				<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
+				<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
 			</fieldset>
 			</tr>
 	
@@ -648,7 +649,7 @@
 		
 			<table id="cfgValvesTable1" class="tabTable">
 			<tr>
-			<fieldset class="checkboxgroup" style="height:13em;">
+			<fieldset class="checkboxgroup" style="height:13em;" id="cfgValvesTableFieldSet1">
 				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
 				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour of next calibration"> h</label>
@@ -660,7 +661,7 @@
 				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
 				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
 			</fieldset>
-			<fieldset class="checkboxgroup" style="height:5em;">
+			<fieldset class="checkboxgroup" style="height:5em;" id="cfgValvesTableFieldSet2">
 				<legend>Characteristic</legend>	
 				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low  </label>
 				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
@@ -772,10 +773,10 @@
 				</td>
 				<td>
 					<label>Heat Control</label>
-					<select id="VCtrlConfigHeatControl" title="Heat valves control manual/on/off.">
+					<select id="VCtrlConfigHeatControl" title="Heat valves control manual/on/off=Park position.">
 					<option>Manual</option>
 					<option>On</option>
-					<option>Off</option>
+					<option>Off/Park position</option>
 					</select>
 				
 				</td>
@@ -1360,10 +1361,15 @@
 		var getStatusInterval;
 		var dataTempSensorsID=null;
 		const NoOfMaxSensors = 34;
-		var stmStatus = 0;
+		var stmInit = 0;
 		const cfgVCKiCol= 12;
 		var getFSIntervalID = null;
 		var loopGetFSCnt=0;
+		var valveTempsExists = false;
+		var valveMqttExists = false;
+		var heatControl = null;
+		var anyValveControlEnabled=false;
+		var stmLoaded=false;
 
 		// Get the modal
 		var modal = id("pwdModal");
@@ -1434,11 +1440,22 @@
 		   }
 		}
 		
+
+		function disable_enable_ValvesCfg (doDisable) {
+			id("valvesDetect").disabled=doDisable;
+			id("cfgValvesTableFieldSet1").disabled=doDisable;
+			id("cfgValvesTableFieldSet2").disabled=doDisable;
+			id("valvesStartCalib").disabled=doDisable;
+			id("valvesAssembly").disabled=doDisable;
+		}
+
 		window.onload = async function() {
 			await OnStart();
 		}
 
 		async function OnStart() {
+			stmLoaded=false;
+			disable_enable_ValvesCfg(true);
 			fillTZList();
 			await getSystemConfig();
 			makeTempsTable(0);
@@ -1451,8 +1468,9 @@
 			await getNetConfig();
 			await getProtConfig();
 			await getTempsConfig();
-			await getValvesStatus();
+			await getValvesConfig();
 			await getValvesControlConfig();
+			await getValvesStatus();
 			
 			await getFSDir();
 			getStatusInterval = window.setInterval(await getStatus, 2000);
@@ -1461,11 +1479,11 @@
 		}		
 		
 		async function loadStmData() {
-			console.log("load stm data");
+			// console.log("load stm data");
+			await getMotorConfig();
 			await getTempSensorsID();
 			await getTempsStatus();
 			await getSystemInfo();
-			await getValvesConfig();
 		}
 				
 		async function checkLogin() {
@@ -1497,12 +1515,38 @@
 			}
 		}
 		
+		function checkIfTempExists(valvesJson) {
+			for (let row=0; row<valvesJson.length; row++) { 
+				if (valvesJson[row].temp1) return true;
+				if (valvesJson[row].temp2) return true;
+			}	
+			return false;
+		}
+
+		function checkIfMqttExists(valvesJson) {
+			for (let row=0; row<valvesJson.length; row++) { 
+				if (valvesJson[row].tTarget) return true;
+				if (valvesJson[row].tValue) return true;
+			}	
+			return false;
+		}
+
+
 		function makeValvesTable(valvesJson) {
 			const ValvesTable = id('valvesTable');
 			ValvesTable.innerHTML="";
+			let columnsize = 7;
+			valveTempsExists=checkIfTempExists(valvesJson);
+			if (valveTempsExists===true) {
+				columnsize+=2;
+			}
+			valveMqttExists = checkIfMqttExists(valvesJson);
+			if (valveMqttExists===true) {
+				columnsize+=2;
+			}
 			for (let row=0; row<valvesJson.length+1; row++) { 
 				const thisRow = valvesTable.insertRow(0);
-				for (let i = 0; i < 9; i++) {
+				for (let i = 0; i < columnsize; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -1536,9 +1580,15 @@
 			valvesTable.rows[0].cells[3].textContent = 'mA';
 			valvesTable.rows[0].cells[4].textContent = 'State';
 			valvesTable.rows[0].cells[5].innerHTML = 'Target %';
-			valvesTable.rows[0].cells[7].innerHTML = 'Temp1';
-			valvesTable.rows[0].cells[8].innerHTML = 'Temp2';
-			
+			let colIdx=7;
+			if (valveTempsExists===true) {
+				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp1';
+				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp2';
+			}
+			if (valveMqttExists===true) {
+				valvesTable.rows[0].cells[colIdx++].innerHTML = 'tTarget';
+				valvesTable.rows[0].cells[colIdx].innerHTML = 'tValue';
+			}
 			thiscell = ValvesTable.rows[0].cells[5];
 			el = document.createElement('input');
 			el.setAttribute('type', 'checkbox');
@@ -1871,7 +1921,7 @@
 				e.style.display = "none";
 			} else {
 				x.style.display = "block";
-				e.className = 'tabTable';
+				e.style.display = "";
 			}
 		}
 		
@@ -2019,6 +2069,9 @@
 		
 		function activateSetValves(){
 			let checked=id("activeSetValves").checked ;
+			if ((heatControl!=null) && (heatControl!=0) && (anyValveControlEnabled) && (checked)){
+				alert ("#Control/Heat control is not set to manual. Valve may doesn't work properly");
+			} 
 			const valvesTable = id('valvesTable');
 			const valvesCfgTable = id('cfgValvesTable');
 			for (i=1; i<valvesTable.rows.length;i++){
@@ -2202,6 +2255,7 @@
 				protCfg.pubTarget = id("protcfg-pubTarget").checked ? 1 : 0;
 				protCfg.pubAllTemps = id("protcfg-pubAllTemps").checked ? 1 : 0;
 				protCfg.pubPathAsRoot = id("protcfg-pubPathAsRoot").checked ? 1 : 0;
+				protCfg.pubUpTime = id("protcfg-pubUpTime").checked ? 1 : 0;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -2295,6 +2349,7 @@
 			let valvesControlCfg={};
 			let commonValues={};
 			commonValues.heatControl=id('VCtrlConfigHeatControl').selectedIndex;
+			heatControl = commonValues.heatControl;
 			commonValues.parkPosition=id('VCtrlConfigParkPosition').value;
 			valvesControlCfg.common=commonValues;
 			valvesControlCfg.valves=valvesItemsCfg;
@@ -2397,14 +2452,16 @@
 				cfgValvesControlTable.rows[row].cells[0].style.backgroundColor = "";
 			}
 			valvesJson.forEach(function(item, index){
-				cfgValvesTable.rows[item.idx].cells[0].style.backgroundColor = "green";
-				cfgValvesControlTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+				if ((item.state!=5) && (item.state!=6)) {
+					cfgValvesTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+					cfgValvesControlTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+				}
 			});
 		}
 		
 		function fillValvesTable (valvesJson) {
 			const ValvesTable = id('valvesTable');
-			if (ValvesTable.rows.length != valvesJson.length+1) {
+			if ((ValvesTable.rows.length != valvesJson.length+1) || (checkIfTempExists(valvesJson)!=valveTempsExists) || (checkIfMqttExists(valvesJson)!=valveMqttExists)) {
 				makeValvesTable(valvesJson);
 			}
 			const States = ["---","idle","opens","closes","blocked","unknown","no valve","full open","connected"];
@@ -2414,44 +2471,60 @@
 				ValvesTable.rows[index+1].cells[2].textContent = item.pos;	
 				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
 				ValvesTable.rows[index+1].cells[4].textContent = States[item.state];
-				if (item.temp1)
-					ValvesTable.rows[index+1].cells[7].textContent = item.temp1;
-				else ValvesTable.rows[index+1].cells[7].textContent = "";
-				if (item.temp2)
-					ValvesTable.rows[index+1].cells[8].textContent = item.temp2;
-				else ValvesTable.rows[index+1].cells[8].textContent = "";
+				let colIdx=7;
+				if (valveTempsExists===true) {
+					if (item.temp1)
+						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.temp1;
+					else ValvesTable.rows[index+1].cells[colIdx++].textContent = "";
+
+					if (item.temp2)
+						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.temp2;
+					else ValvesTable.rows[index+1].cells[colIdx++].textContent = "";
+				}
+				if (valveMqttExists===true) {
+					if (item.tTarget)
+						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.tTarget;
+					else ValvesTable.rows[index+1].cells[colIdx++].textContent = "";
+					if (item.tValue)
+						ValvesTable.rows[index+1].cells[colIdx].textContent = item.tValue;
+					else ValvesTable.rows[index+1].cells[colIdx].textContent = "";
+				}
+
 				if (!(id('activeSetValves').checked)) {
 					id('setValveP'+(index+1)).value=item.targetPos;
 				}
 			});
-			checkValvesConnected (valvesJson);
 		}
 		
 		function fillCfgValvesTable (cfgValvesJson) {
 			const ValvesTable = id('valvesTable');
 			const cfgValvesTable = id('cfgValvesTable');
-			for (let row = 1; row<13; row++) {
-				id('cfgVName'+row).value = cfgValvesJson.valves[row-1].name;
-				id('cfgVActive'+row).checked = cfgValvesJson.valves[row-1].active;
-				id('cfgVTIdx1-'+row).value = cfgValvesJson.valves[row-1].tIdx1;
-				id('cfgVTIdx2-'+row).value = cfgValvesJson.valves[row-1].tIdx2;
-			}
-			
 			id('vCfg-hCalib').value = cfgValvesJson.calib.hourOfCalib;
 			let dCalib=0;	
 			for (let i=0; i<7; i++) {
 				dCalib=cfgValvesJson.calib.dayOfCalib & (1<<i);
 				if (dCalib==0) id('vCfg-d'+i).checked=false; else id('vCfg-d'+i).checked=true; 
 			}
-			id('vCfg-movCalib').value=cfgValvesJson.calib.cycles;
-			id("vCfg-lowC").value=cfgValvesJson.motor.lowC/10;
-			id("vCfg-highC").value=cfgValvesJson.motor.highC/10;
-			id("vCfg-StartOnPower").value=cfgValvesJson.motor.startOnPower;
+			for (let row = 1; row<13; row++) {
+				id('cfgVName'+row).value = cfgValvesJson.valves[row-1].name;
+				id('cfgVActive'+row).checked = cfgValvesJson.valves[row-1].active;
+				id('cfgVTIdx1-'+row).value = cfgValvesJson.valves[row-1].tIdx1;
+				id('cfgVTIdx2-'+row).value = cfgValvesJson.valves[row-1].tIdx2;
+			}
+		}
+
+		function fillCfgMotorTable(cfgMotorJson) {
+			id('vCfg-movCalib').value=cfgMotorJson.calib.cycles;
+			id("vCfg-lowC").value=cfgMotorJson.motor.lowC/10;
+			id("vCfg-highC").value=cfgMotorJson.motor.highC/10;
+			id("vCfg-StartOnPower").value=cfgMotorJson.motor.startOnPower;
 		}
 		
 		function fillCfgValvesControlTable (cfgValvesControlJson) {
+			anyValveControlEnabled=false;
 			const cfgValvesControlTable = id('cfgValvesControlTable');
 			id ('VCtrlConfigHeatControl').selectedIndex=cfgValvesControlJson.common.heatControl;
+			heatControl = cfgValvesControlJson.common.heatControl;
 			id ('VCtrlConfigParkPosition').value=cfgValvesControlJson.common.parkPosition;
 			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
 			for (let row = 1; row<13; row++) {
@@ -2469,8 +2542,8 @@
 				id('cfgVCSZ'+row).value= cfgValvesControlJson.valves[row-1].startAZ;
 				id('cfgVCEZ'+row).value= cfgValvesControlJson.valves[row-1].endAZ;
 				setCfgVCLink(id('cfgVCLink-'+row));
+				if (cfgValvesControlJson.valves[row-1].active==1) anyValveControlEnabled=true;
 			}
-			//show_hide_column('cfgValvesControlTable',cfgVCKiCol, checkVCScheme());
 		}
 		
 		function fillTempsTable (tempsJson) {
@@ -2513,13 +2586,18 @@
 			return (retVal);
 		}
 		
-		function checkCfgTempsID (){
+		function checkCfgTempsID () {
+			var result=true;
 			for (let row = 1; row<NoOfMaxSensors+1; row++) {
 				let TID = id('cfgTID'+row);
 				if (TID.value!="") {
-					if (!findTID(TID.value)) TID.style.backgroundColor = "red"; else TID.style.backgroundColor = "";
+					if (!findTID(TID.value)) {
+						TID.style.backgroundColor = "red";
+						result=false;
+					 } else TID.style.backgroundColor = "";
 				}
 			}
+			return result;
 		}
 		
 		function findID (SensorID) {
@@ -2586,14 +2664,20 @@
 					id("net-broker").style.display="block";
 					id("net-broker-status").textContent=dataSystemDynInfo["brokerConnected"] ? "Connected" : "Not connected"; 
 				}
-				var newStmStatus=dataSystemDynInfo["stmStatus"];
-				if (newStmStatus!=stmStatus) {
-					stmStatus=newStmStatus;
-					if (stmStatus===2) {
+				let newStmInit=dataSystemDynInfo["stmInit"];
+				disable_enable_ValvesCfg((newStmInit!=2) || (!stmLoaded));
+				if (newStmInit!=stmInit) {
+					stmInit=newStmInit;
+					if (stmInit===2) {
 						setTimeout(async function() {
-							await loadStmData();	
+							await loadStmData();
+							stmLoaded=true;
 						},5000);
 					}
+				}
+
+				if (!checkCfgTempsID()) {
+					await getTempSensorsID();
 				}
 			}
 		}
@@ -2658,6 +2742,7 @@
 				id("protcfg-pubTarget").checked = dataProtConfig["pubTarget"];
 				id("protcfg-pubAllTemps").checked = dataProtConfig["pubAllTemps"];
 				id("protcfg-pubPathAsRoot").checked = dataProtConfig["pubPathAsRoot"];
+				id("protcfg-pubUpTime").checked = dataProtConfig["pubUpTime"];
 				showBrokerIP();
 			}
 		}
@@ -2667,6 +2752,11 @@
 			if (dataValvesConfig) fillCfgValvesTable(dataValvesConfig);
 		}
 		
+		async function getMotorConfig() {
+			const dataMotorConfig=await getJson("motorconfig");
+			if (dataMotorConfig) fillCfgMotorTable(dataMotorConfig);
+		}
+
 		async function getValvesControlConfig() {
 			const dataValvesControlConfig=await getJson("valvesctrlconfig");
 			if (dataValvesControlConfig) fillCfgValvesControlTable(dataValvesControlConfig);
@@ -2674,7 +2764,10 @@
 		
 		async function getValvesStatus() {
 			const dataValvesStatus=await getJson("valves");
-			if (dataValvesStatus) fillValvesTable(dataValvesStatus);
+			if (dataValvesStatus) {
+				fillValvesTable(dataValvesStatus.valves);
+				checkValvesConnected (dataValvesStatus.valves);
+			}
 		}
 		
 		async function getTempsConfig() {

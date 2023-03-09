@@ -301,23 +301,14 @@ int16_t app_match_sensors() {
   for (unsigned int owsensorindex=0; owsensorindex<numberOfDevices; owsensorindex++)
   {
       sensors.getAddress(currAddress, owsensorindex);
-      //tempsensors[i].address = currAddress;
-
-      //COMM_DBG.print("owsensorindex ");
-      //COMM_DBG.println(owsensorindex, DEC);
       #ifdef appDebug
         printAddress(currAddress);
-        //COMM_DBG.println("");
       #endif
 
       // first sensor of valve
       // step through all possible valves
       for (unsigned int valveindex1 = 0;valveindex1<ACTUATOR_COUNT;valveindex1++) {
         valveindexlast = valveindex1;
-
-        //COMM_DBG.print("valveindex ");
-        //COMM_DBG.println(valveindex, DEC);
-
         found1 = 0;
         if (eep_content.owsensors1[valveindex1].crc == currAddress[7]) 
         {
@@ -338,24 +329,17 @@ int16_t app_match_sensors() {
       {
           #ifdef appDebug
             COMM_DBG.print(" found as 1st sensor at valve: ");
-            // COMM_DBG.print(owsensorindex, DEC);
             COMM_DBG.println(valveindexlast, DEC);
           #endif
           myvalves[valveindexlast].sensorindex1 = owsensorindex;
       } else {
         myvalves[valveindexlast].sensorindex1 = VALVE_SENSOR_UNKNOWN;
       }
-      // else 
-      // {
-      //     COMM_DBG.println(" not found");
-      //     //COMM_DBG.println(found, DEC);
-      // }
-
+      
       // second sensor of valve
       // step through all possible valves
       for (unsigned int valveindex = 0;valveindex<ACTUATOR_COUNT;valveindex++) {
         valveindexlast = valveindex;
-         
         found2 = 0;
         if (eep_content.owsensors2[valveindex].crc == currAddress[7]) 
         {
@@ -376,44 +360,29 @@ int16_t app_match_sensors() {
       {     
           #ifdef appDebug     
             COMM_DBG.print(" found as 2nd sensor at valve: ");
-            // COMM_DBG.print(owsensorindex, DEC);
             COMM_DBG.println(valveindexlast, DEC);
           #endif
           myvalves[valveindexlast].sensorindex2 = owsensorindex;
       }  else {
         myvalves[valveindexlast].sensorindex2 = VALVE_SENSOR_UNKNOWN;
       }
-      // else 
-      // {
-      //     COMM_DBG.println(" not found");
-      //     //COMM_DBG.println(found, DEC);
-      // }
 
       if(found1==0 && found2==0) {
         #ifdef appDebug
           COMM_DBG.println(" not found");
         #endif
       }
-
-      
-      // else 
-      // {
-      //     COMM_DBG.print("not found ");
-      //     COMM_DBG.print(owsensorindex, DEC);
-      //     COMM_DBG.println(valveindexlast, DEC);
-      //     myvalvemots[valveindexlast].sensorindex1 = VALVE_SENSOR_UNKNOWN;
-      // }
   }
-
   return 0;
-
 }
 
 
 // set soft reset request
 void reset_STM32 () {
   reset_request = 1;
-  COMM_DBG.println("prepare for soft reset");
+  #ifdef appDebug
+    COMM_DBG.println("prepare for soft reset");
+  #endif
 }
 
 
@@ -421,8 +390,9 @@ void reset_STM32 () {
 // waits until eeprom is written completely
 void reset_check () {
   if(reset_request && eeprom_free()) {
-    COMM_DBG.println("soft reset now");
-    //NVIC_SystemReset();
+    #ifdef appDebug
+      COMM_DBG.println("soft reset now");
+    #endif
     HAL_NVIC_SystemReset();
    // #define AIRCR_VECTKEY_MASK    (0x05FA0000)    
    //   SCB->AIRCR = AIRCR_VECTKEY_MASK | 0x04;

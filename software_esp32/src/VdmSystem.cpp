@@ -37,12 +37,28 @@
 
 *END************************************************************************/
 
-
+#include "globals.h"
 #include "VdmSystem.h"
+#include "VdmNet.h"
 #include <SPIFFS.h> 
 #include "esp_spi_flash.h" 
 #include "helper.h"
 #include <esp_task_wdt.h>
+
+String ResetReason[] =  {
+    "UNKNOWN",    //!< Reset reason can not be determined
+    "POWERON",    //!< Reset due to power-on event
+    "EXT",        //!< Reset by external pin (not applicable for ESP32)
+    "SW",         //!< Software reset via esp_restart
+    "PANIC",      //!< Software reset due to exception/panic
+    "INT_WDT",    //!< Reset (software or hardware) due to interrupt watchdog
+    "TASK_WDT",   //!< Reset due to task watchdog
+    "WDT",        //!< Reset due to other watchdogs
+    "DEEPSLEEP",  //!< Reset after exiting deep sleep mode
+    "BROWNOUT",   //!< Brownout reset (software or hardware)
+    "SDIO"       //!< Reset over SDIO
+};
+
 
 CVdmSystem VdmSystem;
 
@@ -51,7 +67,7 @@ CVdmSystem::CVdmSystem()
   spiffsStarted=false;
   numfiles  = 0;
   stmBuild = 0;
-  memset (systemMessage,0,sizeof(systemMessage));
+  systemMessage="";
   systemState = systemStateOK;
   getFSInProgress = false;
 }
@@ -74,6 +90,14 @@ String CVdmSystem::getUpTime() {
 }
 
 
+void CVdmSystem::sendResetReason() {
+  String ResetMsg = String(systemMsgReset)+':'+VdmSystem.getLastResetReason();
+  VdmSystem.setSystemState(systemStateInfo,ResetMsg);
+  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+      syslog.log(LOG_DEBUG, ResetMsg);
+  }   
+}
+
 void CVdmSystem::getFSDirectory() 
 {
   getFSInProgress = true;
@@ -88,8 +112,10 @@ void CVdmSystem::getFSDirectory()
       Filenames[numfiles].filename = (String(file.name()).startsWith("/") ? String(file.name()).substring(1) : file.name());
       Filenames[numfiles].ftype    = (file.isDirectory() ? "Dir" : "File");
       Filenames[numfiles].fsize    = ConvBinUnits(file.size(), 1);
-      UART_DBG.print("get file : ");
-      UART_DBG.println(file.name());
+      #ifdef EnvDevelop
+        UART_DBG.print("get file : ");
+        UART_DBG.println(file.name());
+      #endif
       file = root.openNextFile();
       numfiles++;
       if (numfiles>maxFiles) break;
@@ -105,12 +131,11 @@ void CVdmSystem::clearFS()
   spiffsStarted=true;
   //esp_task_wdt_init(30, false);
   bool formatSuccess = SPIFFS.format();
-
-  UART_DBG.print("Format success: ");
-  UART_DBG.println(formatSuccess);
+  #ifdef EnvDevelop
+    UART_DBG.print("Format success: ");
+    UART_DBG.println(formatSuccess);
+  #endif
   getFSDirectory();
-
-  //ESP.restart();
 }
 
 void CVdmSystem::fileDelete (String fileName)
@@ -122,10 +147,18 @@ void CVdmSystem::fileDelete (String fileName)
   SPIFFS.remove(thisFileName);
 }
 
-void CVdmSystem::setSystemState(uint8_t thisSystemState,char const *thisSystemMsg)
+void CVdmSystem::setSystemState(uint8_t thisSystemState,String thisSystemMsg)
 {
   systemState=thisSystemState; 
-  strncpy (systemMessage,thisSystemMsg,sizeof(systemMessage));
+  systemMessage= String(thisSystemMsg);
+  
   UART_DBG.print("SystemMsg: ");
   UART_DBG.println(systemMessage);
+}
+
+String CVdmSystem::getLastResetReason()
+{
+  uint8_t rr=esp_reset_reason();
+  if (rr>10) rr=0;
+  return (ResetReason[rr]);
 }

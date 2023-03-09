@@ -119,8 +119,8 @@ int valvenr = 0;
 byte poschangecmd = 0;
 unsigned int m_meancurrent = 0;           // mean current in mA
 
-uint8_t currentbound_low_fac = 20;     // lower current limit factor for detection of end stop
-uint8_t currentbound_high_fac = 20;    // upper current limit factor for detection of end stop
+uint8_t currentbound_low_fac = 17;     // lower current limit factor for detection of end stop
+uint8_t currentbound_high_fac = 17;    // upper current limit factor for detection of end stop
 uint8_t startOnPower = 50;
 
 //volatile uint32_t revcounter;
@@ -149,11 +149,11 @@ byte valve_setup () {
   //attachInterrupt(digitalPinToInterrupt(REVINPIN),isr_counter,RISING);
 
 
- if ((eep_content.currentbound_low_fac>=10) && (eep_content.currentbound_low_fac<=50))
+ if ((eep_content.currentbound_low_fac>=10) && (eep_content.currentbound_low_fac<=40))
     currentbound_low_fac = eep_content.currentbound_low_fac;
-  if ((eep_content.currentbound_high_fac>=10) && (eep_content.currentbound_high_fac<=50))
+  if ((eep_content.currentbound_high_fac>=10) && (eep_content.currentbound_high_fac<=40))
     currentbound_high_fac = eep_content.currentbound_high_fac;
-  if (eep_content.startOnPower<=100) startOnPower=eep_content.startOnPower; else startOnPower=50;
+  if (eep_content.startOnPower<=100) startOnPower=eep_content.startOnPower; else startOnPower=30;
   #ifdef motDebug
     COMM_DBG.print("Current end stop factor low: ");
     COMM_DBG.println((float) (currentbound_low_fac)/10,DEC);

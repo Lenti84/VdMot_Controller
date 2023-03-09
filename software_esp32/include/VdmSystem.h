@@ -46,7 +46,8 @@
 #include "esp_system.h"
 #include "helper.h"
 
-#define systemMsgSTMReset "stm not working. reset stm"
+#define systemMsgSTMReset   "stm not working. reset stm"
+#define systemMsgReset      "reset system"
 
 #define systemStateOK       0
 #define systemStateInfo     1 
@@ -72,8 +73,10 @@ public:
   void fileDelete(String fName);
   void setClearFS();
   void clearFS();
-  void setSystemState(uint8_t thisSystemState,char const *thisSystemMsg);
+  void setSystemState(uint8_t thisSystemState,String thisSystemMsg);
   String getUpTime();
+  String getLastResetReason();
+  void sendResetReason();
 
   esp_chip_info_t chip_info;
   fileinfo Filenames[maxFiles]; // Enough for most purposes!
@@ -81,8 +84,9 @@ public:
   String stmVersion;
   time_t stmBuild;
   uint8_t systemState;
-  char systemMessage[50];
+  String systemMessage;
   bool getFSInProgress;
+  uint32_t stackSize;
 
 private:
   bool spiffsStarted;

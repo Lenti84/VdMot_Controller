@@ -11,6 +11,26 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.1.0]
+### Changed
+- MQTT : publish esp32 reset reason
+- MQTT : publish esp32 uptime (in config activate/deactivate)
+- MQTT : don't set the actuators.target_position if valve is deactivated in config
+- Statuspage : hide column temp1 and temp2 if no temp sensor is linked to valve
+- Config : after saving config to stm, wait until eeprom-write is finished (timeout = 60s)
+- add delay after reset to give stm more time to initialise
+- platformio.ini : forcehardreset enabled
+- web : show tTarget and tValue on status page (issue #76)
+- web : show alert if manual valve setting on status page is enabled and on control page manual heat control is not set (issue #76)
+- STM : always hard-reset stm with start of esp except power-on and software reset
+- Env : suppress all debug outputs in release environment, except IP and  sytem message 
+### Fixed
+- PIControl : set linked valves to park position also (issue #73)
+
+## [1.0.9]
+### Fixed
+- MQTT : possible buffer overflow  
+
 ## [1.0.8]
 ### Added
 - forceHardReset option added, but disabled by default

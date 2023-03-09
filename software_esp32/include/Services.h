@@ -54,7 +54,7 @@ public:
   void servicesLoop();
   void runOnce();
   void runOnceDelayed();
-  void restartSystem(TRestartMode restartMode=soft,bool WaitQueueFinished=true);
+  void restartSystem(TRestartMode restartMode=soft,bool waitQueueFinished=true);
   void restartStmApp(uint32_t ms);
   void checkServiceValves();
   void valvesSetLearn();

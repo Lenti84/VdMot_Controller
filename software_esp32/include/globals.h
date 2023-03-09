@@ -72,3 +72,4 @@
 #define STM32_TX            17
 
 enum TRestartMode {soft,hard};
+

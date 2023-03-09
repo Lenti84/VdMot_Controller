@@ -99,10 +99,11 @@ typedef struct {
 #define APP_PRE_GETSTATUS          	"gstat"   // not used in stm
 
 #define APP_PRE_SETVLVSENSOR        "stvls"
-#define APP_PRE_SETDETECTVLV        "stdet"     // new
+#define APP_PRE_SETDETECTVLV        "stdet"     
 
-#define APP_PRE_MATCHSENS           "masns"     // new
-#define APP_PRE_SOFTRESET           "reset"     // new
+#define APP_PRE_MATCHSENS           "masns"     
+#define APP_PRE_SOFTRESET           "reset"     
+#define APP_PRE_EEPSTATE            "eepst"     // new eeprom state : 1 = ready, 0 = write pending
 
 #define APP_PRE_UNDEFSENSOR         "00-00-00-00-00-00-00-00"
 
@@ -121,11 +122,14 @@ typedef struct {
 #define ARG_DELIMITER       String(" ")
 
 enum COMM_STATE {COMM_IDLE,COMM_SENDTARGET,COMM_CHECKTARGET,COMM_GETDATA,
-                  COMM_GETONEWIRE,COMM_GETONEWIRECOUNT,COMM_HANDLEQUEUE};
+                  COMM_GETONEWIRE,COMM_GETONEWIRECOUNT,COMM_GETEEPSTATE,COMM_HANDLEQUEUE};
 
 enum STM_START_PROC {STM_NOT_READY,STM_READY,STM_READ_ALL_FROM_QUEUE};
 
+enum STM_INIT_STATE {STM_INIT_NOT_STARTED,STM_INIT_STARTED,STM_INIT_FINISHED};
+
 enum APP_STATE {APP_IDLE,APP_PENDING,APP_TIMEOUT};
+enum EEP_STATE {EEP_IDLE,EEP_REQUEST,EEP_DONE};
 
 #define maxAppRetries 100
 #define maxAppTimeOuts 10
@@ -162,11 +166,15 @@ public:
   bool setMotorCharsActive;
   uint32_t learnAfterMovements;
   volatile STM_START_PROC stmStatus;
+  volatile STM_INIT_STATE stmInitState;
   bool matchSensorRequest;
+  EEP_STATE eepState;
+  bool waitEEPFinished;
 
 private:
   void appHandler();
   void app_comm_machine();
+  void app_comm_send(String thisAppCmd,uint8_t * value1=NULL,uint8_t * value2=NULL);
   void app_web_cmd_check();
   int8_t findTempID(char* ID);
   void setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2); 
@@ -194,10 +202,13 @@ private:
   String cmd_buffer;
 
   char buffer[1200];
+  char sendbuffer[50];
   char *bufptr;
   uint16_t buflen;
   int16_t availcnt;
   bool found;
+  bool stmInitated;
+  bool fastGetOneWire;
   
   char*   cmdptr;
   char*	  cmdptrend;
@@ -217,6 +228,7 @@ private:
   char*		arg5ptr;
   
 	uint8_t	argcnt;
+  
 };
 
 extern CStmApp StmApp;

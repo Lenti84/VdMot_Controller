@@ -121,7 +121,9 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
 
 void CVdmTask::startServices()
 {
-    UART_DBG.println("Start services");
+    #ifdef EnvDevelop
+        UART_DBG.println("Start services");
+    #endif
     taskIdRunOnce = taskManager.scheduleOnce(1000, [] {
                 Services.runOnce();
     });

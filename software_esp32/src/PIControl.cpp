@@ -107,6 +107,17 @@ void CPiControl::controlValve()
 {
   if (VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOff) {
      StmApp.actuators[valveIndex].target_position=VdmConfig.configFlash.valvesControlConfig.parkingPosition;
+     // check if there are links
+     for (uint8_t i=0; i< ACTUATOR_COUNT; i++) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].active) {
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].link==(valveIndex+1)) {
+          StmApp.actuators[i].target_position=VdmConfig.configFlash.valvesControlConfig.parkingPosition;
+          if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+            syslog.log(LOG_DEBUG, "pic:link valve position has changed to parking: "+String(VdmConfig.configFlash.valvesConfig.valveConfig[i].name)+"(#"+String(i+1)+") = "+String(VdmConfig.configFlash.valvesControlConfig.parkingPosition));
+          }
+        }
+      }
+    }
      return;
   }
   
