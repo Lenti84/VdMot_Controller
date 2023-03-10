@@ -88,8 +88,7 @@ CServerServices ServerServices;
 
 void restart (JsonObject doc)
 {  
-  Services.restartSTM=true;
-  Services.restartSystem(hard,false);
+  Services.restartSystem(false);
 }
 
 void writeConfig (JsonObject doc)

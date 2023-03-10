@@ -267,9 +267,19 @@ String CWeb::getSysDynInfo()
   return result;  
 }
 
+bool CWeb::getControlActive() 
+{
+  bool active=false;
+  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
+    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].active) active = true;
+  }
+  return ((VdmConfig.configFlash.valvesControlConfig.heatControl==1) && active);
+}
+
 String CWeb::getValvesStatus() 
 {
   bool start=false;
+  bool controlActive = getControlActive();
   String result = "{";
   result += "\"valves\":[";
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
@@ -290,7 +300,8 @@ String CWeb::getValvesStatus()
                  if (StmApp.actuators[x].temp2>-500) {
                     result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
                  }
-                 if (Mqtt.mqttReceived || ServerServices.jsonSetValveReceived) {
+                 //if (Mqtt.mqttReceived || ServerServices.jsonSetValveReceived) {
+                 if (controlActive) {
                     result +=",\"tTarget\":" + String(((float)PiControl[x].target),1);
                     result +=",\"tValue\":" + String(((float)PiControl[x].value),1);
                  }

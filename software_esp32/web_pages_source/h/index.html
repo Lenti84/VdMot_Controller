@@ -1517,16 +1517,16 @@
 		
 		function checkIfTempExists(valvesJson) {
 			for (let row=0; row<valvesJson.length; row++) { 
-				if (valvesJson[row].temp1) return true;
-				if (valvesJson[row].temp2) return true;
+				if ('temp1' in valvesJson[row]) return true;
+				if ('temp2' in valvesJson[row]) return true;
 			}	
 			return false;
 		}
 
 		function checkIfMqttExists(valvesJson) {
 			for (let row=0; row<valvesJson.length; row++) { 
-				if (valvesJson[row].tTarget) return true;
-				if (valvesJson[row].tValue) return true;
+				if ('tTarget' in valvesJson[row]) return true;
+				if ('tValue' in valvesJson[row]) return true;
 			}	
 			return false;
 		}
@@ -1548,6 +1548,12 @@
 				const thisRow = valvesTable.insertRow(0);
 				for (let i = 0; i < columnsize; i++) {
 					cell = thisRow.insertCell();
+					if ((i==2) || (i==3)) {
+						cell.style.width = '30px';
+					}
+					if (i==4) {
+						cell.style.width = '90px';
+					}
 				}
 			}
 			for (row=1;row<valvesJson.length+1;row++) {
@@ -2482,10 +2488,10 @@
 					else ValvesTable.rows[index+1].cells[colIdx++].textContent = "";
 				}
 				if (valveMqttExists===true) {
-					if (item.tTarget)
+					if ('tTarget' in item)
 						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.tTarget;
 					else ValvesTable.rows[index+1].cells[colIdx++].textContent = "";
-					if (item.tValue)
+					if ('tValue' in item)
 						ValvesTable.rows[index+1].cells[colIdx].textContent = item.tValue;
 					else ValvesTable.rows[index+1].cells[colIdx].textContent = "";
 				}

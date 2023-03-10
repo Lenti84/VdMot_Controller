@@ -75,7 +75,7 @@ void setup(void) {
 
   Stm32.STM32ota_setup();
   uint8_t rr=esp_reset_reason();
-  if ((rr!=1) && (rr!=3)) {  // sw or power on reset
+  if (rr!=1) {  // not at power on reset
     Stm32.ResetSTM32(false);
   }
   #ifdef EnvDevelop

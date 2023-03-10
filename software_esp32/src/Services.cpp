@@ -51,7 +51,6 @@ CServices Services;
 CServices::CServices()
 {
   serviceValvesStarted=false;
-  restartSTM=false;
 }
 
 void CServices::checkServiceValves()
@@ -97,23 +96,13 @@ void CServices::runOnceDelayed()
   VdmNet.startBroker();
 }
 
-void CServices::restartSystem(TRestartMode thisRestartMode,bool waitQueueFinished) {
-  restartMode=thisRestartMode;
-  StmApp.waitForFinishQueue=waitQueueFinished;
-  #ifdef forceHardReset
-    restartMode=hard;
-    restartSTM=true;
-  #endif
+void CServices::restartSystem(bool waitQueueFinished) {
   #ifdef EnvDevelop
-    UART_DBG.println("restart System "+String(restartMode));
+    UART_DBG.println("restart System ");
   #endif
-  if (restartMode==soft) {
-    StmApp.waitForFinishQueue=true;
-    StmApp.softReset();
-  }
+  
   if (StmApp.waitEEPFinished) {
     StmApp.eepState=EEP_REQUEST; 
-    restartSTM=true;
   }
   if (StmApp.waitForFinishQueue || StmApp.waitEEPFinished) {
         #ifdef EnvDevelop
@@ -123,10 +112,6 @@ void CServices::restartSystem(TRestartMode thisRestartMode,bool waitQueueFinishe
                 #ifdef EnvDevelop
                   UART_DBG.println("wait for finish queue timeout, restart now");
                 #endif
-                if (Services.restartSTM) {
-                  syslog.log(LOG_DEBUG,"Services: queue restart hard STM32 after 30s");
-                  Stm32.ResetSTM32(true);
-                }
                 delay (1000);
                 ESP.restart();
             });
@@ -145,17 +130,6 @@ void CServices::restartSystem(TRestartMode thisRestartMode,bool waitQueueFinishe
               #endif
               StmApp.eepState=EEP_IDLE;
                 VdmTask.taskIdResetSystem = taskManager.scheduleOnce(3000, [] {
-                  if (Services.restartSTM) {
-                    syslog.log(LOG_DEBUG,"Services: queue restart STM32 after 3s");
-                    #ifdef EnvDevelop
-                      UART_DBG.println("restart System after queue now "+String(Services.restartMode));
-                    #endif
-                    if (Services.restartMode==hard) {
-                      Stm32.ResetSTM32(true);
-                      delay (2000);
-                    }
-                  }
-                  delay (1000);
                   ESP.restart();
                 });
                 VdmTask.deleteTask(VdmTask.taskIdwaitForFinishQueue);
@@ -166,18 +140,7 @@ void CServices::restartSystem(TRestartMode thisRestartMode,bool waitQueueFinishe
         UART_DBG.println("normal restart");
       #endif
       VdmTask.taskIdResetSystem = taskManager.scheduleOnce(2000, [] {
-                if (Services.restartSTM || Services.restartMode==hard) {
-                  syslog.log(LOG_DEBUG,"Services: normal restart STM32 after 2s");
-                  #ifdef EnvDevelop
-                    UART_DBG.println("restart System now "+String(Services.restartMode));
-                  #endif
-                  if (Services.restartMode==hard) {
-                    Stm32.ResetSTM32(true);
-                    delay (2000);
-                  }
-                }
-                delay (1000);
-                ESP.restart();
+              ESP.restart();
             });
     }
 }

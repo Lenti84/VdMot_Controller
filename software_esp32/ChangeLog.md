@@ -22,10 +22,11 @@ All notable changes to this project will be documented in this file.
 - platformio.ini : forcehardreset enabled
 - web : show tTarget and tValue on status page (issue #76)
 - web : show alert if manual valve setting on status page is enabled and on control page manual heat control is not set (issue #76)
-- STM : always hard-reset stm with start of esp except power-on and software reset
+- STM : always hard-reset stm with start of esp except power-on
 - Env : suppress all debug outputs in release environment, except IP and  sytem message 
 ### Fixed
 - PIControl : set linked valves to park position also (issue #73)
+- small fixes in webui
 
 ## [1.0.9]
 ### Fixed

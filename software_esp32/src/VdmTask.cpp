@@ -92,7 +92,7 @@ void CVdmTask::startApp()
         deleteTask (taskIdStm32Ota);
         delay (1000);       // wait to finish task; 
         taskIdStm32Ota=TASKMGR_INVALIDID; 
-        Services.restartSystem(hard,false);
+        Services.restartSystem(false);
     }
     if (taskIdApp==TASKMGR_INVALIDID) { 
         StmApp.app_setup();

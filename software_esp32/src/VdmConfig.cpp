@@ -64,7 +64,7 @@ void CVdmConfig::resetConfig (bool reboot)
   clearConfig(); 
   writeConfig();
   writeValvesControlConfig();
-  if (reboot) Services.restartSystem(hard,false);
+  if (reboot) Services.restartSystem(false);
 }
 
 void CVdmConfig::restoreConfig (bool reboot)
@@ -72,7 +72,7 @@ void CVdmConfig::restoreConfig (bool reboot)
   setDefault();
   writeConfig();
   writeValvesControlConfig();
-  if (reboot) Services.restartSystem(hard,false);
+  if (reboot) Services.restartSystem(false);
 }
 
 void CVdmConfig::setDefault()
@@ -412,7 +412,6 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
  
   if ((StmApp.setTempIdxActive) && (chunkEnd==12)) {
     StmApp.setTempIdx();
-    Services.restartSTM=true;
     //StmApp.matchSensors();
     //StmApp.matchSensorRequest = true;
     StmApp.setTempIdxActive=false;

@@ -72,6 +72,7 @@ public:
   String getFSDir();
   String getStmUpdStatus();
   bool findIdInValve (uint8_t idx);
+  bool getControlActive();
 };
 
 extern CWeb Web;
