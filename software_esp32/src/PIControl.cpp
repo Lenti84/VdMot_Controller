@@ -97,19 +97,70 @@ float CPiControl::piCtrl(float e) {
   return y;
 }
 
+CHECKACTION CPiControl::checkAction(uint8_t idx)
+{
+  switch (VdmConfig.configFlash.valvesControlConfig.heatControl)
+  {
+    case piControlManual:
+      return(nothing);
+    case piControlOnHeating:
+      if ((VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow==piControlAllowedHeatingCooling) || (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow==piControlAllowedHeating))
+      {
+        return(control); 
+      }
+      else {
+        return(gotoMin);  
+      }
+    case piControlOnCooling:
+      if ((VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow==piControlAllowedHeatingCooling) || (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow==piControlAllowedCooling))
+      {
+        return(control); 
+      }
+      else {
+        return(gotoMin);  
+      }
+    case piControlOff:
+      return (gotoPark);
+  } 
+  return (nothing);
+}
+
 uint8_t CPiControl::calcValve()
 {
-    float piValue=piCtrl(target-value);
-    return (round(piValue));
+  float piValue=0;
+  if (VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOnHeating)
+  {
+    piValue=piCtrl(target-value);
+  } else {
+    piValue=piCtrl(value-target);
+  }
+  return (round(piValue));
 }
 
 void CPiControl::controlValve() 
 {
-  if (VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOff) {
-     StmApp.actuators[valveIndex].target_position=VdmConfig.configFlash.valvesControlConfig.parkingPosition;
+  checkAction(valveIndex);
+  switch (checkAction(valveIndex)) {
+    case nothing:
+      break;
+    case gotoMin:
+      setPosition(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].startActiveZone);
+      break;
+    case gotoPark:
+      setPosition(VdmConfig.configFlash.valvesControlConfig.parkingPosition);
+      break;
+    case control:
+      doControlValve();
+      break;
+  }
+}
+
+void CPiControl::setPosition(uint8_t thisPosition)
+{
+  StmApp.actuators[valveIndex].target_position=thisPosition;
      // check if there are links
      for (uint8_t i=0; i< ACTUATOR_COUNT; i++) {
-      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].active) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.active) {
         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].link==(valveIndex+1)) {
           StmApp.actuators[i].target_position=VdmConfig.configFlash.valvesControlConfig.parkingPosition;
           if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
@@ -118,10 +169,10 @@ void CPiControl::controlValve()
         }
       }
     }
-     return;
-  }
+}
   
-  if (VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOn) {
+void CPiControl::doControlValve() 
+{
     uint8_t valvePosition;
     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==1) {
       value=((float)StmApp.actuators[valveIndex].temp1)/10;
@@ -146,7 +197,7 @@ void CPiControl::controlValve()
     }
     // check if there are links
     for (uint8_t i=0; i< ACTUATOR_COUNT; i++) {
-      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].active) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.active) {
         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].link==(valveIndex+1)) {
           StmApp.actuators[i].target_position=valvePosition;
           if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
@@ -155,6 +206,5 @@ void CPiControl::controlValve()
         }
       }
     }
-  }
 }
   

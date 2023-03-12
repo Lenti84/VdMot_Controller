@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ## [1.1.0]
 ### Changed
+- PI Controller : Add cooling function
 - MQTT : publish esp32 reset reason
 - MQTT : publish esp32 uptime (in config activate/deactivate)
 - MQTT : don't set the actuators.target_position if valve is deactivated in config

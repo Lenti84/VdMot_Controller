@@ -151,7 +151,8 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
     result += "{\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) + "\"," +
-              "\"active\":"+String(valvesControlConfig.valveControlConfig[x].active) + ","+
+              "\"active\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.active) + ","+
+              "\"allow\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.allow) + ","+
               "\"link\":"+String(valvesControlConfig.valveControlConfig[x].link) + ","+
               "\"vSource\":"+String(valvesControlConfig.valveControlConfig[x].valueSource) + ","+
               "\"tSource\":"+String(valvesControlConfig.valveControlConfig[x].targetSource) + ","+
@@ -271,9 +272,9 @@ bool CWeb::getControlActive()
 {
   bool active=false;
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
-    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].active) active = true;
+    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) active = true;
   }
-  return ((VdmConfig.configFlash.valvesControlConfig.heatControl==1) && active);
+  return (((VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOnHeating) || (VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOnCooling)) && active);
 }
 
 String CWeb::getValvesStatus() 

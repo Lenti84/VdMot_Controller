@@ -246,7 +246,7 @@
    .container {  
 		display: grid;  
 		grid-gap: 2px;  
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+		grid-template-columns: repeat(auto-fit, minmax(285px, 1fr)); 
 		grid-template-rows:  masonry;
 	}
 	
@@ -561,7 +561,7 @@
 		</div>
 		</div>
 
-		<div class="rtabframe" style="height:375px;">
+		<div class="rtabframe" >
 		<h3>Protocol</h3>
 
 		<table id="protConfig" class="tabTable1">		
@@ -630,7 +630,7 @@
 		</div>
 		</div>
 
-		<div class="rtabframe" style="height:460px;">
+		<div class="rtabframe">
 		<h3>Valves</h3>
 		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		
@@ -644,7 +644,7 @@
 		</table>
 		</div>
 		
-		<div class="rtabframe" id ="motorTabFrame" style="height:430px">
+		<div class="rtabframe" id ="motorTabFrame">
 			<h3>Motor</h3>
 		
 			<table id="cfgValvesTable1" class="tabTable">
@@ -681,7 +681,7 @@
 			</table>
 		</div>
 		
-			<div class="rtabframe2" style="height:495px">
+			<div class="rtabframe2">
 			<h3>Temperature sensor</h3>
 			<div style="height:390px;overflow-y:scroll">
 			<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
@@ -773,9 +773,10 @@
 				</td>
 				<td>
 					<label>Heat Control</label>
-					<select id="VCtrlConfigHeatControl" title="Heat valves control manual/on/off=Park position.">
+					<select id="VCtrlConfigHeatControl" title="Heat valves control manual/on Heating/on Cooling/off=Park position.">
 					<option>Manual</option>
-					<option>On</option>
+					<option>On/Heating</option>
+					<option>On/Cooling</option>
 					<option>Off/Park position</option>
 					</select>
 				
@@ -1484,6 +1485,7 @@
 			await getTempSensorsID();
 			await getTempsStatus();
 			await getSystemInfo();
+			await getValvesConfig();
 		}
 				
 		async function checkLogin() {
@@ -1747,7 +1749,7 @@
 			const valvesControlTable = id('cfgValvesControlTable');	  
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesControlTable.insertRow(0);
-				for (let i = 0; i < 13; i++) {
+				for (let i = 0; i < 14; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -1760,13 +1762,27 @@
 				el.setAttribute('name', 'cfgVCActive' + row);
 				el.setAttribute('id', 'cfgVCActive' + row);
 				thiscell.appendChild(el);
-				
+
 				thiscell = valvesControlTable.rows[row].cells[3];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCAllow' + row);
+				el.setAttribute('id', 'cfgVCAllow' + row);
+				el.setAttribute('style','width:90px;');
+				el.setAttribute('title','Select control allowed');
+				let option = new Option('Heat/Cool', 0);
+				el.options[0] = option;
+				option = new Option('Heat', 1);
+				el.options[1] = option;
+				option = new Option('Cool', 2);
+				el.options[2] = option;
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[4];
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCLink-' + row);
 				el.setAttribute('id', 'cfgVCLink-' + row);
 				el.setAttribute('style','width:60px;');
-				let option = new Option('none', 0);
+				option = new Option('none', 0);
 				el.options[0] = option;
 				let idx=1;
 				for (i=1; i<13;i++) {
@@ -1776,14 +1792,16 @@
 						idx++;
 					}
 				}
-				el.setAttribute('onchange','setCfgVCLink(this);');				
+				el.setAttribute('onchange','setCfgVCLink(this);');		
+				el.setAttribute('title','Select link for this valve');		
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[4];
+				thiscell = valvesControlTable.rows[row].cells[5];
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCValue' + row);
 				el.setAttribute('id', 'cfgVCValue' + row);
 				el.setAttribute('style','width:60px;');
+				el.setAttribute('title','Select value source');
 				option = new Option('mqtt', 0);
 				el.options[0] = option;
 				option = new Option('TIdx1', 1);
@@ -1794,53 +1812,58 @@
 				el.options[3] = option;
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[5];
+				thiscell = valvesControlTable.rows[row].cells[6];
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCTarget' + row);
 				el.setAttribute('id', 'cfgVCTarget' + row);
 				el.setAttribute('style','width:60px;');
+				el.setAttribute('title','Select target source');
 				option = new Option('mqtt', 0);
 				el.options[0] = option;
 				option = new Option('json', 1);
 				el.options[1] = option;
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[6];
+				thiscell = valvesControlTable.rows[row].cells[7];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCXp' + row);
 				el.setAttribute('id', 'cfgVCXp' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
+				el.setAttribute('title','Enter band (xp). Kp=100/xp');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[7];
+				thiscell = valvesControlTable.rows[row].cells[8];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCOffs' + row);
 				el.setAttribute('id', 'cfgVCOffs' + row);
 				el.setAttribute('style','width:50px;');
+				el.setAttribute('title','Enter offset');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[8];
+				thiscell = valvesControlTable.rows[row].cells[9];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCTi' + row);
 				el.setAttribute('id', 'cfgVCTi' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
+				el.setAttribute('title','Enter integral time in seconds');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[9];
+				thiscell = valvesControlTable.rows[row].cells[10];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCTs' + row);
 				el.setAttribute('id', 'cfgVCTs' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','1');
+				el.setAttribute('title','Enter sampling time in seconds');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[10];
+				thiscell = valvesControlTable.rows[row].cells[11];
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCScheme-' + row);
 				el.setAttribute('id', 'cfgVCScheme-' + row);
@@ -1850,9 +1873,10 @@
 				option = new Option('static ki', 1);
 				el.options[1] = option;
 				el.setAttribute('onclick','setCfgVCScheme(this);');
+				el.setAttribute('title','Enter scheme for control calculation');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[11];
+				thiscell = valvesControlTable.rows[row].cells[12];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('step', 'any');
@@ -1860,9 +1884,10 @@
 				el.setAttribute('id', 'cfgVCKi' + row);
 				el.setAttribute('style','width:70px;');
 				el.setAttribute('min','0');
+				el.setAttribute('title','Value ki for constant integral control calculation');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[12];
+				thiscell = valvesControlTable.rows[row].cells[13];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCSZ' + row);
@@ -1870,6 +1895,7 @@
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
 				el.setAttribute('max','99');
+				el.setAttribute('title','Active zone (closed) of the valve (0-99%)');
 				thiscell.appendChild(el);
 				
 				el = document.createElement('input');
@@ -1879,31 +1905,35 @@
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','1');
 				el.setAttribute('max','100');
+				el.setAttribute('title','Active zone (opened) of the valve (1-100%)');
 				thiscell.appendChild(el);
 			}
-			valvesControlTable.rows[0].cells[0].textContent = 'No';
-			valvesControlTable.rows[0].cells[1].textContent = 'Name';
-			valvesControlTable.rows[0].cells[2].textContent = 'Active';
-			valvesControlTable.rows[0].cells[3].textContent = 'Link';
-			valvesControlTable.rows[0].cells[3].title = 'Select link for this valve';
-			valvesControlTable.rows[0].cells[4].textContent = 'Value';
-			valvesControlTable.rows[0].cells[4].title = 'Select value source for this valve';
-			valvesControlTable.rows[0].cells[5].textContent = 'Target';
-			valvesControlTable.rows[0].cells[5].title = 'Select target source for this valve';
-			valvesControlTable.rows[0].cells[6].textContent = 'Xp';
-			valvesControlTable.rows[0].cells[6].title = 'Enter band (xp). Kp=100/xp';
-			valvesControlTable.rows[0].cells[7].textContent = 'Offset(%)';
-			valvesControlTable.rows[0].cells[7].title = 'Enter offset';
-			valvesControlTable.rows[0].cells[8].textContent = 'Ti(s)';
-			valvesControlTable.rows[0].cells[8].title = 'Enter integral time in seconds';
-			valvesControlTable.rows[0].cells[9].textContent = 'Ts(s)';
-			valvesControlTable.rows[0].cells[9].title = 'Enter sampling time in seconds';
-			valvesControlTable.rows[0].cells[10].textContent = 'Scheme';
-			valvesControlTable.rows[0].cells[10].title = 'Enter scheme for control calculation';
-			valvesControlTable.rows[0].cells[11].textContent = 'ki';
-			valvesControlTable.rows[0].cells[11].title = 'Value ki for constant integral control calculation';
-			valvesControlTable.rows[0].cells[12].textContent = 'Active zone';
-			valvesControlTable.rows[0].cells[12].title = 'Active zone of the valve (0-100 %)';
+			let col=0;
+			valvesControlTable.rows[0].cells[col++].textContent = 'No';
+			valvesControlTable.rows[0].cells[col++].textContent = 'Name';
+			valvesControlTable.rows[0].cells[col++].textContent = 'Active';
+			valvesControlTable.rows[0].cells[col].textContent = 'Allow';
+			valvesControlTable.rows[0].cells[col++].title = 'Select control allowed';
+			valvesControlTable.rows[0].cells[col].textContent = 'Link';
+			valvesControlTable.rows[0].cells[col++].title = 'Select link for this valve';
+			valvesControlTable.rows[0].cells[col].textContent = 'Value';
+			valvesControlTable.rows[0].cells[col++].title = 'Select value source for this valve';
+			valvesControlTable.rows[0].cells[col].textContent = 'Target';
+			valvesControlTable.rows[0].cells[col++].title = 'Select target source for this valve';
+			valvesControlTable.rows[0].cells[col].textContent = 'Xp';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter band (xp). Kp=100/xp';
+			valvesControlTable.rows[0].cells[col].textContent = 'Offset(%)';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter offset';
+			valvesControlTable.rows[0].cells[col].textContent = 'Ti(s)';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter integral time in seconds';
+			valvesControlTable.rows[0].cells[col].textContent = 'Ts(s)';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter sampling time in seconds';
+			valvesControlTable.rows[0].cells[col].textContent = 'Scheme';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter scheme for control calculation';
+			valvesControlTable.rows[0].cells[col].textContent = 'ki';
+			valvesControlTable.rows[0].cells[col++].title = 'Value ki for constant integral control calculation';
+			valvesControlTable.rows[0].cells[col].textContent = 'Active zone';
+			valvesControlTable.rows[0].cells[col].title = 'Active zone of the valve (0-100 %)';
 		}
 		
 		function showBrokerIP(){
@@ -2043,7 +2073,7 @@
 				}
 			}
 			id ("VCtrlConfigHeatControl").onchange = function (){
-				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
+				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
 			}
 			
 			
@@ -2064,7 +2094,7 @@
 				if (confirm('Are you sure you want to save control settings ?')) {
 					await postValvesControlCfg();
 					postCmd('{"action":"vCtrlSave"}');
-					reloadDoc("http:/#home",4000,true);
+					//reloadDoc("http:/#home",4000,true);
 				}
 			};
 		}
@@ -2276,15 +2306,17 @@
 		}
 		
 		async function postValvesCfg() {
-			await postChunkValvesCfg(1,6,true);
-			await postChunkValvesCfg(7,12);
+			await postChunkValvesCfg(1,4,true);
+			await postChunkValvesCfg(5,8);
+			await postChunkValvesCfg(9,12,false,true);
 		}
 		
-		async function postChunkValvesCfg(chunkStart,chunkEnd,postMotor=false) {
+		async function postChunkValvesCfg(chunkStart,chunkEnd,postMotor=false,postSetTempTdx=false) {
 			const cfgValvesTable = id('cfgValvesTable');
 			let valvesItemsCfg = [];
 			for (let row = chunkStart; row<chunkEnd+1; row++) {
 				let valveValues={};
+				valveValues.no = row;
 				valveValues.name = id('cfgVName'+row).value; 
 				valveValues.active = id('cfgVActive'+row).checked  ? 1 : 0;
 				if (TIdxHasChanged) {
@@ -2304,8 +2336,6 @@
 				dCalib|=x<<i;
 			}
 			valvesCfg.valves=valvesItemsCfg;
-			valvesCfg.chunkStart=chunkStart;
-			valvesCfg.chunkEnd=chunkEnd;
 			if (postMotor===true) {
 				valvesCalib.dayOfCalib=dCalib;
 				if (movCalibHasChanged===true){
@@ -2324,13 +2354,19 @@
 					valvesCfg.motor=motor;
 				}
 			}
+			if (postSetTempTdx===true) {
+				let tempIdx={};
+				tempIdx.set=1;
+				valvesCfg.tempIdx=tempIdx;
+			}
 			await postJson("valvesconfig",JSON.stringify(valvesCfg));
 		}
 		
 		async function postValvesControlCfg() {
-			await postChunkValvesControlCfg(1,4);
-			await postChunkValvesControlCfg(5,8);
-			await postChunkValvesControlCfg(9,12);
+			await postChunkValvesControlCfg(1,3);
+			await postChunkValvesControlCfg(4,6);
+			await postChunkValvesControlCfg(7,9);
+			await postChunkValvesControlCfg(10,12);
 		}
 		
 		async function postChunkValvesControlCfg(chunkStart,chunkEnd) {
@@ -2338,7 +2374,9 @@
 			let valvesItemsCfg = [];
 			for (let row = chunkStart; row<chunkEnd+1; row++) {
 				let valveValues={};
+				valveValues.no = row;
 				valveValues.active = id('cfgVCActive'+row).checked  ? 1 : 0;
+				valveValues.allow = id('cfgVCAllow'+row).value;
 				valveValues.link = id('cfgVCLink-'+row).value;
 				valveValues.vSource = id('cfgVCValue'+row).value;
 				valveValues.tSource = id('cfgVCTarget'+row).value;
@@ -2359,8 +2397,6 @@
 			commonValues.parkPosition=id('VCtrlConfigParkPosition').value;
 			valvesControlCfg.common=commonValues;
 			valvesControlCfg.valves=valvesItemsCfg;
-			valvesControlCfg.chunkStart=chunkStart;
-			valvesControlCfg.chunkEnd=chunkEnd;
 			await postJson("valvesctrlconfig",JSON.stringify(valvesControlCfg));
 		}
 				
@@ -2532,10 +2568,11 @@
 			id ('VCtrlConfigHeatControl').selectedIndex=cfgValvesControlJson.common.heatControl;
 			heatControl = cfgValvesControlJson.common.heatControl;
 			id ('VCtrlConfigParkPosition').value=cfgValvesControlJson.common.parkPosition;
-			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
+			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
 			for (let row = 1; row<13; row++) {
 				cfgValvesControlTable.rows[row].cells[1].textContent = cfgValvesControlJson.valves[row-1].name;
 				id('cfgVCActive'+row).checked = cfgValvesControlJson.valves[row-1].active;
+				id('cfgVCAllow'+row).value = cfgValvesControlJson.valves[row-1].allow;
 				id('cfgVCLink-'+row).value = cfgValvesControlJson.valves[row-1].link;
 				id('cfgVCValue'+row).value = cfgValvesControlJson.valves[row-1].vSource;
 				id('cfgVCTarget'+row).value = cfgValvesControlJson.valves[row-1].tSource;

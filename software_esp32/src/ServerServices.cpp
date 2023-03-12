@@ -145,7 +145,7 @@ void valvesDetect (JsonObject doc)
 
 void writeValvesControl (JsonObject doc)
 {  
-  VdmConfig.writeValvesControlConfig(true);
+  VdmConfig.writeValvesControlConfig(false,VdmTask.restartPiTask);
 }
 
 void CServerServices::postSetValve (JsonObject doc)
@@ -157,7 +157,7 @@ void CServerServices::postSetValve (JsonObject doc)
       if (VdmConfig.configFlash.valvesConfig.valveConfig[index].active) {
         if (!doc["value"].isNull()) StmApp.actuators[index].target_position = doc["value"];
       }
-      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].active) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].controlFlags.active) {
         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].valueSource==3) {
           if (!doc["ctrlValue"].isNull()) PiControl[index].value = doc["ctrlValue"];
           #ifdef EnvDevelop
