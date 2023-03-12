@@ -63,3 +63,4 @@ All notable changes to this project will be documented in this file.
 - missing prefs.end in vdmconfig added
 - don't start pi-control task, if ts = 0
 - mqtt compare topics with non leading slash
+
