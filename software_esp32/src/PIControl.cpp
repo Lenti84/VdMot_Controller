@@ -139,8 +139,11 @@ uint8_t CPiControl::calcValve()
 
 void CPiControl::controlValve() 
 {
-  checkAction(valveIndex);
-  switch (checkAction(valveIndex)) {
+  //UART_DBG.println("enter controlValve ");
+  CHECKACTION check=checkAction(valveIndex);
+  //UART_DBG.println("check "+String(valveIndex)+":"+String(check));
+  
+  switch (check) {
     case nothing:
       break;
     case gotoMin:
@@ -173,6 +176,7 @@ void CPiControl::setPosition(uint8_t thisPosition)
   
 void CPiControl::doControlValve() 
 {
+  UART_DBG.println("enter doControlValve");
     uint8_t valvePosition;
     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==1) {
       value=((float)StmApp.actuators[valveIndex].temp1)/10;

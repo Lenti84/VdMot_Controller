@@ -435,8 +435,8 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
         if (!doc["valves"][i]["ti"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].ti=doc["valves"][i]["ti"];
         if (!doc["valves"][i]["ts"].isNull()) {
           uint16_t ts = doc["valves"][i]["ts"];
-          if (configFlash.valvesControlConfig.valveControlConfig[i].ts!=ts) VdmTask.restartPiTask=true;
-          configFlash.valvesControlConfig.valveControlConfig[i].ts=ts;
+          if (configFlash.valvesControlConfig.valveControlConfig[idx].ts!=ts) VdmTask.restartPiTask=true;
+          configFlash.valvesControlConfig.valveControlConfig[idx].ts=ts;
         }
         if (!doc["valves"][i]["ki"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].ki=doc["valves"][i]["ki"];  
         if (!doc["valves"][i]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["valves"][i]["scheme"];  

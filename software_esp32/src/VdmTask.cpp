@@ -151,6 +151,7 @@ void CVdmTask::stopPIServices()
 
 void CVdmTask::startPIServices(bool startTask)
 {
+    restartPiTask=false;
     #ifdef EnvDevelop
         UART_DBG.println("Start pi tasks "+String(startTask));
     #endif
@@ -169,8 +170,10 @@ void CVdmTask::startPIServices(bool startTask)
                 PiControl[picIdx].startValvePos=StmApp.motorChars.startOnPower;
                 if (startTask) {
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts>0) {
-                        if (taskIdPiControl[picIdx]==TASKMGR_INVALIDID)
+                        if (taskIdPiControl[picIdx]==TASKMGR_INVALIDID) {
+                            //UART_DBG.println("Start pi tasks valve # "+String(picIdx)+":"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts));
                             taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts, &PiControl[picIdx], TIME_SECONDS);
+                        }
                     }
                 }
             }
