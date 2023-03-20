@@ -7,6 +7,8 @@ It's an alternative to the original HmIP-FALMOT-C12 hardware.
 My intention was to create a cheap solution to operate my 18 valves (floor heating + radiators).
 I wanted a pure offline system (no cloud connection) and to be free of the constraint to use further components like CCU2/CCU3.
 
+**Hardware for VdMot_Controller is available at Tindie: https://www.tindie.com/products/lenti/vdmot_controller/**
+
 ![-](./hardware/c2-sample_pcb_soldered.jpg "C2 sample PCB with soldered components")
 
 ## Features:
