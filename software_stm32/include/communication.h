@@ -61,11 +61,12 @@ extern int16_t communication_loop (void);
 #define APP_PRE_SETMOTCHARS         "smotc"		  // doc	
 #define APP_PRE_GETMOTCHARS         "gmotc"		  // doc
 
-#define APP_PRE_SETVLVSENSOR        "stvls"     // new
-#define APP_PRE_SETDETECTVLV        "stdet"     // new
+#define APP_PRE_SETVLVSENSOR        "stvls"     
+#define APP_PRE_SETDETECTVLV        "stdet"     
 
-#define APP_PRE_MATCHSENS           "masns"     // new
-#define APP_PRE_SOFTRESET           "reset"     // new
+#define APP_PRE_MATCHSENS           "masns"     
+#define APP_PRE_SOFTRESET           "reset"     
+#define APP_PRE_EEPSTATE            "eepst"     // new eeprom state : 1 = ready, 0 = write pending
 
 #define APP_PRE_GETACTUALPOS       	"gactp"     // not implemented
 #define APP_PRE_GETMEANCURR        	"gmenc"     // not implemented

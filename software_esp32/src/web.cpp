@@ -45,6 +45,8 @@
 #include "VdmNet.h"
 #include "VdmConfig.h"
 #include "VdmSystem.h"
+#include "PIControl.h"
+#include "ServerServices.h"
 #include "WiFi.h"
 #include "helper.h"
 #include "stm32.h"
@@ -108,18 +110,15 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"pubTarget\":"+String(protConfig.publishTarget)+","+
                     "\"pubAllTemps\":"+String(protConfig.publishAllTemps)+","+
                     "\"pubPathAsRoot\":"+String(protConfig.publishPathAsRoot)+","+
+                    "\"pubUpTime\":"+String(protConfig.publishUpTime)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
 }
 
-String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorConfig)
+String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
 {
   String result = "{\"calib\":{\"dayOfCalib\":"+String(valvesConfig.dayOfCalib) + "," +
-                   "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib)+ "," +
-                    "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
-                   "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
-                   "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
-                   "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}," +
+                   "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib)+ "}," +
                    "\"valves\":[" ;
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
@@ -134,6 +133,16 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorCo
 }
 
 
+String CWeb::getMotorConfig (MOTOR_CHARS motorConfig)
+{
+  String result =   "{\"calib\":{";
+        result +=   "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
+                    "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
+                    "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
+                    "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}}";
+  return result;  
+}
+
 String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConfig)
 {
   String result = "{\"common\":{\"heatControl\":"+String(valvesControlConfig.heatControl) + "," +
@@ -142,7 +151,8 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
     result += "{\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) + "\"," +
-              "\"active\":"+String(valvesControlConfig.valveControlConfig[x].active) + ","+
+              "\"active\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.active) + ","+
+              "\"allow\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.allow) + ","+
               "\"link\":"+String(valvesControlConfig.valveControlConfig[x].link) + ","+
               "\"vSource\":"+String(valvesControlConfig.valveControlConfig[x].valueSource) + ","+
               "\"tSource\":"+String(valvesControlConfig.valveControlConfig[x].targetSource) + ","+
@@ -222,6 +232,7 @@ String CWeb::getSysInfo()
   String result = "{\"wt32version\":\""+String(FIRMWARE_VERSION)+wt32Build+"\"," +
                   "\"wt32cores\":"+VdmSystem.chip_info.cores+ "," +
                   "\"wt32coreRev\":"+VdmSystem.chip_info.revision+","+
+                  "\"wt32stack\":"+VdmSystem.stackSize+","+
                   "\"stm32version\":\""+VdmSystem.stmVersion+stmBuild+"\""+
                   "}";
   return result;  
@@ -239,27 +250,16 @@ String CWeb::getSysDynInfo()
   } else {
     strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
     time = String(buf);
-    
-    int64_t upTimeUS = esp_timer_get_time(); // in microseconds
-    int64_t seconds = upTimeUS/1000000;
-    uint32_t days = (uint32_t)seconds/86400;
-    uint32_t hr=(uint32_t)seconds % 86400 /  3600;
-    uint32_t min=(uint32_t)seconds %  3600 / 60;
-    uint32_t sec=(uint32_t)seconds % 60;
-    snprintf (buf,sizeof(buf),"%dd %d:%02d:%02d", days, hr, min, sec);
-    upTime = String(buf);
   }
 
-  
-
-
   String result = "{\"locTime\":\""+time+"\"," +
-                  "\"upTime\":\""+upTime+"\"," +
+                  "\"upTime\":\""+VdmSystem.getUpTime()+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
                   "\"minheap\":\""+ConvBinUnits(ESP.getMinFreeHeap(),1)+ "\"," +
                   "\"wifirssi\":"+WiFi.RSSI()+ "," +
                   "\"wifich\":"+WiFi.channel()+ "," +
-                  "\"stmStatus\":"+String(StmApp.stmStatus);
+                  "\"stmStatus\":"+String(StmApp.stmStatus)+ "," +
+                  "\"stmInit\":"+String(StmApp.stmInitState);
                   if (VdmConfig.configFlash.protConfig.dataProtocol>0) {
                     result += ",\"brokerStatus\":"+String(Mqtt.mqttState);
                     result += ",\"brokerConnected\":"+String(Mqtt.mqttConnected);
@@ -268,10 +268,21 @@ String CWeb::getSysDynInfo()
   return result;  
 }
 
+bool CWeb::getControlActive() 
+{
+  bool active=false;
+  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
+    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) active = true;
+  }
+  return (((VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOnHeating) || (VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOnCooling)) && active);
+}
+
 String CWeb::getValvesStatus() 
 {
   bool start=false;
-  String result = "[";
+  bool controlActive = getControlActive();
+  String result = "{";
+  result += "\"valves\":[";
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
     #ifdef ValveSimulation
       if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) StmApp.actuators[x].state=VLV_STATE_IDLE;
@@ -290,11 +301,16 @@ String CWeb::getValvesStatus()
                  if (StmApp.actuators[x].temp2>-500) {
                     result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
                  }
+                 //if (Mqtt.mqttReceived || ServerServices.jsonSetValveReceived) {
+                 if (controlActive) {
+                    result +=",\"tTarget\":" + String(((float)PiControl[x].target),1);
+                    result +=",\"tValue\":" + String(((float)PiControl[x].value),1);
+                 }
                  result +="}";      
     start = true;
     }
   }  
-  result += "]";
+  result += "]}";
   return result;
 }
 

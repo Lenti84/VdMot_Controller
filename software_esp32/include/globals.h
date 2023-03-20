@@ -71,4 +71,3 @@
 #define STM32_RX            5
 #define STM32_TX            17
 
-enum TRestartMode {soft,hard};

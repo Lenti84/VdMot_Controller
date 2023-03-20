@@ -53,7 +53,7 @@ public:
   void valvesCalib();
   void stmDoUpdate(JsonObject doc);
   void postSetValve (JsonObject doc);
-  
+  bool jsonSetValveReceived;
 };
 
 extern CServerServices ServerServices;

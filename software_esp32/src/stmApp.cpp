@@ -104,6 +104,9 @@ CStmApp::CStmApp()
     appTimeOuts=0;
     commstate=COMM_IDLE;
     matchSensorRequest=false;
+    waitEEPFinished=false;
+    stmInitState=STM_INIT_NOT_STARTED;
+    fastGetOneWire=false;
 }
 
 void  CStmApp::app_setup() {
@@ -125,7 +128,9 @@ void  CStmApp::app_setup() {
         target_position_mirror[x] = actuators[x].target_position;
     }
     commstate=COMM_IDLE;
-    UART_DBG.println("application setup finished");
+    #ifdef EnvDevelop
+        UART_DBG.println("application setup finished");
+    #endif
 }
 
 void  CStmApp::setupStartPosition(uint8_t thisStartPosition) 
@@ -133,8 +138,10 @@ void  CStmApp::setupStartPosition(uint8_t thisStartPosition)
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         actuators[x].target_position = thisStartPosition;
         target_position_mirror[x] = actuators[x].target_position;
-   }
-   UART_DBG.println("application setup start position finished");
+    }
+    #ifdef EnvDevelop
+        UART_DBG.println("application setup start position finished");
+    #endif
 }
 
 
@@ -186,6 +193,7 @@ void CStmApp::valvesDetect()
 
 void CStmApp::getParametersFromSTM()
 {
+    stmInitState=STM_INIT_STARTED;
     fastQueueMode=true;  
     app_cmd(APP_PRE_GETVERSION);
     app_cmd(APP_PRE_GETMOTCHARS);
@@ -193,6 +201,7 @@ void CStmApp::getParametersFromSTM()
     app_cmd(APP_PRE_GETONEWIRECNT,String(255));
     app_cmd(APP_PRE_GETONEWIRESETT,String(255));
     app_cmd(APP_PRE_GETVLSTATUS);
+    fastGetOneWire=true;
 }
 
 // soft reset of STM32 ensures that eeprom content is saved before restart
@@ -201,7 +210,9 @@ void CStmApp::softReset()
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
         syslog.log(LOG_DEBUG, "stmApp: soft reset of STM32");
     }
-    UART_DBG.println("stmApp: send soft reset command");
+    #ifdef EnvDevelop
+        UART_DBG.println("stmApp: send soft reset command");
+    #endif
     app_cmd(APP_PRE_SOFTRESET);
 }
 
@@ -219,7 +230,9 @@ void CStmApp::matchSensors()
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
         syslog.log(LOG_DEBUG, "stmApp: send match sensor request");
     }
-    UART_DBG.println("stmApp: send match sensor request");
+    #ifdef EnvDevelop
+        UART_DBG.println("stmApp: send match sensor request");
+    #endif
     app_cmd(APP_PRE_MATCHSENS);      
 }
 
@@ -248,6 +261,7 @@ void CStmApp::setTempIdx()
         
         waitForFinishQueue=true;
         fastQueueMode=true;
+        waitEEPFinished=true;
         app_cmd(APP_PRE_SETVLVSENSOR,String(i)+ARG_DELIMITER+s1+ARG_DELIMITER+s2);
         fastQueueMode=true;
 
@@ -261,6 +275,7 @@ void CStmApp::setTempIdx()
 void CStmApp::setLearnAfterMovements()
 {
     waitForFinishQueue=true;
+    waitEEPFinished=true;
     app_cmd(APP_PRE_SETLEARNMOVEM,String(learnAfterMovements));
     fastQueueMode=true;   
 }
@@ -268,6 +283,7 @@ void CStmApp::setLearnAfterMovements()
 void CStmApp::setMotorChars()
 {
     waitForFinishQueue=true;
+    waitEEPFinished=true;
     app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent)+ARG_DELIMITER+String(motorChars.startOnPower));   
     fastQueueMode=true;
 }
@@ -299,7 +315,9 @@ bool CStmApp::checkCmdIsAvailable (String thisCmd)
         }
         i++;
     }
-    UART_DBG.println("Command not found "+String(thisCmd));
+    #ifdef EnvDevelop
+        UART_DBG.println("Command not found "+String(thisCmd));
+    #endif
     return (false);
 }
 
@@ -308,7 +326,9 @@ void  CStmApp::app_cmd(String command,String args)
     if (checkCmdIsAvailable(command)) {
         String s=command+ARG_DELIMITER;
         if (args!="") s+=args+ARG_DELIMITER;
-        UART_DBG.println("push "+s);
+        #ifdef EnvDevelop
+            UART_DBG.println("push "+s);
+        #endif
         Queue.push(s);
     }
     else {
@@ -394,8 +414,6 @@ void  CStmApp::app_check_data()
         }
     }
    
-
-//    if (found) {
     if(!found) 
     {
         //syslog.log(LOG_DEBUG, "incomplete buffer : >" + String(buffer) + "<");
@@ -489,7 +507,8 @@ void  CStmApp::app_check_data()
                     if (cmdptr!=NULL) ps=cmdptr+1;
                     idx++;
                 }  
-                stmStatus=STM_READ_ALL_FROM_QUEUE;    
+                stmStatus=STM_READ_ALL_FROM_QUEUE;  
+                if (stmInitState==STM_INIT_STARTED) stmInitState=STM_INIT_FINISHED ;
             }
             appState=APP_IDLE;
         }
@@ -561,6 +580,7 @@ void  CStmApp::app_check_data()
                 }
                 tempsCount=tempsPrivCount;
             }
+            if (tempsPrivCount==0) fastGetOneWire=false;
             appState=APP_IDLE;
         }
 
@@ -579,9 +599,14 @@ void  CStmApp::app_check_data()
                     temps[idx].temperature=ConvertCF(cValue)+VdmConfig.configFlash.tempsConfig.tempConfig[idx].offset;
                 } 
                 tempIndex++;
+                
                 if (tempIndex>=tempsCount) {  // all temp sensors read
                     tempIndex=0;
+                    fastGetOneWire=false;
                 }
+                #ifdef AppDebug
+                    UART_DBG.println("read onwire "+String(tempIndex)+":"+String(fastGetOneWire));
+                #endif
             }
             // handle incomplete messages to not block 1-wire request cycle
             else if(argcnt == 1) {
@@ -591,6 +616,7 @@ void  CStmApp::app_check_data()
                 tempIndex++;
                 if (tempIndex>=tempsCount) {  // all temp sensors read
                     tempIndex=0;
+                    fastGetOneWire=false;
                 }
             }
             appState=APP_IDLE;
@@ -631,7 +657,7 @@ void  CStmApp::app_check_data()
                     }
                 }
                 
-            }
+            }  
             appState=APP_IDLE;
         }
         
@@ -680,6 +706,16 @@ void  CStmApp::app_check_data()
                 motorChars.maxHighCurrent=atoi(arg1ptr);
                 motorChars.startOnPower=atoi(arg2ptr);
                 setupStartPosition(motorChars.startOnPower);
+            }
+            appState=APP_IDLE;
+        }
+        else if(memcmp(APP_PRE_EEPSTATE,cmd,5) == 0) {
+            if(argcnt == 1) {
+                bool getEEState=atoi(arg0ptr);
+                #ifdef EnvDevelop
+                    UART_DBG.println("get eeprom state "+ String(getEEState));
+                #endif
+                if ((eepState==EEP_REQUEST) && (getEEState)) eepState=EEP_DONE; 
             }
             appState=APP_IDLE;
         }
@@ -751,10 +787,27 @@ void CStmApp::appHandler()
     }
 }
 
+void CStmApp::app_comm_send(String thisAppCmd,uint8_t * value1,uint8_t * value2) 
+{
+    char valbuffer[20];
+    memset(sendbuffer,0x0,sizeof(sendbuffer));
+    strncat(sendbuffer,thisAppCmd.c_str(),sizeof(sendbuffer) - strlen (sendbuffer) - 1);
+    strncat(sendbuffer," ",sizeof(sendbuffer) - strlen (sendbuffer) - 1);
+    if (value1!=NULL) {
+        itoa(*value1, valbuffer, 10);
+        strncat(sendbuffer,valbuffer,sizeof(sendbuffer) - strlen (sendbuffer) - 1);
+        strncat(sendbuffer," ",sizeof(sendbuffer) - strlen (sendbuffer) - 1);
+        if (value2!=NULL) {
+            itoa(*value2, valbuffer, 10);
+            strncat(sendbuffer,valbuffer,sizeof(sendbuffer) - strlen (sendbuffer) - 1);
+            strncat(sendbuffer," ",sizeof(sendbuffer) - strlen (sendbuffer) - 1);
+        }
+    }
+    UART_STM32.println(sendbuffer);   
+}
 
 void  CStmApp::app_comm_machine()
 {
-    char sendbuffer[30];
     char valbuffer[10];
 
     switch(commstate) {
@@ -782,20 +835,11 @@ void  CStmApp::app_comm_machine()
                                 syslog.log(LOG_DEBUG, "STMApp:valve position has changed : "+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name)+"(#"+String(x+1)+") = "+String(actuators[x].target_position));
                             }
                             settarget_check=false;
-                            memset(sendbuffer,0x0,sizeof(sendbuffer));
-                            strcat(sendbuffer, APP_PRE_SETTARGETPOS);
-                            strcat(sendbuffer, " ");
-
-                            itoa(x, valbuffer, 10);
-                            strcat(sendbuffer, valbuffer);
-                            strcat(sendbuffer, " ");   
-
-                            itoa(actuators[x].target_position, valbuffer, 10);      
-                            strcat(sendbuffer, valbuffer);
-                            strcat(sendbuffer, " ");
-                            
-                            UART_STM32.println(sendbuffer);
-                            UART_DBG.println("valve position has changed : "+String(x)+" = "+String(actuators[x].target_position));
+                           
+                            app_comm_send(APP_PRE_SETTARGETPOS,&x, &(actuators[x].target_position));
+                            #ifdef EnvDevelop
+                                UART_DBG.println("valve position has changed : "+String(x)+" = "+String(actuators[x].target_position));
+                            #endif
                             // break loop, next valve will be served in next cycle
                             appState=APP_PENDING;
                             break;
@@ -825,26 +869,29 @@ void  CStmApp::app_comm_machine()
                 break;
 
         case COMM_GETDATA:  
-                commstate =  COMM_GETONEWIRECOUNT;
-                
+                if (eepState!=EEP_IDLE) {
+                    commstate =  COMM_GETEEPSTATE;
+                } else {
+                    commstate =  COMM_GETONEWIRECOUNT;
+                }
                 // walk through all valves, one per cycle
                 if (getindex<ACTUATOR_COUNT-1) getindex++; else getindex=0;
+               
+                app_comm_send(APP_PRE_GETVLVDATA,&getindex);
 
-                memset(sendbuffer,0x0,sizeof(sendbuffer));
-                strcat(sendbuffer, APP_PRE_GETVLVDATA);
-                strcat(sendbuffer, " ");
-
-                itoa(getindex, valbuffer, 10);
-                strcat(sendbuffer, valbuffer);
-                strcat(sendbuffer, " ");   
-
-                UART_STM32.println(sendbuffer);
-                
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG, sendbuffer);
                 }
                 appState=APP_PENDING;
                 break;
+
+        case COMM_GETEEPSTATE :
+            #ifdef EnvDevelop
+                UART_DBG.println("request eeprom state");
+            #endif
+            app_comm_send(APP_PRE_EEPSTATE);
+            appState=APP_PENDING;
+            break;
 
         case COMM_GETONEWIRECOUNT:
                 if (tempsPrivCount>0) {
@@ -853,11 +900,7 @@ void  CStmApp::app_comm_machine()
                     commstate =  COMM_HANDLEQUEUE;   
                 }
                 if (checkTempsCount==0) {
-                    memset(sendbuffer,0x0,sizeof(sendbuffer));
-                    
-                    strcat(sendbuffer, APP_PRE_GETONEWIRECNT);
-                    strcat(sendbuffer, " ");
-                    UART_STM32.println(sendbuffer);
+                    app_comm_send(APP_PRE_GETONEWIRECNT);
                     checkTempsCount=20;
                     appState=APP_PENDING;
 
@@ -869,18 +912,9 @@ void  CStmApp::app_comm_machine()
                 break;
 
         case COMM_GETONEWIRE:
-                commstate = COMM_HANDLEQUEUE;
+            if (!fastGetOneWire) commstate = COMM_HANDLEQUEUE;
                 if (tempsPrivCount>0) {
-                    memset(sendbuffer,0x0,sizeof(sendbuffer));
-                    
-                    strcat(sendbuffer, APP_PRE_GETONEWIREDATA);
-                    strcat(sendbuffer, " ");
-
-                    itoa(tempIndex, valbuffer, 10);
-                    strcat(sendbuffer, valbuffer);
-                    strcat(sendbuffer, " ");   
-
-                    UART_STM32.println(sendbuffer);
+                    app_comm_send(APP_PRE_GETONEWIREDATA,&tempIndex);
                     appState=APP_PENDING;
 
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
@@ -893,7 +927,9 @@ void  CStmApp::app_comm_machine()
                 if ((cmd_buffer=="") && (Queue.available()>0) && (stmStatus>=STM_READY)) {
                     memset(&cmd_buffer,0x0,sizeof(cmd_buffer));
                     cmd_buffer=Queue.pop();
-                    UART_DBG.println("pop "+String(cmd_buffer));
+                    #ifdef EnvDevelop
+                        UART_DBG.println("pop "+String(cmd_buffer));
+                    #endif
                     UART_STM32.println(cmd_buffer);
                     appState=APP_PENDING;
                 }

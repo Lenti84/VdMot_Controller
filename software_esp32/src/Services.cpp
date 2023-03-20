@@ -51,7 +51,6 @@ CServices Services;
 CServices::CServices()
 {
   serviceValvesStarted=false;
-  restartSTM=false;
 }
 
 void CServices::checkServiceValves()
@@ -97,64 +96,51 @@ void CServices::runOnceDelayed()
   VdmNet.startBroker();
 }
 
-void CServices::restartSystem(TRestartMode thisRestartMode,bool WaitQueueFinished) {
-  restartMode=thisRestartMode;
-  StmApp.waitForFinishQueue=WaitQueueFinished;
-  #ifdef forceHardReset
-    restartMode=hard;
-    StmApp.waitForFinishQueue=false;
+void CServices::restartSystem(bool waitQueueFinished) {
+  #ifdef EnvDevelop
+    UART_DBG.println("restart System ");
   #endif
-  UART_DBG.println("restart System "+String(restartMode));
-  if (restartMode==soft) {
-    StmApp.waitForFinishQueue=true;
-    StmApp.softReset();
+  
+  if (StmApp.waitEEPFinished) {
+    StmApp.eepState=EEP_REQUEST; 
   }
-  if (StmApp.waitForFinishQueue) {
-        UART_DBG.println("wait for finish queue");
+  if (StmApp.waitForFinishQueue || StmApp.waitEEPFinished) {
+        #ifdef EnvDevelop
+          UART_DBG.println("wait for finish queue");
+        #endif
         VdmTask.taskIdResetSystem = taskManager.scheduleOnce(60*1000, [] {
-                UART_DBG.println("wait for finish queue timeout, restart now");
-                if (Services.restartSTM) {
-                  syslog.log(LOG_DEBUG,"Services: queue restart hard STM32 after 30s");
-                  Stm32.ResetSTM32(true);
-                }
+                #ifdef EnvDevelop
+                  UART_DBG.println("wait for finish queue timeout, restart now");
+                #endif
                 delay (1000);
                 ESP.restart();
             });
         VdmTask.taskIdwaitForFinishQueue = taskManager.scheduleFixedRate(500, [] {
-          if (Queue.available()==0) {
-            UART_DBG.println("queue finished, restart now");
-              VdmTask.taskIdResetSystem = taskManager.scheduleOnce(3000, [] {
-                if (Services.restartSTM) {
-                  syslog.log(LOG_DEBUG,"Services: queue restart STM32 after 3s");
-                  UART_DBG.println("restart System after queue now "+String(Services.restartMode));
-                  if (Services.restartMode==hard) {
-                    Stm32.ResetSTM32(true);
-                    delay (2000);
-                  }
-                  
-                }
-                
-                delay (1000);
-                ESP.restart();
-              });
-              VdmTask.deleteTask(VdmTask.taskIdwaitForFinishQueue);
+          int restartNow = 0;
+          if (StmApp.waitForFinishQueue) restartNow=Queue.available();
+          if (StmApp.waitEEPFinished) {
+            if ((StmApp.eepState!=EEP_DONE) && (StmApp.eepState!=EEP_IDLE)) restartNow++; 
+            #ifdef EnvDevelop
+              UART_DBG.println("waiting eep finished "+String(StmApp.eepState));
+            #endif
+          } 
+          if (restartNow==0) {
+              #ifdef EnvDevelop
+                UART_DBG.println("queue/eeprom finished, restart now");
+              #endif
+              StmApp.eepState=EEP_IDLE;
+                VdmTask.taskIdResetSystem = taskManager.scheduleOnce(3000, [] {
+                  ESP.restart();
+                });
+                VdmTask.deleteTask(VdmTask.taskIdwaitForFinishQueue);
           }
         });
     } else {
-      UART_DBG.println("normal restart");
+      #ifdef EnvDevelop
+        UART_DBG.println("normal restart");
+      #endif
       VdmTask.taskIdResetSystem = taskManager.scheduleOnce(2000, [] {
-                if (Services.restartSTM || Services.restartMode==hard) {
-                  syslog.log(LOG_DEBUG,"Services: normal restart STM32 after 2s");
-                  UART_DBG.println("restart System now "+String(Services.restartMode));
-                  if (Services.restartMode==hard) {
-                    Stm32.ResetSTM32(true);
-                    delay (2000);
-                  }
-                  
-                }
-                
-                delay (1000);
-                ESP.restart();
+              ESP.restart();
             });
     }
 }

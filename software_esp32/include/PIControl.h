@@ -41,9 +41,16 @@
 #include <ExecWithParameter.h>
 #include "globals.h"
 
-#define piControlManual 0
-#define piControlOn     1
-#define piControlOff    2
+#define piControlManual     0
+#define piControlOnHeating  1
+#define piControlOnCooling  2
+#define piControlOff        3
+
+#define piControlAllowedHeatingCooling 0
+#define piControlAllowedHeating 1
+#define piControlAllowedCooling 2
+
+enum CHECKACTION {nothing,gotoMin,gotoPark,control};
 
 class CPiControl: public Executable
 {
@@ -76,6 +83,10 @@ public:
   uint8_t endActiveZone;
   uint8_t startValvePos;
 private:
+  void doControlValve(); 
+  void setPosition(uint8_t thisPosition);
+  CHECKACTION checkAction(uint8_t idx);
+
   float iProp;
   time_t ts;
   bool start;

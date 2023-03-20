@@ -57,6 +57,7 @@ class CMqtt
     void callback(char* topic, byte* payload, unsigned int length);
     int mqttState;
     bool mqttConnected;
+    bool mqttReceived;
   private:
     void reconnect();
     void publish_valves ();

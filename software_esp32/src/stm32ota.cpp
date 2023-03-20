@@ -161,7 +161,6 @@ uint8_t CStmOta::stm32Read(uint8_t * rdbuf, uint32_t rdaddress, uint16_t rdlen)
   size_t getlen;
   
   // send read request
-  //UART_DBG.println("send STM32RD");
   Stm32.clearUART_STM32Buffer();
   stm32SendCommand(STM32RD);  
 
@@ -170,12 +169,9 @@ uint8_t CStmOta::stm32Read(uint8_t * rdbuf, uint32_t rdaddress, uint16_t rdlen)
   if (UART_STM32.read() == STM32ACK) {
 
     // send read address
-    // UART_DBG.println("send rdadress");
-
     // got ACK?
     if (stm32Address(rdaddress) == STM32ACK) {
       // send read length
-      //UART_DBG.println("send rdlen");
       stm32SendCommand(rdlen - 1);
     }
     else return STM32ERR;
@@ -191,15 +187,10 @@ uint8_t CStmOta::stm32Read(uint8_t * rdbuf, uint32_t rdaddress, uint16_t rdlen)
       delay(10);
       getlen = UART_STM32.available();
       if (getlen == rdlen) {
-        //UART_DBG.print("got bytes: ");
-        //UART_DBG.println(getlen, DEC);
         UART_STM32.readBytes(rdbuf, getlen);
         return STM32ACK;
       }
-    } 
-    //UART_DBG.print("got wrong number of bytes: ");
-    //UART_DBG.println(getlen, DEC);
-    
+    }     
   }
   
   return STM32ERR;
@@ -289,22 +280,27 @@ uint8_t CStmOta::stm32GetId()
         chipId = sbuf[1];
         chipId = (chipId << 8) + sbuf[2];
         chipName = checkChipName (chipId);
-        UART_DBG.print("- Id: 0x");
-        UART_DBG.print(chipId, HEX); 
-        UART_DBG.println(""); 
-        UART_DBG.print("--> type is ");
-        UART_DBG.println(chipName);
+        #ifdef EnvDevelop
+          UART_DBG.print("- Id: 0x");
+          UART_DBG.print(chipId, HEX); 
+          UART_DBG.println(""); 
+          UART_DBG.print("--> type is ");
+          UART_DBG.println(chipName);
+        #endif
         return 1;
       }
       else {
-        Serial.println("Error: wrong answer");
+        #ifdef EnvDevelop
+          UART_DBG.println("Error: wrong answer");
+        #endif
         return 0;
       }
     }    
     delayMicroseconds(20);
   }
-  
-  Serial.println("- Error: no data");
+  #ifdef EnvDevelop
+    UART_DBG.println("- Error: no data");
+  #endif
   return 0;
 }
 

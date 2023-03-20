@@ -49,6 +49,10 @@
 
 enum protType  {protTypeNone=0,protTypeMqtt=1};
 
+#define allowHeatingCooling 0
+#define allowHeating 1
+#define allowCooling 2
+
 typedef struct {
   uint8_t eth_wifi;
   bool dhcpEnabled;
@@ -89,6 +93,7 @@ typedef struct {
   bool publishTarget;
   bool publishAllTemps;
   bool publishPathAsRoot;
+  bool publishUpTime;
 } VDM_PROTOCOL_CONFIG;
 
 typedef struct {
@@ -102,8 +107,14 @@ typedef struct {
   uint8_t hourOfCalib;
 } VDM_VALVES_CONFIG;
 
+typedef struct  {
+  uint8_t active : 1 ;
+  uint8_t allow : 3;
+} VDM_VALVE_CONTROL_CONFIG_FLAGS;
+
+
 typedef struct {
-  bool active;
+  VDM_VALVE_CONTROL_CONFIG_FLAGS controlFlags;
   uint8_t link;
   uint8_t valueSource;
   uint8_t targetSource;
@@ -179,6 +190,7 @@ typedef struct
 #define nvsProtBrokerPublishTarget  "brokerPT"
 #define nvsProtBrokerPublishAllTemps  "brokerPAT"
 #define nvsProtBrokerPublishPathAsRoot  "brokerPaR"
+#define nvsProtBrokerPublishUpTime  "brokerPuP"
 
 #define nvsValvesCfg                "valvesCfg"
 #define nvsValvesControlCfg         "valvesCtrlCfg"
@@ -213,7 +225,7 @@ public:
   void writeConfig(bool reboot=false);
   void resetConfig (bool reboot=false);
   void restoreConfig (bool reboot=false);
-  void writeValvesControlConfig(bool reboot=false);
+  void writeValvesControlConfig(bool reboot=false, bool restartTask=true);
   void postNetCfg (JsonObject doc);
   void postProtCfg (JsonObject doc);
   void postValvesCfg (JsonObject doc);

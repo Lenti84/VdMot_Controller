@@ -38,11 +38,14 @@
 #include "communication.h"
 #include "temperature.h"
 #include "eeprom.h"
-#include "mycan.h"
-#include "rs485.h"
 #include "otasupport.h"
 #include "STM32TimerInterrupt.h"      
-
+#ifdef useCan
+  #include "mycan.h"
+#endif
+#ifdef useRS485
+  #include "rs485.h"
+#endif
 
 //using Matthias Hertel driver https://github.com/mathertel/LiquidCrystal_PCF8574
 //LiquidCrystal_PCF8574 lcd(0x27);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -135,12 +138,15 @@ void setup_system() {
   app_setup();
   valve_setup();
 
-  // can
-  //mycan_setup();          // can hardware testcode setup
-
-  // rs485
-  //rs485_setup();          // rs485 hardware testcode setup
-
+  #ifdef useCan
+    // can
+    //mycan_setup();          // can hardware testcode setup
+  #endif
+  
+  #ifdef useRS485
+    // rs485
+    //rs485_setup();          // rs485 hardware testcode setup
+  #endif
 
   // hardware timer for motor loop
   if (ITimer1.attachInterruptInterval(10 * 1000, valve_loop))

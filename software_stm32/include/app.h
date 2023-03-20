@@ -37,7 +37,7 @@
 
 
 
-#define LEARN_AFTER_MOVEMENTS_DEFAULT     100          // after x movements a learning cycle will be executed
+#define LEARN_AFTER_MOVEMENTS_DEFAULT     2000          // after x movements a learning cycle will be executed
 #define LEARN_AFTER_TIME_DEFAULT          7*24*3600   // after x seconds a learning cycle will be executed
 
 

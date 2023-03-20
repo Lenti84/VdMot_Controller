@@ -64,7 +64,10 @@ CVdmTask::CVdmTask()
   taskIdRunOnceClearFS=TASKMGR_INVALIDID;
   taskIdRunOnceGetFS=TASKMGR_INVALIDID;
   setFactoryCfgState=idle;
-  taskIdUptime=TASKMGR_INVALIDID;
+  for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) {
+            taskIdPiControl[picIdx]=TASKMGR_INVALIDID;
+  }
+  restartPiTask=true;
 }
 
 void CVdmTask::init()
@@ -93,7 +96,7 @@ void CVdmTask::startApp()
         deleteTask (taskIdStm32Ota);
         delay (1000);       // wait to finish task; 
         taskIdStm32Ota=TASKMGR_INVALIDID; 
-        Services.restartSystem(hard,false);
+        Services.restartSystem(false);
     }
     if (taskIdApp==TASKMGR_INVALIDID) { 
         StmApp.app_setup();
@@ -122,7 +125,9 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
 
 void CVdmTask::startServices()
 {
-    UART_DBG.println("Start services");
+    #ifdef EnvDevelop
+        UART_DBG.println("Start services");
+    #endif
     taskIdRunOnce = taskManager.scheduleOnce(1000, [] {
                 Services.runOnce();
     });
@@ -131,16 +136,27 @@ void CVdmTask::startServices()
     });
     taskIdServices = taskManager.scheduleFixedRate(60, [] {
         Services.servicesLoop();
-    },TIME_SECONDS);
-    taskIdUptime = taskManager.scheduleFixedRate(1, [] {
-        VdmSystem.uptime++;
-    },TIME_SECONDS);     
+    },TIME_SECONDS);  
 }
 
-void CVdmTask::startPIServices()
+void CVdmTask::stopPIServices()
 {
+    for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) {
+        if (taskIdPiControl[picIdx]!=TASKMGR_INVALIDID) {
+            taskManager.cancelTask (taskIdPiControl[picIdx]);
+            taskIdPiControl[picIdx]=TASKMGR_INVALIDID;
+        }
+    }
+}
+
+void CVdmTask::startPIServices(bool startTask)
+{
+    restartPiTask=false;
+    #ifdef EnvDevelop
+        UART_DBG.println("Start pi tasks "+String(startTask));
+    #endif
     for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) { 
-        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].active) {
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].controlFlags.active) {
             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].link==0) { 
                 PiControl[picIdx].valveIndex=picIdx;
                 PiControl[picIdx].ti=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ti;
@@ -152,8 +168,13 @@ void CVdmTask::startPIServices()
                 PiControl[picIdx].endActiveZone=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].endActiveZone;
                 if (StmApp.motorChars.startOnPower>100) StmApp.motorChars.startOnPower=50;
                 PiControl[picIdx].startValvePos=StmApp.motorChars.startOnPower;
-                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts>0) {
-                    taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts, &PiControl[picIdx], TIME_SECONDS);
+                if (startTask) {
+                    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts>0) {
+                        if (taskIdPiControl[picIdx]==TASKMGR_INVALIDID) {
+                            //UART_DBG.println("Start pi tasks valve # "+String(picIdx)+":"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts));
+                            taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts, &PiControl[picIdx], TIME_SECONDS);
+                        }
+                    }
                 }
             }
         }

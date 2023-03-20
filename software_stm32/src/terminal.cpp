@@ -141,9 +141,7 @@ int16_t Terminal_Serve (void) {
             if(buffer[c] == '\r') 
             {
                 buffer[c] = '\0';
-                //COMM_DBG.print("recv "); COMM_DBG.println(buffer);
                 found = 1;
-
                 buflen = 0;           	// reset counter
                 bufptr = buffer;    	// reset ptr
             }
@@ -196,8 +194,7 @@ int16_t Terminal_Serve (void) {
 			//x = atoi(arg0ptr);
 			//y = atoi(arg0ptr);
 
-			if(argcnt == 1) {				
-				//COMM_DBG.println("learn valve x");				
+			if(argcnt == 1) {								
 				if (appsetaction(CMD_A_LEARN,x,0)!=0) COMM_DBG.println("valve machine command not accepted");				
 			}
 			else COMM_DBG.println("to few arguments");
@@ -730,7 +727,7 @@ void WriteEEPROMBaselayout(void) {
 	eeprom_fill ();		// write eeprom mark
 
 	eep_content.b_slave = 0;
-	strcpy(eep_content.descr, SYSTEM_NAME);
+	strncpy(eep_content.descr, SYSTEM_NAME, sizeof(eep_content.descr));
 	eep_content.OneWireCfg[0] = 0;
 	eep_content.OneWireCfg[1] = 0;
 	eep_content.OneWireCfg[2] = 0;

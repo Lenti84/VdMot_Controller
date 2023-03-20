@@ -43,6 +43,7 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Syslog.h>
+#include <string.h>
 #include "mqtt.h"
 #include "globals.h"
 #include "stmApp.h"
@@ -53,6 +54,7 @@
 #include "helper.h"
 #include "web.h"
 #include "PIControl.h"
+
 
 CMqtt Mqtt;
 
@@ -67,11 +69,12 @@ PubSubClient mqtt_client(espClient);
 
 void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort) 
 {
+    mqttReceived=false;
     mqtt_client.setServer(brokerIP, brokerPort);
     mqtt_client.setCallback(mcallback);
 
     memset (mqtt_mainTopic,0,sizeof(mqtt_mainTopic));
-    if (VdmConfig.configFlash.protConfig.publishPathAsRoot) strcpy(mqtt_mainTopic,"/");
+    if (VdmConfig.configFlash.protConfig.publishPathAsRoot) strncpy(mqtt_mainTopic,"/",sizeof(mqtt_mainTopic));
 
     if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
         strncat(mqtt_mainTopic, VdmConfig.configFlash.systemConfig.stationName,sizeof(mqtt_mainTopic) - strlen (mqtt_mainTopic) - 1);
@@ -80,11 +83,11 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
         strncat(mqtt_mainTopic, DEFAULT_MAINTOPIC,sizeof(mqtt_mainTopic) - strlen (mqtt_mainTopic) - 1);
     }
 
-    strcpy(mqtt_commonTopic, mqtt_mainTopic);
+    strncpy(mqtt_commonTopic, mqtt_mainTopic, sizeof(mqtt_commonTopic));
     strncat(mqtt_commonTopic, DEFAULT_COMMONTOPIC,sizeof(mqtt_commonTopic) - strlen (mqtt_commonTopic) - 1);
-    strcpy(mqtt_valvesTopic, mqtt_mainTopic);
+    strncpy(mqtt_valvesTopic, mqtt_mainTopic,sizeof(mqtt_commonTopic));
     strncat(mqtt_valvesTopic, DEFAULT_VALVESTOPIC,sizeof(mqtt_valvesTopic)- strlen (mqtt_valvesTopic) - 1);
-    strcpy(mqtt_tempsTopic, mqtt_mainTopic);
+    strncpy(mqtt_tempsTopic, mqtt_mainTopic,sizeof(mqtt_commonTopic));
     strncat(mqtt_tempsTopic, DEFAULT_TEMPSTOPIC,sizeof(mqtt_tempsTopic)- strlen (mqtt_tempsTopic) - 1);
 
     if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
@@ -128,11 +131,15 @@ void CMqtt::reconnect()
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
         syslog.log(LOG_DEBUG, "MQTT reconnecting ...");
     }
-    UART_DBG.println("Reconnecting MQTT...");
+    #ifdef EnvDevelop
+        UART_DBG.println("Reconnecting MQTT...");
+    #endif
     if (!mqtt_client.connect(stationName,mqttUser,mqttPwd)) {
-        UART_DBG.print("failed, rc=");
-        UART_DBG.print(mqtt_client.state());
-        UART_DBG.println(" retrying");
+        #ifdef EnvDevelop
+            UART_DBG.print("failed, rc=");
+            UART_DBG.print(mqtt_client.state());
+            UART_DBG.println(" retrying");
+        #endif
         if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
             syslog.log(LOG_ERR, "MQTT failed rc="+String(mqtt_client.state())+String(" retrying"));
         }
@@ -167,7 +174,7 @@ void CMqtt::reconnect()
             strncat(topicstr, "/target",sizeof(topicstr) - strlen (topicstr) - 1);
             mqtt_client.subscribe(topicstr);
 
-            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].active) {
+            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) {
                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].valueSource==0) {
                         // temp value
@@ -198,7 +205,8 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
     char* pt;
     uint8_t i;
     uint8_t idx;
-   
+    uint8_t val8;
+
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                syslog.log(LOG_DEBUG, "MQTT: callback "+String(topic));
     }
@@ -218,12 +226,18 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
             pt= (char*) topic;
             pt+= strlen(mqtt_commonTopic);
             if (strncmp(pt,"heatControl",sizeof("heatControl"))==0) {
-               VdmConfig.configFlash.valvesControlConfig.heatControl=atoi(value);
-               VdmConfig.writeValvesControlConfig(false); 
+                val8=atoi(value);
+                if (val8!=VdmConfig.configFlash.valvesControlConfig.heatControl) {
+                    VdmConfig.configFlash.valvesControlConfig.heatControl=val8;
+                    VdmConfig.writeValvesControlConfig(false,false); 
+                }
             } 
             if (strncmp(pt,"parkPosition",sizeof("parkPosition"))==0) {
-               VdmConfig.configFlash.valvesControlConfig.parkingPosition=atoi(value); 
-               VdmConfig.writeValvesControlConfig(false); 
+                val8=atoi(value); 
+                if (val8!=VdmConfig.configFlash.valvesControlConfig.heatControl) {
+                    VdmConfig.configFlash.valvesControlConfig.parkingPosition=val8;
+                    VdmConfig.writeValvesControlConfig(false,false); 
+                }
             }    
         }
 
@@ -263,19 +277,25 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                
                 if (isFloat(value)) {
                     if (strncmp(pt,"/target",7)==0) {
-                        StmApp.actuators[idx].target_position = atoi(value);
+                        if (VdmConfig.configFlash.valvesConfig.valveConfig[idx].active) {
+                            StmApp.actuators[idx].target_position = atoi(value);
+                        }
                     } else if (strncmp(pt,"/tValue",7)==0) {
-                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].active) {
-                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].valueSource==0)
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].valueSource==0) {
                                 PiControl[idx].value=strtof(value, NULL);
+                                mqttReceived=true;
+                            }
                         }
                     } else if (strncmp(pt,"/tTarget",8)==0) {
-                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].active) {
-                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0) {
                                 PiControl[idx].target=strtof(value, NULL);
+                                mqttReceived=true;
+                            }
                         }
                     }else if (strncmp(pt,"/dynOffs",8)==0) {
-                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].active) {
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
                             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
                                 PiControl[idx].dynOffset=atoi(value);
                         }
@@ -330,13 +350,19 @@ void CMqtt::publish_valves ()
     memset(topicstr,0x0,sizeof(topicstr));
     strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
     len = strlen(topicstr);
-    strncat(topicstr, "uptime",sizeof(topicstr) - strlen (topicstr) - 1);
-    itoa(VdmSystem.uptime , valstr, 10);        
-    mqtt_client.publish(topicstr, valstr); 
-
-    topicstr[len] = '\0';
-    strncat(topicstr, "message",sizeof(topicstr) - strlen (topicstr) - 1);       
-    mqtt_client.publish(topicstr,VdmSystem.systemMessage);   
+    
+    if (VdmConfig.configFlash.protConfig.publishUpTime) {
+        strncat(topicstr, "uptime",sizeof(topicstr) - strlen (topicstr) - 1);
+        String upTime = VdmSystem.getUpTime();
+        mqtt_client.publish(topicstr, (const char*) (upTime.c_str())); 
+    }
+    
+    if (VdmSystem.systemMessage.length()>0) {
+        topicstr[len] = '\0';
+        strncat(topicstr, "message",sizeof(topicstr) - strlen (topicstr) - 1);       
+        mqtt_client.publish(topicstr,VdmSystem.systemMessage.c_str());  
+        VdmSystem.systemMessage=""; 
+    }
 
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
