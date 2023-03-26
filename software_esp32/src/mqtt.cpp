@@ -74,7 +74,7 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
     mqtt_client.setCallback(mcallback);
 
     memset (mqtt_mainTopic,0,sizeof(mqtt_mainTopic));
-    if (VdmConfig.configFlash.protConfig.publishPathAsRoot) strncpy(mqtt_mainTopic,"/",sizeof(mqtt_mainTopic));
+    if (VdmConfig.configFlash.protConfig.protocolFlags.publishPathAsRoot) strncpy(mqtt_mainTopic,"/",sizeof(mqtt_mainTopic));
 
     if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
         strncat(mqtt_mainTopic, VdmConfig.configFlash.systemConfig.stationName,sizeof(mqtt_mainTopic) - strlen (mqtt_mainTopic) - 1);
@@ -104,14 +104,33 @@ CMqtt::CMqtt()
 void CMqtt::mqtt_loop() 
 {
     if (!mqtt_client.connected()) {
+        firstPublish=true;
         reconnect();        
     }
     if (mqtt_client.connected()) {
         mqtt_client.loop();
-        publish_valves();
+        if (VdmConfig.configFlash.protConfig.publishInterval<2) VdmConfig.configFlash.protConfig.publishInterval=2;
+        if (((millis()-tsPublish)>(1000*VdmConfig.configFlash.protConfig.publishInterval)) || firstPublish) {
+            tsPublish = millis();
+            firstPublish=false;
+            publish_valves();
+        }
+        
     }
     mqttConnected=mqtt_client.connected();
     mqttState=mqtt_client.state();
+    /*
+        -4 : MQTT_CONNECTION_TIMEOUT - the server didn't respond within the keepalive time
+        -3 : MQTT_CONNECTION_LOST - the network connection was broken
+        -2 : MQTT_CONNECT_FAILED - the network connection failed
+        -1 : MQTT_DISCONNECTED - the client is disconnected cleanly
+         0 : MQTT_CONNECTED - the client is connected
+         1 : MQTT_CONNECT_BAD_PROTOCOL - the server doesn't support the requested version of MQTT
+         2 : MQTT_CONNECT_BAD_CLIENT_ID - the server rejected the client identifier
+         3 : MQTT_CONNECT_UNAVAILABLE - the server was unable to accept the connection
+         4 : MQTT_CONNECT_BAD_CREDENTIALS - the username/password were rejected
+         5 : MQTT_CONNECT_UNAUTHORIZED - the client was not authorized to connect
+    */
 }
 
 
@@ -122,8 +141,7 @@ void CMqtt::reconnect()
     char* mqttUser = NULL;
     char* mqttPwd = NULL;
     uint8_t len;
-    
-
+    tsPublish = millis();
     if ((strlen(VdmConfig.configFlash.protConfig.userName)>0) && (strlen(VdmConfig.configFlash.protConfig.userPwd)>0)) {
         mqttUser = VdmConfig.configFlash.protConfig.userName;
         mqttPwd = VdmConfig.configFlash.protConfig.userPwd;
@@ -134,6 +152,10 @@ void CMqtt::reconnect()
     #ifdef EnvDevelop
         UART_DBG.println("Reconnecting MQTT...");
     #endif
+    
+    mqtt_client.setKeepAlive(VdmConfig.configFlash.protConfig.keepAliveTime);
+    mqtt_client.setSocketTimeout(VdmConfig.configFlash.protConfig.keepAliveTime);
+
     if (!mqtt_client.connect(stationName,mqttUser,mqttPwd)) {
         #ifdef EnvDevelop
             UART_DBG.print("failed, rc=");
@@ -148,6 +170,9 @@ void CMqtt::reconnect()
         return;
     }
     
+    mqtt_client.setKeepAlive(VdmConfig.configFlash.protConfig.keepAliveTime);
+    mqtt_client.setSocketTimeout(VdmConfig.configFlash.protConfig.keepAliveTime);
+
     // make some subscriptions
     memset(topicstr,0x0,sizeof(topicstr));
     strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
@@ -211,7 +236,7 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                syslog.log(LOG_DEBUG, "MQTT: callback "+String(topic));
     }
     if (length>0) {
-        if (!VdmConfig.configFlash.protConfig.publishPathAsRoot) {
+        if (!VdmConfig.configFlash.protConfig.protocolFlags.publishPathAsRoot) {
             if (topic[0]=='/') {
                 topic++;        // adjust topic 
             }
@@ -326,7 +351,7 @@ void CMqtt::publish_valves ()
     int8_t tempIdx;
     uint8_t len;
     
-    if (VdmConfig.configFlash.protConfig.publishTarget) {
+    if (VdmConfig.configFlash.protConfig.protocolFlags.publishTarget) {
         memset(topicstr,0x0,sizeof(topicstr));
         strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
         len = strlen(topicstr);
@@ -351,7 +376,7 @@ void CMqtt::publish_valves ()
     strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
     len = strlen(topicstr);
     
-    if (VdmConfig.configFlash.protConfig.publishUpTime) {
+    if (VdmConfig.configFlash.protConfig.protocolFlags.publishUpTime) {
         strncat(topicstr, "uptime",sizeof(topicstr) - strlen (topicstr) - 1);
         String upTime = VdmSystem.getUpTime();
         mqtt_client.publish(topicstr, (const char*) (upTime.c_str())); 
@@ -382,7 +407,7 @@ void CMqtt::publish_valves ()
             mqtt_client.publish(topicstr, valstr);
             
             // target
-            if (VdmConfig.configFlash.protConfig.publishTarget) {
+            if (VdmConfig.configFlash.protConfig.protocolFlags.publishTarget) {
                 topicstr[len] = '\0';
                 strncat(topicstr, "/target",sizeof(topicstr) - strlen (topicstr) - 1);
                 itoa(StmApp.actuators[x].target_position, valstr, 10);
@@ -418,7 +443,7 @@ void CMqtt::publish_valves ()
         tempIdx=VdmConfig.findTempID(StmApp.temps[x].id);
         if (tempIdx>=0) {
             if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
-                if ((!Web.findIdInValve (tempIdx)) || VdmConfig.configFlash.protConfig.publishAllTemps) {
+                if ((!Web.findIdInValve (tempIdx)) || VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps) {
                     memset(topicstr,0x0,sizeof(topicstr));
                     memset(nrstr,0x0,sizeof(nrstr));
                     itoa((x+1), nrstr, 10);

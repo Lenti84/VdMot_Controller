@@ -97,13 +97,15 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.dataProtocol = 0;
   configFlash.protConfig.brokerIp = 0;
   configFlash.protConfig.brokerPort = 0;
-  configFlash.protConfig.brokerInterval = 2000;
+  configFlash.protConfig.brokerInterval = 1000;
+  configFlash.protConfig.publishInterval = 10;
   memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
   memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
-  configFlash.protConfig.publishTarget = false;
-  configFlash.protConfig.publishAllTemps = false;
-  configFlash.protConfig.publishPathAsRoot = false;
-  configFlash.protConfig.publishUpTime = false;
+  configFlash.protConfig.protocolFlags.publishTarget = false;
+  configFlash.protConfig.protocolFlags.publishAllTemps = false;
+  configFlash.protConfig.protocolFlags.publishPathAsRoot = false;
+  configFlash.protConfig.protocolFlags.publishUpTime = false;
+  configFlash.protConfig.keepAliveTime = 60;
   
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesConfig.valveConfig[i].active = false;
@@ -191,15 +193,15 @@ void CVdmConfig::readConfig()
     configFlash.protConfig.dataProtocol = prefs.getUChar(nvsProtDataProt);
     configFlash.protConfig.brokerIp = prefs.getULong(nvsProtBrokerIp);
     configFlash.protConfig.brokerPort = prefs.getUShort(nvsProtBrokerPort);
-    configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,2000);
+    configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,1000);
+    configFlash.protConfig.publishInterval = prefs.getULong(nvsProtPublishInterval,10);
     if (prefs.isKey(nvsProtBrokerUser))
       prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName));
     if (prefs.isKey(nvsProtBrokerPwd))
       prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd));
-    configFlash.protConfig.publishTarget = prefs.getUChar(nvsProtBrokerPublishTarget);
-    configFlash.protConfig.publishAllTemps = prefs.getUChar(nvsProtBrokerPublishAllTemps);
-    configFlash.protConfig.publishPathAsRoot = prefs.getUChar(nvsProtBrokerPublishPathAsRoot);
-    configFlash.protConfig.publishUpTime = prefs.getUChar(nvsProtBrokerPublishUpTime);
+    uint8_t a=prefs.getUChar(nvsProtBrokerPublishFlags,7);
+    configFlash.protConfig.protocolFlags =  *(VDM_PROTOCOL_CONFIG_FLAGS *)&a;
+    configFlash.protConfig.keepAliveTime = prefs.getUShort(nvsProtBrokerKeepAliveTime,60);
     prefs.end();
   }
 
@@ -269,12 +271,12 @@ void CVdmConfig::writeConfig(bool reboot)
     prefs.putULong(nvsProtBrokerIp,configFlash.protConfig.brokerIp);
     prefs.putUShort(nvsProtBrokerPort,configFlash.protConfig.brokerPort);
     prefs.putULong(nvsProtBrokerInterval,configFlash.protConfig.brokerInterval);
+    prefs.putULong(nvsProtPublishInterval,configFlash.protConfig.publishInterval);
     prefs.putString(nvsProtBrokerUser,configFlash.protConfig.userName);
     prefs.putString(nvsProtBrokerPwd,configFlash.protConfig.userPwd);
-    prefs.putUChar(nvsProtBrokerPublishTarget,configFlash.protConfig.publishTarget);
-    prefs.putUChar(nvsProtBrokerPublishAllTemps,configFlash.protConfig.publishAllTemps);
-    prefs.putUChar(nvsProtBrokerPublishPathAsRoot,configFlash.protConfig.publishPathAsRoot);
-    prefs.putUChar(nvsProtBrokerPublishUpTime,configFlash.protConfig.publishUpTime);
+    uint8_t a = *(uint8_t *)&configFlash.protConfig.protocolFlags;
+    prefs.putUChar(nvsProtBrokerPublishFlags,a);
+    prefs.putUShort(nvsProtBrokerKeepAliveTime,configFlash.protConfig.keepAliveTime);
   }
   prefs.end();
  
@@ -351,12 +353,14 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["ip"].isNull()) configFlash.protConfig.brokerIp = doc2IPAddress(doc["ip"]);
   if (!doc["port"].isNull()) configFlash.protConfig.brokerPort = doc["port"];
   if (!doc["interval"].isNull()) configFlash.protConfig.brokerInterval = doc["interval"];
+  if (!doc["publish"].isNull()) configFlash.protConfig.publishInterval = doc["publish"];
   if (!doc["user"].isNull()) strncpy(configFlash.protConfig.userName,doc["user"].as<const char*>(),sizeof(configFlash.netConfig.userName));
   if (!doc["pwd"].isNull()) strncpy(configFlash.protConfig.userPwd,doc["pwd"].as<const char*>(),sizeof(configFlash.netConfig.userPwd));
-  if (!doc["pubTarget"].isNull()) configFlash.protConfig.publishTarget = doc["pubTarget"];
-  if (!doc["pubAllTemps"].isNull()) configFlash.protConfig.publishAllTemps = doc["pubAllTemps"];
-  if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.publishPathAsRoot = doc["pubPathAsRoot"];
-  if (!doc["pubUpTime"].isNull()) configFlash.protConfig.publishUpTime = doc["pubUpTime"];
+  if (!doc["pubTarget"].isNull()) configFlash.protConfig.protocolFlags.publishTarget = doc["pubTarget"];
+  if (!doc["pubAllTemps"].isNull()) configFlash.protConfig.protocolFlags.publishAllTemps = doc["pubAllTemps"];
+  if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.protocolFlags.publishPathAsRoot = doc["pubPathAsRoot"];
+  if (!doc["pubUpTime"].isNull()) configFlash.protConfig.protocolFlags.publishUpTime = doc["pubUpTime"];
+  if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)

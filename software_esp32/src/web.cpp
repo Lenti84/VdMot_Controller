@@ -107,10 +107,12 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"ip\":\""+ip2String(protConfig.brokerIp)+"\","+
                     "\"port\":\""+String(protConfig.brokerPort)+"\","+
                     "\"interval\":"+String(protConfig.brokerInterval)+","+
-                    "\"pubTarget\":"+String(protConfig.publishTarget)+","+
-                    "\"pubAllTemps\":"+String(protConfig.publishAllTemps)+","+
-                    "\"pubPathAsRoot\":"+String(protConfig.publishPathAsRoot)+","+
-                    "\"pubUpTime\":"+String(protConfig.publishUpTime)+","+
+                    "\"publish\":"+String(protConfig.publishInterval)+","+
+                    "\"pubTarget\":"+String(protConfig.protocolFlags.publishTarget)+","+
+                    "\"pubAllTemps\":"+String(protConfig.protocolFlags.publishAllTemps)+","+
+                    "\"pubPathAsRoot\":"+String(protConfig.protocolFlags.publishPathAsRoot)+","+
+                    "\"pubUpTime\":"+String(protConfig.protocolFlags.publishUpTime)+","+
+                    "\"keepAliveTime\":"+String(protConfig.keepAliveTime)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
 }

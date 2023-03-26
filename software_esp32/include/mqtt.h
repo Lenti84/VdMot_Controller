@@ -61,13 +61,14 @@ class CMqtt
   private:
     void reconnect();
     void publish_valves ();
-
+    bool firstPublish;
     char mqtt_mainTopic[MAINTOPIC_LEN];
     char mqtt_commonTopic[MAINTOPIC_LEN];
     char mqtt_valvesTopic[MAINTOPIC_LEN];
     char mqtt_tempsTopic[MAINTOPIC_LEN];
     char mqtt_callbackTopic[MAINTOPIC_LEN];
     char stationName[MAINTOPIC_LEN];
+    uint32_t tsPublish;
 };
 
 extern CMqtt Mqtt;

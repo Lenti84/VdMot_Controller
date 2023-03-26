@@ -595,6 +595,18 @@
 				</td>
 			</tr>
 			<tr>
+				<th>Publish Interval (s)</th>
+				<td>
+				<input type="number" class="form-input" min="2" id="protcfg-Publish" name="protcfg-Publish"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Keep alive time (s)</th>
+				<td>
+				<input type="number" class="form-input" min="100" id="protcfg-keepAliveTime" name="protcfg-keepAliveTime"/>
+				</td>
+			</tr>
+			<tr>
 				<th>User name</th>
 				<td>
 				<input type="text" class="form-input" id="protcfg-User" name="protcfg-User"/>
@@ -625,7 +637,6 @@
 				<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
 			</fieldset>
 			</tr>
-	
 		</table>
 		</div>
 		</div>
@@ -2287,11 +2298,13 @@
 				protCfg.ip = id("protcfg-Ip").value;
 				protCfg.port = id("protcfg-Port").value;
 				protCfg.interval = id("protcfg-Interval").value;
+				protCfg.publish = id("protcfg-Publish").value;
 				protCfg.user = id("protcfg-User").value;
 				protCfg.pubTarget = id("protcfg-pubTarget").checked ? 1 : 0;
 				protCfg.pubAllTemps = id("protcfg-pubAllTemps").checked ? 1 : 0;
 				protCfg.pubPathAsRoot = id("protcfg-pubPathAsRoot").checked ? 1 : 0;
 				protCfg.pubUpTime = id("protcfg-pubUpTime").checked ? 1 : 0;
+				protCfg.keepAliveTime = id("protcfg-keepAliveTime").value;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -2781,11 +2794,13 @@
 				id("protcfg-Ip").value = dataProtConfig["ip"];
 				id("protcfg-Port").value = dataProtConfig["port"];
 				id("protcfg-Interval").value = dataProtConfig["interval"];
+				id("protcfg-Publish").value = dataProtConfig["publish"];
 				id("protcfg-User").value = dataProtConfig["user"];
 				id("protcfg-pubTarget").checked = dataProtConfig["pubTarget"];
 				id("protcfg-pubAllTemps").checked = dataProtConfig["pubAllTemps"];
 				id("protcfg-pubPathAsRoot").checked = dataProtConfig["pubPathAsRoot"];
 				id("protcfg-pubUpTime").checked = dataProtConfig["pubUpTime"];
+				id("protcfg-keepAliveTime").value = dataProtConfig["keepAliveTime"];
 				showBrokerIP();
 			}
 		}
