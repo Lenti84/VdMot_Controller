@@ -303,10 +303,14 @@ String CWeb::getValvesStatus()
                  if (StmApp.actuators[x].temp2>-500) {
                     result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
                  }
-                 //if (Mqtt.mqttReceived || ServerServices.jsonSetValveReceived) {
                  if (controlActive) {
+                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     result +=",\"tTarget\":" + String(((float)PiControl[x].target),1);
                     result +=",\"tValue\":" + String(((float)PiControl[x].value),1);
+                  } else {
+                    result +=",\"tTarget\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
+                    result +=",\"tValue\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
+                  }
                  }
                  result +="}";      
     start = true;
