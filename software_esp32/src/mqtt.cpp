@@ -69,6 +69,13 @@ PubSubClient mqtt_client(espClient);
 
 void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort) 
 {
+    memset(lastValveValues,0x0,sizeof(lastValveValues)); 
+    for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
+        lastTempValues[i].temperature=0;
+        memset(lastTempValues[i].id,0x0,sizeof(lastTempValues[i].id));
+        lastTempValues[i].publishNow=false;
+    }
+
     mqttReceived=false;
     mqtt_client.setServer(brokerIP, brokerPort);
     mqtt_client.setCallback(mcallback);
@@ -98,7 +105,66 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
 
 CMqtt::CMqtt()
 {
-    
+       
+}
+
+uint8_t CMqtt::checkForPublish() 
+{
+    uint8_t result=publishNothing;
+    uint8_t i;
+
+    forcePublish = true;
+    if (firstPublish) {
+        return publishCommon+publishValves+publishTemps;    
+    }
+    if (!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) {
+        if ((millis()-tsPublish)>(1000*VdmConfig.configFlash.protConfig.publishInterval)) {
+            return publishCommon+publishValves+publishTemps;    
+        }
+    } else {
+        forcePublish = false;
+        if ((millis()-tsPublish)>(1000*VdmConfig.configFlash.protConfig.minBrokerDelay)) {
+            // common
+            if (VdmSystem.systemMessage.length()>0) result = publishCommon; 
+            if (lastCommonValues.heatControl!=VdmConfig.configFlash.valvesControlConfig.heatControl) result = publishCommon; 
+            if (lastCommonValues.parkingPosition!=VdmConfig.configFlash.valvesControlConfig.parkingPosition) result = publishCommon; 
+            if (lastCommonValues.systemState!=VdmSystem.systemState) result = publishCommon; 
+        }
+        // valves
+        for (i=0;i<ACTUATOR_COUNT;i++) {
+            lastValveValues[i].publishNow=false;
+            if (VdmConfig.configFlash.valvesConfig.valveConfig[i].active) {
+                if ((millis()-lastValveValues[i].ts)>(1000*VdmConfig.configFlash.protConfig.minBrokerDelay)) {
+                    if ((lastValveValues[i].position!=StmApp.actuators[i].actual_position) || 
+                        (lastValveValues[i].target!=StmApp.actuators[i].target_position) ||
+                        (lastValveValues[i].state!=StmApp.actuators[i].state) ||
+                        (lastValveValues[i].meanCurrent!=StmApp.actuators[i].meancurrent) ||
+                        (lastValveValues[i].temp1!=StmApp.actuators[i].temp1) ||
+                        (lastValveValues[i].temp2!=StmApp.actuators[i].temp2) ||
+                        ((millis()-lastValveValues[i].ts)>(1000*VdmConfig.configFlash.protConfig.publishInterval))) {
+                            result|=publishValves;
+                            lastValveValues[i].publishNow=true;
+                            if ((millis()-lastValveValues[i].ts)>(1000*VdmConfig.configFlash.protConfig.publishInterval))
+                                lastValveValues[i].publishTimeOut=true;
+                    }
+                }
+            }
+        } 
+        // temps
+        for (i=0;i<TEMP_SENSORS_COUNT;i++) {
+            lastTempValues[i].publishNow=false;
+            if (VdmConfig.configFlash.tempsConfig.tempConfig[i].active) {
+                if ((millis()-lastTempValues[i].ts)>(1000*VdmConfig.configFlash.protConfig.minBrokerDelay)) {
+                    if ((lastTempValues[i].temperature!=StmApp.temps[i].temperature) ||
+                        ((millis()-lastTempValues[i].ts)>(1000*VdmConfig.configFlash.protConfig.publishInterval))) {
+                            result|=publishTemps;
+                            lastTempValues[i].publishNow=true;
+                    } 
+                }
+            }
+        }
+    }
+    return result;
 }
 
 void CMqtt::mqtt_loop() 
@@ -110,13 +176,15 @@ void CMqtt::mqtt_loop()
     if (mqtt_client.connected()) {
         mqtt_client.loop();
         if (VdmConfig.configFlash.protConfig.publishInterval<2) VdmConfig.configFlash.protConfig.publishInterval=2;
-        if (((millis()-tsPublish)>(1000*VdmConfig.configFlash.protConfig.publishInterval)) || firstPublish) {
+        uint8_t check=checkForPublish();
+       
+        if (check!=0) { 
             tsPublish = millis();
             firstPublish=false;
-            publish_valves();
+            publish_all(check);
         }
-        
     }
+        
     mqttConnected=mqtt_client.connected();
     mqttState=mqtt_client.state();
     /*
@@ -184,6 +252,9 @@ void CMqtt::reconnect()
     mqtt_client.subscribe(topicstr);    
 
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
+        lastValveValues[x].ts=millis();
+        lastValveValues[x].publishNow=false;
+        lastValveValues[x].publishTimeOut=false;
         if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
             memset(topicstr,0x0,sizeof(topicstr));
             memset(nrstr,0x0,sizeof(nrstr));
@@ -216,6 +287,10 @@ void CMqtt::reconnect()
                 }
             }
         }
+    }
+    for (uint8_t x = 0;x<TEMP_SENSORS_COUNT;x++) {
+        lastTempValues[x].ts=millis();
+        lastTempValues[x].publishNow=false;
     }
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
         syslog.log(LOG_DEBUG, "MQTT Connected...");
@@ -343,7 +418,124 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
     }
 }
 
-void CMqtt::publish_valves () 
+void CMqtt::publish_valves () {
+    char topicstr[MAINTOPIC_LEN+30];
+    char nrstr[11];
+    char valstr[10];
+    int8_t tempIdx;
+    uint8_t len;
+
+    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
+        if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
+            if (lastValveValues[x].publishNow || forcePublish) {
+                memset(topicstr,0x0,sizeof(topicstr));
+                memset(nrstr,0x0,sizeof(nrstr));
+                itoa((x+1), nrstr, 10);
+                if (strlen(VdmConfig.configFlash.valvesConfig.valveConfig[x].name)>0)
+                    strncpy(nrstr,VdmConfig.configFlash.valvesConfig.valveConfig[x].name,sizeof(nrstr));
+                // prepare prefix
+                strncat(topicstr, mqtt_valvesTopic,sizeof(topicstr) - strlen (topicstr) - 1);
+                strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
+                len = strlen(topicstr);
+
+                // actual value
+                if ((lastValveValues[x].position!=StmApp.actuators[x].actual_position) || forcePublish || lastValveValues[x].publishTimeOut) {
+                    strncat(topicstr, "/actual",sizeof(topicstr) - strlen (topicstr) - 1);
+                    itoa(StmApp.actuators[x].actual_position, valstr, 10);        
+                    mqtt_client.publish(topicstr, valstr);
+                    lastValveValues[x].position=StmApp.actuators[x].actual_position;
+                }
+                // target
+                if (VdmConfig.configFlash.protConfig.protocolFlags.publishTarget)  {
+                    if ((lastValveValues[x].target!=StmApp.actuators[x].target_position) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/target",sizeof(topicstr) - strlen (topicstr) - 1);
+                        itoa(StmApp.actuators[x].target_position, valstr, 10);
+                        mqtt_client.publish(topicstr, valstr);
+                        lastValveValues[x].target=StmApp.actuators[x].target_position;
+                    }
+                }
+                // state
+                if ((lastValveValues[x].state!=StmApp.actuators[x].state) || forcePublish || lastValveValues[x].publishTimeOut) {
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/state",sizeof(topicstr) - strlen (topicstr) - 1);
+                    itoa(StmApp.actuators[x].state, valstr, 10);
+                    mqtt_client.publish(topicstr, valstr);
+                    lastValveValues[x].state=StmApp.actuators[x].state;
+                }
+                // meancurrent
+                if ((lastValveValues[x].meanCurrent!=StmApp.actuators[x].meancurrent) || forcePublish || lastValveValues[x].publishTimeOut) {
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/meancur",sizeof(topicstr) - strlen (topicstr) - 1);
+                    itoa(StmApp.actuators[x].meancurrent, valstr, 10);
+                    mqtt_client.publish(topicstr, valstr);
+                    lastValveValues[x].meanCurrent=StmApp.actuators[x].meancurrent;
+                }
+                // temperature 1st sensor
+                if ((lastValveValues[x].temp1!=StmApp.actuators[x].temp1) || forcePublish || lastValveValues[x].publishTimeOut) {
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
+                    String s = String(((float)StmApp.actuators[x].temp1)/10,1); 
+                    mqtt_client.publish(topicstr, (const char*) &s);
+                    lastValveValues[x].temp1=StmApp.actuators[x].temp1;
+                }
+                // temperature 2nd sensor
+                if ((lastValveValues[x].temp2!=StmApp.actuators[x].temp2) || forcePublish || lastValveValues[x].publishTimeOut) {
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
+                    String s = String(((float)StmApp.actuators[x].temp2)/10,1); 
+                    mqtt_client.publish(topicstr, (const char*) &s);
+                    lastValveValues[x].temp2=StmApp.actuators[x].temp2;
+                }
+                lastValveValues[x].publishNow=false;
+                lastValveValues[x].publishTimeOut=false;
+                lastValveValues[x].ts=millis();
+            }
+        }
+    }
+}
+
+void CMqtt::publish_temps()
+{
+    char topicstr[MAINTOPIC_LEN+30];
+    char nrstr[11];
+    int8_t tempIdx;
+    uint8_t len;
+    
+    for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
+        if (lastTempValues[x].publishNow || forcePublish) {
+            tempIdx=VdmConfig.findTempID(StmApp.temps[x].id);
+            if (tempIdx>=0) {
+                if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
+                    if ((!Web.findIdInValve (tempIdx)) || VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps) {
+                        memset(topicstr,0x0,sizeof(topicstr));
+                        memset(nrstr,0x0,sizeof(nrstr));
+                        itoa((x+1), nrstr, 10);
+                        if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0)
+                            strncpy(nrstr,VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name,sizeof(nrstr));
+                        // prepare prefix
+                        strncat(topicstr, mqtt_tempsTopic,sizeof(topicstr) - strlen (topicstr) - 1);
+                        strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
+                        len = strlen(topicstr);
+                        // id
+                        strncat(topicstr, "/id",sizeof(topicstr) - strlen (topicstr) - 1);     
+                        mqtt_client.publish(topicstr,StmApp.temps[x].id);
+                        // actual value
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
+                        String s = String(((float)StmApp.temps[x].temperature)/10,1);     
+                        mqtt_client.publish(topicstr,(const char*) &s);
+                    }
+                }
+            }
+            lastTempValues[x].temperature=StmApp.temps[x].temperature;
+            lastTempValues[x].publishNow=false;
+            lastTempValues[x].ts=millis();
+        }
+    }
+} 
+
+void CMqtt::publish_common () 
 {
     char topicstr[MAINTOPIC_LEN+30];
     char nrstr[11];
@@ -351,119 +543,50 @@ void CMqtt::publish_valves ()
     int8_t tempIdx;
     uint8_t len;
     
-    if (VdmConfig.configFlash.protConfig.protocolFlags.publishTarget) {
-        memset(topicstr,0x0,sizeof(topicstr));
-        strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
-        len = strlen(topicstr);
+    memset(topicstr,0x0,sizeof(topicstr));
+    strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
+    len = strlen(topicstr);
+    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || (lastCommonValues.heatControl!=VdmConfig.configFlash.valvesControlConfig.heatControl)) {
         strncat(topicstr, "heatControl",sizeof(topicstr) - strlen (topicstr) - 1);
         itoa(VdmConfig.configFlash.valvesControlConfig.heatControl, valstr, 10);        
-        mqtt_client.publish(topicstr, valstr);  
+        mqtt_client.publish(topicstr, valstr); 
+        lastCommonValues.heatControl=VdmConfig.configFlash.valvesControlConfig.heatControl; 
+    }
 
-        topicstr[len] = '\0';
+    topicstr[len] = '\0';
+    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || (lastCommonValues.parkingPosition!=VdmConfig.configFlash.valvesControlConfig.parkingPosition)) {
         strncat(topicstr, "parkPosition",sizeof(topicstr) - strlen (topicstr) - 1);
         itoa(VdmConfig.configFlash.valvesControlConfig.parkingPosition, valstr, 10);        
-        mqtt_client.publish(topicstr, valstr);   
-    }  
-
-    memset(topicstr,0x0,sizeof(topicstr));
-    strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
-    len = strlen(topicstr);
-    strncat(topicstr, "state",sizeof(topicstr) - strlen (topicstr) - 1);
-    itoa(VdmSystem.systemState , valstr, 10);        
-    mqtt_client.publish(topicstr, valstr);  
-
-    memset(topicstr,0x0,sizeof(topicstr));
-    strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
-    len = strlen(topicstr);
+        mqtt_client.publish(topicstr, valstr);  
+        lastCommonValues.parkingPosition=VdmConfig.configFlash.valvesControlConfig.parkingPosition; 
+    }
+    topicstr[len] = '\0';
     
+    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || (lastCommonValues.systemState!=VdmSystem.systemState)) {
+        strncat(topicstr, "state",sizeof(topicstr) - strlen (topicstr) - 1);
+        itoa(VdmSystem.systemState , valstr, 10);        
+        mqtt_client.publish(topicstr, valstr);  
+        lastCommonValues.systemState=VdmSystem.systemState;
+    }
+    topicstr[len] = '\0';
     if (VdmConfig.configFlash.protConfig.protocolFlags.publishUpTime) {
         strncat(topicstr, "uptime",sizeof(topicstr) - strlen (topicstr) - 1);
         String upTime = VdmSystem.getUpTime();
         mqtt_client.publish(topicstr, (const char*) (upTime.c_str())); 
     }
     
+    topicstr[len] = '\0';
     if (VdmSystem.systemMessage.length()>0) {
         topicstr[len] = '\0';
         strncat(topicstr, "message",sizeof(topicstr) - strlen (topicstr) - 1);       
         mqtt_client.publish(topicstr,VdmSystem.systemMessage.c_str());  
         VdmSystem.systemMessage=""; 
     }
-
-    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
-        if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
-            memset(topicstr,0x0,sizeof(topicstr));
-            memset(nrstr,0x0,sizeof(nrstr));
-            itoa((x+1), nrstr, 10);
-            if (strlen(VdmConfig.configFlash.valvesConfig.valveConfig[x].name)>0)
-                strncpy(nrstr,VdmConfig.configFlash.valvesConfig.valveConfig[x].name,sizeof(nrstr));
-            // prepare prefix
-            strncat(topicstr, mqtt_valvesTopic,sizeof(topicstr) - strlen (topicstr) - 1);
-            strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
-            len = strlen(topicstr);
-
-            // actual value
-            strncat(topicstr, "/actual",sizeof(topicstr) - strlen (topicstr) - 1);
-            itoa(StmApp.actuators[x].actual_position, valstr, 10);        
-            mqtt_client.publish(topicstr, valstr);
-            
-            // target
-            if (VdmConfig.configFlash.protConfig.protocolFlags.publishTarget) {
-                topicstr[len] = '\0';
-                strncat(topicstr, "/target",sizeof(topicstr) - strlen (topicstr) - 1);
-                itoa(StmApp.actuators[x].target_position, valstr, 10);
-                mqtt_client.publish(topicstr, valstr);
-            }
-            // state
-            topicstr[len] = '\0';
-            strncat(topicstr, "/state",sizeof(topicstr) - strlen (topicstr) - 1);
-            itoa(StmApp.actuators[x].state, valstr, 10);
-            mqtt_client.publish(topicstr, valstr);
-            
-            // meancurrent
-            topicstr[len] = '\0';
-            strncat(topicstr, "/meancur",sizeof(topicstr) - strlen (topicstr) - 1);
-            itoa(StmApp.actuators[x].meancurrent, valstr, 10);
-            mqtt_client.publish(topicstr, valstr);
-
-            // temperature 1st sensor
-            topicstr[len] = '\0';
-            strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
-            String s = String(((float)StmApp.actuators[x].temp1)/10,1); 
-            mqtt_client.publish(topicstr, (const char*) &s);
-
-            // temperature 2nd sensor
-            topicstr[len] = '\0';
-            strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
-            s = String(((float)StmApp.actuators[x].temp2)/10,1); 
-            mqtt_client.publish(topicstr, (const char*) &s);
-        }
-    }
+}
     
-    for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
-        tempIdx=VdmConfig.findTempID(StmApp.temps[x].id);
-        if (tempIdx>=0) {
-            if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
-                if ((!Web.findIdInValve (tempIdx)) || VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps) {
-                    memset(topicstr,0x0,sizeof(topicstr));
-                    memset(nrstr,0x0,sizeof(nrstr));
-                    itoa((x+1), nrstr, 10);
-                    if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0)
-                        strncpy(nrstr,VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name,sizeof(nrstr));
-                    // prepare prefix
-                    strncat(topicstr, mqtt_tempsTopic,sizeof(topicstr) - strlen (topicstr) - 1);
-                    strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
-                    len = strlen(topicstr);
-                    // id
-                    strncat(topicstr, "/id",sizeof(topicstr) - strlen (topicstr) - 1);     
-                    mqtt_client.publish(topicstr,StmApp.temps[x].id);
-                    // actual value
-                    topicstr[len] = '\0';
-                    strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
-                    String s = String(((float)StmApp.temps[x].temperature)/10,1);     
-                    mqtt_client.publish(topicstr,(const char*) &s);
-                }
-            }
-        }
-    }
-    
+void CMqtt::publish_all (uint8_t publishFlags) 
+{
+   if (CHECK_BIT(publishFlags,0)==1) publish_common (); 
+   if (CHECK_BIT(publishFlags,1)==1) publish_valves ();
+   if (CHECK_BIT(publishFlags,2)==1) publish_temps ();
 }

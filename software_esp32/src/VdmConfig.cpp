@@ -99,13 +99,16 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.brokerPort = 0;
   configFlash.protConfig.brokerInterval = 1000;
   configFlash.protConfig.publishInterval = 10;
+  configFlash.protConfig.minBrokerDelay = 5;
   memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
   memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
   configFlash.protConfig.protocolFlags.publishTarget = false;
   configFlash.protConfig.protocolFlags.publishAllTemps = false;
   configFlash.protConfig.protocolFlags.publishPathAsRoot = false;
   configFlash.protConfig.protocolFlags.publishUpTime = false;
+  configFlash.protConfig.protocolFlags.publishOnChange = false;
   configFlash.protConfig.keepAliveTime = 60;
+
   
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesConfig.valveConfig[i].active = false;
@@ -202,6 +205,7 @@ void CVdmConfig::readConfig()
     uint8_t a=prefs.getUChar(nvsProtBrokerPublishFlags,7);
     configFlash.protConfig.protocolFlags =  *(VDM_PROTOCOL_CONFIG_FLAGS *)&a;
     configFlash.protConfig.keepAliveTime = prefs.getUShort(nvsProtBrokerKeepAliveTime,60);
+    configFlash.protConfig.minBrokerDelay = prefs.getUShort(nvsProtBrokerMinBrokerDelay,5);
     prefs.end();
   }
 
@@ -277,6 +281,7 @@ void CVdmConfig::writeConfig(bool reboot)
     uint8_t a = *(uint8_t *)&configFlash.protConfig.protocolFlags;
     prefs.putUChar(nvsProtBrokerPublishFlags,a);
     prefs.putUShort(nvsProtBrokerKeepAliveTime,configFlash.protConfig.keepAliveTime);
+    prefs.putUShort(nvsProtBrokerMinBrokerDelay,configFlash.protConfig.minBrokerDelay);
   }
   prefs.end();
  
@@ -360,7 +365,9 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["pubAllTemps"].isNull()) configFlash.protConfig.protocolFlags.publishAllTemps = doc["pubAllTemps"];
   if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.protocolFlags.publishPathAsRoot = doc["pubPathAsRoot"];
   if (!doc["pubUpTime"].isNull()) configFlash.protConfig.protocolFlags.publishUpTime = doc["pubUpTime"];
+  if (!doc["pubOnChange"].isNull()) configFlash.protConfig.protocolFlags.publishOnChange = doc["pubOnChange"];
   if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
+  if (!doc["pubMinDelay"].isNull()) configFlash.protConfig.minBrokerDelay = doc["pubMinDelay"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)

@@ -88,6 +88,7 @@ typedef struct  {
   uint8_t publishAllTemps : 1;
   uint8_t publishPathAsRoot : 1 ;
   uint8_t publishUpTime : 1;
+  uint8_t publishOnChange : 1;
 } VDM_PROTOCOL_CONFIG_FLAGS;
 
 typedef struct {
@@ -100,6 +101,7 @@ typedef struct {
   char userPwd[65];
   VDM_PROTOCOL_CONFIG_FLAGS protocolFlags;
   uint16_t keepAliveTime;
+  uint32_t minBrokerDelay;
 } VDM_PROTOCOL_CONFIG;
 
 typedef struct {
@@ -196,6 +198,7 @@ typedef struct
 #define nvsProtBrokerPwd            "brokerPwd"
 #define nvsProtBrokerPublishFlags   "brokerPF"
 #define nvsProtBrokerKeepAliveTime  "brokerKAT"
+#define nvsProtBrokerMinBrokerDelay "brokerMD"
 
 #define nvsValvesCfg                "valvesCfg"
 #define nvsValvesControlCfg         "valvesCtrlCfg"
