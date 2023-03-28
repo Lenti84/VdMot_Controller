@@ -84,6 +84,7 @@ void CVdmTask::startMqtt(uint32_t interval)
     uint32_t thisInterval = 100;
     if (taskIdMqtt==TASKMGR_INVALIDID) {
         if (interval >= 100) thisInterval = interval;
+        VdmNet.mqttBroker();
         taskIdMqtt = taskManager.scheduleFixedRate(thisInterval, [] {
             VdmNet.mqttBroker();
         });

@@ -40,6 +40,8 @@
 
 #pragma once
 
+#include "globals.h"
+
 #define MAINTOPIC_LEN 50
 
 // MQTT settings
@@ -47,6 +49,37 @@
 #define DEFAULT_COMMONTOPIC  "common/"
 #define DEFAULT_VALVESTOPIC  "valves/"
 #define DEFAULT_TEMPSTOPIC   "temps/"
+
+
+#define publishNothing  0
+#define publishCommon   1
+#define publishValves   2
+#define publishTemps    4
+
+typedef struct {
+  uint8_t  position;
+  uint8_t target;
+  uint8_t state;
+  uint16_t meanCurrent;
+  int temp1;
+  int temp2;
+  uint32_t ts;
+  bool publishNow;
+  bool publishTimeOut;
+} LASTVALVEVALUES; 
+
+typedef struct {
+  int16_t temperature;          // temperature of assigned sensor
+  char id[25];
+  uint32_t ts;
+  bool publishNow;
+} LASTTEMPVALUES; 
+
+typedef struct {
+  uint8_t heatControl;          
+  uint8_t parkingPosition;
+  uint8_t systemState;
+} LASTCOMMONVALUES; 
 
 class CMqtt
 {
@@ -60,14 +93,23 @@ class CMqtt
     bool mqttReceived;
   private:
     void reconnect();
+    void publish_all (uint8_t publishFlags);
+    void publish_common (); 
     void publish_valves ();
-
+    void publish_temps ();
+    uint8_t checkForPublish(); 
+    bool firstPublish;
     char mqtt_mainTopic[MAINTOPIC_LEN];
     char mqtt_commonTopic[MAINTOPIC_LEN];
     char mqtt_valvesTopic[MAINTOPIC_LEN];
     char mqtt_tempsTopic[MAINTOPIC_LEN];
     char mqtt_callbackTopic[MAINTOPIC_LEN];
     char stationName[MAINTOPIC_LEN];
+    uint32_t tsPublish;
+    bool forcePublish;
+    LASTCOMMONVALUES lastCommonValues;
+    LASTVALVEVALUES lastValveValues[ACTUATOR_COUNT];
+    LASTTEMPVALUES lastTempValues[TEMP_SENSORS_COUNT];
 };
 
 extern CMqtt Mqtt;

@@ -104,6 +104,11 @@
 	  padding: 5px;
 	  text-align: center;
 	}
+	.tabpframe {
+	  border-top: white 1px solid;
+	  padding: 5px;
+	  text-align: center;
+	}
 	
 	.form-input{
 		width: 100px;
@@ -165,6 +170,10 @@
 		display: block;
 		text-align: center;
 		padding-left: 5px;
+	}
+
+	.collapse {
+		visibility: collapse;
 	}
 	
    .buttonclass:hover {
@@ -576,7 +585,7 @@
             </tr> 
 		</table>
 		<table id="protcfg-Broker" style="display:none;" class="tabTable1">
-				<tr>
+			<tr>
 				<th>Broker IP</th>
 				<td>
 				<input type="text" class="form-input" id="protcfg-Ip" name="protcfg-Ip" placeholder="xxx.xxx.xxx.xxx"/>
@@ -586,12 +595,6 @@
 				<th>Broker Port</th>
 				<td>
 				<input type="text" class="form-input" id="protcfg-Port" name="protcfg-Port" placeholder="xxxxx"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Interval (ms)</th>
-				<td>
-				<input type="number" class="form-input" min="100" id="protcfg-Interval" name="protcfg-Interval"/>
 				</td>
 			</tr>
 			<tr>
@@ -613,8 +616,41 @@
 				</td>
 			</tr>
 		</table>
-		
-		<div class="tabiframe" > 
+		<div id="div-protcfg-Broker3" class="tabpframe"> 	
+		<table id="protcfg-Broker3" style="display:none;" class="tabTable1">
+			<tr>
+				<th>Interval (ms)</th>
+				<td>
+				<input type="number" class="form-input" min="100" id="protcfg-Interval" name="protcfg-Interval" title="Polling interval in ms (default 1000). This polls the mqtt connection for events coming from broker"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Publish Interval (s)</th>
+				<td>
+				<input type="number" class="form-input" min="2" id="protcfg-Publish" name="protcfg-Publish" title="If Publish on change is not checked, it defines the publish interval of all values in seconds (default 10), otherwise it defines the time out to publish the values even the value was not changed."/>
+				</td>
+			</tr>
+			<tr>
+				<th>Publish on change</th>
+				<td>
+				<input type="checkbox" id="protcfg-pubOnChange" name="protcfg-pubOnChange" titel="Publish values if changed or time out (defined in Publish interval, individually for each valve and temperature sensor)"/>
+				</td>
+			</tr>
+			<tr id="tr-minPubTime">
+				<th>Min time for next publish (s)</th>
+				<td>
+				<input type="number" class="form-input" min="2" id="protcfg-pubMinDelay" name="protcfg-pubMinDelay" title="Minimum time (in seconds) the system wait for the next publishing values, individually for each valve and temperature sensor"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Keep alive time (s)</th>
+				<td>
+				<input type="number" class="form-input" min="100" id="protcfg-keepAliveTime" name="protcfg-keepAliveTime" title="After this time the connection will be closed if there is no traffic"/>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div class="tabpframe"> 
 		<table id="protcfg-Broker1" style="display:none;" class="tabTable">
 			<tr>
 			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:6em;display:none;">
@@ -625,7 +661,6 @@
 				<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
 			</fieldset>
 			</tr>
-	
 		</table>
 		</div>
 		</div>
@@ -1434,11 +1469,14 @@
 		}
 		
 		function show_hide_column(tableId,col_no, do_show) {
-		   let tbl = id(tableId);
-		   let col = tbl.col[col_no];
-		   if (col) {
-			 col.visible=do_show;
-		   }
+		   	let tbl = id(tableId);
+		   	for (i=0;i<tbl.rows.length;i++) {
+		   		let thiscell = tbl.rows[i].cells[col_no];
+				if (do_show===true)
+					thiscell.classList.remove('hide');
+				else
+					thiscell.classList.add('hide');
+		  	 }
 		}
 		
 
@@ -1581,7 +1619,10 @@
 				el.setAttribute('onclick','setValve(this);');
 				thiscell.appendChild(el);
 				valvesTable.rows[row].cells[0].innerHTML = row;
+				thiscell.classList.add('hide');
 			}
+			let thiscell = ValvesTable.rows[0].cells[6];
+			thiscell.classList.add('hide');
 			valvesTable.rows[0].cells[0].textContent = 'No';
 			valvesTable.rows[0].cells[1].textContent = 'Name';
 			valvesTable.rows[0].cells[2].textContent = '%';
@@ -1936,19 +1977,34 @@
 			valvesControlTable.rows[0].cells[col].title = 'Active zone of the valve (0-100 %)';
 		}
 		
-		function showBrokerIP(){
+		function showBrokerIP() {
 			let x = id("protcfg-Broker");
+			let div1=id("div-protcfg-Broker3");
 			let select = id("protcfg-dataProt").selectedIndex;
 			if (select === 0) {
 				x.style.display = "none";
+				div1.classList.remove("tabpframe");
 			} else {
 				x.style.display = "block";
+				div1.classList.add("tabpframe");
 			}
 			id("protcfg-Broker1").style.display=x.style.display;
 			id("protcfg-Broker2").style.display=x.style.display;
+			id("protcfg-Broker3").style.display=x.style.display;
+			
+
+		}
+
+		function showMinPublish() {
+			let e = id("tr-minPubTime");
+			if (id("protcfg-pubOnChange").checked) {
+				e.style.display = "";
+			} else {
+				e.style.display = "none";
+			}	
 		}
 		
-		function showWifi(){
+		function showWifi() {
 			let x = id("netcfg-wifi");
 			let e = id("tr-rssi");
 			let select = id("netcfg-EthWifi").selectedIndex;
@@ -2076,6 +2132,9 @@
 				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
 			}
 			
+			id ("protcfg-pubOnChange").onclick = function() {
+				showMinPublish();
+			}
 			
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
@@ -2110,6 +2169,7 @@
 			} 
 			const valvesTable = id('valvesTable');
 			const valvesCfgTable = id('cfgValvesTable');
+			show_hide_column('valvesTable',6, checked);
 			for (i=1; i<valvesTable.rows.length;i++){
 				let idx = valvesTable.rows[i].cells[0].textContent;
 				let active=id('cfgVActive'+idx).checked; 
@@ -2287,11 +2347,15 @@
 				protCfg.ip = id("protcfg-Ip").value;
 				protCfg.port = id("protcfg-Port").value;
 				protCfg.interval = id("protcfg-Interval").value;
+				protCfg.publish = id("protcfg-Publish").value;
+				protCfg.pubMinDelay = id("protcfg-pubMinDelay").value;
 				protCfg.user = id("protcfg-User").value;
 				protCfg.pubTarget = id("protcfg-pubTarget").checked ? 1 : 0;
 				protCfg.pubAllTemps = id("protcfg-pubAllTemps").checked ? 1 : 0;
 				protCfg.pubPathAsRoot = id("protcfg-pubPathAsRoot").checked ? 1 : 0;
 				protCfg.pubUpTime = id("protcfg-pubUpTime").checked ? 1 : 0;
+				protCfg.pubOnChange = id("protcfg-pubOnChange").checked ? 1 : 0;
+				protCfg.keepAliveTime = id("protcfg-keepAliveTime").value;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -2447,7 +2511,6 @@
 				display = 'none';
 			}  
 			id('cfgVCKi'+linkNo).style.display=display;
-			//show_hide_column('cfgValvesControlTable',cfgVCKiCol, (display == 'block'));
 		}		
 		
 		function setCfgVCLink(thisLink){
@@ -2781,12 +2844,17 @@
 				id("protcfg-Ip").value = dataProtConfig["ip"];
 				id("protcfg-Port").value = dataProtConfig["port"];
 				id("protcfg-Interval").value = dataProtConfig["interval"];
+				id("protcfg-Publish").value = dataProtConfig["publish"];
+				id("protcfg-pubMinDelay").value = dataProtConfig["pubMinDelay"];
 				id("protcfg-User").value = dataProtConfig["user"];
 				id("protcfg-pubTarget").checked = dataProtConfig["pubTarget"];
 				id("protcfg-pubAllTemps").checked = dataProtConfig["pubAllTemps"];
 				id("protcfg-pubPathAsRoot").checked = dataProtConfig["pubPathAsRoot"];
 				id("protcfg-pubUpTime").checked = dataProtConfig["pubUpTime"];
+				id("protcfg-pubOnChange").checked = dataProtConfig["pubOnChange"];
+				id("protcfg-keepAliveTime").value = dataProtConfig["keepAliveTime"];
 				showBrokerIP();
+				showMinPublish();
 			}
 		}
 		

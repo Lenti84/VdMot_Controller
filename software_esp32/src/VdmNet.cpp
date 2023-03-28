@@ -68,7 +68,7 @@
 
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
-
+#include "esp32-hal-time.c"
 
 // A UDP instance to let us send and receive packets over UDP
 WiFiUDP udpClient;

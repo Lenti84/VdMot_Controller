@@ -83,17 +83,25 @@ typedef struct {
   char stationName[21];
 } VDM_SYSTEM_CONFIG;
 
+typedef struct  {
+  uint8_t publishTarget : 1 ;
+  uint8_t publishAllTemps : 1;
+  uint8_t publishPathAsRoot : 1 ;
+  uint8_t publishUpTime : 1;
+  uint8_t publishOnChange : 1;
+} VDM_PROTOCOL_CONFIG_FLAGS;
+
 typedef struct {
   uint8_t  dataProtocol; // 0 = no protocol , 1 = mqtt
   uint32_t brokerIp;
   uint16_t brokerPort;
   uint32_t brokerInterval;
+  uint32_t publishInterval;
   char userName[65];
   char userPwd[65];
-  bool publishTarget;
-  bool publishAllTemps;
-  bool publishPathAsRoot;
-  bool publishUpTime;
+  VDM_PROTOCOL_CONFIG_FLAGS protocolFlags;
+  uint16_t keepAliveTime;
+  uint32_t minBrokerDelay;
 } VDM_PROTOCOL_CONFIG;
 
 typedef struct {
@@ -185,12 +193,12 @@ typedef struct
 #define nvsProtBrokerIp             "brokerIp"
 #define nvsProtBrokerPort           "brokerPort"
 #define nvsProtBrokerInterval       "brokerInterval"
+#define nvsProtPublishInterval      "publishInterval"
 #define nvsProtBrokerUser           "brokerUser"
 #define nvsProtBrokerPwd            "brokerPwd"
-#define nvsProtBrokerPublishTarget  "brokerPT"
-#define nvsProtBrokerPublishAllTemps  "brokerPAT"
-#define nvsProtBrokerPublishPathAsRoot  "brokerPaR"
-#define nvsProtBrokerPublishUpTime  "brokerPuP"
+#define nvsProtBrokerPublishFlags   "brokerPF"
+#define nvsProtBrokerKeepAliveTime  "brokerKAT"
+#define nvsProtBrokerMinBrokerDelay "brokerMD"
 
 #define nvsValvesCfg                "valvesCfg"
 #define nvsValvesControlCfg         "valvesCtrlCfg"

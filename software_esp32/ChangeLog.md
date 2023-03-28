@@ -11,6 +11,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.1.1]
+### Breaking Changed
+- protocol flags redefined, please check settings 
+### Changed
+- MQTT : loop interval and publish interval separated. Default : interval = 1000 (ms) , publish 10 (s)  
+
 ## [1.1.0]
 ### Changed
 - webui : control configuration does not reset the system
