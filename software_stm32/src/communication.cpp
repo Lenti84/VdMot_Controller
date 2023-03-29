@@ -28,6 +28,9 @@
   Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
 *END************************************************************************/
 
+#define SERIAL_TX_BUFFER_SIZE 256
+#define SERIAL_RX_BUFFER_SIZE 256
+
 #include <Arduino.h>
 #include "hardware.h"
 #include "app.h"
@@ -135,6 +138,9 @@ void communication_setup (void) {
 	COMM_SER.begin(115200, SERIAL_8N1);
 	while(!COMM_SER);
 	//COMM_SER.println("alive");COMM_SER.flush();
+	#ifdef commDebug
+		COMM_DBG.println("SERIAL_BUFFER_SIZE TX="+String(SERIAL_TX_BUFFER_SIZE)+" RX="+String(SERIAL_RX_BUFFER_SIZE)); 
+	#endif
 }
 
 
