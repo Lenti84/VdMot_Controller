@@ -235,6 +235,7 @@ var getFSIntervalID = null;
 		async uploadNow() {
 			const input = id('STMFiles');
 			await uploadFile(input.files[0]);
+			await this.getFSDir();
 		}
 	,
 		async updateNow() {
