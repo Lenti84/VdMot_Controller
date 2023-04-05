@@ -56,6 +56,8 @@
 #define publishValves   2
 #define publishTemps    4
 
+#define MAX_MQTT_RETRIES 100
+
 typedef struct {
   uint8_t  position;
   uint8_t target;
@@ -98,6 +100,7 @@ class CMqtt
     void publish_valves ();
     void publish_temps ();
     uint8_t checkForPublish(); 
+    uint8_t reconnectCounter;
     bool firstPublish;
     char mqtt_mainTopic[MAINTOPIC_LEN];
     char mqtt_commonTopic[MAINTOPIC_LEN];

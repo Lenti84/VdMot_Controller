@@ -55,7 +55,6 @@
 #include "stm32ota.h"
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
-//#include <SPIFFS.h>
 #include "ServerServices.h"
 #include "VdmSystem.h"
 #include "VdmTask.h"
@@ -583,16 +582,6 @@ AsyncCallbackJsonWebHandler* testPOHandler = new AsyncCallbackJsonWebHandler("/t
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(testPOHandler);  
-
-AsyncCallbackJsonWebHandler* testEmailHandler = new AsyncCallbackJsonWebHandler("/testEmail", [](AsyncWebServerRequest *request, JsonVariant &json) {
-    if (json.is<JsonObject>()) {
-      JsonObject&& jsonObj = json.as<JsonObject>();
-      Messenger.testEmail(jsonObj);
-      request->send(200, aj, resOk);
-    } else request->send(400, tp, "Not an object");
-  });
-  server.addHandler(testEmailHandler);  
-
 
   WT32AsyncOTA.begin(&server);    // Start WT32OTA
   server.begin();

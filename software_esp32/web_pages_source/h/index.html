@@ -818,73 +818,6 @@
 			</table>
 		</dialog>
 
-		<dialog id="emailParameterDialog" class="dialogClass">
-			<h3>Email</h3>
-			<table id="cfgEmailParam" class="tabTable">
-			<tr>
-				<button id="test-Email" class="buttonclass1">test</button>
-			</tr>
-			<tr>
-				<button id="close-EmailParameterDialog" class="buttonclass1">close</button>
-			</tr>
-			<tr>
-				<th>Host Name</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="50" id="cfgEmailHostName" name="cfgEmailHostName"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Port</th>
-				<td>
-				<input type="number" class="form-input" style="width:50px;" min="1" max="65535" id="cfgEmailServerPort" name="cfgEmailServerPort"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Login Email</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="50" id="cfgEmailLoginEmail" name="cfgEmailLoginEmail"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Login Password</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="50" id="cfgEmailLoginPwd" name="cfgEmailLoginPwd"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Login User Domain</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="50" id="cfgEmailLoginUserDomain" name="cfgEmailLoginUserDomain"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Sender Name</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="50" id="cfgEmailSenderName" name="cfgEmailSenderName"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Sender Email</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="50" id="cfgEmailSenderEmail" name="cfgEmailSenderEmail"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Receiver Name</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="50" id="cfgEmailReceiverName" name="cfgEmailReceiverName"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Receiver Email</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="50" id="cfgEmailReceiverEmail" name="cfgEmailReceiverEmail"/>
-				</td>
-			</tr>
-			
-			</table>
-		</dialog>
-
 		<div class="rtabframe" id ="messengerTabFrame" style="height:250px">
 			<h3>Messenger</h3>
 			<table id="cfgValvesTable1" class="tabTable">
@@ -892,7 +825,6 @@
 				<fieldset class="checkboxgroup1" style="height:4em;" id="cfgMessengerFieldSet1">
 					<legend>Active</legend>
 					<label><input type="checkbox" id="MsgPOCfg-Active" name="theGroup">Pushover <input type="button" class="buttonclass1" id="msgCfg-PushOverParam" style="height:2em;" value="..." title="Push over parameter" /></label>
-					<label><input type="checkbox" id="MsgEmailCfg-Active" name="theGroup">Email <input type="button" class="buttonclass1" id="msgCfg-EmailParam" style="height:2em;" value="..." title="Email parameter" /></label>
 				</fieldset>
 				<fieldset class="checkboxgroup1" style="height:5em;" id="cfgValvesTableFieldSet2">
 					<legend>Send reasons</legend>	
@@ -2330,16 +2262,6 @@
 			id("test-pushOver").addEventListener("click", () => {
     			testPushOver();
 			});
-
-			id("msgCfg-EmailParam").addEventListener("click", () => {
-    			id("emailParameterDialog").showModal();
-			});
-			id("close-EmailParameterDialog").addEventListener("click", () => {
-    			id("emailParameterDialog").close();
-			});
-			id("test-Email").addEventListener("click", () => {
-    			testEmail();
-			});
 		}
 		
 		async function testPushOver(){
@@ -2348,20 +2270,6 @@
 			testPO.userToken = id("cfgPushOverUserToken").value;
 			testPO.title = id("cfgPushOverTitle").value;
 			await postJson("testPO",JSON.stringify(testPO));
-		}
-
-		async function testEmail(){
-			let testEmail={};
-			testEmail.hostName = id("cfgEmailHostName").value;
-			testEmail.port = id("cfgEmailServerPort").value;
-			testEmail.loginEmail = id("cfgEmailLoginEmail").value;
-			testEmail.loginPwd = id("cfgEmailLoginPwd").value;
-			testEmail.loginUserDomain = id("cfgEmailLoginUserDomain").value;
-			testEmail.senderName = id("cfgEmailSenderName").value;
-			testEmail.senderEmail = id("cfgEmailSenderEmail").value;
-			testEmail.receiverName = id("cfgEmailReceiverName").value;
-			testEmail.receiverEmail = id("cfgEmailReceiverEmail").value;
-			await postJson("testEmail",JSON.stringify(testEmail));
 		}
 
 		function SetTIdxHasChanged() {
@@ -2590,19 +2498,6 @@
 			msgCfg.reason = reason;
 			msgCfg.PO = PO;
 			
-			let Email ={};
-			Email.active = id("MsgEmailCfg-Active").checked ? 1 : 0;
-			Email.hostName = id("cfgEmailHostName").value;
-			Email.port = id("cfgEmailServerPort").value;
-			Email.loginEmail = id("cfgEmailLoginEmail").value;
-			Email.loginPwd = id("cfgEmailLoginPwd").value;
-			Email.loginUserDomain = id("cfgEmailLoginUserDomain").value;
-			Email.senderName = id("cfgEmailSenderName").value;
-			Email.senderEmail = id("cfgEmailSenderEmail").value;
-			Email.receiverName = id("cfgEmailReceiverName").value;
-			Email.receiverEmail = id("cfgEmailReceiverEmail").value;
-			
-			msgCfg.Email = Email;
 			await postJson("msgconfig",JSON.stringify(msgCfg));
 			return (true);
 		}
@@ -3106,17 +3001,6 @@
 				id("cfgPushOverAPIToken").value = dataMsgConfig.PO.appToken;
 				id("cfgPushOverUserToken").value = dataMsgConfig.PO.userToken;
 				id("cfgPushOverTitle").value = dataMsgConfig.PO.title;
-
-				id("MsgEmailCfg-Active").checked = dataMsgConfig.Email.active;
-				id("cfgEmailHostName").value = dataMsgConfig.Email.hostName;
-				id("cfgEmailServerPort").value = dataMsgConfig.Email.port;
-				id("cfgEmailLoginEmail").value = dataMsgConfig.Email.loginEmail;
-				id("cfgEmailLoginPwd").value = dataMsgConfig.Email.loginPwd;
-				id("cfgEmailLoginUserDomain").value = dataMsgConfig.Email.loginUserDomain;
-				id("cfgEmailSenderName").value = dataMsgConfig.Email.senderName;
-				id("cfgEmailSenderEmail").value = dataMsgConfig.Email.senderEmail;
-				id("cfgEmailReceiverName").value = dataMsgConfig.Email.receiverName;
-				id("cfgEmailReceiverEmail").value = dataMsgConfig.Email.receiverEmail;
 
 				return (true);
 			}

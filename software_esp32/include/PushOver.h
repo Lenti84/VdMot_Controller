@@ -3,7 +3,7 @@
 
   author : SurfGargano, Lenti84
 
-  Comments:
+  Comments: derived from https://github.com/brunojoyal/PushoverESP32
 
   Version :
 
@@ -38,77 +38,41 @@
 *END************************************************************************/
 
 
-
 #pragma once
 
-#include <Arduino.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 #include <FS.h>
-#include <CRC32.h>
-#include <LittleFS.h>
 
 
-#define     STM32OTA_START          0x12
-#define     STM32OTA_STARTBLANK     0x45
-#define     STM32OTA_BLOCKSIZE      256
-
-typedef struct {
-  File fsfile;
-  uint32_t size;
-  uint16_t blockcnt;
-  uint16_t lastbytes;
-  uint32_t crc;
-} flashfile;
 
 
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
-
-
-enum ota_state {STM32OTA_IDLE, STM32OTA_PREPARE, STM32OTA_SENDSIGN, \
-                STM32OTA_INITSTM, STM32OTA_ERASE_START, STM32OTA_ERASE_FIN, STM32OTA_PREPAREFILE, \
-                STM32OTA_VERIFY, STM32OTA_VERIFYREAD, STM32OTA_GETID, STM32OTA_FLASH, STM32OTA_STARTOVER, \
-                STM32OTA_ERROR };
-
-
-class CStm32 
+struct CPushoverMessage
 {
 public:
-  CStm32();
-  void STM32ota_setup();
-  void STM32ota_begin();
-  void STM32ota_start(uint8_t command, String thisFileName);
-  void STM32ota_loop();
-  void FlashMode();
-  void RunMode();
-  void ResetSTM32(bool useTask = false);
-  bool waitForSTMResponse (uint32_t timeout_ms);
-  void clearUART_STM32Buffer();
-
-  volatile uint8_t stmUpdPercent;
-  volatile otaUpdateStatus stmUpdateStatus;
-  File dir;
-  File file;
-
-  flashfile myflashfile;
-  String updateFileName;
-private:
-  int PrepareFile(String FileName);
-  int FlashBytes(int Block, int Bytes);
-  uint8_t stm32StartRead(uint32_t rdaddress, uint16_t rdlen);
-  int stm32ota_command;
-  ota_state stm32ota_state;
-  
-  int timeout;
-  int count;
-  uint8_t buffer[STM32OTA_BLOCKSIZE];
- // uint8_t id;
-  uint8_t skipsigning;
-  int blockcounter;
-  uint32_t timer;
-
-  String tempstr;
-  uint32_t  tempcrc;
-  CRC32 crc;
-
+	const char *message = "";
+	const char *title = "";
+	const char *url = "";
+	const char *url_title = "";
+	const char *sound = "";
+	bool html = false;
+	uint8_t priority = 0;
+	uint32_t timestamp;
+	File *attachment = NULL;
 };
 
-extern CStm32 Stm32;
+class CPushover
+{
+private:
+	uint16_t _timeout = 5000;
+	const char *_token;
+	const char *_user;
+
+public:
+	CPushover(const char *, const char *);
+	CPushover();
+	void setUser(const char *);
+	void setToken(const char *);
+	int send(CPushoverMessage message);
+};

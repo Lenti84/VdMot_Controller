@@ -33,8 +33,6 @@
 #include "stm32ota.h"
 #include "globals.h"
 #include "VdmTask.h"
-//#include <SPIFFS.h>
-//#include <FS.h>
 #include <CRC32.h>
 
 #include <FS.h>

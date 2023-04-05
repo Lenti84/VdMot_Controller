@@ -58,8 +58,6 @@
 #include "stm32ota.h"
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
-//#include <SPIFFS.h>
-//#include <FS.h>
 
 #include "VdmTask.h"
 #include "VdmSystem.h"
