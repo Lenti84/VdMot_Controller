@@ -69,6 +69,7 @@ public:
   String getSysDynInfo();
   String getSysInfo();
   String getSysConfig (VDM_SYSTEM_CONFIG sysConfig);
+  String getMsgConfig (VDM_MSG_CONFIG msgConfig);
   String getFSDir();
   String getStmUpdStatus();
   bool findIdInValve (uint8_t idx);

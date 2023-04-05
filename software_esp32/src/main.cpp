@@ -71,6 +71,8 @@ void setup(void) {
     UART_DBG.printf("\r\n\r\nAddress of Stackpointer near start is:  %p \r\n",  (uint32_t *)StackPtrAtStart);
     UART_DBG.printf("End of Stack is near: %p \r\n",  (uint32_t *)StackPtrEnd);
     UART_DBG.printf("Free Stack near start is:  %d \r\n",  (uint32_t)StackPtrAtStart - (uint32_t)StackPtrEnd);
+    UART_DBG.printf("Free Prefs entries  %d \r\n",  VdmConfig.prefs.freeEntries());
+    UART_DBG.printf("Config space  %d bytes (max 20k) \r\n",  sizeof(VdmConfig.configFlash));
   #endif
 
   Stm32.STM32ota_setup();

@@ -153,6 +153,22 @@ void CVdmConfig::clearConfig()
   configFlash.netConfig.syslogLevel=0;
   configFlash.netConfig.syslogIp=0;
   configFlash.netConfig.syslogPort=0; 
+
+  configFlash.messengerConfig.activeFlags.pushOver=0;
+  configFlash.messengerConfig.activeFlags.email=0;
+  memset(configFlash.messengerConfig.pushover.title,0,sizeof(configFlash.messengerConfig.pushover.title));
+  memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
+  memset(configFlash.messengerConfig.pushover.userToken,0,sizeof(configFlash.messengerConfig.pushover.userToken));
+
+  memset(configFlash.messengerConfig.mail.server_host_name,0,sizeof(configFlash.messengerConfig.mail.server_host_name));
+  configFlash.messengerConfig.mail.server_port=465;         // for TLS with STARTTLS or 25 (Plain/TLS with STARTTLS) or 465 (SSL)
+  memset(configFlash.messengerConfig.mail.login_email,0,sizeof(configFlash.messengerConfig.mail.login_email));
+  memset(configFlash.messengerConfig.mail.login_password,0,sizeof(configFlash.messengerConfig.mail.login_password));
+  memset(configFlash.messengerConfig.mail.login_user_domain,0,sizeof(configFlash.messengerConfig.mail.login_user_domain));
+  memset(configFlash.messengerConfig.mail.sender_name,0,sizeof(configFlash.messengerConfig.mail.sender_name));
+  memset(configFlash.messengerConfig.mail.sender_email,0,sizeof(configFlash.messengerConfig.mail.sender_email));
+  memset(configFlash.messengerConfig.mail.receiver_name,0,sizeof(configFlash.messengerConfig.mail.receiver_name));
+  memset(configFlash.messengerConfig.mail.receiver_email,0,sizeof(configFlash.messengerConfig.mail.receiver_email));
 }
 
 void CVdmConfig::readConfig()
@@ -160,7 +176,7 @@ void CVdmConfig::readConfig()
   if (prefs.begin(nvsSystemCfg,false)) {
     configFlash.systemConfig.celsiusFahrenheit=prefs.getUChar(nvsSystemCelsiusFahrenheit);
     if (prefs.isKey(nvsSystemStationName))
-      prefs.getString(nvsSystemStationName,(char*) configFlash.systemConfig.stationName,sizeof(configFlash.systemConfig.stationName));
+      prefs.getString(nvsSystemStationName,(char*) configFlash.systemConfig.stationName,sizeof(configFlash.systemConfig.stationName)-1);
     prefs.end();
   }
 
@@ -172,15 +188,15 @@ void CVdmConfig::readConfig()
     configFlash.netConfig.gateway=prefs.getULong(nvsNetGW);
     configFlash.netConfig.dnsIp=prefs.getULong(nvsNetDnsIp); 
     if (prefs.isKey(nvsNetSsid))
-      prefs.getString(nvsNetSsid,(char*) configFlash.netConfig.ssid,sizeof(configFlash.netConfig.ssid));
+      prefs.getString(nvsNetSsid,(char*) configFlash.netConfig.ssid,sizeof(configFlash.netConfig.ssid)-1);
     if (prefs.isKey(nvsNetPwd))
-      prefs.getString(nvsNetPwd,(char*) configFlash.netConfig.pwd,sizeof(configFlash.netConfig.pwd));
+      prefs.getString(nvsNetPwd,(char*) configFlash.netConfig.pwd,sizeof(configFlash.netConfig.pwd)-1);
     if (prefs.isKey(nvsNetUserName))
-      prefs.getString(nvsNetUserName,(char*) configFlash.netConfig.userName,sizeof(configFlash.netConfig.userName));
+      prefs.getString(nvsNetUserName,(char*) configFlash.netConfig.userName,sizeof(configFlash.netConfig.userName)-1);
     if (prefs.isKey(nvsNetUserPwd))
-      prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
+      prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd)-1);
     if (prefs.isKey(nvsNetTimeServer))
-      prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
+      prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer)-1);
     
     if (strlen(configFlash.netConfig.timeServer) == 0) {
       memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
@@ -199,9 +215,9 @@ void CVdmConfig::readConfig()
     configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,1000);
     configFlash.protConfig.publishInterval = prefs.getULong(nvsProtPublishInterval,10);
     if (prefs.isKey(nvsProtBrokerUser))
-      prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName));
+      prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName)-1);
     if (prefs.isKey(nvsProtBrokerPwd))
-      prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd));
+      prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd)-1);
     uint8_t a=prefs.getUChar(nvsProtBrokerPublishFlags,7);
     configFlash.protConfig.protocolFlags =  *(VDM_PROTOCOL_CONFIG_FLAGS *)&a;
     configFlash.protConfig.keepAliveTime = prefs.getUShort(nvsProtBrokerKeepAliveTime,60);
@@ -226,24 +242,56 @@ void CVdmConfig::readConfig()
     prefs.end();
   }
  
- if (prefs.begin(nvsTempsCfg,false)) {
-  if (prefs.isKey(nvsTemps))
-    prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
-  prefs.end();
- }
+  if (prefs.begin(nvsTempsCfg,false)) {
+    if (prefs.isKey(nvsTemps))
+      prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
+    prefs.end();
+  }
 
   if (prefs.begin(nvsTZCfg,false)) {
     if (prefs.isKey(nvsTZ))
-      prefs.getString(nvsTZ,(char*) configFlash.timeZoneConfig.tz,sizeof(configFlash.timeZoneConfig.tz));
+      prefs.getString(nvsTZ,(char*) configFlash.timeZoneConfig.tz,sizeof(configFlash.timeZoneConfig.tz)-1);
     if (prefs.isKey(nvsTZCode))
-      prefs.getString(nvsTZCode,(char*) configFlash.timeZoneConfig.tzCode,sizeof(configFlash.timeZoneConfig.tzCode));
+      prefs.getString(nvsTZCode,(char*) configFlash.timeZoneConfig.tzCode,sizeof(configFlash.timeZoneConfig.tzCode)-1);
+    prefs.end();
+  }
+
+  if (prefs.begin(nvsMsgCfg,false)) {
+    uint8_t a=prefs.getUChar(nvsMsgCfgFlags,0);
+    configFlash.messengerConfig.activeFlags =  *(VDM_MSG_ACTIVE_CONFIG_FLAGS *)&a;
+    a=prefs.getUChar(nvsMsgCfgReason,0);
+    configFlash.messengerConfig.reason =  *(VDM_MSG_REASON_CONFIG_FLAGS *)&a;
+    if (prefs.isKey(nvsMsgCfgPOAppToken))
+      prefs.getString(nvsMsgCfgPOAppToken,(char*) configFlash.messengerConfig.pushover.appToken,sizeof(configFlash.messengerConfig.pushover.appToken)-1);
+    if (prefs.isKey(nvsMsgCfgPOUserToken))
+      prefs.getString(nvsMsgCfgPOUserToken,(char*) configFlash.messengerConfig.pushover.userToken,sizeof(configFlash.messengerConfig.pushover.userToken)-1);
+    if (prefs.isKey(nvsMsgCfgPOTitle))
+      prefs.getString(nvsMsgCfgPOTitle,(char*) configFlash.messengerConfig.pushover.title,sizeof(configFlash.messengerConfig.pushover.title)-1);  
+    
+    if (prefs.isKey(nvsMsgCfgMailServerHostName))
+       prefs.getString(nvsMsgCfgMailServerHostName,(char*) configFlash.messengerConfig.mail.server_host_name,sizeof(configFlash.messengerConfig.mail.server_host_name)-1);
+    configFlash.messengerConfig.mail.server_port = prefs.getUShort(nvsMsgCfgMailServerPort,465);   
+    if (prefs.isKey(nvsMsgCfgMailLoginEMail))
+       prefs.getString(nvsMsgCfgMailLoginEMail,(char*) configFlash.messengerConfig.mail.login_email,sizeof(configFlash.messengerConfig.mail.login_email)-1);
+    if (prefs.isKey(nvsMsgCfgMailLoginPwd))
+       prefs.getString(nvsMsgCfgMailLoginPwd,(char*) configFlash.messengerConfig.mail.login_password,sizeof(configFlash.messengerConfig.mail.login_password)-1);
+    if (prefs.isKey(nvsMsgCfgMailLoginUserDomain))
+       prefs.getString(nvsMsgCfgMailLoginUserDomain,(char*) configFlash.messengerConfig.mail.login_user_domain,sizeof(configFlash.messengerConfig.mail.login_user_domain)-1);
+    if (prefs.isKey(nvsMsgCfgMailSenderName))
+       prefs.getString(nvsMsgCfgMailSenderName,(char*) configFlash.messengerConfig.mail.sender_name,sizeof(configFlash.messengerConfig.mail.sender_name)-1);
+    if (prefs.isKey(nvsMsgCfgMailSenderEMail))
+       prefs.getString(nvsMsgCfgMailSenderEMail,(char*) configFlash.messengerConfig.mail.sender_email,sizeof(configFlash.messengerConfig.mail.sender_email)-1);
+    if (prefs.isKey(nvsMsgCfgMailReceiverName))
+       prefs.getString(nvsMsgCfgMailReceiverName,(char*) configFlash.messengerConfig.mail.receiver_name,sizeof(configFlash.messengerConfig.mail.receiver_name)-1);
+    if (prefs.isKey(nvsMsgCfgMailReceiverEMail))
+       prefs.getString(nvsMsgCfgMailReceiverEMail,(char*) configFlash.messengerConfig.mail.receiver_email,sizeof(configFlash.messengerConfig.mail.receiver_email)-1);
+ 
     prefs.end();
   }
 }
 
 void CVdmConfig::writeConfig(bool reboot)
 {
-
   prefs.begin(nvsSystemCfg,false);
   prefs.clear();
   prefs.putUChar(nvsSystemCelsiusFahrenheit,configFlash.systemConfig.celsiusFahrenheit);
@@ -302,6 +350,29 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.putString(nvsTZ,configFlash.timeZoneConfig.tz);
   prefs.putString(nvsTZCode,configFlash.timeZoneConfig.tzCode);
   prefs.end();
+
+  prefs.begin(nvsMsgCfg,false);
+  prefs.clear();
+  uint8_t a = *(uint8_t *)&configFlash.messengerConfig.activeFlags;
+  prefs.putUChar(nvsMsgCfgFlags,a);
+  a = *(uint8_t *)&configFlash.messengerConfig.reason;
+  prefs.putUChar(nvsMsgCfgReason,a);
+  prefs.putString(nvsMsgCfgPOAppToken,configFlash.messengerConfig.pushover.appToken);
+  prefs.putString(nvsMsgCfgPOUserToken,configFlash.messengerConfig.pushover.userToken);
+  prefs.putString(nvsMsgCfgPOTitle,configFlash.messengerConfig.pushover.title);
+
+  prefs.putString(nvsMsgCfgMailServerHostName,configFlash.messengerConfig.mail.server_host_name);
+  prefs.putUShort(nvsMsgCfgMailServerPort,configFlash.messengerConfig.mail.server_port);         // for TLS with STARTTLS or 25 (Plain/TLS with STARTTLS) or 465 (SSL)
+  prefs.putString(nvsMsgCfgMailLoginEMail,configFlash.messengerConfig.mail.login_email);         // set to empty for no SMTP Authentication
+  prefs.putString(nvsMsgCfgMailLoginPwd,configFlash.messengerConfig.mail.login_password);      // set to empty for no SMTP Authentication
+  prefs.putString( nvsMsgCfgMailLoginUserDomain,configFlash.messengerConfig.mail.login_user_domain);   // for client identity, assign invalid string can cause server rejection
+  prefs.putString(nvsMsgCfgMailSenderName,configFlash.messengerConfig.mail.sender_name);         // message headers
+  prefs.putString(nvsMsgCfgMailSenderEMail,configFlash.messengerConfig.mail.sender_email);
+  prefs.putString(nvsMsgCfgMailReceiverName,configFlash.messengerConfig.mail.receiver_name);
+  prefs.putString(nvsMsgCfgMailReceiverEMail,configFlash.messengerConfig.mail.receiver_email);
+
+  prefs.end();
+  
 
   if (reboot) Services.restartSystem();
 }
@@ -485,6 +556,29 @@ void CVdmConfig::postSysCfg (JsonObject doc)
   if (!doc["CF"].isNull()) configFlash.systemConfig.celsiusFahrenheit = doc["CF"];
   if (!doc["station"].isNull()) strncpy(configFlash.systemConfig.stationName,doc["station"].as<const char*>(),sizeof(configFlash.systemConfig.stationName));
  
+}
+
+void CVdmConfig::postMessengerCfg (JsonObject doc)
+{
+  if (!doc["reason"]["valveBlocked"].isNull()) configFlash.messengerConfig.reason.valveBlocked=doc["reason"]["valveBlocked"];
+  if (!doc["reason"]["notDetect"].isNull()) configFlash.messengerConfig.reason.notDetect=doc["reason"]["notDetect"];
+  if (!doc["reason"]["mqttTimeOut"].isNull()) configFlash.messengerConfig.reason.mqttTimeOut=doc["reason"]["mqttTimeOut"];
+  if (!doc["PO"]["active"].isNull()) configFlash.messengerConfig.activeFlags.pushOver=doc["PO"]["active"];
+  if (!doc["PO"]["appToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.appToken,doc["PO"]["appToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.appToken));
+  if (!doc["PO"]["userToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.userToken,doc["PO"]["userToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.userToken));
+  if (!doc["PO"]["title"].isNull()) strncpy(configFlash.messengerConfig.pushover.title,doc["PO"]["title"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.title));
+  
+  if (!doc["Email"]["active"].isNull()) configFlash.messengerConfig.activeFlags.email=doc["Email"]["active"];
+  if (!doc["Email"]["hostName"].isNull()) strncpy(configFlash.messengerConfig.mail.server_host_name,doc["Email"]["hostName"].as<const char*>(),sizeof(configFlash.messengerConfig.mail.server_host_name));
+  if (!doc["Email"]["port"].isNull()) configFlash.messengerConfig.mail.server_port=doc["Email"]["port"];
+  if (!doc["Email"]["loginEmail"].isNull()) strncpy(configFlash.messengerConfig.mail.login_email,doc["Email"]["loginEmail"].as<const char*>(),sizeof(configFlash.messengerConfig.mail.login_email));
+  if (!doc["Email"]["loginPwd"].isNull()) strncpy(configFlash.messengerConfig.mail.login_password,doc["Email"]["loginPwd"].as<const char*>(),sizeof(configFlash.messengerConfig.mail.login_password));
+  if (!doc["Email"]["loginUserDomain"].isNull()) strncpy(configFlash.messengerConfig.mail.login_user_domain,doc["Email"]["loginUserDomain"].as<const char*>(),sizeof(configFlash.messengerConfig.mail.login_user_domain));
+  if (!doc["Email"]["senderName"].isNull()) strncpy(configFlash.messengerConfig.mail.sender_name,doc["Email"]["senderName"].as<const char*>(),sizeof(configFlash.messengerConfig.mail.sender_name));
+  if (!doc["Email"]["senderEmail"].isNull()) strncpy(configFlash.messengerConfig.mail.sender_email,doc["Email"]["senderEmail"].as<const char*>(),sizeof(configFlash.messengerConfig.mail.sender_email));
+  if (!doc["Email"]["receiverName"].isNull()) strncpy(configFlash.messengerConfig.mail.receiver_name,doc["Email"]["receiverName"].as<const char*>(),sizeof(configFlash.messengerConfig.mail.receiver_name));
+  if (!doc["Email"]["receiverEmail"].isNull()) strncpy(configFlash.messengerConfig.mail.receiver_email,doc["Email"]["receiverEmail"].as<const char*>(),sizeof(configFlash.messengerConfig.mail.receiver_email));
+
 }
 
 String CVdmConfig::handleAuth (JsonObject doc)

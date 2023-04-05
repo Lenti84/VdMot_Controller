@@ -42,9 +42,10 @@
 #pragma once
 
 #include <Arduino.h>
-#include <SPIFFS.h>
+//#include <SPIFFS.h>
 #include <FS.h>
 #include <CRC32.h>
+#include <LittleFS.h>
 
 
 #define     STM32OTA_START          0x12

@@ -154,6 +154,45 @@ typedef struct {
   VDM_TEMP_CONFIG tempConfig[TEMP_SENSORS_COUNT];
 } VDM_TEMPS_CONFIG;
 
+typedef struct  {
+  uint8_t pushOver : 1 ;
+  uint8_t email : 1;
+} VDM_MSG_ACTIVE_CONFIG_FLAGS;
+
+typedef struct  {
+  uint8_t valveBlocked : 1 ;
+  uint8_t notDetect : 1;
+  uint8_t mqttTimeOut : 1;
+} VDM_MSG_REASON_CONFIG_FLAGS;
+
+typedef struct {
+  // pushover
+  char userToken[31];
+  char appToken[31];
+  char title[31];
+} VDM_MSG_PUSHOVER_CONFIG;
+
+typedef struct {
+  //Email
+  char server_host_name [51];
+  uint16_t server_port;         // for TLS with STARTTLS or 25 (Plain/TLS with STARTTLS) or 465 (SSL)
+  char login_email[51];         // set to empty for no SMTP Authentication
+  char login_password[51];      // set to empty for no SMTP Authentication
+  char login_user_domain[51];   // for client identity, assign invalid string can cause server rejection
+  char sender_name[51];         // message headers
+  char sender_email[51];
+  char receiver_name[51];
+  char receiver_email[51];
+} VDM_MSG_EMAIL_CONFIG;
+
+typedef struct {
+  VDM_MSG_ACTIVE_CONFIG_FLAGS activeFlags;
+  VDM_MSG_REASON_CONFIG_FLAGS reason;
+  VDM_MSG_PUSHOVER_CONFIG pushover;
+  VDM_MSG_EMAIL_CONFIG mail;
+} VDM_MSG_CONFIG;
+
+
 typedef struct 
 {
   VDM_NETWORK_CONFIG netConfig;
@@ -163,6 +202,7 @@ typedef struct
   VDM_SYSTEM_CONFIG systemConfig;
   VDM_VALVES_CONTROL_CONFIG valvesControlConfig;
   VDM_SYSTEM_TIME_ZONE_CONFIG timeZoneConfig;
+  VDM_MSG_CONFIG messengerConfig;
 } CONFIG_FLASH;
 
 
@@ -222,6 +262,23 @@ typedef struct
 #define nvsSystemCelsiusFahrenheit  "CF"
 #define nvsSystemStationName        "stName"
 
+#define nvsMsgCfg                   "msgCfg"
+#define nvsMsgCfgFlags              "msgFlags"
+#define nvsMsgCfgReason             "msgReas"
+#define nvsMsgCfgPOAppToken         "POAppTk"
+#define nvsMsgCfgPOUserToken        "POUserTk"
+#define nvsMsgCfgPOTitle            "POTitle"
+
+#define nvsMsgCfgMailServerHostName "MailSHN" 
+#define nvsMsgCfgMailServerPort     "MailSP"  
+#define nvsMsgCfgMailLoginEMail     "MailLE"  
+#define nvsMsgCfgMailLoginPwd       "MailPwd"  
+#define nvsMsgCfgMailLoginUserDomain  "MailLUD"  
+#define nvsMsgCfgMailSenderName     "MailSN" 
+#define nvsMsgCfgMailSenderEMail    "MailSE" 
+#define nvsMsgCfgMailReceiverName   "MailRN"  
+#define nvsMsgCfgMailReceiverEMail  "MailRE" 
+
 class CVdmConfig
 {
 public:
@@ -240,6 +297,7 @@ public:
   void postValvesControlCfg (JsonObject doc);
   void postTempsCfg (JsonObject doc);
   void postSysCfg (JsonObject doc);
+  void postMessengerCfg (JsonObject doc);
   String handleAuth (JsonObject doc);
   uint32_t doc2IPAddress(String id);
   int8_t findTempID (char* tempId);

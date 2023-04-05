@@ -40,10 +40,18 @@
 #include "globals.h"
 #include "VdmSystem.h"
 #include "VdmNet.h"
-#include <SPIFFS.h> 
+//#include <SPIFFS.h> 
 #include "esp_spi_flash.h" 
 #include "helper.h"
 #include <esp_task_wdt.h>
+
+#include <FS.h>
+#ifdef USE_LittleFS
+  #define SPIFFS LittleFS
+  #include <LITTLEFS.h> 
+#else
+  #include <SPIFFS.h>
+#endif 
 
 String ResetReason[] =  {
     "UNKNOWN",    //!< Reset reason can not be determined

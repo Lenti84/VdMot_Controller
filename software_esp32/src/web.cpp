@@ -69,6 +69,29 @@ String CWeb::getSysConfig (VDM_SYSTEM_CONFIG sysConfig)
   return result;  
 }
 
+String CWeb::getMsgConfig (VDM_MSG_CONFIG msgConfig)
+{
+  String result = "{\"reason\":{\"valveBlocked\":"+String(msgConfig.reason.valveBlocked)+","+
+                  "\"notDetect\":"+String(msgConfig.reason.notDetect)+","+
+                  "\"mqttTimeOut\":"+String(msgConfig.reason.mqttTimeOut)+"},"+
+                  "\"PO\":{\"active\":"+String(msgConfig.activeFlags.pushOver)+","+
+                  "\"appToken\":\""+String(msgConfig.pushover.appToken)+"\","+
+                  "\"userToken\":\""+String(msgConfig.pushover.userToken)+"\","+
+                  "\"title\":\""+String(msgConfig.pushover.title)+"\"},"+
+                  "\"Email\":{\"active\":"+String(msgConfig.activeFlags.email)+","+
+                  "\"hostName\":\""+String(msgConfig.mail.server_host_name)+"\","+
+                  "\"port\":"+String(msgConfig.mail.server_port)+","+
+                  "\"loginEmail\":\""+String(msgConfig.mail.login_email)+"\","+
+                  "\"loginPwd\":\""+String(msgConfig.mail.login_password)+"\","+
+                  "\"loginUserDomain\":\""+String(msgConfig.mail.login_user_domain)+"\","+
+                  "\"senderName\":\""+String(msgConfig.mail.sender_name)+"\","+
+                  "\"senderEmail\":\""+String(msgConfig.mail.sender_email)+"\","+
+                  "\"receiverName\":\""+String(msgConfig.mail.receiver_name)+"\","+
+                  "\"receiverEmail\":\""+String(msgConfig.mail.receiver_email)+"\"}"+
+                  "}";  
+  return result;  
+}
+
 String CWeb::getNetConfig (VDM_NETWORK_CONFIG netConfig)
 {
   String result = "{\"ethWifi\":"+String(netConfig.eth_wifi)+","+
