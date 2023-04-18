@@ -40,6 +40,7 @@
 #include "globals.h"
 #include "VdmSystem.h"
 #include "VdmNet.h"
+#include "Messenger.h"
 #include "esp_spi_flash.h" 
 #include "helper.h"
 #include <esp_task_wdt.h>
@@ -98,11 +99,20 @@ String CVdmSystem::getUpTime() {
 
 
 void CVdmSystem::sendResetReason() {
-  String ResetMsg = String(systemMsgReset)+':'+VdmSystem.getLastResetReason();
+  String ResetMsg = String(systemMsgReset)+':'+getLastResetReason();
   VdmSystem.setSystemState(systemStateInfo,ResetMsg);
   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
       syslog.log(LOG_DEBUG, ResetMsg);
   }   
+  if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.reset) {
+    uint8_t rr=esp_reset_reason();
+    if (rr>10) rr=0;
+    if ((rr>=4) && (rr<=7) || (rr==9)) {
+      if (VdmConfig.configFlash.messengerConfig.activeFlags.pushOver) {
+        Messenger.sendMessage(systemMsgReset,getLastResetReason().c_str());
+      }
+    }
+  }
 }
 
 void CVdmSystem::getFSDirectory() 

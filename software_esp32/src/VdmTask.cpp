@@ -48,6 +48,7 @@
 #include "VdmSystem.h"
 #include <BasicInterruptAbstraction.h>
 #include "PIControl.h"
+#include "Messenger.h"
 
 CVdmTask VdmTask;
 
@@ -68,6 +69,7 @@ CVdmTask::CVdmTask()
             taskIdPiControl[picIdx]=TASKMGR_INVALIDID;
   }
   restartPiTask=true;
+  sendMessenger = false;
 }
 
 void CVdmTask::init()
@@ -135,7 +137,7 @@ void CVdmTask::startServices()
     taskIdRunOnceDelayed = taskManager.scheduleOnce(10000, [] {
                 Services.runOnceDelayed();
     });
-    taskIdServices = taskManager.scheduleFixedRate(60, [] {
+    taskIdServices = taskManager.scheduleFixedRate(60, [] { 
         Services.servicesLoop();
     },TIME_SECONDS);  
 }

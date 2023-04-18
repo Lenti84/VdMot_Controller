@@ -120,6 +120,10 @@
 	.form-input2{
 		width: 250px;
 	}
+	form-input3{
+		width: 50px;
+		margin-left: 5px;
+	}
 	.rtabframe {
 		border: white 2px solid;
 		padding: 5px;
@@ -246,17 +250,17 @@
 	}
 
 	.checkboxgroup1{
-		width: 14em;
+		width: 15em;
 		height : 12em;
 		overflow-y: auto;
 		text-align: left;
 	}
 	.checkboxgroup1 p{
-		width: 13em;
+		width: 14em;
 		text-align: left;
 	}
 	.checkboxgroup1 label{
-		width: 13em;
+		width: 14em;
 		float: left;
 	}
 
@@ -818,25 +822,26 @@
 			</table>
 		</dialog>
 
-		<div class="rtabframe" id ="messengerTabFrame" style="height:250px">
+		<div class="rtabframe" id ="messengerTabFrame" style="height:270px">
 			<h3>Messenger</h3>
 			<table id="cfgValvesTable1" class="tabTable">
 				<tr>
-				<fieldset class="checkboxgroup1" style="height:4em;" id="cfgMessengerFieldSet1">
+				<fieldset class="checkboxgroup1" style="height:3em;" id="cfgMessengerFieldSet1">
 					<legend>Active</legend>
 					<label><input type="checkbox" id="MsgPOCfg-Active" name="theGroup">Pushover <input type="button" class="buttonclass1" id="msgCfg-PushOverParam" style="height:2em;" value="..." title="Push over parameter" /></label>
 				</fieldset>
-				<fieldset class="checkboxgroup1" style="height:5em;" id="cfgValvesTableFieldSet2">
+				<fieldset class="checkboxgroup1" style="height:7em;" id="cfgValvesTableFieldSet2">
 					<legend>Send reasons</legend>	
-					<label><input type="checkbox" id="MsgCfg-Reason1" name="theGroup">Valve blocked </label>
-					<label><input type="checkbox" id="MsgCfg-Reason2" name="theGroup">Active valve not detected </label>
-					<label><input type="checkbox" id="MsgCfg-Reason3" name="theGroup">MQTT connection failed</label>
+					<label><input type="checkbox" id="MsgCfg-ReasonValveBlocked" name="theGroup">Valve blocked </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonValveDetect" name="theGroup">Active valve not detected </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonReset" name="theGroup">Reset detected </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonMQTT" name="theGroup">MQTT failed,after<input type="number" class="form-input3" maxlength="3" style="width:3em;" min="1" max="999" id="protcfg-timeOutMqtt" name="protcfg-timeOutMqtt" title="Timeout (min) to check mqtt connection to send messenge"/>min</label>
 				</fieldset>
 				</tr>
 			</table>
 		</div>
 
-		<div class="rtabframe" id ="fileTabFrame" style="height:250px">
+		<div class="rtabframe" id ="fileTabFrame" style="height:270px">
 		<h3>Files</h3>
 		<table id="filesConfig" class="tabTable">
 			<tr>
@@ -862,7 +867,7 @@
 		</table>
 		</div>
 		
-		<div class="rtabframe" style="height:250px">
+		<div class="rtabframe" style="height:270px">
 		<h3>System</h3>
 		<table id="sysConfig" class="tabTable">
 			<tr>
@@ -2487,9 +2492,11 @@
 		async function postMessengerCfg() {
 			let msgCfg = {};
 			let reason = {};
-			reason.valveBlocked = id("MsgCfg-Reason1").checked ? 1 : 0;
-			reason.notDetect = id("MsgCfg-Reason2").checked ? 1 : 0;
-			reason.mqttTimeOut = id("MsgCfg-Reason3").checked ? 1 : 0;
+			reason.valveBlocked = id("MsgCfg-ReasonValveBlocked").checked ? 1 : 0;
+			reason.notDetect = id("MsgCfg-ReasonValveDetect").checked ? 1 : 0;
+			reason.reset = id("MsgCfg-ReasonReset").checked ? 1 : 0;
+			reason.mqttTimeOut = id("MsgCfg-ReasonMQTT").checked ? 1 : 0;
+			reason.mqttTimeOutTime = id("protcfg-timeOutMqtt").value;
 			let PO = {};
 			PO.active = id("MsgPOCfg-Active").checked ? 1 : 0;
 			PO.appToken = id("cfgPushOverAPIToken").value;
@@ -2993,10 +3000,11 @@
 		async function getMsgConfig() {
 			const dataMsgConfig=await getJson("msgconfig");
 			if (dataMsgConfig) {
-				id ("MsgCfg-Reason1").checked = dataMsgConfig.reason.valveBlocked;
-				id ("MsgCfg-Reason2").checked = dataMsgConfig.reason.notDetect;
-				id ("MsgCfg-Reason3").checked = dataMsgConfig.reason.mqttTimeOut;
-
+				id ("MsgCfg-ReasonValveBlocked").checked = dataMsgConfig.reason.valveBlocked;
+				id ("MsgCfg-ReasonValveDetect").checked = dataMsgConfig.reason.notDetect;
+				id ("MsgCfg-ReasonReset").checked = dataMsgConfig.reason.reset;
+				id ("MsgCfg-ReasonMQTT").checked = dataMsgConfig.reason.mqttTimeOut;
+				id ("protcfg-timeOutMqtt").value = dataMsgConfig.reason.mqttTimeOutTime;
 				id("MsgPOCfg-Active").checked = dataMsgConfig.PO.active;
 				id("cfgPushOverAPIToken").value = dataMsgConfig.PO.appToken;
 				id("cfgPushOverUserToken").value = dataMsgConfig.PO.userToken;

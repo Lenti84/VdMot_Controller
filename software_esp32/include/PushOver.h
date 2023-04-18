@@ -68,7 +68,7 @@ private:
 	uint16_t _timeout = 5000;
 	const char *_token;
 	const char *_user;
-
+	HTTPClient myClient;
 public:
 	CPushover(const char *, const char *);
 	CPushover();

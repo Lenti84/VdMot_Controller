@@ -71,9 +71,11 @@ String CWeb::getSysConfig (VDM_SYSTEM_CONFIG sysConfig)
 
 String CWeb::getMsgConfig (VDM_MSG_CONFIG msgConfig)
 {
-  String result = "{\"reason\":{\"valveBlocked\":"+String(msgConfig.reason.valveBlocked)+","+
-                  "\"notDetect\":"+String(msgConfig.reason.notDetect)+","+
-                  "\"mqttTimeOut\":"+String(msgConfig.reason.mqttTimeOut)+"},"+
+  String result = "{\"reason\":{\"valveBlocked\":"+String(msgConfig.reason.reasonFlags.valveBlocked)+","+
+                  "\"notDetect\":"+String(msgConfig.reason.reasonFlags.notDetect)+","+
+                  "\"reset\":"+String(msgConfig.reason.reasonFlags.reset)+","+
+                  "\"mqttTimeOut\":"+String(msgConfig.reason.reasonFlags.mqttTimeOut)+","+
+                  "\"mqttTimeOutTime\":"+String(msgConfig.reason.mqttTimeOutTime)+"},"+
                   "\"PO\":{\"active\":"+String(msgConfig.activeFlags.pushOver)+","+
                   "\"appToken\":\""+String(msgConfig.pushover.appToken)+"\","+
                   "\"userToken\":\""+String(msgConfig.pushover.userToken)+"\","+

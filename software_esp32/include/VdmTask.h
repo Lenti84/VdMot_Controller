@@ -86,6 +86,8 @@ public:
   
   TsetFactoryCfgState setFactoryCfgState;
   bool restartPiTask;
+
+  bool sendMessenger;
 };
 
 extern CVdmTask VdmTask;

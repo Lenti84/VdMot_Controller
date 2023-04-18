@@ -43,14 +43,16 @@
 #pragma once
 
 typedef struct  {
-	uint8_t actual_position;      // from controller
-  uint8_t target_position;      // to controller
-  uint8_t state;                // from controller
+	uint8_t   actual_position;      // from controller
+  uint8_t   target_position;      // to controller
+  uint8_t   state;                // from controller
   uint16_t  meancurrent;          // from controller
-  uint8_t       tIdx1;
-  int           temp1;                // temperature of 1st assigned sensor
-  uint8_t       tIdx2;
-  int           temp2;                // temperature of 2nd assigned sensor
+  uint8_t   tIdx1;
+  int       temp1;                // temperature of 1st assigned sensor
+  uint8_t   tIdx2;
+  int       temp2;                // temperature of 2nd assigned sensor
+  uint8_t   lastState;
+  bool      worked;
 } ACTUATOR_STRUC;
 
 typedef struct  {

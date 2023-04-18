@@ -42,6 +42,7 @@
 #include <Arduino.h>
 #include "Pushover.h"
 #include "globals.h"
+#include <string.h>
 
 CMessenger Messenger;
 
@@ -49,11 +50,25 @@ CMessenger::CMessenger()
 {
 }
 
-void CMessenger::sendMessage (const char* title,const char* thisMessage)
+void CMessenger::checkForSend()
+{
+    if (sendNow) {
+      if (VdmConfig.configFlash.messengerConfig.activeFlags.pushOver) {
+      //  sendPO((const char*) &VdmConfig.configFlash.messengerConfig.pushover.appToken,(const char*) &VdmConfig.configFlash.messengerConfig.pushover.userToken,
+      //    title.c_str(), message.c_str());
+      }
+    }
+    sendNow=false;
+}
+
+void CMessenger::sendMessage (const char* thisTitle,const char* thisMessage)
 {
   if (VdmConfig.configFlash.messengerConfig.activeFlags.pushOver) {
+    title=thisTitle;
+    message=thisMessage;
     sendPO((const char*) &VdmConfig.configFlash.messengerConfig.pushover.appToken,(const char*) &VdmConfig.configFlash.messengerConfig.pushover.userToken,
-      title, thisMessage);
+      thisTitle, thisMessage);
+    //sendNow=true;
   }
 }
 
@@ -62,7 +77,8 @@ int CMessenger::testPO(JsonObject doc)
     char appToken [31]={0};
     char userToken [31]={0};
     char title [31]={0};
-    char message [31] = {"Test from VDMotFB"} ;
+    char message [31] = {"Test from "};
+    strncat (message,VdmConfig.configFlash.systemConfig.stationName,sizeof(message) - strlen(message) - 1) ; 
 
     if (!doc["appToken"].isNull()) strncpy(appToken,doc["appToken"].as<const char*>(),sizeof(appToken));
     if (!doc["userToken"].isNull()) strncpy(userToken,doc["userToken"].as<const char*>(),sizeof(userToken));

@@ -50,11 +50,16 @@ class CMessenger
 {
 public:
   CMessenger();
-  void sendMessage (const char* title, const char* thisMessage);
+  void checkForSend();
+  void sendMessage (const char* thisTitle,const char* thisMessage);
   int sendPO(const char* appToken, const char* userToken ,const char* title, const char* message);
   int testPO(JsonObject doc);
 
   CPushover pushoverClient;
+
+  bool sendNow;
+  String title;
+  String message;
 };
 
 extern CMessenger Messenger;

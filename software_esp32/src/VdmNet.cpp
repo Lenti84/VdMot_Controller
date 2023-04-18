@@ -297,7 +297,7 @@ void CVdmNet::checkNet()
       syslog.appName(APP_NAME);
       syslog.defaultPriority(LOG_KERN);
     }
-    //delay (3000);
+    delay (3000);
     VdmTask.startApp();
     //delay (2000);
     VdmTask.startServices();

@@ -76,7 +76,7 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
         memset(lastTempValues[i].id,0x0,sizeof(lastTempValues[i].id));
         lastTempValues[i].publishNow=false;
     }
-    reconnectCounter = 0;
+    messengerSend=false;
     mqttReceived=false;
     mqtt_client.setServer(brokerIP, brokerPort);
     mqtt_client.setCallback(mcallback);
@@ -175,7 +175,6 @@ void CMqtt::mqtt_loop()
         reconnect();        
     }
     if (mqtt_client.connected()) {
-        reconnectCounter=0;
         mqtt_client.loop();
         if (VdmConfig.configFlash.protConfig.publishInterval<2) VdmConfig.configFlash.protConfig.publishInterval=2;
         uint8_t check=checkForPublish();
@@ -185,13 +184,17 @@ void CMqtt::mqtt_loop()
             firstPublish=false;
             publish_all(check);
         }
+        messengerSend=false;
+        connectTimeout=millis();
     } else {
-      if (reconnectCounter<MAX_MQTT_RETRIES) reconnectCounter++;  
-      if (reconnectCounter==MAX_MQTT_RETRIES){
-        String s = "MQTT connect failed after "+String(MAX_MQTT_RETRIES)+" retries";
-        Messenger.sendMessage ("VDMotFBH : MQTT",s.c_str());
-        reconnectCounter++;
-      }  
+        if ((VdmConfig.configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut) && (!messengerSend)){
+            if ((millis()-connectTimeout)>((uint32_t)60*1000*VdmConfig.configFlash.messengerConfig.reason.mqttTimeOutTime)) {
+                String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : MQTT" ;
+                String s = "MQTT connect failed after "+String(VdmConfig.configFlash.messengerConfig.reason.mqttTimeOutTime)+" minutes";
+                Messenger.sendMessage (title.c_str(),s.c_str());
+                messengerSend=true;
+            }  
+        }
     }
         
     mqttConnected=mqtt_client.connected();

@@ -58,6 +58,7 @@ int CPushover::send(CPushoverMessage newMessage)
 {
 
 	int responseCode = 0;
+	bool beginResult = false;
 	std::map<const char *, const char *> messageData;
 	messageData["token"] = _token;
 	messageData["user"] = _user;
@@ -70,22 +71,29 @@ int CPushover::send(CPushoverMessage newMessage)
 	//messageData["sound"] = newMessage.sound;
 	//messageData["timestamp"] = ((String)newMessage.timestamp).c_str();
 	 //No attachment, so just a regular HTTPS POST request.
-	HTTPClient myClient;
-	myClient.begin(PUSHOVER_API_URL);
+	WiFiClientSecure client;
+	
+	client.setInsecure();
+	if (!client.connect("api.pushover.net", 443)) {
+		UART_DBG.println("Pushover port 443 not connected");
+		return -1;
+	}
+	
+	beginResult = myClient.begin(client,PUSHOVER_API_URL);
 	myClient.addHeader("Content-Type", "application/json");
+	myClient.addHeader("Connection","close");
 	StaticJsonDocument<512> doc;
 	std::map<const char *, const char *>::iterator it = messageData.begin();
 	while(it!=messageData.end()){
 		doc[it->first] = it->second;
 		it++;
 	}
-	char output[512];
-	serializeJson(doc, output);
-	UART_DBG.println("Pushover output "+String(output));
-	responseCode = myClient.POST(output);
-
+	char postmessage[512];
+	serializeJson(doc, postmessage);
+	UART_DBG.println("Pushover output :"+String(beginResult)+" > "+String(postmessage));
+	responseCode = myClient.POST(postmessage);
 	myClient.end();
-	
+	client.stop();
 	return responseCode;
 }
 

@@ -155,6 +155,11 @@ void CVdmConfig::clearConfig()
   configFlash.netConfig.syslogPort=0; 
 
   configFlash.messengerConfig.activeFlags.pushOver=0;
+  configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=0;
+  configFlash.messengerConfig.reason.reasonFlags.notDetect=0;
+  configFlash.messengerConfig.reason.reasonFlags.reset=0;
+  configFlash.messengerConfig.reason.reasonFlags.valveBlocked=0;
+  configFlash.messengerConfig.reason.mqttTimeOutTime=10;
   memset(configFlash.messengerConfig.pushover.title,0,sizeof(configFlash.messengerConfig.pushover.title));
   memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
   memset(configFlash.messengerConfig.pushover.userToken,0,sizeof(configFlash.messengerConfig.pushover.userToken));
@@ -166,7 +171,7 @@ void CVdmConfig::readConfig()
   if (prefs.begin(nvsSystemCfg,false)) {
     configFlash.systemConfig.celsiusFahrenheit=prefs.getUChar(nvsSystemCelsiusFahrenheit);
     if (prefs.isKey(nvsSystemStationName))
-      prefs.getString(nvsSystemStationName,(char*) configFlash.systemConfig.stationName,sizeof(configFlash.systemConfig.stationName)-1);
+      prefs.getString(nvsSystemStationName,(char*) configFlash.systemConfig.stationName,sizeof(configFlash.systemConfig.stationName));
     prefs.end();
   }
 
@@ -178,15 +183,15 @@ void CVdmConfig::readConfig()
     configFlash.netConfig.gateway=prefs.getULong(nvsNetGW);
     configFlash.netConfig.dnsIp=prefs.getULong(nvsNetDnsIp); 
     if (prefs.isKey(nvsNetSsid))
-      prefs.getString(nvsNetSsid,(char*) configFlash.netConfig.ssid,sizeof(configFlash.netConfig.ssid)-1);
+      prefs.getString(nvsNetSsid,(char*) configFlash.netConfig.ssid,sizeof(configFlash.netConfig.ssid));
     if (prefs.isKey(nvsNetPwd))
-      prefs.getString(nvsNetPwd,(char*) configFlash.netConfig.pwd,sizeof(configFlash.netConfig.pwd)-1);
+      prefs.getString(nvsNetPwd,(char*) configFlash.netConfig.pwd,sizeof(configFlash.netConfig.pwd));
     if (prefs.isKey(nvsNetUserName))
-      prefs.getString(nvsNetUserName,(char*) configFlash.netConfig.userName,sizeof(configFlash.netConfig.userName)-1);
+      prefs.getString(nvsNetUserName,(char*) configFlash.netConfig.userName,sizeof(configFlash.netConfig.userName));
     if (prefs.isKey(nvsNetUserPwd))
-      prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd)-1);
+      prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
     if (prefs.isKey(nvsNetTimeServer))
-      prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer)-1);
+      prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
     
     if (strlen(configFlash.netConfig.timeServer) == 0) {
       memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
@@ -205,9 +210,9 @@ void CVdmConfig::readConfig()
     configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,1000);
     configFlash.protConfig.publishInterval = prefs.getULong(nvsProtPublishInterval,10);
     if (prefs.isKey(nvsProtBrokerUser))
-      prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName)-1);
+      prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName));
     if (prefs.isKey(nvsProtBrokerPwd))
-      prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd)-1);
+      prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd));
     uint8_t a=prefs.getUChar(nvsProtBrokerPublishFlags,7);
     configFlash.protConfig.protocolFlags =  *(VDM_PROTOCOL_CONFIG_FLAGS *)&a;
     configFlash.protConfig.keepAliveTime = prefs.getUShort(nvsProtBrokerKeepAliveTime,60);
@@ -240,9 +245,9 @@ void CVdmConfig::readConfig()
 
   if (prefs.begin(nvsTZCfg,false)) {
     if (prefs.isKey(nvsTZ))
-      prefs.getString(nvsTZ,(char*) configFlash.timeZoneConfig.tz,sizeof(configFlash.timeZoneConfig.tz)-1);
+      prefs.getString(nvsTZ,(char*) configFlash.timeZoneConfig.tz,sizeof(configFlash.timeZoneConfig.tz));
     if (prefs.isKey(nvsTZCode))
-      prefs.getString(nvsTZCode,(char*) configFlash.timeZoneConfig.tzCode,sizeof(configFlash.timeZoneConfig.tzCode)-1);
+      prefs.getString(nvsTZCode,(char*) configFlash.timeZoneConfig.tzCode,sizeof(configFlash.timeZoneConfig.tzCode));
     prefs.end();
   }
 
@@ -250,13 +255,15 @@ void CVdmConfig::readConfig()
     uint8_t a=prefs.getUChar(nvsMsgCfgFlags,0);
     configFlash.messengerConfig.activeFlags =  *(VDM_MSG_ACTIVE_CONFIG_FLAGS *)&a;
     a=prefs.getUChar(nvsMsgCfgReason,0);
-    configFlash.messengerConfig.reason =  *(VDM_MSG_REASON_CONFIG_FLAGS *)&a;
+    configFlash.messengerConfig.reason.reasonFlags =  *(VDM_MSG_REASON_CONFIG_FLAGS *)&a;
+    if (prefs.isKey(nvsMsgCfgMqttTimeout))
+      configFlash.messengerConfig.reason.mqttTimeOutTime =prefs.getShort(nvsMsgCfgMqttTimeout,10);
     if (prefs.isKey(nvsMsgCfgPOAppToken))
-      prefs.getString(nvsMsgCfgPOAppToken,(char*) configFlash.messengerConfig.pushover.appToken,sizeof(configFlash.messengerConfig.pushover.appToken)-1);
+      prefs.getString(nvsMsgCfgPOAppToken,(char*) configFlash.messengerConfig.pushover.appToken,sizeof(configFlash.messengerConfig.pushover.appToken));
     if (prefs.isKey(nvsMsgCfgPOUserToken))
-      prefs.getString(nvsMsgCfgPOUserToken,(char*) configFlash.messengerConfig.pushover.userToken,sizeof(configFlash.messengerConfig.pushover.userToken)-1);
+      prefs.getString(nvsMsgCfgPOUserToken,(char*) configFlash.messengerConfig.pushover.userToken,sizeof(configFlash.messengerConfig.pushover.userToken));
     if (prefs.isKey(nvsMsgCfgPOTitle))
-      prefs.getString(nvsMsgCfgPOTitle,(char*) configFlash.messengerConfig.pushover.title,sizeof(configFlash.messengerConfig.pushover.title)-1);  
+      prefs.getString(nvsMsgCfgPOTitle,(char*) configFlash.messengerConfig.pushover.title,sizeof(configFlash.messengerConfig.pushover.title));  
     prefs.end();
   }
 }
@@ -328,6 +335,7 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.putUChar(nvsMsgCfgFlags,a);
   a = *(uint8_t *)&configFlash.messengerConfig.reason;
   prefs.putUChar(nvsMsgCfgReason,a);
+  prefs.putShort(nvsMsgCfgMqttTimeout,configFlash.messengerConfig.reason.mqttTimeOutTime);
   prefs.putString(nvsMsgCfgPOAppToken,configFlash.messengerConfig.pushover.appToken);
   prefs.putString(nvsMsgCfgPOUserToken,configFlash.messengerConfig.pushover.userToken);
   prefs.putString(nvsMsgCfgPOTitle,configFlash.messengerConfig.pushover.title);
@@ -521,9 +529,11 @@ void CVdmConfig::postSysCfg (JsonObject doc)
 
 void CVdmConfig::postMessengerCfg (JsonObject doc)
 {
-  if (!doc["reason"]["valveBlocked"].isNull()) configFlash.messengerConfig.reason.valveBlocked=doc["reason"]["valveBlocked"];
-  if (!doc["reason"]["notDetect"].isNull()) configFlash.messengerConfig.reason.notDetect=doc["reason"]["notDetect"];
-  if (!doc["reason"]["mqttTimeOut"].isNull()) configFlash.messengerConfig.reason.mqttTimeOut=doc["reason"]["mqttTimeOut"];
+  if (!doc["reason"]["valveBlocked"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveBlocked=doc["reason"]["valveBlocked"];
+  if (!doc["reason"]["notDetect"].isNull()) configFlash.messengerConfig.reason.reasonFlags.notDetect=doc["reason"]["notDetect"];
+  if (!doc["reason"]["mqttTimeOut"].isNull()) configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=doc["reason"]["mqttTimeOut"];
+  if (!doc["reason"]["mqttTimeOutTime"].isNull()) configFlash.messengerConfig.reason.mqttTimeOutTime=doc["reason"]["mqttTimeOutTime"];
+   if (!doc["reason"]["reset"].isNull()) configFlash.messengerConfig.reason.reasonFlags.reset=doc["reason"]["reset"];
   if (!doc["PO"]["active"].isNull()) configFlash.messengerConfig.activeFlags.pushOver=doc["PO"]["active"];
   if (!doc["PO"]["appToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.appToken,doc["PO"]["appToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.appToken));
   if (!doc["PO"]["userToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.userToken,doc["PO"]["userToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.userToken));

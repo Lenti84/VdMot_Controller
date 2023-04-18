@@ -162,7 +162,13 @@ typedef struct  {
   uint8_t valveBlocked : 1 ;
   uint8_t notDetect : 1;
   uint8_t mqttTimeOut : 1;
+  uint8_t reset : 1;
 } VDM_MSG_REASON_CONFIG_FLAGS;
+
+typedef struct  {
+  VDM_MSG_REASON_CONFIG_FLAGS reasonFlags;
+  uint16_t mqttTimeOutTime;
+} VDM_MSG_REASON_CONFIG;
 
 typedef struct {
   // pushover
@@ -174,7 +180,7 @@ typedef struct {
 
 typedef struct {
   VDM_MSG_ACTIVE_CONFIG_FLAGS activeFlags;
-  VDM_MSG_REASON_CONFIG_FLAGS reason;
+  VDM_MSG_REASON_CONFIG reason;
   VDM_MSG_PUSHOVER_CONFIG pushover;
 } VDM_MSG_CONFIG;
 
@@ -251,6 +257,7 @@ typedef struct
 #define nvsMsgCfg                   "msgCfg"
 #define nvsMsgCfgFlags              "msgFlags"
 #define nvsMsgCfgReason             "msgReas"
+#define nvsMsgCfgMqttTimeout        "msgMQTO"
 #define nvsMsgCfgPOAppToken         "POAppTk"
 #define nvsMsgCfgPOUserToken        "POUserTk"
 #define nvsMsgCfgPOTitle            "POTitle"

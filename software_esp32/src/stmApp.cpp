@@ -52,7 +52,7 @@
 #include "VdmConfig.h"
 #include "stm32.h"
 #include "Queue.h"
-
+#include "Messenger.h"
 
 #define     MAX_CMD_LEN     10
 #define     MAX_ARG_LEN     120
@@ -122,6 +122,8 @@ void  CStmApp::app_setup() {
         actuators[x].temp2 = -500;
         actuators[x].tIdx1 = 0;
         actuators[x].tIdx2 = 0;
+        actuators[x].lastState = actuators[x].state;
+        actuators[x].worked = false;
    }
 
     for (uint8_t x = 0; x<ACTUATOR_COUNT; x++) {
@@ -547,6 +549,38 @@ void  CStmApp::app_check_data()
                         syslog.log(LOG_DEBUG, "STMApp:got valve data #"+String(arg0ptr)+" pos:"+String(arg1ptr)+
                         " mean:"+String(arg2ptr)+" state:"+String(arg3ptr)+" t1:"+String(arg4ptr)+" t2:"+String(arg5ptr));
                     }
+
+                    if (actuators[idx].state!=actuators[idx].lastState) {
+                        switch (actuators[idx].state) {
+                            case VLV_STATE_OPENING:
+                            case VLV_STATE_CLOSING:
+                            {
+                                actuators[idx].worked = true;
+                                break;    
+                            }
+                            case VLV_STATE_BLOCKS:
+                            {
+                                if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.valveBlocked) {
+                                    String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : Valve" ;
+                                    String s = "Valve "+String(idx+1)+" is blocked";
+                                    Messenger.sendMessage (title.c_str(),s.c_str());
+                                }
+                                break;
+                            }
+                            case VLV_STATE_OPENCIR:
+                            {
+                                if ((actuators[idx].worked) && (VdmConfig.configFlash.valvesConfig.valveConfig[idx].active)) { // has previous worked correctly
+                                    if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.notDetect) {
+                                        String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : Valve" ;
+                                        String s = "Valve "+String(idx+1)+" is not connected";
+                                        Messenger.sendMessage (title.c_str(),s.c_str());
+                                    }
+                                }
+                                break;
+                            }
+                        } 
+                    }
+                    actuators[idx].lastState=actuators[idx].state;
                 }
             } 
             appState=APP_IDLE;

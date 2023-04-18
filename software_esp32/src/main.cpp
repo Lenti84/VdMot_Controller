@@ -47,11 +47,14 @@
 #include "stm32.h"
 #include "esp_task_wdt.h"
 #include "esp_err.h"
+#include "Messenger.h"
+#include "VdmTask.h"
 
 uint32_t * StackPtrAtStart;
 uint32_t * StackPtrEnd;
 UBaseType_t watermarkStart;
 uint32_t stackSize;
+
 
 void setup(void) {
   disableCore0WDT();
