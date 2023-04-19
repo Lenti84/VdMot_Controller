@@ -156,6 +156,7 @@ typedef struct {
 
 typedef struct  {
   uint8_t pushOver : 1 ;
+  uint8_t email : 1 ;
 } VDM_MSG_ACTIVE_CONFIG_FLAGS;
 
 typedef struct  {
@@ -177,11 +178,21 @@ typedef struct {
   char title[31];
 } VDM_MSG_PUSHOVER_CONFIG;
 
+typedef struct {
+  // email
+  char user[65];
+  char pwd[65];
+  char host[65]; 
+  uint16_t port;
+  char recipient[65];
+  char title[31];
+} VDM_MSG_EMAIL_CONFIG;
 
 typedef struct {
   VDM_MSG_ACTIVE_CONFIG_FLAGS activeFlags;
   VDM_MSG_REASON_CONFIG reason;
   VDM_MSG_PUSHOVER_CONFIG pushover;
+  VDM_MSG_EMAIL_CONFIG email;
 } VDM_MSG_CONFIG;
 
 
@@ -261,6 +272,13 @@ typedef struct
 #define nvsMsgCfgPOAppToken         "POAppTk"
 #define nvsMsgCfgPOUserToken        "POUserTk"
 #define nvsMsgCfgPOTitle            "POTitle"
+
+#define nvsMsgCfgEmailUser          "EUser"
+#define nvsMsgCfgEmailPwd           "EPwd"
+#define nvsMsgCfgEMailHost          "EHost"
+#define nvsMsgCfgEmailPort          "EPort"
+#define nvsMsgCfgEmailRecipient     "ERep"
+#define nvsMsgCfgEmailTitle         "ETitle"
 
 
 class CVdmConfig

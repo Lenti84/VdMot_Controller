@@ -140,6 +140,7 @@ void CVdmTask::startServices()
     taskIdServices = taskManager.scheduleFixedRate(60, [] { 
         Services.servicesLoop();
     },TIME_SECONDS);  
+    VdmSystem.sendResetReason();
 }
 
 void CVdmTask::stopPIServices()

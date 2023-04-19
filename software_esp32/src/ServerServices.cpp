@@ -583,6 +583,15 @@ AsyncCallbackJsonWebHandler* testPOHandler = new AsyncCallbackJsonWebHandler("/t
   });
   server.addHandler(testPOHandler);  
 
+AsyncCallbackJsonWebHandler* testEmailHandler = new AsyncCallbackJsonWebHandler("/testEmail", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      Messenger.testEmail(jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(testEmailHandler);  
+
   WT32AsyncOTA.begin(&server);    // Start WT32OTA
   server.begin();
 }

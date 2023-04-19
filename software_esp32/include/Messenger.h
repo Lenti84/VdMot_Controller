@@ -45,21 +45,25 @@
 #include "VdmConfig.h"
 #include <Syslog.h>
 #include "Pushover.h"
+#include "ESP_Mail_Client.h"
 
 class CMessenger
 {
 public:
   CMessenger();
-  void checkForSend();
   void sendMessage (const char* thisTitle,const char* thisMessage);
   int sendPO(const char* appToken, const char* userToken ,const char* title, const char* message);
   int testPO(JsonObject doc);
-
+  void sendEmail(const char* user, const char* pwd ,const char* host, uint16_t port,const char* recipient,const char* title,const char* thisMessage);
+  void testEmail(JsonObject doc); 
+  void mSMTCallback(SMTP_Status status);
+  
   CPushover pushoverClient;
+  SMTPSession smtp;
 
-  bool sendNow;
   String title;
   String message;
+
 };
 
 extern CMessenger Messenger;

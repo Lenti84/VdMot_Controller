@@ -79,7 +79,14 @@ String CWeb::getMsgConfig (VDM_MSG_CONFIG msgConfig)
                   "\"PO\":{\"active\":"+String(msgConfig.activeFlags.pushOver)+","+
                   "\"appToken\":\""+String(msgConfig.pushover.appToken)+"\","+
                   "\"userToken\":\""+String(msgConfig.pushover.userToken)+"\","+
-                  "\"title\":\""+String(msgConfig.pushover.title)+"\"}"+
+                  "\"title\":\""+String(msgConfig.pushover.title)+"\"},"+
+                  "\"Email\":{\"active\":"+String(msgConfig.activeFlags.email)+","+
+                  "\"user\":\""+String(msgConfig.email.user)+"\","+
+                  "\"pwd\":\""+String(msgConfig.email.pwd)+"\","+
+                  "\"host\":\""+String(msgConfig.email.host)+"\","+
+                  "\"port\":\""+String(msgConfig.email.port)+"\","+
+                  "\"recipient\":\""+String(msgConfig.email.recipient)+"\","+
+                  "\"title\":\""+String(msgConfig.email.title)+"\"}"+
                   "}";  
   return result;  
 }

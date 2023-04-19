@@ -99,7 +99,7 @@ String CVdmSystem::getUpTime() {
 
 
 void CVdmSystem::sendResetReason() {
-  String ResetMsg = String(systemMsgReset)+':'+getLastResetReason();
+  String ResetMsg = systemMsgReset+':'+getLastResetReason();
   VdmSystem.setSystemState(systemStateInfo,ResetMsg);
   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
       syslog.log(LOG_DEBUG, ResetMsg);

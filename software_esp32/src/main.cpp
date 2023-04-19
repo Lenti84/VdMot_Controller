@@ -92,9 +92,7 @@ void setup(void) {
   VdmConfig.checkToResetCfg();
   VdmNet.init();
   VdmTask.init();
-  VdmSystem.getFSDirectory();
-  VdmSystem.sendResetReason();
-  
+  VdmSystem.getFSDirectory(); 
 }
 
 void loop(void) {
