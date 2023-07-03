@@ -154,6 +154,48 @@ typedef struct {
   VDM_TEMP_CONFIG tempConfig[TEMP_SENSORS_COUNT];
 } VDM_TEMPS_CONFIG;
 
+typedef struct  {
+  uint8_t pushOver : 1 ;
+  uint8_t email : 1 ;
+} VDM_MSG_ACTIVE_CONFIG_FLAGS;
+
+typedef struct  {
+  uint8_t valveBlocked : 1 ;
+  uint8_t notDetect : 1;
+  uint8_t mqttTimeOut : 1;
+  uint8_t reset : 1;
+} VDM_MSG_REASON_CONFIG_FLAGS;
+
+typedef struct  {
+  VDM_MSG_REASON_CONFIG_FLAGS reasonFlags;
+  uint16_t mqttTimeOutTime;
+} VDM_MSG_REASON_CONFIG;
+
+typedef struct {
+  // pushover
+  char userToken[31];
+  char appToken[31];
+  char title[31];
+} VDM_MSG_PUSHOVER_CONFIG;
+
+typedef struct {
+  // email
+  char user[65];
+  char pwd[65];
+  char host[65]; 
+  uint16_t port;
+  char recipient[65];
+  char title[31];
+} VDM_MSG_EMAIL_CONFIG;
+
+typedef struct {
+  VDM_MSG_ACTIVE_CONFIG_FLAGS activeFlags;
+  VDM_MSG_REASON_CONFIG reason;
+  VDM_MSG_PUSHOVER_CONFIG pushover;
+  VDM_MSG_EMAIL_CONFIG email;
+} VDM_MSG_CONFIG;
+
+
 typedef struct 
 {
   VDM_NETWORK_CONFIG netConfig;
@@ -163,6 +205,7 @@ typedef struct
   VDM_SYSTEM_CONFIG systemConfig;
   VDM_VALVES_CONTROL_CONFIG valvesControlConfig;
   VDM_SYSTEM_TIME_ZONE_CONFIG timeZoneConfig;
+  VDM_MSG_CONFIG messengerConfig;
 } CONFIG_FLASH;
 
 
@@ -222,6 +265,22 @@ typedef struct
 #define nvsSystemCelsiusFahrenheit  "CF"
 #define nvsSystemStationName        "stName"
 
+#define nvsMsgCfg                   "msgCfg"
+#define nvsMsgCfgFlags              "msgFlags"
+#define nvsMsgCfgReason             "msgReas"
+#define nvsMsgCfgMqttTimeout        "msgMQTO"
+#define nvsMsgCfgPOAppToken         "POAppTk"
+#define nvsMsgCfgPOUserToken        "POUserTk"
+#define nvsMsgCfgPOTitle            "POTitle"
+
+#define nvsMsgCfgEmailUser          "EUser"
+#define nvsMsgCfgEmailPwd           "EPwd"
+#define nvsMsgCfgEMailHost          "EHost"
+#define nvsMsgCfgEmailPort          "EPort"
+#define nvsMsgCfgEmailRecipient     "ERep"
+#define nvsMsgCfgEmailTitle         "ETitle"
+
+
 class CVdmConfig
 {
 public:
@@ -240,6 +299,7 @@ public:
   void postValvesControlCfg (JsonObject doc);
   void postTempsCfg (JsonObject doc);
   void postSysCfg (JsonObject doc);
+  void postMessengerCfg (JsonObject doc);
   String handleAuth (JsonObject doc);
   uint32_t doc2IPAddress(String id);
   int8_t findTempID (char* tempId);

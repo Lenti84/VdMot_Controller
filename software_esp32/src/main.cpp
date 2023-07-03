@@ -47,11 +47,14 @@
 #include "stm32.h"
 #include "esp_task_wdt.h"
 #include "esp_err.h"
+#include "Messenger.h"
+#include "VdmTask.h"
 
 uint32_t * StackPtrAtStart;
 uint32_t * StackPtrEnd;
 UBaseType_t watermarkStart;
 uint32_t stackSize;
+
 
 void setup(void) {
   disableCore0WDT();
@@ -71,6 +74,8 @@ void setup(void) {
     UART_DBG.printf("\r\n\r\nAddress of Stackpointer near start is:  %p \r\n",  (uint32_t *)StackPtrAtStart);
     UART_DBG.printf("End of Stack is near: %p \r\n",  (uint32_t *)StackPtrEnd);
     UART_DBG.printf("Free Stack near start is:  %d \r\n",  (uint32_t)StackPtrAtStart - (uint32_t)StackPtrEnd);
+    UART_DBG.printf("Free Prefs entries  %d \r\n",  VdmConfig.prefs.freeEntries());
+    UART_DBG.printf("Config space  %d bytes (max 20k) \r\n",  sizeof(VdmConfig.configFlash));
   #endif
 
   Stm32.STM32ota_setup();
@@ -87,9 +92,7 @@ void setup(void) {
   VdmConfig.checkToResetCfg();
   VdmNet.init();
   VdmTask.init();
-  VdmSystem.getFSDirectory();
-  VdmSystem.sendResetReason();
-  
+  VdmSystem.getFSDirectory(); 
 }
 
 void loop(void) {

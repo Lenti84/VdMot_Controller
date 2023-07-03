@@ -58,8 +58,6 @@
 #include "stm32ota.h"
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
-#include <SPIFFS.h>
-#include <FS.h>
 
 #include "VdmTask.h"
 #include "VdmSystem.h"
@@ -69,6 +67,14 @@
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
 #include "esp32-hal-time.c"
+
+#include <FS.h>
+#ifdef USE_LittleFS
+  #define SPIFFS LittleFS
+  #include <LITTLEFS.h> 
+#else
+  #include <SPIFFS.h>
+#endif 
 
 // A UDP instance to let us send and receive packets over UDP
 WiFiUDP udpClient;
@@ -291,10 +297,11 @@ void CVdmNet::checkNet()
       syslog.appName(APP_NAME);
       syslog.defaultPriority(LOG_KERN);
     }
-    //delay (3000);
+    delay (3000);
     VdmTask.startApp();
     //delay (2000);
     VdmTask.startServices();
+   
   } else {
     // check if net is connected
     setup();

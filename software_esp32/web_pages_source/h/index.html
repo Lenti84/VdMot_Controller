@@ -117,7 +117,13 @@
 	.form-input1{
 		width: 300px;
 	}
-	
+	.form-input2{
+		width: 250px;
+	}
+	form-input3{
+		width: 50px;
+		margin-left: 5px;
+	}
 	.rtabframe {
 		border: white 2px solid;
 		padding: 5px;
@@ -199,6 +205,35 @@
 		color: #c0c0c0;
 	}
 
+	.buttonclass1:hover {
+		padding: 0.6em;
+		font-weight: bold;
+		background-color: #fff;
+		color: green;
+	}
+
+	.buttonclass1 {
+		font-weight: bold;
+		background-color: #79B935;
+		color: #fff;
+		margin: 2px;
+		padding: 0.6em;
+		border-radius: 5px;
+		float: right;
+
+	}
+	.buttonclass1:disabled {
+		font-weight: bold;
+		background-color: #79B900;
+		color: #c0c0c0;
+	}
+	
+	.dialogClass{
+		width: 30em;
+		overflow-y: auto;
+		text-align: left;	
+		border: lightgray 5px solid;
+	}
 	.checkboxgroup{
 		width: 11em;
 		height : 12em;
@@ -211,6 +246,21 @@
 	}
 	.checkboxgroup label{
 		width: 10em;
+		float: left;
+	}
+
+	.checkboxgroup1{
+		width: 15em;
+		height : 12em;
+		overflow-y: auto;
+		text-align: left;
+	}
+	.checkboxgroup1 p{
+		width: 14em;
+		text-align: left;
+	}
+	.checkboxgroup1 label{
+		width: 14em;
 		float: left;
 	}
 
@@ -701,7 +751,7 @@
 				<legend>Characteristic</legend>	
 				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low  </label>
 				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
-				<label></label><input type="number" min=0 max=100 maxlength=3 step=1 style="width:60px" id="vCfg-StartOnPower" name="vCfg-StartOnPower" title="Start valves % at power on"> Start % </label>
+				<label><input type="number" min=0 max=100 maxlength=3 step=1 style="width:60px" id="vCfg-StartOnPower" name="vCfg-StartOnPower" title="Start valves % at power on"> Start % </label>
 			</fieldset>
 			</tr>
 			</table>
@@ -741,7 +791,106 @@
 			</div>
 		</div>
 		
-		<div class="rtabframe" id ="fileTabFrame" style="height:250px">
+		<dialog id="pushOverParameterDialog" class="dialogClass">
+			<h3>PushOver</h3>
+			<table id="cfgPushOverParam" class="tabTable">
+			<tr>
+				<button id="test-pushOver" class="buttonclass1">test</button>
+			</tr>
+			<tr>
+				<button id="close-pushOverParameterDialog" class="buttonclass1">close</button>
+			</tr>
+			<tr>
+				<th>API Token</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverAPIToken" name="cfgPushOverAPIToken"/>
+				</td>
+			</tr>
+			<tr>
+				<th>User Token</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverUserToken" name="cfgPushOverUserToken"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Title</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverTitle" name="cfgPushOverTitle"/>
+				</td>
+			</tr>
+			
+			</table>
+		</dialog>
+
+		<dialog id="emailParameterDialog" class="dialogClass">
+			<h3>Email</h3>
+			<table id="cfgEmailParam" class="tabTable">
+			<tr>
+				<button id="test-email" class="buttonclass1">test</button>
+			</tr>
+			<tr>
+				<button id="close-emailParameterDialog" class="buttonclass1">close</button>
+			</tr>
+			<tr>
+				<th>User</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgEmailUser" name="cfgEmailUser"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Password</th>
+				<td>
+				<input type="password" class="form-input2" maxlength="30" id="cfgEmailPwd" name="cfgEmailPwd"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Host</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgEmailHost" name="cfgEmailHost"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Port</th>
+				<td>
+				<input type="number" class="form-input2" id="cfgEmailPort" name="cfgEmailPort"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Recipient</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgEmailRecipient" name="cfgEmailRecipient"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Title</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgEmailTitle" name="cfgEmailTitle"/>
+				</td>
+			</tr>
+			</table>
+		</dialog>
+		
+		<div class="rtabframe" id ="messengerTabFrame" style="height:290px">
+			<h3>Messenger</h3>
+			<table id="cfgValvesTable1" class="tabTable">
+				<tr>
+				<fieldset class="checkboxgroup1" style="height:5em;" id="cfgMessengerFieldSet1">
+					<legend>Active</legend>
+					<label><input type="checkbox" id="MsgPOCfg-Active" name="theGroup">Pushover <input type="button" class="buttonclass1" id="msgCfg-PushOverParam" style="height:2em;" value="..." title="Push over parameter" /></label>
+					<label><input type="checkbox" id="MsgEmailCfg-Active" name="theGroup">Email <input type="button" class="buttonclass1" id="msgCfg-emailParam" style="height:2em;" value="..." title="Email parameter" /></label>
+				</fieldset>
+				<fieldset class="checkboxgroup1" style="height:7em;" id="cfgValvesTableFieldSet2">
+					<legend>Send reasons</legend>	
+					<label><input type="checkbox" id="MsgCfg-ReasonValveBlocked" name="theGroup">Valve blocked </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonValveDetect" name="theGroup">Active valve not detected </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonReset" name="theGroup">Reset detected </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonMQTT" name="theGroup">MQTT failed,after<input type="number" class="form-input3" maxlength="3" style="width:3em;" min="1" max="999" id="protcfg-timeOutMqtt" name="protcfg-timeOutMqtt" title="Timeout (min) to check mqtt connection to send messenge"/>min</label>
+				</fieldset>
+				</tr>
+			</table>
+		</div>
+
+		<div class="rtabframe" id ="fileTabFrame" style="height:290px">
 		<h3>Files</h3>
 		<table id="filesConfig" class="tabTable">
 			<tr>
@@ -767,7 +916,7 @@
 		</table>
 		</div>
 		
-		<div class="rtabframe" style="height:250px">
+		<div class="rtabframe" style="height:290px">
 		<h3>System</h3>
 		<table id="sysConfig" class="tabTable">
 			<tr>
@@ -1394,6 +1543,7 @@
 		var TIdxHasChanged=false;
 		var motorCharsHasChanged=false;
 		var movCalibHasChanged=false;
+		var emailPwdChanged=false;
 		var showAllTabs=window.location.href.startsWith('file');
 		var getStatusInterval;
 		var dataTempSensorsID=null;
@@ -1507,6 +1657,7 @@
 			await getNetInfo();
 			await getNetConfig();
 			await getProtConfig();
+			await getMsgConfig();
 			await getTempsConfig();
 			await getValvesConfig();
 			await getValvesControlConfig();
@@ -2157,8 +2308,52 @@
 					//reloadDoc("http:/#home",4000,true);
 				}
 			};
+			id("msgCfg-PushOverParam").addEventListener("click", () => {
+    			id("pushOverParameterDialog").showModal();
+			});
+			id("close-pushOverParameterDialog").addEventListener("click", () => {
+    			id("pushOverParameterDialog").close();
+			});
+			id("test-pushOver").addEventListener("click", () => {
+    			testPushOver();
+			});
+			id("msgCfg-emailParam").addEventListener("click", () => {
+    			id("emailParameterDialog").showModal();
+			});
+			id("close-emailParameterDialog").addEventListener("click", () => {
+    			id("emailParameterDialog").close();
+			});
+			id("cfgEmailPwd").addEventListener("change", () => {
+    			emailPwdChanged=true;
+			});
+			
+			id("test-email").addEventListener("click", () => {
+    			testEmail();
+			});
+
 		}
 		
+		async function testPushOver(){
+			let testPO={};
+			testPO.appToken = id("cfgPushOverAPIToken").value;
+			testPO.userToken = id("cfgPushOverUserToken").value;
+			testPO.title = id("cfgPushOverTitle").value;
+			await postJson("testPO",JSON.stringify(testPO));
+		}
+
+		async function testEmail(){
+			let testEmail = {};
+			testEmail.active = id("MsgEmailCfg-Active").checked ? 1 : 0;
+			testEmail.user = id("cfgEmailUser").value;
+			//if (emailPwdChanged===true) 
+			testEmail.pwd = id("cfgEmailPwd").value;
+			testEmail.host = id("cfgEmailHost").value;
+			testEmail.port = id("cfgEmailPort").value;
+			testEmail.recipient = id("cfgEmailRecipient").value;
+			testEmail.title = id("cfgEmailTitle").value;
+			await postJson("testEmail",JSON.stringify(testEmail));
+		}
+
 		function SetTIdxHasChanged() {
 			TIdxHasChanged=true;
 		}
@@ -2284,6 +2479,7 @@
 			if (confirm('Are you sure you want to save configuration ?')) {
 				if (!(await postNetCfg())) return;
 				if (!(await postProtCfg())) return;
+				await postMessengerCfg();
 				await postSystemConfig();
 				await postValvesCfg();
 				await postValvesControlCfg();
@@ -2367,6 +2563,34 @@
 			}
 			brokerPwdHasChanged=false;
 			await postJson("protconfig",JSON.stringify(protCfg));
+			return (true);
+		}
+
+		async function postMessengerCfg() {
+			let msgCfg = {};
+			let reason = {};
+			reason.valveBlocked = id("MsgCfg-ReasonValveBlocked").checked ? 1 : 0;
+			reason.notDetect = id("MsgCfg-ReasonValveDetect").checked ? 1 : 0;
+			reason.reset = id("MsgCfg-ReasonReset").checked ? 1 : 0;
+			reason.mqttTimeOut = id("MsgCfg-ReasonMQTT").checked ? 1 : 0;
+			reason.mqttTimeOutTime = id("protcfg-timeOutMqtt").value;
+			let PO = {};
+			PO.active = id("MsgPOCfg-Active").checked ? 1 : 0;
+			PO.appToken = id("cfgPushOverAPIToken").value;
+			PO.userToken = id("cfgPushOverUserToken").value;
+			PO.title = id("cfgPushOverTitle").value;
+			let Email = {};
+			Email.active = id("MsgEmailCfg-Active").checked ? 1 : 0;
+			Email.user = id("cfgEmailUser").value;
+			Email.pwd = id("cfgEmailPwd").value;
+			Email.host = id("cfgEmailHost").value;
+			Email.port = id("cfgEmailPort").value;
+			Email.recipient = id("cfgEmailRecipient").value;
+			Email.title = id("cfgEmailTitle").value;
+			msgCfg.reason = reason;
+			msgCfg.PO = PO;
+			msgCfg.Email = Email;
+			await postJson("msgconfig",JSON.stringify(msgCfg));
 			return (true);
 		}
 		
@@ -2856,6 +3080,30 @@
 				id("protcfg-keepAliveTime").value = dataProtConfig["keepAliveTime"];
 				showBrokerIP();
 				showMinPublish();
+			}
+		}
+		async function getMsgConfig() {
+			const dataMsgConfig=await getJson("msgconfig");
+			if (dataMsgConfig) {
+				id ("MsgCfg-ReasonValveBlocked").checked = dataMsgConfig.reason.valveBlocked;
+				id ("MsgCfg-ReasonValveDetect").checked = dataMsgConfig.reason.notDetect;
+				id ("MsgCfg-ReasonReset").checked = dataMsgConfig.reason.reset;
+				id ("MsgCfg-ReasonMQTT").checked = dataMsgConfig.reason.mqttTimeOut;
+				id ("protcfg-timeOutMqtt").value = dataMsgConfig.reason.mqttTimeOutTime;
+				id("MsgPOCfg-Active").checked = dataMsgConfig.PO.active;
+				id("cfgPushOverAPIToken").value = dataMsgConfig.PO.appToken;
+				id("cfgPushOverUserToken").value = dataMsgConfig.PO.userToken;
+				id("cfgPushOverTitle").value = dataMsgConfig.PO.title;
+				
+				id("MsgEmailCfg-Active").checked = dataMsgConfig.Email.active;
+				id("cfgEmailUser").value = dataMsgConfig.Email.user;
+				id("cfgEmailPwd").value = dataMsgConfig.Email.pwd;
+				id("cfgEmailHost").value = dataMsgConfig.Email.host;
+				id("cfgEmailPort").value = dataMsgConfig.Email.port;
+				id("cfgEmailRecipient").value = dataMsgConfig.Email.recipient;
+				id("cfgEmailTitle").value = dataMsgConfig.Email.title;
+
+				return (true);
 			}
 		}
 		

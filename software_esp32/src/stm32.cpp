@@ -33,9 +33,15 @@
 #include "stm32ota.h"
 #include "globals.h"
 #include "VdmTask.h"
-#include <SPIFFS.h>
-#include <FS.h>
 #include <CRC32.h>
+
+#include <FS.h>
+#ifdef USE_LittleFS
+  #define SPIFFS LittleFS
+  #include <LITTLEFS.h> 
+#else
+  #include <SPIFFS.h>
+#endif 
 
 CStm32 Stm32;
 

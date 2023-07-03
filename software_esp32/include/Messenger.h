@@ -38,56 +38,32 @@
 *END************************************************************************/
 
 
-
 #pragma once
 
-#include <TaskManagerIO.h>
-#include "globals.h"
-#include "VdmNet.h" 
-#include "stmApp.h"
-#include "Services.h"
-#include "stm32ota.h"
-#include "stm32.h"
+#include <stdint.h>
+#include <ArduinoJson.h>
+#include "VdmConfig.h"
+#include <Syslog.h>
+#include "Pushover.h"
+#include "ESP_Mail_Client.h"
 
-enum TsetFactoryCfgState  {idle,inProgress,action,resetCfg};
-
-class CVdmTask
+class CMessenger
 {
 public:
-  CVdmTask();
-  void init();
-  void deleteTask(taskid_t taskId);
-  bool taskExists (taskid_t taskId);
-  void yieldTask (uint16_t ms);
-  void startMqtt(uint32_t interval);
-  void startApp();
-  void startStm32Ota(uint8_t command,String thisFileName);
-  void startServices();
-  void startPIServices(bool startTask=true);
-  void stopPIServices();
-  void startClearFS();
-  void startGetFS();
+  CMessenger();
+  void sendMessage (const char* thisTitle,const char* thisMessage);
+  int sendPO(const char* appToken, const char* userToken ,const char* title, const char* message);
+  int testPO(JsonObject doc);
+  void sendEmail(const char* user, const char* pwd ,const char* host, uint16_t port,const char* recipient,const char* title,const char* thisMessage);
+  void testEmail(JsonObject doc); 
+  void mSMTCallback(SMTP_Status status);
   
-  taskid_t taskIdCheckNet;
-  taskid_t taskIdMqtt;
-  taskid_t taskIdApp;
-  taskid_t taskIdStm32Ota;
-  taskid_t taskIdServices;
-  taskid_t taskIdSetFactoryCfgTimeOut; 
-  taskid_t taskIdSetFactoryCfgInProgress;
-  taskid_t taskIdResetSystem;
-  taskid_t restartStmApp;
-  taskid_t taskIdRunOnce;
-  taskid_t taskIdRunOnceDelayed;
-  taskid_t taskIdwaitForFinishQueue;
-  taskid_t taskIdPiControl[ACTUATOR_COUNT];
-  taskid_t taskIdRunOnceClearFS;
-  taskid_t taskIdRunOnceGetFS;
-  
-  TsetFactoryCfgState setFactoryCfgState;
-  bool restartPiTask;
+  CPushover pushoverClient;
+  SMTPSession smtp;
 
-  bool sendMessenger;
+  String title;
+  String message;
+
 };
 
-extern CVdmTask VdmTask;
+extern CMessenger Messenger;

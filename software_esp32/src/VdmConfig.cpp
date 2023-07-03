@@ -153,6 +153,17 @@ void CVdmConfig::clearConfig()
   configFlash.netConfig.syslogLevel=0;
   configFlash.netConfig.syslogIp=0;
   configFlash.netConfig.syslogPort=0; 
+
+  configFlash.messengerConfig.activeFlags.pushOver=0;
+  configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=0;
+  configFlash.messengerConfig.reason.reasonFlags.notDetect=0;
+  configFlash.messengerConfig.reason.reasonFlags.reset=0;
+  configFlash.messengerConfig.reason.reasonFlags.valveBlocked=0;
+  configFlash.messengerConfig.reason.mqttTimeOutTime=10;
+  memset(configFlash.messengerConfig.pushover.title,0,sizeof(configFlash.messengerConfig.pushover.title));
+  memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
+  memset(configFlash.messengerConfig.pushover.userToken,0,sizeof(configFlash.messengerConfig.pushover.userToken));
+
 }
 
 void CVdmConfig::readConfig()
@@ -226,11 +237,11 @@ void CVdmConfig::readConfig()
     prefs.end();
   }
  
- if (prefs.begin(nvsTempsCfg,false)) {
-  if (prefs.isKey(nvsTemps))
-    prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
-  prefs.end();
- }
+  if (prefs.begin(nvsTempsCfg,false)) {
+    if (prefs.isKey(nvsTemps))
+      prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
+    prefs.end();
+  }
 
   if (prefs.begin(nvsTZCfg,false)) {
     if (prefs.isKey(nvsTZ))
@@ -239,11 +250,43 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsTZCode,(char*) configFlash.timeZoneConfig.tzCode,sizeof(configFlash.timeZoneConfig.tzCode));
     prefs.end();
   }
+
+  if (prefs.begin(nvsMsgCfg,false)) {
+    uint8_t a=prefs.getUChar(nvsMsgCfgFlags,0);
+    configFlash.messengerConfig.activeFlags =  *(VDM_MSG_ACTIVE_CONFIG_FLAGS *)&a;
+    a=prefs.getUChar(nvsMsgCfgReason,0);
+    configFlash.messengerConfig.reason.reasonFlags =  *(VDM_MSG_REASON_CONFIG_FLAGS *)&a;
+    if (prefs.isKey(nvsMsgCfgMqttTimeout))
+      configFlash.messengerConfig.reason.mqttTimeOutTime =prefs.getShort(nvsMsgCfgMqttTimeout,10);
+    
+    if (prefs.isKey(nvsMsgCfgPOAppToken))
+      prefs.getString(nvsMsgCfgPOAppToken,(char*) configFlash.messengerConfig.pushover.appToken,sizeof(configFlash.messengerConfig.pushover.appToken));
+    if (prefs.isKey(nvsMsgCfgPOUserToken))
+      prefs.getString(nvsMsgCfgPOUserToken,(char*) configFlash.messengerConfig.pushover.userToken,sizeof(configFlash.messengerConfig.pushover.userToken));
+    if (prefs.isKey(nvsMsgCfgPOTitle))
+      prefs.getString(nvsMsgCfgPOTitle,(char*) configFlash.messengerConfig.pushover.title,sizeof(configFlash.messengerConfig.pushover.title));  
+    
+    if (prefs.isKey(nvsMsgCfgEmailUser))
+      prefs.getString(nvsMsgCfgEmailUser,(char*) configFlash.messengerConfig.email.user,sizeof(configFlash.messengerConfig.email.user));
+    if (prefs.isKey(nvsMsgCfgEmailPwd))
+      prefs.getString(nvsMsgCfgEmailPwd,(char*) configFlash.messengerConfig.email.pwd,sizeof(configFlash.messengerConfig.email.pwd));
+    if (prefs.isKey(nvsMsgCfgEMailHost))
+      prefs.getString(nvsMsgCfgEMailHost,(char*) configFlash.messengerConfig.email.host,sizeof(configFlash.messengerConfig.email.host));
+    configFlash.messengerConfig.email.port = prefs.getShort(nvsMsgCfgEmailPort,465);
+    if (prefs.isKey(nvsMsgCfgEmailRecipient))
+      prefs.getString(nvsMsgCfgEmailRecipient,(char*) configFlash.messengerConfig.email.recipient,sizeof(configFlash.messengerConfig.email.recipient));
+    if (prefs.isKey(nvsMsgCfgEmailTitle))
+      prefs.getString(nvsMsgCfgEmailTitle,(char*) configFlash.messengerConfig.email.title,sizeof(configFlash.messengerConfig.email.title));
+  
+  
+  
+    
+    prefs.end();
+  }
 }
 
 void CVdmConfig::writeConfig(bool reboot)
 {
-
   prefs.begin(nvsSystemCfg,false);
   prefs.clear();
   prefs.putUChar(nvsSystemCelsiusFahrenheit,configFlash.systemConfig.celsiusFahrenheit);
@@ -301,6 +344,26 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.clear();
   prefs.putString(nvsTZ,configFlash.timeZoneConfig.tz);
   prefs.putString(nvsTZCode,configFlash.timeZoneConfig.tzCode);
+  prefs.end();
+
+  prefs.begin(nvsMsgCfg,false);
+  prefs.clear();
+  uint8_t a = *(uint8_t *)&configFlash.messengerConfig.activeFlags;
+  prefs.putUChar(nvsMsgCfgFlags,a);
+  a = *(uint8_t *)&configFlash.messengerConfig.reason;
+  prefs.putUChar(nvsMsgCfgReason,a);
+  prefs.putShort(nvsMsgCfgMqttTimeout,configFlash.messengerConfig.reason.mqttTimeOutTime);
+  prefs.putString(nvsMsgCfgPOAppToken,configFlash.messengerConfig.pushover.appToken);
+  prefs.putString(nvsMsgCfgPOUserToken,configFlash.messengerConfig.pushover.userToken);
+  prefs.putString(nvsMsgCfgPOTitle,configFlash.messengerConfig.pushover.title);
+
+  prefs.putString(nvsMsgCfgEmailUser,configFlash.messengerConfig.email.user);
+  prefs.putString(nvsMsgCfgEmailPwd,configFlash.messengerConfig.email.pwd);
+  prefs.putString(nvsMsgCfgEMailHost,configFlash.messengerConfig.email.host);
+  prefs.putShort(nvsMsgCfgEmailPort,configFlash.messengerConfig.email.port);
+  prefs.putString(nvsMsgCfgEmailRecipient,configFlash.messengerConfig.email.recipient);
+  prefs.putString(nvsMsgCfgEmailTitle,configFlash.messengerConfig.email.title);
+
   prefs.end();
 
   if (reboot) Services.restartSystem();
@@ -485,6 +548,28 @@ void CVdmConfig::postSysCfg (JsonObject doc)
   if (!doc["CF"].isNull()) configFlash.systemConfig.celsiusFahrenheit = doc["CF"];
   if (!doc["station"].isNull()) strncpy(configFlash.systemConfig.stationName,doc["station"].as<const char*>(),sizeof(configFlash.systemConfig.stationName));
  
+}
+
+void CVdmConfig::postMessengerCfg (JsonObject doc)
+{
+  if (!doc["reason"]["valveBlocked"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveBlocked=doc["reason"]["valveBlocked"];
+  if (!doc["reason"]["notDetect"].isNull()) configFlash.messengerConfig.reason.reasonFlags.notDetect=doc["reason"]["notDetect"];
+  if (!doc["reason"]["mqttTimeOut"].isNull()) configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=doc["reason"]["mqttTimeOut"];
+  if (!doc["reason"]["mqttTimeOutTime"].isNull()) configFlash.messengerConfig.reason.mqttTimeOutTime=doc["reason"]["mqttTimeOutTime"];
+  if (!doc["reason"]["reset"].isNull()) configFlash.messengerConfig.reason.reasonFlags.reset=doc["reason"]["reset"];
+  
+  if (!doc["PO"]["active"].isNull()) configFlash.messengerConfig.activeFlags.pushOver=doc["PO"]["active"];
+  if (!doc["PO"]["appToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.appToken,doc["PO"]["appToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.appToken));
+  if (!doc["PO"]["userToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.userToken,doc["PO"]["userToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.userToken));
+  if (!doc["PO"]["title"].isNull()) strncpy(configFlash.messengerConfig.pushover.title,doc["PO"]["title"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.title));
+  
+  if (!doc["Email"]["active"].isNull()) configFlash.messengerConfig.activeFlags.email=doc["Email"]["active"];
+  if (!doc["Email"]["user"].isNull()) strncpy(configFlash.messengerConfig.email.user,doc["Email"]["user"].as<const char*>(),sizeof(configFlash.messengerConfig.email.user));
+  if (!doc["Email"]["pwd"].isNull()) strncpy(configFlash.messengerConfig.email.pwd,doc["Email"]["pwd"].as<const char*>(),sizeof(configFlash.messengerConfig.email.pwd));
+  if (!doc["Email"]["host"].isNull()) strncpy(configFlash.messengerConfig.email.host,doc["Email"]["host"].as<const char*>(),sizeof(configFlash.messengerConfig.email.host));
+  if (!doc["Email"]["port"].isNull()) configFlash.messengerConfig.email.port=doc["Email"]["port"];
+  if (!doc["Email"]["recipient"].isNull()) strncpy(configFlash.messengerConfig.email.recipient,doc["Email"]["recipient"].as<const char*>(),sizeof(configFlash.messengerConfig.email.recipient));
+  if (!doc["Email"]["title"].isNull()) strncpy(configFlash.messengerConfig.email.title,doc["Email"]["title"].as<const char*>(),sizeof(configFlash.messengerConfig.email.title));
 }
 
 String CVdmConfig::handleAuth (JsonObject doc)

@@ -11,6 +11,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.2.0]
+### Breaking Changed
+- use LittleFS instead SPIFFS, all files will be removed with update.
+### Added
+- messenger : pushover and email support in case of errors
+### Changed
+- CWT32AsyncOTA::restart() : direct call of ESP.restart() instead Services.restartSystem(false);
+
 ## [1.1.1]
 ### Breaking Changed
 - protocol flags redefined, please check settings 

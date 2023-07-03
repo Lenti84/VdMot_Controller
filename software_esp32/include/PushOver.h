@@ -3,7 +3,7 @@
 
   author : SurfGargano, Lenti84
 
-  Comments:
+  Comments: derived from https://github.com/brunojoyal/PushoverESP32
 
   Version :
 
@@ -38,56 +38,41 @@
 *END************************************************************************/
 
 
-
 #pragma once
 
-#include <TaskManagerIO.h>
-#include "globals.h"
-#include "VdmNet.h" 
-#include "stmApp.h"
-#include "Services.h"
-#include "stm32ota.h"
-#include "stm32.h"
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <FS.h>
 
-enum TsetFactoryCfgState  {idle,inProgress,action,resetCfg};
 
-class CVdmTask
+
+
+struct CPushoverMessage
 {
 public:
-  CVdmTask();
-  void init();
-  void deleteTask(taskid_t taskId);
-  bool taskExists (taskid_t taskId);
-  void yieldTask (uint16_t ms);
-  void startMqtt(uint32_t interval);
-  void startApp();
-  void startStm32Ota(uint8_t command,String thisFileName);
-  void startServices();
-  void startPIServices(bool startTask=true);
-  void stopPIServices();
-  void startClearFS();
-  void startGetFS();
-  
-  taskid_t taskIdCheckNet;
-  taskid_t taskIdMqtt;
-  taskid_t taskIdApp;
-  taskid_t taskIdStm32Ota;
-  taskid_t taskIdServices;
-  taskid_t taskIdSetFactoryCfgTimeOut; 
-  taskid_t taskIdSetFactoryCfgInProgress;
-  taskid_t taskIdResetSystem;
-  taskid_t restartStmApp;
-  taskid_t taskIdRunOnce;
-  taskid_t taskIdRunOnceDelayed;
-  taskid_t taskIdwaitForFinishQueue;
-  taskid_t taskIdPiControl[ACTUATOR_COUNT];
-  taskid_t taskIdRunOnceClearFS;
-  taskid_t taskIdRunOnceGetFS;
-  
-  TsetFactoryCfgState setFactoryCfgState;
-  bool restartPiTask;
-
-  bool sendMessenger;
+	const char *message = "";
+	const char *title = "";
+	const char *url = "";
+	const char *url_title = "";
+	const char *sound = "";
+	bool html = false;
+	uint8_t priority = 0;
+	uint32_t timestamp;
+	File *attachment = NULL;
 };
 
-extern CVdmTask VdmTask;
+class CPushover
+{
+private:
+	uint16_t _timeout = 5000;
+	const char *_token;
+	const char *_user;
+	HTTPClient myClient;
+public:
+	CPushover(const char *, const char *);
+	CPushover();
+	void setUser(const char *);
+	void setToken(const char *);
+	int send(CPushoverMessage message);
+};

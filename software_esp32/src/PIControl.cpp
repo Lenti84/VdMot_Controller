@@ -176,7 +176,6 @@ void CPiControl::setPosition(uint8_t thisPosition)
   
 void CPiControl::doControlValve() 
 {
-  UART_DBG.println("enter doControlValve");
     uint8_t valvePosition;
     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==1) {
       value=((float)StmApp.actuators[valveIndex].temp1)/10;

@@ -55,14 +55,21 @@
 #include "stm32ota.h"
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
-#include <SPIFFS.h>
-#include <FS.h>
 #include "ServerServices.h"
 #include "VdmSystem.h"
 #include "VdmTask.h"
 #include "Services.h"
 #include "stmApp.h"
 #include "PIControl.h"
+#include "Messenger.h"
+
+#include <FS.h>
+#ifdef USE_LittleFS
+  #define SPIFFS LittleFS
+  #include <LITTLEFS.h> 
+#else
+  #include <SPIFFS.h>
+#endif 
 
 extern "C" {
   #include "tfs_data.h"
@@ -331,6 +338,11 @@ void handleGetSysConfig(AsyncWebServerRequest *request)
   request->send(200,aj,Web.getSysConfig(VdmConfig.configFlash.systemConfig));
 }
 
+void handleGetMsgConfig(AsyncWebServerRequest *request) 
+{ 
+  request->send(200,aj,Web.getMsgConfig(VdmConfig.configFlash.messengerConfig));
+}
+
 void handleGetStm(AsyncWebServerRequest *request) 
 { 
   // generate callback with request parameter
@@ -453,6 +465,7 @@ void  CServerServices::initServer()
   server.on("/stmupdstatus", HTTP_GET, [](AsyncWebServerRequest * request) {handleStmUpdStatus(request);});
   server.on("/tempsensorsid", HTTP_GET, [](AsyncWebServerRequest * request) {handleTempSensorsID(request);});
   server.on("/sysconfig", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetSysConfig(request);});
+  server.on("/msgconfig", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetMsgConfig(request);});
   server.on("/stm?", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetStm(request);});
   
   server.on("/fupload", HTTP_POST, [](AsyncWebServerRequest *request) {},
@@ -551,6 +564,33 @@ AsyncCallbackJsonWebHandler* valvesControlCfgHandler = new AsyncCallbackJsonWebH
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(sysCfgHandler);
+  
+AsyncCallbackJsonWebHandler* msgCfgHandler = new AsyncCallbackJsonWebHandler("/msgconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postMessengerCfg (jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(msgCfgHandler);
+
+AsyncCallbackJsonWebHandler* testPOHandler = new AsyncCallbackJsonWebHandler("/testPO", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      Messenger.testPO(jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(testPOHandler);  
+
+AsyncCallbackJsonWebHandler* testEmailHandler = new AsyncCallbackJsonWebHandler("/testEmail", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      Messenger.testEmail(jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(testEmailHandler);  
 
   WT32AsyncOTA.begin(&server);    // Start WT32OTA
   server.begin();
