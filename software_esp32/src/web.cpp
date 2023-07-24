@@ -268,17 +268,23 @@ String CWeb::getSysDynInfo()
 {
   struct tm timeinfo;
   char buf[50];
-  String time;
+  String sTime;
   String upTime;
+  String sLastCalib;
 
   if(!getLocalTime(&timeinfo)) {
-    time = "Failed to obtain time";
+    sTime = "Failed to obtain time";
   } else {
     strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
-    time = String(buf);
+    sTime = String(buf);
   }
 
-  String result = "{\"locTime\":\""+time+"\"," +
+  time_t lastCalib=VdmConfig.miscValues.lastCalib;
+  localtime_r(&lastCalib, &timeinfo);
+  strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
+  sLastCalib = String(buf);
+
+  String result = "{\"locTime\":\""+sTime+"\"," +
                   "\"upTime\":\""+VdmSystem.getUpTime()+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
                   "\"minheap\":\""+ConvBinUnits(ESP.getMinFreeHeap(),1)+ "\"," +
@@ -290,6 +296,7 @@ String CWeb::getSysDynInfo()
                     result += ",\"brokerStatus\":"+String(Mqtt.mqttState);
                     result += ",\"brokerConnected\":"+String(Mqtt.mqttConnected);
                   }
+                  result += ",\"lastCalib\":\""+String(sLastCalib)+"\"";
                   result +="}";
   return result;  
 }

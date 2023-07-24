@@ -58,7 +58,9 @@ void CServices::checkServiceValves()
   struct tm timeinfo;
   getLocalTime(&timeinfo);
   uint8_t i = 1<<timeinfo.tm_wday;
-
+  time_t now;
+  time (&now);
+    
   if ((VdmConfig.configFlash.valvesConfig.dayOfCalib & i) !=0) { // day fits
     if (VdmConfig.configFlash.valvesConfig.hourOfCalib==timeinfo.tm_hour) { // hour fits
         if (!serviceValvesStarted) {

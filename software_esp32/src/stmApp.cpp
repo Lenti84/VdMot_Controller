@@ -180,6 +180,10 @@ void CStmApp::valvesCalibration()
 {
     uint8_t i=255;
     app_cmd(APP_PRE_SETVLLEARN,String(i));
+    time_t now;
+    time (&now);
+    VdmConfig.miscValues.lastCalib=now;
+    VdmConfig.writeMiscValues();
 }
 
 void CStmApp::valvesAssembly()

@@ -417,7 +417,19 @@
 		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
-		
+		<div class="rtabframe" style="overflow-y:auto" id="addStatusTabFrame">  
+			<h3>Miscellaneous</h3>
+			<table id="miscStatus" class="tabTable1">
+				<tr>
+					<th>Heat Control</th>
+					<td id="miscStatusHC"></td>
+				</tr>
+				<tr>
+					<th>Last Calibration</th>
+					<td id="miscStatusLC"></td>
+				</tr>
+			</table>
+		</div>
 		<div class="rtabframe" style="overflow-y:auto" id="tempStatusTabFrame">  
 		<h3>Temperature</h3>
 		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
@@ -2282,6 +2294,7 @@
 			}
 			id ("VCtrlConfigHeatControl").onchange = function (){
 				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
+				id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[id("VCtrlConfigHeatControl").selectedIndex].value;
 			}
 			
 			id ("protcfg-pubOnChange").onclick = function() {
@@ -2854,6 +2867,7 @@
 			anyValveControlEnabled=false;
 			const cfgValvesControlTable = id('cfgValvesControlTable');
 			id ('VCtrlConfigHeatControl').selectedIndex=cfgValvesControlJson.common.heatControl;
+			id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[id("VCtrlConfigHeatControl").selectedIndex].value;
 			heatControl = cfgValvesControlJson.common.heatControl;
 			id ('VCtrlConfigParkPosition').value=cfgValvesControlJson.common.parkPosition;
 			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
@@ -2995,6 +3009,9 @@
 					id("net-broker").style.display="block";
 					id("net-broker-status").textContent=dataSystemDynInfo["brokerConnected"] ? "Connected" : "Not connected"; 
 				}
+				
+				id("miscStatusLC").textContent=dataSystemDynInfo["lastCalib"];
+
 				let newStmInit=dataSystemDynInfo["stmInit"];
 				disable_enable_ValvesCfg((newStmInit!=2) || (!stmLoaded));
 				if (newStmInit!=stmInit) {

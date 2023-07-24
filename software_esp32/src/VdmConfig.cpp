@@ -164,6 +164,8 @@ void CVdmConfig::clearConfig()
   memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
   memset(configFlash.messengerConfig.pushover.userToken,0,sizeof(configFlash.messengerConfig.pushover.userToken));
 
+  miscValues.lastCalib=0;
+
 }
 
 void CVdmConfig::readConfig()
@@ -277,10 +279,12 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsMsgCfgEmailRecipient,(char*) configFlash.messengerConfig.email.recipient,sizeof(configFlash.messengerConfig.email.recipient));
     if (prefs.isKey(nvsMsgCfgEmailTitle))
       prefs.getString(nvsMsgCfgEmailTitle,(char*) configFlash.messengerConfig.email.title,sizeof(configFlash.messengerConfig.email.title));
-  
-  
-  
-    
+    prefs.end();
+  }
+
+  if (prefs.begin(nvsMisc,false)) {
+    if (prefs.isKey(nvsMiscLastCalib))
+      miscValues.lastCalib=prefs.getLong(nvsMiscLastCalib,0);
     prefs.end();
   }
 }
@@ -369,6 +373,12 @@ void CVdmConfig::writeConfig(bool reboot)
   if (reboot) Services.restartSystem();
 }
 
+void CVdmConfig::writeMiscValues()
+{
+  prefs.begin(nvsMisc,false);
+    prefs.putLong(nvsMiscLastCalib,miscValues.lastCalib);
+  prefs.end();
+}
 
 void CVdmConfig::writeValvesControlConfig(bool reboot, bool restartTask)
 {
