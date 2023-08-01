@@ -53,6 +53,7 @@ typedef struct  {
   int       temp2;                // temperature of 2nd assigned sensor
   uint8_t   lastState;
   bool      worked;
+  uint32_t  movements;
 } ACTUATOR_STRUC;
 
 typedef struct  {
@@ -221,6 +222,7 @@ private:
   char    arg3[30];
   char    arg4[30];
   char    arg5[30];
+  char    arg6[30];
   
 	char*		arg0ptr;
 	char*		arg1ptr;
@@ -228,6 +230,7 @@ private:
   char*		arg3ptr;
   char*		arg4ptr;
   char*		arg5ptr;
+  char*		arg6ptr;
   
 	uint8_t	argcnt;
   

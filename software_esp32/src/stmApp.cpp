@@ -85,6 +85,7 @@ CStmApp::CStmApp()
     arg3ptr = arg3;
     arg4ptr = arg4;
     arg5ptr = arg5;
+    arg6ptr = arg6;
 	argcnt = 0;
     tempsPrivCount=0;
     tempsCount=0;
@@ -433,7 +434,7 @@ void  CStmApp::app_check_data()
 		// ****************************************
 		cmdptr = buffer;
         
-		for(int x=0;x<7;x++) {
+		for(int x=0;x<8;x++) {
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
@@ -469,6 +470,11 @@ void  CStmApp::app_check_data()
                     strncpy(arg5,cmdptr,sizeof(arg5)-1); 
                     argcnt=6;	
                 } 	// 6th argument
+                else if(x==7) {	
+                    memset (arg6,0x0,sizeof(arg6));
+                    strncpy(arg6,cmdptr,sizeof(arg6)-1); 
+                    argcnt=7;	
+                } 	// 7th argument
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -540,7 +546,7 @@ void  CStmApp::app_check_data()
         // get data values
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVLVDATA,cmd,5) == 0) {
-            if(argcnt == 6) {
+            if(argcnt >= 6) {
                 uint8_t idx=atoi(arg0ptr);
                 if(idx < ACTUATOR_COUNT) {
                     actuators[idx].actual_position = atoi(arg1ptr);
@@ -548,6 +554,9 @@ void  CStmApp::app_check_data()
                     actuators[idx].state = atoi(arg3ptr);
                     actuators[idx].temp1 = ConvertCF(atoi(arg4ptr))+getTOffset(actuators[idx].tIdx1);
                     actuators[idx].temp2 =  ConvertCF(atoi(arg5ptr))+getTOffset(actuators[idx].tIdx2);
+                    if (argcnt == 7) {
+                        actuators[idx].movements = atoi(arg6ptr);    
+                    }
 
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                         syslog.log(LOG_DEBUG, "STMApp:got valve data #"+String(arg0ptr)+" pos:"+String(arg1ptr)+

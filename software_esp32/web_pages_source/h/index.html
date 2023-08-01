@@ -750,7 +750,7 @@
 			<fieldset class="checkboxgroup" style="height:13em;" id="cfgValvesTableFieldSet1">
 				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
-				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour of next calibration"> h</label>
+				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour time of next calibration"> hour time</label>
 				<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
 				<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
 				<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
@@ -1035,7 +1035,7 @@
 		along with this program.  If not, see http://www.gnu.org/licenses/.
 		</p>
 		<p>
-		Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+		Copyright (C) 2021-2023 Lenti84  https://github.com/Lenti84/VdMot_Controller
 		</p>	
 		<p>
 		Contributor : SurfGargano
@@ -1739,7 +1739,7 @@
 		function makeValvesTable(valvesJson) {
 			const ValvesTable = id('valvesTable');
 			ValvesTable.innerHTML="";
-			let columnsize = 7;
+			let columnsize = 8;
 			valveTempsExists=checkIfTempExists(valvesJson);
 			if (valveTempsExists===true) {
 				columnsize+=2;
@@ -1793,7 +1793,8 @@
 			valvesTable.rows[0].cells[3].textContent = 'mA';
 			valvesTable.rows[0].cells[4].textContent = 'State';
 			valvesTable.rows[0].cells[5].innerHTML = 'Target %';
-			let colIdx=7;
+			valvesTable.rows[0].cells[7].innerHTML = 'Moves';
+			let colIdx=8;
 			if (valveTempsExists===true) {
 				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp1';
 				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp2';
@@ -2814,7 +2815,8 @@
 				ValvesTable.rows[index+1].cells[2].textContent = item.pos;	
 				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
 				ValvesTable.rows[index+1].cells[4].textContent = States[item.state];
-				let colIdx=7;
+				ValvesTable.rows[index+1].cells[7].textContent = item.moves;
+				let colIdx=8;
 				if (valveTempsExists===true) {
 					if (item.temp1)
 						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.temp1;
