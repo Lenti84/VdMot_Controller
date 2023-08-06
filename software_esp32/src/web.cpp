@@ -328,7 +328,11 @@ String CWeb::getValvesStatus()
                  "\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
                  "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
                  "\"targetPos\":" + String(StmApp.actuators[x].target_position)+ ","+
-                 "\"moves\":" + String(StmApp.actuators[x].movements);
+                 "\"moves\":" + String(StmApp.actuators[x].movements)+ ","+
+                 "\"oc\":" + String(StmApp.actuators[x].opening_count)+ ","+
+                 "\"cc\":" + String(StmApp.actuators[x].closing_count)+ ","+
+                 "\"dc\":" + String(StmApp.actuators[x].deadzone_count);
+
                  if (StmApp.actuators[x].temp1>-500) {
                     result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
                  }

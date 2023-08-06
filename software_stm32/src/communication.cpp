@@ -170,7 +170,7 @@ int16_t communication_loop (void) {
 	uint16_t		x = 0;
 	uint32_t		xu32 = 0;
 	uint16_t		y = 0;
-	char sendbuffer[50];
+	char sendbuffer[60];
     char valbuffer[10];
 
 	DeviceAddress currAddress;
@@ -344,7 +344,16 @@ int16_t communication_loop (void) {
 
 					strcat(sendbuffer, " ");
 					itoa(learning_movements-myvalves[x].learn_movements, valbuffer, 10);  
-					   
+					strcat(sendbuffer, valbuffer);
+
+					strcat(sendbuffer, " ");
+					itoa(myvalvemots[x].opening_count, valbuffer, 10);  
+					strcat(sendbuffer, valbuffer);
+					strcat(sendbuffer, " ");
+					itoa(myvalvemots[x].closing_count, valbuffer, 10);  
+					strcat(sendbuffer, valbuffer);
+					strcat(sendbuffer, " ");
+					itoa(myvalvemots[x].deadzone_count, valbuffer, 10);  
 					strcat(sendbuffer, valbuffer);
 					
 					// end

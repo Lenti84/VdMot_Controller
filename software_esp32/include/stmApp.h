@@ -54,6 +54,9 @@ typedef struct  {
   uint8_t   lastState;
   bool      worked;
   uint32_t  movements;
+  uint32_t  opening_count;
+  uint32_t  closing_count;
+  int32_t  deadzone_count;
 } ACTUATOR_STRUC;
 
 typedef struct  {
@@ -215,23 +218,29 @@ private:
   
   char*   cmdptr;
   char*	  cmdptrend;
-  char    cmd[50];
-  char		arg0[1200];	
-  char    arg1[1200];		
-  char    arg2[30];
-  char    arg3[30];
-  char    arg4[30];
-  char    arg5[30];
-  char    arg6[30];
-  
-	char*		arg0ptr;
-	char*		arg1ptr;
-  char*		arg2ptr;
-  char*		arg3ptr;
-  char*		arg4ptr;
-  char*		arg5ptr;
-  char*		arg6ptr;
-  
+
+  #define noOfLargeArgs 2
+  #define noOfSmallArgs 8
+  #define noOfArgs noOfLargeArgs+noOfSmallArgs
+  #define cmdSize 50
+  #define largeArgSize 1200
+  #define smallArgSize 30
+
+  char  cmd[cmdSize];
+  char	arg0[largeArgSize],	
+        arg1[largeArgSize],		
+        arg2[smallArgSize],
+        arg3[smallArgSize],
+        arg4[smallArgSize],
+        arg5[smallArgSize],
+        arg6[smallArgSize],
+        arg7[smallArgSize],
+        arg8[smallArgSize],
+        arg9[smallArgSize];
+
+  char *argptr[noOfArgs]={arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9};
+  uint16_t argSize[noOfArgs]={sizeof(arg0),sizeof(arg1),sizeof(arg2),sizeof(arg3),sizeof(arg4),sizeof(arg5),sizeof(arg6),sizeof(arg7),sizeof(arg8),sizeof(arg9)};
+
 	uint8_t	argcnt;
   
 };

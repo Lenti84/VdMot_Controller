@@ -145,6 +145,14 @@
 		text-align: center;
 		grid-column : span 3;
 	}
+
+	.rtabframe4 {
+		border: white 2px solid;
+		padding: 5px;
+		border-radius: 5px;
+		text-align: center;
+		grid-column : span 4;
+	}
 	
 	table.tabTable td {
 		padding-left: 5px;
@@ -412,7 +420,7 @@
 	
 	<div id="Status" class="tabContent">
 	<div class="container3">
-		<div class="rtabframe3">  
+		<div id="divValvesTable" class="rtabframe3">  
 		<h3>Valves</h3>	
 		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
@@ -427,6 +435,12 @@
 				<tr>
 					<th>Last Calibration</th>
 					<td id="miscStatusLC"></td>
+				</tr>
+				<tr>
+					<th>Show status detailed</th>
+					<td>
+					<input type="checkbox" id="status-detailed" name="status-detailed" title="Show detailed status"/>
+					</td>
 				</tr>
 			</table>
 		</div>
@@ -696,7 +710,7 @@
 			<tr>
 				<th>Publish on change</th>
 				<td>
-				<input type="checkbox" id="protcfg-pubOnChange" name="protcfg-pubOnChange" titel="Publish values if changed or time out (defined in Publish interval, individually for each valve and temperature sensor)"/>
+				<input type="checkbox" id="protcfg-pubOnChange" name="protcfg-pubOnChange" title="Publish values if changed or time out (defined in Publish interval, individually for each valve and temperature sensor)"/>
 				</td>
 			</tr>
 			<tr id="tr-minPubTime">
@@ -1739,7 +1753,7 @@
 		function makeValvesTable(valvesJson) {
 			const ValvesTable = id('valvesTable');
 			ValvesTable.innerHTML="";
-			let columnsize = 8;
+			let columnsize = 11;
 			valveTempsExists=checkIfTempExists(valvesJson);
 			if (valveTempsExists===true) {
 				columnsize+=2;
@@ -1794,7 +1808,10 @@
 			valvesTable.rows[0].cells[4].textContent = 'State';
 			valvesTable.rows[0].cells[5].innerHTML = 'Target %';
 			valvesTable.rows[0].cells[7].innerHTML = 'Moves';
-			let colIdx=8;
+			valvesTable.rows[0].cells[8].innerHTML = 'Open Counts';
+			valvesTable.rows[0].cells[9].innerHTML = 'Close Counts';
+			valvesTable.rows[0].cells[10].innerHTML = 'Dead Counts';
+			let colIdx=11;
 			if (valveTempsExists===true) {
 				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp1';
 				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp2';
@@ -1810,6 +1827,13 @@
 			el.setAttribute('id', 'activeSetValves');
 			el.setAttribute('onclick','activateSetValves();');
 			thiscell.appendChild(el);
+			
+			if (localStorage.statusDetailed!=null) {
+				id("status-detailed").checked=(localStorage.statusDetailed==="true");
+			} else {
+				id("status-detailed").checked=false;	
+			}
+			showStatusDetailed(id("status-detailed").checked);
 		}
 		
 		function makeTempsTable(NoOfSensors) {
@@ -2209,6 +2233,18 @@
 			return (tzCode);
 		}	
 
+		function showStatusDetailed(enabled) {
+			let vt=id('divValvesTable');
+			if (enabled) vt.setAttribute ("style", "grid-column : span 4;");
+			else
+			vt.setAttribute ("style", "grid-column : span 3;");
+			show_hide_column('valvesTable',3, enabled);
+			show_hide_column('valvesTable',7, enabled);
+			show_hide_column('valvesTable',8, enabled);
+			show_hide_column('valvesTable',9, enabled);
+			show_hide_column('valvesTable',10, enabled);
+		}
+
 		function generateOnClick() {
 			id("netcfg-EthWifi").onclick = function(){
 				showWifi();
@@ -2287,6 +2323,9 @@
 			id ("vCfg-movCalib").onchange = function (){
 				movCalibHasChanged=true;
 			}
+			id ("vCfg-hCalib").onchange = function (){
+				movCalibHasChanged=true;
+			}
 			for (i=0;i<7;i++) {
 				let thisID = "vCfg-d" + i;
 				id (thisID).onchange = function (){
@@ -2302,6 +2341,13 @@
 				showMinPublish();
 			}
 			
+			id("status-detailed").onchange = function() {
+				let statusDetailed = id('status-detailed');
+				let enabled = statusDetailed.checked;
+				showStatusDetailed(enabled);
+				localStorage.statusDetailed = enabled;
+			}
+
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
 			  modal.style.display = "none";
@@ -2344,6 +2390,7 @@
 			id("test-email").addEventListener("click", () => {
     			testEmail();
 			});
+
 
 		}
 		
@@ -2816,7 +2863,10 @@
 				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
 				ValvesTable.rows[index+1].cells[4].textContent = States[item.state];
 				ValvesTable.rows[index+1].cells[7].textContent = item.moves;
-				let colIdx=8;
+				ValvesTable.rows[index+1].cells[8].textContent = item.oc;
+				ValvesTable.rows[index+1].cells[9].textContent = item.cc;
+				ValvesTable.rows[index+1].cells[10].textContent = item.dc;
+				let colIdx=11;
 				if (valveTempsExists===true) {
 					if (item.temp1)
 						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.temp1;

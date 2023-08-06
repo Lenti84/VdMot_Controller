@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+## [1.2.2]
+### Add
+- send valve movements, open counts, close counts, dead counts with cmd APP_PRE_GETVLVDATA
+
 ## [1.1.0]
 ### Changed
 - new command : APP_PRE_EEPSTATE : gets the state of eeprom (1 = ready, 0 = write pending)
