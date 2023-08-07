@@ -258,17 +258,17 @@
 	}
 
 	.checkboxgroup1{
-		width: 15em;
+		width: 16em;
 		height : 12em;
 		overflow-y: auto;
 		text-align: left;
 	}
 	.checkboxgroup1 p{
-		width: 14em;
+		width: 16em;
 		text-align: left;
 	}
 	.checkboxgroup1 label{
-		width: 14em;
+		width: 16em;
 		float: left;
 	}
 
@@ -339,6 +339,53 @@
 		grid-template-rows:  masonry;
 	}
 		
+	/* slider checkbox */ 
+	[type="checkbox"] {
+	--s:18px; /* adjust this to control the size*/
+	position: relative; 
+  	top: .3em;
+	height:var(--s);
+	aspect-ratio:2/1;
+	padding:calc(var(--s)/5);
+	border-radius:var(--s);
+	background:
+		radial-gradient(farthest-side,#fafafa 85%,#0005,#0000) left/var(--s) 100% no-repeat,
+		linear-gradient(90deg,#20b68f 50%,#939393 0) right/200% 100% content-box;
+	transition:0.5s;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	cursor:pointer;
+	}
+
+	[type="checkbox"]:checked {
+	background-position:right,left;
+	}
+
+	[type="text"],[type="number"],[type="password"] {
+	--s:15px; /* adjust this to control the size*/
+	/*height:var(--s);
+	aspect-ratio:2/1;
+	padding:calc(var(--s)/5);*/
+	border-radius:8px; 
+	background:
+		white;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	cursor:pointer;
+	}
+
+	select,[type="button"] {
+		border-radius:8px;
+	}
+
+	body {
+	background:gray;
+	}
+
+
+
 	#Home {background-color: gray;}
 	#Status {background-color: gray;}
 	#Network {background-color: gray;}
@@ -730,7 +777,7 @@
 		<div class="tabpframe"> 
 		<table id="protcfg-Broker1" style="display:none;" class="tabTable">
 			<tr>
-			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:6em;display:none;">
+			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:8em;display:none;">
 				<legend>Publish</legend>
 				<label><input type="checkbox" id="protcfg-pubTarget" name="theGroupP">Target </label>
 				<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
@@ -761,7 +808,7 @@
 		
 			<table id="cfgValvesTable1" class="tabTable">
 			<tr>
-			<fieldset class="checkboxgroup" style="height:13em;" id="cfgValvesTableFieldSet1">
+			<fieldset class="checkboxgroup" style="height:16em;" id="cfgValvesTableFieldSet1">
 				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
 				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour time of next calibration"> hour time</label>
@@ -896,7 +943,7 @@
 			</table>
 		</dialog>
 		
-		<div class="rtabframe" id ="messengerTabFrame" style="height:290px">
+		<div class="rtabframe" id ="messengerTabFrame" style="height:330px">
 			<h3>Messenger</h3>
 			<table id="cfgValvesTable1" class="tabTable">
 				<tr>
@@ -905,7 +952,7 @@
 					<label><input type="checkbox" id="MsgPOCfg-Active" name="theGroup">Pushover <input type="button" class="buttonclass1" id="msgCfg-PushOverParam" style="height:2em;" value="..." title="Push over parameter" /></label>
 					<label><input type="checkbox" id="MsgEmailCfg-Active" name="theGroup">Email <input type="button" class="buttonclass1" id="msgCfg-emailParam" style="height:2em;" value="..." title="Email parameter" /></label>
 				</fieldset>
-				<fieldset class="checkboxgroup1" style="height:7em;" id="cfgValvesTableFieldSet2">
+				<fieldset class="checkboxgroup1" style="height:9em;" id="cfgValvesTableFieldSet2">
 					<legend>Send reasons</legend>	
 					<label><input type="checkbox" id="MsgCfg-ReasonValveBlocked" name="theGroup">Valve blocked </label>
 					<label><input type="checkbox" id="MsgCfg-ReasonValveDetect" name="theGroup">Active valve not detected </label>

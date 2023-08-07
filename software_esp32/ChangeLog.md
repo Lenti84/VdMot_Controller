@@ -13,7 +13,9 @@ All notable changes to this project will be documented in this file.
 
 ## [1.2.2]
 ### Added
-- status page : display valve movements
+- status page : display valve movements, open counts, close counts, dead counts
+### Changed
+- web site : more modern style
 ### Fixed
 - hour time was not set correctly when only changed hour time
 
