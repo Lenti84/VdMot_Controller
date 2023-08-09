@@ -792,7 +792,7 @@
 
 		<div class="rtabframe">
 		<h3>Valves</h3>
-		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center;">
 		
 		</table>
 		<table class="tabTable"
@@ -1631,6 +1631,7 @@
 		var heatControl = null;
 		var anyValveControlEnabled=false;
 		var stmLoaded=false;
+		var activeSetValvesDisplay = "none";
 
 		// Get the modal
 		var modal = id("pwdModal");
@@ -1765,8 +1766,8 @@
 				case 3 : {	
 							showAllTabs= true;
 							showAllTabsNow();
-							let el = id("activeSetValves");
-							el.disabled=false;
+							activeSetValvesDisplay = "block";
+							id('activeSetValves').style.display="block";
 							break;
 						 }
 			}
@@ -1884,7 +1885,7 @@
 			el.setAttribute('name', 'activeSetValves');
 			el.setAttribute('id', 'activeSetValves');
 			el.setAttribute('onclick','activateSetValves();');
-			el.disabled=true;
+			el.style.display=activeSetValvesDisplay; 
 			thiscell.appendChild(el);
 			
 			if (localStorage.statusDetailed!=null) {
@@ -3183,9 +3184,10 @@
 				id("netcfg-syslog-port").value=dataNetConfig.syslogPort;
 				showWifi();
 				showSyslogIP();
-				if (id("netcfg-UserName").value==="") {
-					let el = id("activeSetValves");
-					el.disabled=false;
+				console.log('getNetConfig');
+				if (dataNetConfig["userName"]==="") {
+					activeSetValvesDisplay = "block";
+					id('activeSetValves').style.display="block";
 					showAllTabs=true;
 					showAllTabsNow();
 				} else id("login-button").style.display = "block";
