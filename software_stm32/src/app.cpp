@@ -54,6 +54,7 @@ int16_t app_setup (void) {
       myvalves[x].sensorindex1 = VALVE_SENSOR_UNKNOWN;        // marks that no slot is selected
       myvalves[x].sensorindex2 = VALVE_SENSOR_UNKNOWN;        // marks that no slot is selected
       myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
+      myvalves[x].movements = 0;
       // distribute learn timing equaly over valve slots
       myvalves[x].learn_time = (unsigned int) (((long)LEARN_AFTER_TIME_DEFAULT * ((long)x+1)) / (long)ACTUATOR_COUNT);
   }
@@ -190,6 +191,7 @@ byte app_10s_loop () {
   if (learning_movements > 0) { 
     for (x=0; x< ACTUATOR_COUNT; x++) {  
       if(myvalves[x].learn_movements == 0) {
+        myvalves[x].movements = 0;
         myvalves[x].learn_movements = learning_movements;
         myvalvemots[x].status = VLV_STATE_PRESENT;     // mark state as unknown, net set target req will do a learning cycle
         #ifdef appDebug
@@ -215,6 +217,7 @@ int16_t app_set_learnmovements(uint16_t movements) {
   // update all valve memories 
   for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {          
     myvalves[x].learn_movements = learning_movements;
+    myvalves[x].movements = 0;
   }
 
   return 0;

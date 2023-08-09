@@ -343,7 +343,7 @@ int16_t communication_loop (void) {
 					else strcat(sendbuffer, "-500");
 
 					strcat(sendbuffer, " ");
-					itoa(learning_movements-myvalves[x].learn_movements, valbuffer, 10);  
+					itoa(myvalves[x].movements, valbuffer, 10);  
 					strcat(sendbuffer, valbuffer);
 
 					strcat(sendbuffer, " ");

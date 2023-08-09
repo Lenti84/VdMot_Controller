@@ -79,6 +79,7 @@ struct valve {
   unsigned int sensorindex2;
   unsigned int learn_time;
   unsigned int learn_movements;
+  unsigned int movements;
 //   byte target_position;
 //   byte actual_position;
   byte statusm;

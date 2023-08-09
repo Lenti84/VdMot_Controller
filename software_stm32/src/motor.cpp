@@ -317,7 +317,10 @@ void valve_loop () {
 
                   // decrement learning counter
                   if(valvestate == A_OPEN1 || valvestate == A_CLOSE1) {
-                    if(myvalves[valveindex].learn_movements) myvalves[valveindex].learn_movements--;
+                    if(myvalves[valveindex].learn_movements) {
+                      myvalves[valveindex].learn_movements--;
+                    }
+                    myvalves[valveindex].movements++;
                   }
 
                   // pause temperature measurement to avoid ADC interference
