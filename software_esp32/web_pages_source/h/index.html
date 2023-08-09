@@ -1649,7 +1649,7 @@
 		
 		function showThisTab(pageName)
 		{
-			let showTab = (pageName=="Home") || (pageName=="About") || showAllTabs;
+			let showTab = (pageName=="Home") || (pageName=="About") || (pageName=="Status") || showAllTabs;
 			return showTab
 		}
 		
@@ -1726,6 +1726,7 @@
 			makeCfgValvesTable();
 			makeValvesControlTable();
 			makeCfgTempTable();
+			await getValvesStatus();
 			await getSystemInfo();
 			await getSystemDynInfo();
 			await getNetInfo();
@@ -1735,7 +1736,7 @@
 			await getTempsConfig();
 			await getValvesConfig();
 			await getValvesControlConfig();
-			await getValvesStatus();
+			
 			
 			await getFSDir();
 			getStatusInterval = window.setInterval(await getStatus, 2000);
@@ -1764,11 +1765,20 @@
 				case 3 : {	
 							showAllTabs= true;
 							showAllTabsNow();
+							let el = id("activeSetValves");
+							el.disabled=false;
 							break;
 						 }
 			}
 		}
 				
+		function setAllInputsDisabled (value) {
+			var inputs = document.querySelectorAll(['input','select']);
+			inputs.forEach(el => {
+			   el.disabled=value;
+			});
+		}
+
 		function ValidateIPaddress(inputText) {
 			var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 			if (inputText.value.match(ipformat)) {
@@ -1874,6 +1884,7 @@
 			el.setAttribute('name', 'activeSetValves');
 			el.setAttribute('id', 'activeSetValves');
 			el.setAttribute('onclick','activateSetValves();');
+			el.disabled=true;
 			thiscell.appendChild(el);
 			
 			if (localStorage.statusDetailed!=null) {
@@ -3173,6 +3184,8 @@
 				showWifi();
 				showSyslogIP();
 				if (id("netcfg-UserName").value==="") {
+					let el = id("activeSetValves");
+					el.disabled=false;
 					showAllTabs=true;
 					showAllTabsNow();
 				} else id("login-button").style.display = "block";
