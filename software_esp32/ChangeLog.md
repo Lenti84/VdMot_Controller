@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - status page : display valve movements, open counts, close counts, dead counts
 ### Changed
 - web site : more modern style
+- status page is alwas displayed even a login user exists, the activate-set slider is disabled in this case.
 ### Fixed
 - hour time was not set correctly when only changed hour time
 
