@@ -268,17 +268,23 @@ String CWeb::getSysDynInfo()
 {
   struct tm timeinfo;
   char buf[50];
-  String time;
+  String sTime;
   String upTime;
+  String sLastCalib;
 
   if(!getLocalTime(&timeinfo)) {
-    time = "Failed to obtain time";
+    sTime = "Failed to obtain time";
   } else {
     strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
-    time = String(buf);
+    sTime = String(buf);
   }
 
-  String result = "{\"locTime\":\""+time+"\"," +
+  time_t lastCalib=VdmConfig.miscValues.lastCalib;
+  localtime_r(&lastCalib, &timeinfo);
+  strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
+  sLastCalib = String(buf);
+
+  String result = "{\"locTime\":\""+sTime+"\"," +
                   "\"upTime\":\""+VdmSystem.getUpTime()+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
                   "\"minheap\":\""+ConvBinUnits(ESP.getMinFreeHeap(),1)+ "\"," +
@@ -290,6 +296,7 @@ String CWeb::getSysDynInfo()
                     result += ",\"brokerStatus\":"+String(Mqtt.mqttState);
                     result += ",\"brokerConnected\":"+String(Mqtt.mqttConnected);
                   }
+                  result += ",\"lastCalib\":\""+String(sLastCalib)+"\"";
                   result +="}";
   return result;  
 }
@@ -320,7 +327,12 @@ String CWeb::getValvesStatus()
                  "\"state\":"+String(StmApp.actuators[x].state) + ","+
                  "\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
                  "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
-                 "\"targetPos\":" + String(StmApp.actuators[x].target_position);
+                 "\"targetPos\":" + String(StmApp.actuators[x].target_position)+ ","+
+                 "\"moves\":" + String(StmApp.actuators[x].movements)+ ","+
+                 "\"oc\":" + String(StmApp.actuators[x].opening_count)+ ","+
+                 "\"cc\":" + String(StmApp.actuators[x].closing_count)+ ","+
+                 "\"dc\":" + String(StmApp.actuators[x].deadzone_count);
+
                  if (StmApp.actuators[x].temp1>-500) {
                     result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
                  }

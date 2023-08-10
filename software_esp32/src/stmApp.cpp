@@ -79,12 +79,18 @@ CStmApp::CStmApp()
     bufptr = buffer;
     buflen = 0;
     argcnt = 0;
-    arg0ptr = arg0;
-	arg1ptr = arg1;
-    arg2ptr = arg2;
-    arg3ptr = arg3;
-    arg4ptr = arg4;
-    arg5ptr = arg5;
+    /*
+    argptr[0] = arg0;
+	argptr[1] = arg1;
+    argptr[2] = arg2;
+    argptr[3] = arg3;
+    argptr[4] = arg4;
+    argptr[5] = arg5;
+    argptr[6] = arg6;
+    argptr[7] = arg7;
+    argptr[8] = arg8;
+    argptr[9] = arg9;
+*/
 	argcnt = 0;
     tempsPrivCount=0;
     tempsCount=0;
@@ -107,6 +113,7 @@ CStmApp::CStmApp()
     waitEEPFinished=false;
     stmInitState=STM_INIT_NOT_STARTED;
     fastGetOneWire=false;
+    
 }
 
 void  CStmApp::app_setup() {
@@ -180,6 +187,10 @@ void CStmApp::valvesCalibration()
 {
     uint8_t i=255;
     app_cmd(APP_PRE_SETVLLEARN,String(i));
+    time_t now;
+    time (&now);
+    VdmConfig.miscValues.lastCalib=now;
+    VdmConfig.writeMiscValues();
 }
 
 void CStmApp::valvesAssembly()
@@ -363,6 +374,7 @@ void  CStmApp::app_check_data()
 {
     static int errorcnt = 0;
     int availcnt;
+    uint8_t noToken;
 
     #ifdef STMSimulation
         #warning STMSimulation active
@@ -425,58 +437,42 @@ void  CStmApp::app_check_data()
         found = false;
 
         if (stmStatus==STM_NOT_READY) stmStatus=STM_READY;
+         
         // devide buffer into command and data
 		// ****************************************
-		cmdptr = buffer;
-        
-		for(int x=0;x<7;x++) {
-			cmdptrend = strchr(cmdptr,' ');
-			if (cmdptrend!=NULL) {
-				*cmdptrend = '\0';
-				if(x==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
-				else if(x==1) { 
-                    memset (arg0,0x0,sizeof(arg0));
-                    strncpy(arg0,cmdptr,sizeof(arg0)-1); 
-                    argcnt=1;	
-                } 	// 1st argument
-				else if(x==2) {	
-                    memset (arg1,0x0,sizeof(arg1));
-                    strncpy(arg1,cmdptr,sizeof(arg1)-1); 
-                    argcnt=2;	
-                } 	// 2nd argument
-                else if(x==3) {	
-                    memset (arg2,0x0,sizeof(arg2));
-                    strncpy(arg2,cmdptr,sizeof(arg2)-1); 
-                    argcnt=3;	
-                } 	// 3rd argument
-                else if(x==4) {
-                    memset (arg3,0x0,sizeof(arg3));	
-                    strncpy(arg3,cmdptr,sizeof(arg3)-1); 
-                    argcnt=4;	
-                } 	// 4th argument
-                else if(x==5) {	
-                    memset (arg4,0x0,sizeof(arg4));
-                    strncpy(arg4,cmdptr,sizeof(arg4)-1); 
-                    argcnt=5;	
-                } 	// 5th argument
 
-                else if(x==6) {	
-                    memset (arg5,0x0,sizeof(arg5));
-                    strncpy(arg5,cmdptr,sizeof(arg5)-1); 
-                    argcnt=6;	
-                } 	// 6th argument
-				cmdptr = cmdptrend + 1;
-			}
-		}
- 
+        cmdptr = buffer;
+        argcnt = 0;
+        noToken = 0;
+        //UART_DBG.println("cmdbuffer "+String(cmdptr));
+
+        // Returns first token
+        char *token = strtok(cmdptr, " ");
+        strncpy(cmd,token,sizeof(cmd)-1);		// command
+        // Keep get tokens while one of the
+        // delimiters present in buffer.
+        //UART_DBG.println("token1 "+String(token));
+        while (token != NULL)
+        {
+            if (noToken>0) { 
+                //UART_DBG.println("token "+String(token));
+                memset (argptr[noToken-1],0x0,argSize[noToken-1]);
+                strncpy(argptr[noToken-1],token,argSize[noToken-1]-1); 
+                argcnt++;
+            }
+            token = strtok(NULL, " ");
+            noToken++;
+            if (noToken>noOfArgs) break;
+        }
+
 		// get actual values
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		if(memcmp(APP_PRE_GETACTUALPOS,cmd,5) == 0) {
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"STMApp:actual position answer "+String(arg0ptr)+" : "+String(arg1ptr));
+                    syslog.log(LOG_DEBUG,"STMApp:actual position answer "+String(argptr[0])+" : "+String(argptr[1]));
                 }
-                actuators[atoi(arg0ptr)].actual_position = atoi(arg1ptr);
+                actuators[atoi(argptr[0])].actual_position = atoi(argptr[1]);
             }
             appState=APP_IDLE;
         }
@@ -486,9 +482,9 @@ void  CStmApp::app_check_data()
 		else if(memcmp(APP_PRE_GETMEANCURR,cmd,5) == 0) {
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"STMApp:mean current answer "+String(arg0ptr)+" : "+String(arg1ptr));  
+                    syslog.log(LOG_DEBUG,"STMApp:mean current answer "+String(argptr[0])+" : "+String(argptr[1]));  
                 }
-                actuators[atoi(arg0ptr)].meancurrent = atoi(arg1ptr);
+                actuators[atoi(argptr[0])].meancurrent = atoi(argptr[1]);
             }
             appState=APP_IDLE;
         }
@@ -498,11 +494,11 @@ void  CStmApp::app_check_data()
 		else if(memcmp(APP_PRE_GETVLSTATUS,cmd,5) == 0) { 
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"STMApp:valve status "+String(arg1ptr));
+                    syslog.log(LOG_DEBUG,"STMApp:valve status "+String(argptr[1]));
                 }
-                uint8_t nActuators = atoi(arg0ptr);
+                uint8_t nActuators = atoi(argptr[0]);
                 char* cmdptr;
-                char* ps=arg1ptr;
+                char* ps=argptr[1];
                 for (uint8_t idx=0; idx<nActuators;idx++) {
                     if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
                     actuators[idx].state = atoi(ps);
@@ -528,7 +524,7 @@ void  CStmApp::app_check_data()
             // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
             else if(memcmp(APP_PRE_GETTARGETPOS,cmd,5) == 0) {
                 if(argcnt == 2) {
-                    actuators[atoi(arg0ptr)].target_position = atoi(arg1ptr);
+                    actuators[atoi(argptr[0])].target_position = atoi(argptr[1]);
                 }
                 appState=APP_IDLE;
             }
@@ -536,18 +532,24 @@ void  CStmApp::app_check_data()
         // get data values
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVLVDATA,cmd,5) == 0) {
-            if(argcnt == 6) {
-                uint8_t idx=atoi(arg0ptr);
+            if(argcnt >= 6) {
+                uint8_t idx=atoi(argptr[0]);
                 if(idx < ACTUATOR_COUNT) {
-                    actuators[idx].actual_position = atoi(arg1ptr);
-                    actuators[idx].meancurrent = atoi(arg2ptr);
-                    actuators[idx].state = atoi(arg3ptr);
-                    actuators[idx].temp1 = ConvertCF(atoi(arg4ptr))+getTOffset(actuators[idx].tIdx1);
-                    actuators[idx].temp2 =  ConvertCF(atoi(arg5ptr))+getTOffset(actuators[idx].tIdx2);
+                    actuators[idx].actual_position = atoi(argptr[1]);
+                    actuators[idx].meancurrent = atoi(argptr[2]);
+                    actuators[idx].state = atoi(argptr[3]);
+                    actuators[idx].temp1 = ConvertCF(atoi(argptr[4]))+getTOffset(actuators[idx].tIdx1);
+                    actuators[idx].temp2 =  ConvertCF(atoi(argptr[5]))+getTOffset(actuators[idx].tIdx2);
+                    if (argcnt == 10) {
+                        actuators[idx].movements = atoi(argptr[6]);   
+                        actuators[idx].opening_count = atoi(argptr[7]);
+                        actuators[idx].closing_count = atoi(argptr[8]);
+                        actuators[idx].deadzone_count = atoi(argptr[9]); 
+                    }
 
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                        syslog.log(LOG_DEBUG, "STMApp:got valve data #"+String(arg0ptr)+" pos:"+String(arg1ptr)+
-                        " mean:"+String(arg2ptr)+" state:"+String(arg3ptr)+" t1:"+String(arg4ptr)+" t2:"+String(arg5ptr));
+                        syslog.log(LOG_DEBUG, "STMApp:got valve data #"+String(argptr[0])+" pos:"+String(argptr[1])+
+                        " mean:"+String(argptr[2])+" state:"+String(argptr[3])+" t1:"+String(argptr[4])+" t2:"+String(argptr[5]));
                     }
 
                     if (actuators[idx].state!=actuators[idx].lastState) {
@@ -591,7 +593,7 @@ void  CStmApp::app_check_data()
         
         else if(memcmp(APP_PRE_GETONEWIRECNT,cmd,5) == 0) {
             if(argcnt == 1) {
-                tempsPrivCount= atoi(arg0ptr); 
+                tempsPrivCount= atoi(argptr[0]); 
                 if (tempsPrivCount!=tempsCount) app_cmd(APP_PRE_GETONEWIRECNT,String(255));
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG,"STMApp:one wire count "+String(tempsPrivCount));
@@ -599,12 +601,12 @@ void  CStmApp::app_check_data()
             }
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"STMApp:one wire data "+String(arg1ptr));
+                    syslog.log(LOG_DEBUG,"STMApp:one wire data "+String(argptr[1]));
                 } 
-                tempsPrivCount= atoi(arg0ptr);
+                tempsPrivCount= atoi(argptr[0]);
                 if (tempsPrivCount>0) {
                     char* cmdptr;
-                    char* ps=arg1ptr;
+                    char* ps=argptr[1];
                     for (uint8_t idx=0; idx<tempsPrivCount;idx++) {
                         if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
                         strncpy(tempsId[idx].id,ps,sizeof(tempsId[idx].id));
@@ -621,15 +623,15 @@ void  CStmApp::app_check_data()
 		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"STMApp:one wire data "+String(arg0ptr)+":"+String(arg1ptr));
+                    syslog.log(LOG_DEBUG,"STMApp:one wire data "+String(argptr[0])+":"+String(argptr[1]));
                 } 
-                strncpy(tempsId[tempIndex].id,arg0ptr,sizeof(tempsId[tempIndex].id));
+                strncpy(tempsId[tempIndex].id,argptr[0],sizeof(tempsId[tempIndex].id));
 
-                int8_t idx=findTempID(arg0ptr);
+                int8_t idx=findTempID(argptr[0]);
                 if (idx>=0) {
                     memset(temps[idx].id,0x0,sizeof(temps[idx].id)); 
-                    strncpy(temps[idx].id,arg0ptr,sizeof(temps[idx].id));
-                    int16_t cValue=atoi(arg1ptr);
+                    strncpy(temps[idx].id,argptr[0],sizeof(temps[idx].id));
+                    int16_t cValue=atoi(argptr[1]);
                     temps[idx].temperature=ConvertCF(cValue)+VdmConfig.configFlash.tempsConfig.tempConfig[idx].offset;
                 } 
                 tempIndex++;
@@ -658,11 +660,11 @@ void  CStmApp::app_check_data()
 
         else if(memcmp(APP_PRE_GETVERSION,cmd,5) == 0) {
             if(argcnt > 0) {
-                VdmSystem.stmVersion=arg0ptr; 
+                VdmSystem.stmVersion=argptr[0]; 
                 VdmSystem.stmBuild=0;
             }
             if(argcnt > 1) {
-                 VdmSystem.stmBuild=atoi(arg1ptr);
+                 VdmSystem.stmBuild=atoi(argptr[1]);
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
             appState=APP_IDLE;
@@ -670,23 +672,23 @@ void  CStmApp::app_check_data()
 
         else if(memcmp(APP_PRE_GETONEWIRESETT,cmd,5) == 0) {
             if(argcnt == 3) {
-                setSensorIndex(atoi(arg0ptr),arg1ptr,arg2ptr);
+                setSensorIndex(atoi(argptr[0]),argptr[1],argptr[2]);
             }
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"STMApp:one wire settings data "+String(arg0ptr)+" : "+String(arg1ptr));
+                    syslog.log(LOG_DEBUG,"STMApp:one wire settings data "+String(argptr[0])+" : "+String(argptr[1]));
                 }   
-                uint8_t nItems= atoi(arg0ptr);
+                uint8_t nItems= atoi(argptr[0]);
                 if (nItems>0) {
                     char* cmdptr;
-                    char* ps=arg1ptr;
+                    char* ps=argptr[1];
                     for (uint8_t idx=0; idx<nItems;idx++) {
                         if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
-                        strncpy(arg4ptr,ps,sizeof(arg4));
+                        strncpy(argptr[4],ps,argSize[4]);
                         if (cmdptr!=NULL) ps=cmdptr+1;
                         if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
-                        strncpy(arg5ptr,ps,sizeof(arg5));
-                        setSensorIndex(idx,arg4ptr,arg5ptr);
+                        strncpy(argptr[5],ps,argSize[5]); 
+                        setSensorIndex(idx,argptr[4],argptr[5]);
                         if (cmdptr!=NULL) ps=cmdptr+1;
                     }
                 }
@@ -705,7 +707,7 @@ void  CStmApp::app_check_data()
 
         else if(memcmp(APP_PRE_GETLEARNMOVEM,cmd,5) == 0) {
             if(argcnt == 1) {
-                learnAfterMovements=atoi(arg0ptr);
+                learnAfterMovements=atoi(argptr[0]);
             }
             appState=APP_IDLE;
         }
@@ -732,20 +734,20 @@ void  CStmApp::app_check_data()
 
         else if(memcmp(APP_PRE_GETMOTCHARS,cmd,5) == 0) {
             if(argcnt == 2) {
-                motorChars.maxLowCurrent=atoi(arg0ptr);
-                motorChars.maxHighCurrent=atoi(arg1ptr);
+                motorChars.maxLowCurrent=atoi(argptr[0]);
+                motorChars.maxHighCurrent=atoi(argptr[1]);
             }
             if(argcnt == 3) {
-                motorChars.maxLowCurrent=atoi(arg0ptr);
-                motorChars.maxHighCurrent=atoi(arg1ptr);
-                motorChars.startOnPower=atoi(arg2ptr);
+                motorChars.maxLowCurrent=atoi(argptr[0]);
+                motorChars.maxHighCurrent=atoi(argptr[1]);
+                motorChars.startOnPower=atoi(argptr[2]);
                 setupStartPosition(motorChars.startOnPower);
             }
             appState=APP_IDLE;
         }
         else if(memcmp(APP_PRE_EEPSTATE,cmd,5) == 0) {
             if(argcnt == 1) {
-                bool getEEState=atoi(arg0ptr);
+                bool getEEState=atoi(argptr[0]);
                 #ifdef EnvDevelop
                     UART_DBG.println("get eeprom state "+ String(getEEState));
                 #endif

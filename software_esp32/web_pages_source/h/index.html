@@ -145,6 +145,14 @@
 		text-align: center;
 		grid-column : span 3;
 	}
+
+	.rtabframe4 {
+		border: white 2px solid;
+		padding: 5px;
+		border-radius: 5px;
+		text-align: center;
+		grid-column : span 4;
+	}
 	
 	table.tabTable td {
 		padding-left: 5px;
@@ -250,17 +258,17 @@
 	}
 
 	.checkboxgroup1{
-		width: 15em;
+		width: 16em;
 		height : 12em;
 		overflow-y: auto;
 		text-align: left;
 	}
 	.checkboxgroup1 p{
-		width: 14em;
+		width: 16em;
 		text-align: left;
 	}
 	.checkboxgroup1 label{
-		width: 14em;
+		width: 16em;
 		float: left;
 	}
 
@@ -331,6 +339,54 @@
 		grid-template-rows:  masonry;
 	}
 		
+	/* slider checkbox */ 
+	[type="checkbox"] {
+	--s:18px; /* adjust this to control the size*/
+	position: relative; 
+  	top: .3em;
+	height:var(--s);
+	aspect-ratio:2/1;
+	padding:calc(var(--s)/5);
+	border-radius:var(--s);
+	background:
+		radial-gradient(farthest-side,#fafafa 85%,#0005,#0000) left/var(--s) 100% no-repeat,
+		/*linear-gradient(90deg,#20b68f 50%,#939393 0) right/200% 100% content-box;*/
+		linear-gradient(90deg,#79B935 50%,#939393 0) right/200% 100% content-box;
+	transition:0.5s;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	cursor:pointer;
+	}
+
+	[type="checkbox"]:checked {
+	background-position:right,left;
+	}
+
+	[type="text"],[type="number"],[type="password"] {
+	--s:15px; /* adjust this to control the size*/
+	/*height:var(--s);
+	aspect-ratio:2/1;
+	padding:calc(var(--s)/5);*/
+	border-radius:8px; 
+	background:
+		white;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	cursor:pointer;
+	}
+
+	select,[type="button"] {
+		border-radius:8px;
+	}
+
+	body {
+	background:gray;
+	}
+
+
+
 	#Home {background-color: gray;}
 	#Status {background-color: gray;}
 	#Network {background-color: gray;}
@@ -412,12 +468,30 @@
 	
 	<div id="Status" class="tabContent">
 	<div class="container3">
-		<div class="rtabframe3">  
+		<div id="divValvesTable" class="rtabframe3">  
 		<h3>Valves</h3>	
 		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
-		
+		<div class="rtabframe" style="overflow-y:auto" id="addStatusTabFrame">  
+			<h3>Miscellaneous</h3>
+			<table id="miscStatus" class="tabTable1">
+				<tr>
+					<th>Heat Control</th>
+					<td id="miscStatusHC"></td>
+				</tr>
+				<tr>
+					<th>Last Calibration</th>
+					<td id="miscStatusLC"></td>
+				</tr>
+				<tr>
+					<th>Show status detailed</th>
+					<td>
+					<input type="checkbox" id="status-detailed" name="status-detailed" title="Show detailed status"/>
+					</td>
+				</tr>
+			</table>
+		</div>
 		<div class="rtabframe" style="overflow-y:auto" id="tempStatusTabFrame">  
 		<h3>Temperature</h3>
 		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
@@ -684,7 +758,7 @@
 			<tr>
 				<th>Publish on change</th>
 				<td>
-				<input type="checkbox" id="protcfg-pubOnChange" name="protcfg-pubOnChange" titel="Publish values if changed or time out (defined in Publish interval, individually for each valve and temperature sensor)"/>
+				<input type="checkbox" id="protcfg-pubOnChange" name="protcfg-pubOnChange" title="Publish values if changed or time out (defined in Publish interval, individually for each valve and temperature sensor)"/>
 				</td>
 			</tr>
 			<tr id="tr-minPubTime">
@@ -704,7 +778,7 @@
 		<div class="tabpframe"> 
 		<table id="protcfg-Broker1" style="display:none;" class="tabTable">
 			<tr>
-			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:6em;display:none;">
+			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:8em;display:none;">
 				<legend>Publish</legend>
 				<label><input type="checkbox" id="protcfg-pubTarget" name="theGroupP">Target </label>
 				<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
@@ -718,7 +792,7 @@
 
 		<div class="rtabframe">
 		<h3>Valves</h3>
-		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center;">
 		
 		</table>
 		<table class="tabTable"
@@ -735,10 +809,10 @@
 		
 			<table id="cfgValvesTable1" class="tabTable">
 			<tr>
-			<fieldset class="checkboxgroup" style="height:13em;" id="cfgValvesTableFieldSet1">
+			<fieldset class="checkboxgroup" style="height:16em;" id="cfgValvesTableFieldSet1">
 				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
-				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour of next calibration"> h</label>
+				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour time of next calibration"> hour time</label>
 				<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
 				<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
 				<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
@@ -870,7 +944,7 @@
 			</table>
 		</dialog>
 		
-		<div class="rtabframe" id ="messengerTabFrame" style="height:290px">
+		<div class="rtabframe" id ="messengerTabFrame" style="height:330px">
 			<h3>Messenger</h3>
 			<table id="cfgValvesTable1" class="tabTable">
 				<tr>
@@ -879,7 +953,7 @@
 					<label><input type="checkbox" id="MsgPOCfg-Active" name="theGroup">Pushover <input type="button" class="buttonclass1" id="msgCfg-PushOverParam" style="height:2em;" value="..." title="Push over parameter" /></label>
 					<label><input type="checkbox" id="MsgEmailCfg-Active" name="theGroup">Email <input type="button" class="buttonclass1" id="msgCfg-emailParam" style="height:2em;" value="..." title="Email parameter" /></label>
 				</fieldset>
-				<fieldset class="checkboxgroup1" style="height:7em;" id="cfgValvesTableFieldSet2">
+				<fieldset class="checkboxgroup1" style="height:9em;" id="cfgValvesTableFieldSet2">
 					<legend>Send reasons</legend>	
 					<label><input type="checkbox" id="MsgCfg-ReasonValveBlocked" name="theGroup">Valve blocked </label>
 					<label><input type="checkbox" id="MsgCfg-ReasonValveDetect" name="theGroup">Active valve not detected </label>
@@ -1023,7 +1097,7 @@
 		along with this program.  If not, see http://www.gnu.org/licenses/.
 		</p>
 		<p>
-		Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+		Copyright (C) 2021-2023 Lenti84  https://github.com/Lenti84/VdMot_Controller
 		</p>	
 		<p>
 		Contributor : SurfGargano
@@ -1557,6 +1631,7 @@
 		var heatControl = null;
 		var anyValveControlEnabled=false;
 		var stmLoaded=false;
+		var activeSetValvesDisplay = "none";
 
 		// Get the modal
 		var modal = id("pwdModal");
@@ -1575,7 +1650,7 @@
 		
 		function showThisTab(pageName)
 		{
-			let showTab = (pageName=="Home") || (pageName=="About") || showAllTabs;
+			let showTab = (pageName=="Home") || (pageName=="About") || (pageName=="Status") || showAllTabs;
 			return showTab
 		}
 		
@@ -1652,6 +1727,7 @@
 			makeCfgValvesTable();
 			makeValvesControlTable();
 			makeCfgTempTable();
+			await getValvesStatus();
 			await getSystemInfo();
 			await getSystemDynInfo();
 			await getNetInfo();
@@ -1661,7 +1737,7 @@
 			await getTempsConfig();
 			await getValvesConfig();
 			await getValvesControlConfig();
-			await getValvesStatus();
+			
 			
 			await getFSDir();
 			getStatusInterval = window.setInterval(await getStatus, 2000);
@@ -1690,11 +1766,20 @@
 				case 3 : {	
 							showAllTabs= true;
 							showAllTabsNow();
+							activeSetValvesDisplay = "block";
+							id('activeSetValves').style.display="block";
 							break;
 						 }
 			}
 		}
 				
+		function setAllInputsDisabled (value) {
+			var inputs = document.querySelectorAll(['input','select']);
+			inputs.forEach(el => {
+			   el.disabled=value;
+			});
+		}
+
 		function ValidateIPaddress(inputText) {
 			var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 			if (inputText.value.match(ipformat)) {
@@ -1727,7 +1812,7 @@
 		function makeValvesTable(valvesJson) {
 			const ValvesTable = id('valvesTable');
 			ValvesTable.innerHTML="";
-			let columnsize = 7;
+			let columnsize = 11;
 			valveTempsExists=checkIfTempExists(valvesJson);
 			if (valveTempsExists===true) {
 				columnsize+=2;
@@ -1781,7 +1866,11 @@
 			valvesTable.rows[0].cells[3].textContent = 'mA';
 			valvesTable.rows[0].cells[4].textContent = 'State';
 			valvesTable.rows[0].cells[5].innerHTML = 'Target %';
-			let colIdx=7;
+			valvesTable.rows[0].cells[7].innerHTML = 'Moves';
+			valvesTable.rows[0].cells[8].innerHTML = 'Open Counts';
+			valvesTable.rows[0].cells[9].innerHTML = 'Close Counts';
+			valvesTable.rows[0].cells[10].innerHTML = 'Dead Counts';
+			let colIdx=11;
 			if (valveTempsExists===true) {
 				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp1';
 				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp2';
@@ -1796,7 +1885,15 @@
 			el.setAttribute('name', 'activeSetValves');
 			el.setAttribute('id', 'activeSetValves');
 			el.setAttribute('onclick','activateSetValves();');
+			el.style.display=activeSetValvesDisplay; 
 			thiscell.appendChild(el);
+			
+			if (localStorage.statusDetailed!=null) {
+				id("status-detailed").checked=(localStorage.statusDetailed==="true");
+			} else {
+				id("status-detailed").checked=false;	
+			}
+			showStatusDetailed(id("status-detailed").checked);
 		}
 		
 		function makeTempsTable(NoOfSensors) {
@@ -2196,6 +2293,18 @@
 			return (tzCode);
 		}	
 
+		function showStatusDetailed(enabled) {
+			let vt=id('divValvesTable');
+			if (enabled) vt.setAttribute ("style", "grid-column : span 4;");
+			else
+			vt.setAttribute ("style", "grid-column : span 3;");
+			show_hide_column('valvesTable',3, enabled);
+			show_hide_column('valvesTable',7, enabled);
+			show_hide_column('valvesTable',8, enabled);
+			show_hide_column('valvesTable',9, enabled);
+			show_hide_column('valvesTable',10, enabled);
+		}
+
 		function generateOnClick() {
 			id("netcfg-EthWifi").onclick = function(){
 				showWifi();
@@ -2274,6 +2383,9 @@
 			id ("vCfg-movCalib").onchange = function (){
 				movCalibHasChanged=true;
 			}
+			id ("vCfg-hCalib").onchange = function (){
+				movCalibHasChanged=true;
+			}
 			for (i=0;i<7;i++) {
 				let thisID = "vCfg-d" + i;
 				id (thisID).onchange = function (){
@@ -2282,12 +2394,20 @@
 			}
 			id ("VCtrlConfigHeatControl").onchange = function (){
 				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
+				id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[id("VCtrlConfigHeatControl").selectedIndex].value;
 			}
 			
 			id ("protcfg-pubOnChange").onclick = function() {
 				showMinPublish();
 			}
 			
+			id("status-detailed").onchange = function() {
+				let statusDetailed = id('status-detailed');
+				let enabled = statusDetailed.checked;
+				showStatusDetailed(enabled);
+				localStorage.statusDetailed = enabled;
+			}
+
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
 			  modal.style.display = "none";
@@ -2330,6 +2450,7 @@
 			id("test-email").addEventListener("click", () => {
     			testEmail();
 			});
+
 
 		}
 		
@@ -2801,7 +2922,11 @@
 				ValvesTable.rows[index+1].cells[2].textContent = item.pos;	
 				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
 				ValvesTable.rows[index+1].cells[4].textContent = States[item.state];
-				let colIdx=7;
+				ValvesTable.rows[index+1].cells[7].textContent = item.moves;
+				ValvesTable.rows[index+1].cells[8].textContent = item.oc;
+				ValvesTable.rows[index+1].cells[9].textContent = item.cc;
+				ValvesTable.rows[index+1].cells[10].textContent = item.dc;
+				let colIdx=11;
 				if (valveTempsExists===true) {
 					if (item.temp1)
 						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.temp1;
@@ -2854,6 +2979,7 @@
 			anyValveControlEnabled=false;
 			const cfgValvesControlTable = id('cfgValvesControlTable');
 			id ('VCtrlConfigHeatControl').selectedIndex=cfgValvesControlJson.common.heatControl;
+			id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[id("VCtrlConfigHeatControl").selectedIndex].value;
 			heatControl = cfgValvesControlJson.common.heatControl;
 			id ('VCtrlConfigParkPosition').value=cfgValvesControlJson.common.parkPosition;
 			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
@@ -2995,6 +3121,9 @@
 					id("net-broker").style.display="block";
 					id("net-broker-status").textContent=dataSystemDynInfo["brokerConnected"] ? "Connected" : "Not connected"; 
 				}
+				
+				id("miscStatusLC").textContent=dataSystemDynInfo["lastCalib"];
+
 				let newStmInit=dataSystemDynInfo["stmInit"];
 				disable_enable_ValvesCfg((newStmInit!=2) || (!stmLoaded));
 				if (newStmInit!=stmInit) {
@@ -3055,7 +3184,10 @@
 				id("netcfg-syslog-port").value=dataNetConfig.syslogPort;
 				showWifi();
 				showSyslogIP();
-				if (id("netcfg-UserName").value==="") {
+				console.log('getNetConfig');
+				if (dataNetConfig["userName"]==="") {
+					activeSetValvesDisplay = "block";
+					id('activeSetValves').style.display="block";
 					showAllTabs=true;
 					showAllTabsNow();
 				} else id("login-button").style.display = "block";

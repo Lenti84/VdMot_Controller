@@ -11,6 +11,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.2.2]
+### Added
+- status page : display valve movements, open counts, close counts, dead counts
+### Changed
+- web site : more modern style
+- status page is alwas displayed even a login user exists, the activate-set slider is disabled in this case.
+### Fixed
+- hour time was not set correctly when only changed hour time
+
+## [1.2.1]
+### Added
+- status page : display heat control state and last calibration 
+
 ## [1.2.0]
 ### Breaking Changed
 - use LittleFS instead SPIFFS, all files will be removed with update.

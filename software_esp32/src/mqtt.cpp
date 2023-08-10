@@ -484,20 +484,24 @@ void CMqtt::publish_valves () {
                     lastValveValues[x].meanCurrent=StmApp.actuators[x].meancurrent;
                 }
                 // temperature 1st sensor
-                if ((lastValveValues[x].temp1!=StmApp.actuators[x].temp1) || forcePublish || lastValveValues[x].publishTimeOut) {
-                    topicstr[len] = '\0';
-                    strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
-                    String s = String(((float)StmApp.actuators[x].temp1)/10,1); 
-                    mqtt_client.publish(topicstr, (const char*) &s);
-                    lastValveValues[x].temp1=StmApp.actuators[x].temp1;
+                if (StmApp.actuators[x].temp1>-50) {
+                    if ((lastValveValues[x].temp1!=StmApp.actuators[x].temp1) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
+                        String s = String(((float)StmApp.actuators[x].temp1)/10,1); 
+                        mqtt_client.publish(topicstr, (const char*) &s);
+                        lastValveValues[x].temp1=StmApp.actuators[x].temp1;
+                    }
                 }
                 // temperature 2nd sensor
-                if ((lastValveValues[x].temp2!=StmApp.actuators[x].temp2) || forcePublish || lastValveValues[x].publishTimeOut) {
-                    topicstr[len] = '\0';
-                    strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
-                    String s = String(((float)StmApp.actuators[x].temp2)/10,1); 
-                    mqtt_client.publish(topicstr, (const char*) &s);
-                    lastValveValues[x].temp2=StmApp.actuators[x].temp2;
+                if (StmApp.actuators[x].temp2>-50) {
+                    if ((lastValveValues[x].temp2!=StmApp.actuators[x].temp2) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
+                        String s = String(((float)StmApp.actuators[x].temp2)/10,1); 
+                        mqtt_client.publish(topicstr, (const char*) &s);
+                        lastValveValues[x].temp2=StmApp.actuators[x].temp2;
+                    }
                 }
                 lastValveValues[x].publishNow=false;
                 lastValveValues[x].publishTimeOut=false;

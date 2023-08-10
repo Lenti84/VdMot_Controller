@@ -164,6 +164,8 @@ void CVdmConfig::clearConfig()
   memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
   memset(configFlash.messengerConfig.pushover.userToken,0,sizeof(configFlash.messengerConfig.pushover.userToken));
 
+  miscValues.lastCalib=0;
+
 }
 
 void CVdmConfig::readConfig()
@@ -277,10 +279,12 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsMsgCfgEmailRecipient,(char*) configFlash.messengerConfig.email.recipient,sizeof(configFlash.messengerConfig.email.recipient));
     if (prefs.isKey(nvsMsgCfgEmailTitle))
       prefs.getString(nvsMsgCfgEmailTitle,(char*) configFlash.messengerConfig.email.title,sizeof(configFlash.messengerConfig.email.title));
-  
-  
-  
-    
+    prefs.end();
+  }
+
+  if (prefs.begin(nvsMisc,false)) {
+    if (prefs.isKey(nvsMiscLastCalib))
+      miscValues.lastCalib=prefs.getLong(nvsMiscLastCalib,0);
     prefs.end();
   }
 }
@@ -369,6 +373,12 @@ void CVdmConfig::writeConfig(bool reboot)
   if (reboot) Services.restartSystem();
 }
 
+void CVdmConfig::writeMiscValues()
+{
+  prefs.begin(nvsMisc,false);
+    prefs.putLong(nvsMiscLastCalib,miscValues.lastCalib);
+  prefs.end();
+}
 
 void CVdmConfig::writeValvesControlConfig(bool reboot, bool restartTask)
 {
@@ -494,32 +504,46 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
 {
   uint8_t idx=0;
   size_t size=doc["valves"].size();
-  for (uint8_t i=0; i<size; i++) {
-     if (!doc["valves"][i]["no"].isNull()) {
-      idx=doc["valves"][i]["no"];
-      idx--;
-      if ((idx>=0) && (idx<12)) {
-        if (!doc["valves"][i]["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["valves"][i]["active"];
-        if (!doc["valves"][i]["allow"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow=doc["valves"][i]["allow"];
-        if (!doc["valves"][i]["link"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].link=doc["valves"][i]["link"];
-        if (!doc["valves"][i]["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].valueSource=doc["valves"][i]["vSource"];
-        if (!doc["valves"][i]["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["valves"][i]["tSource"];
-        if (!doc["valves"][i]["xp"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].xp=doc["valves"][i]["xp"];
-        if (!doc["valves"][i]["offset"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].offset=doc["valves"][i]["offset"];
-        if (!doc["valves"][i]["ti"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].ti=doc["valves"][i]["ti"];
-        if (!doc["valves"][i]["ts"].isNull()) {
-          uint16_t ts = doc["valves"][i]["ts"];
-          if (configFlash.valvesControlConfig.valveControlConfig[idx].ts!=ts) VdmTask.restartPiTask=true;
-          configFlash.valvesControlConfig.valveControlConfig[idx].ts=ts;
-        }
-        if (!doc["valves"][i]["ki"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].ki=doc["valves"][i]["ki"];  
-        if (!doc["valves"][i]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["valves"][i]["scheme"];  
-        if (!doc["valves"][i]["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["valves"][i]["startAZ"];  
-        if (!doc["valves"][i]["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["valves"][i]["endAZ"];  
+   #ifdef EnvDevelop
+      UART_DBG.println("size "+String(size));
+    #endif
+  if (size==0) {
+      for (uint8_t i =0;i<12;i++) {
+        if (!doc["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["active"];
+        if (!doc["allow"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.allow=doc["allow"]; 
+        if (!doc["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].valueSource=doc["vSource"];
+        if (!doc["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["tSource"];  
+        if (!doc["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["scheme"];  
+        if (!doc["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["startAZ"];  
+        if (!doc["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["endAZ"];  
       }
-    }
-  } 
-
+  } else {
+    for (uint8_t i=0; i<size; i++) {
+      if (!doc["valves"][i]["no"].isNull()) {
+        idx=doc["valves"][i]["no"];
+        idx--;
+        if ((idx>=0) && (idx<12)) {
+          if (!doc["valves"][i]["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["valves"][i]["active"];
+          if (!doc["valves"][i]["allow"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow=doc["valves"][i]["allow"];
+          if (!doc["valves"][i]["link"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].link=doc["valves"][i]["link"];
+          if (!doc["valves"][i]["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].valueSource=doc["valves"][i]["vSource"];
+          if (!doc["valves"][i]["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["valves"][i]["tSource"];
+          if (!doc["valves"][i]["xp"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].xp=doc["valves"][i]["xp"];
+          if (!doc["valves"][i]["offset"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].offset=doc["valves"][i]["offset"];
+          if (!doc["valves"][i]["ti"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].ti=doc["valves"][i]["ti"];
+          if (!doc["valves"][i]["ts"].isNull()) {
+            uint16_t ts = doc["valves"][i]["ts"];
+            if (configFlash.valvesControlConfig.valveControlConfig[idx].ts!=ts) VdmTask.restartPiTask=true;
+            configFlash.valvesControlConfig.valveControlConfig[idx].ts=ts;
+          }
+          if (!doc["valves"][i]["ki"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].ki=doc["valves"][i]["ki"];  
+          if (!doc["valves"][i]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["valves"][i]["scheme"];  
+          if (!doc["valves"][i]["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["valves"][i]["startAZ"];  
+          if (!doc["valves"][i]["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["valves"][i]["endAZ"];  
+        }
+      }
+    } 
+  }
   if (!doc["common"]["heatControl"].isNull()) {
     configFlash.valvesControlConfig.heatControl=doc["common"]["heatControl"];
   } 

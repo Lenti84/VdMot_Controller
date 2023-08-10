@@ -195,7 +195,6 @@ typedef struct {
   VDM_MSG_EMAIL_CONFIG email;
 } VDM_MSG_CONFIG;
 
-
 typedef struct 
 {
   VDM_NETWORK_CONFIG netConfig;
@@ -208,6 +207,9 @@ typedef struct
   VDM_MSG_CONFIG messengerConfig;
 } CONFIG_FLASH;
 
+typedef struct {
+  time_t lastCalib; 
+} MISC_VALUES;
 
 #define nvsNetCfg                   "netCfg"
 #define nvsNetEthwifi               "ethwifi"
@@ -280,6 +282,8 @@ typedef struct
 #define nvsMsgCfgEmailRecipient     "ERep"
 #define nvsMsgCfgEmailTitle         "ETitle"
 
+#define nvsMisc                     "Misc"
+#define nvsMiscLastCalib            "MiscLC"
 
 class CVdmConfig
 {
@@ -304,10 +308,13 @@ public:
   uint32_t doc2IPAddress(String id);
   int8_t findTempID (char* tempId);
   void checkToResetCfg();
+  void writeMiscValues();
 
   Preferences prefs;
 
   CONFIG_FLASH configFlash;
+
+  MISC_VALUES miscValues;
 };
 
 extern CVdmConfig VdmConfig;
