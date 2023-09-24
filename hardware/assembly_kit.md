@@ -11,7 +11,7 @@ Find pcb number on bottom side of PCB written into copper.
 |L-H0044-01-02|C1-sample|first batch|
 |L-H0044-01-03|C2-sample|- relay replaced by transistors<br/>- added X26 (ENA and IO35 pin of ESP32)<br/>- button switches to 3.3V instead of GND|
 |L-H0044-01-04|C3-sample|- added support for different RJ10 PCB connectors<br/>- corrected some imprints|
-|L-H0044-01-05|C4-sample|- minor changes in the silk screen for better readabillity<br/>- added reset circuit for ESP32, should improve rare startup problems of ESP32 depending on used power supply<br/>changed position of RJ12 connectors, closer to board edge|
+|L-H0044-01-05|C4-sample|- minor changes in the silk screen for better readabillity<br/>- added reset circuit for ESP32, should improve rare startup problems of ESP32 depending on used power supply<br/>- changed position of RJ12 connectors, closer to board edge|
 
 ## schematic
 You can find the C1-sample schematic here: [schematic_c-sample_V02.pdf](./schematic_c-sample_V02.pdf)
