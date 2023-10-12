@@ -89,6 +89,7 @@ typedef struct  {
   uint8_t publishPathAsRoot : 1 ;
   uint8_t publishUpTime : 1;
   uint8_t publishOnChange : 1;
+  uint8_t publishRetained : 1;
 } VDM_PROTOCOL_CONFIG_FLAGS;
 
 typedef struct {

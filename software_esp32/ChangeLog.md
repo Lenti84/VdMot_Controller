@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.2.3]
+### Added
+- mqtt : retained flag
+
 ## [1.2.2]
 ### Added
 - status page : display valve movements, open counts, close counts, dead counts

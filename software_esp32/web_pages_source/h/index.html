@@ -768,6 +768,12 @@
 				</td>
 			</tr>
 			<tr>
+				<th>Publish retained</th>
+				<td>
+					<input type="checkbox" id="protcfg-pubRetained" name="protcfg-pubRetained" title="Publish values retained"/>
+				</td>
+			</tr>
+			<tr>
 				<th>Keep alive time (s)</th>
 				<td>
 				<input type="number" class="form-input" min="100" id="protcfg-keepAliveTime" name="protcfg-keepAliveTime" title="After this time the connection will be closed if there is no traffic"/>
@@ -2673,6 +2679,7 @@
 				protCfg.pubPathAsRoot = id("protcfg-pubPathAsRoot").checked ? 1 : 0;
 				protCfg.pubUpTime = id("protcfg-pubUpTime").checked ? 1 : 0;
 				protCfg.pubOnChange = id("protcfg-pubOnChange").checked ? 1 : 0;
+				protCfg.pubRetained = id("protcfg-pubRetained").checked ? 1 : 0;
 				protCfg.keepAliveTime = id("protcfg-keepAliveTime").value;
 			}
 			if (brokerPwdHasChanged===true) {
@@ -3209,6 +3216,7 @@
 				id("protcfg-pubPathAsRoot").checked = dataProtConfig["pubPathAsRoot"];
 				id("protcfg-pubUpTime").checked = dataProtConfig["pubUpTime"];
 				id("protcfg-pubOnChange").checked = dataProtConfig["pubOnChange"];
+				id ("protcfg-pubRetained").checked = dataProtConfig["pubRetained"];
 				id("protcfg-keepAliveTime").value = dataProtConfig["keepAliveTime"];
 				showBrokerIP();
 				showMinPublish();

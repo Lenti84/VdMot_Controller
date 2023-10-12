@@ -107,6 +107,7 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.protocolFlags.publishPathAsRoot = false;
   configFlash.protConfig.protocolFlags.publishUpTime = false;
   configFlash.protConfig.protocolFlags.publishOnChange = false;
+  configFlash.protConfig.protocolFlags.publishRetained = false;
   configFlash.protConfig.keepAliveTime = 60;
 
   
@@ -439,6 +440,7 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.protocolFlags.publishPathAsRoot = doc["pubPathAsRoot"];
   if (!doc["pubUpTime"].isNull()) configFlash.protConfig.protocolFlags.publishUpTime = doc["pubUpTime"];
   if (!doc["pubOnChange"].isNull()) configFlash.protConfig.protocolFlags.publishOnChange = doc["pubOnChange"];
+  if (!doc["pubRetained"].isNull()) configFlash.protConfig.protocolFlags.publishRetained = doc["pubRetained"];
   if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
   if (!doc["pubMinDelay"].isNull()) configFlash.protConfig.minBrokerDelay = doc["pubMinDelay"];
 }

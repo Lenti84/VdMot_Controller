@@ -132,6 +132,7 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"publish\":"+String(protConfig.publishInterval)+","+
                     "\"pubMinDelay\":"+String(protConfig.minBrokerDelay)+","+
                     "\"pubOnChange\":"+String(protConfig.protocolFlags.publishOnChange)+","+
+                    "\"pubRetained\":"+String(protConfig.protocolFlags.publishRetained)+","+
                     "\"pubTarget\":"+String(protConfig.protocolFlags.publishTarget)+","+
                     "\"pubAllTemps\":"+String(protConfig.protocolFlags.publishAllTemps)+","+
                     "\"pubPathAsRoot\":"+String(protConfig.protocolFlags.publishPathAsRoot)+","+
