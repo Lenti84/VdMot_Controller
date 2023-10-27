@@ -57,6 +57,7 @@ public:
   CVdmTask();
   void init();
   void deleteTask(taskid_t taskId);
+  void disOrEnableTask (taskid_t taskId,bool enabled);
   bool taskExists (taskid_t taskId);
   void yieldTask (uint16_t ms);
   void startMqtt(uint32_t interval);

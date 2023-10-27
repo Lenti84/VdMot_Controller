@@ -297,6 +297,14 @@ void CMqtt::reconnect()
                         mqtt_client.subscribe(topicstr);    
                     } 
                 }
+                // window state
+                topicstr[len] = '\0';
+                strncat(topicstr, "/window/state",sizeof(topicstr) - strlen (topicstr) - 1);
+                mqtt_client.subscribe(topicstr);  
+                // window temp
+                topicstr[len] = '\0';
+                strncat(topicstr, "/window/target",sizeof(topicstr) - strlen (topicstr) - 1);
+                mqtt_client.subscribe(topicstr);  
             }
         }
     }
@@ -406,10 +414,20 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                                 mqttReceived=true;
                             }
                         }
-                    }else if (strncmp(pt,"/dynOffs",8)==0) {
+                    } else if (strncmp(pt,"/dynOffs",8)==0) {
                         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
                             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
                                 PiControl[idx].dynOffset=atoi(value);
+                        }
+                    } else if (strncmp(pt,"/window/state",13)==0) {
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
+                                PiControl[idx].setWindowAction(atoi(value));
+                        }
+                    } else if (strncmp(pt,"/window/target",14)==0) {
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
+                                PiControl[idx].windowOpenTarget=atoi(value);
                         }
                     }
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {

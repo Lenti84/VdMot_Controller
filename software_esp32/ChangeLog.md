@@ -11,6 +11,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.2.4]
+### Added
+- window handling : mqtt flag   window/state 0 = closed, 1 = open
+                                window/target target position if window is open. no control
+
 ## [1.2.3]
 ### Added
 - mqtt : retained flag
