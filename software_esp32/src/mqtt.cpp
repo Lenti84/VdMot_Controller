@@ -172,7 +172,7 @@ void CMqtt::mqtt_loop()
 {
     if (!mqtt_client.connected()) {
         firstPublish=true;
-        reconnect();        
+        reconnect();      
     }
     if (mqtt_client.connected()) {
         mqtt_client.loop();
@@ -213,6 +213,9 @@ void CMqtt::mqtt_loop()
     */
 }
 
+void CMqtt::disconnect() {
+     mqtt_client.disconnect();
+} 
 
 void CMqtt::reconnect() 
 {
@@ -298,13 +301,18 @@ void CMqtt::reconnect()
                     } 
                 }
                 // window state
-                topicstr[len] = '\0';
-                strncat(topicstr, "/window/state",sizeof(topicstr) - strlen (topicstr) - 1);
-                mqtt_client.subscribe(topicstr);  
-                // window temp
-                topicstr[len] = '\0';
-                strncat(topicstr, "/window/target",sizeof(topicstr) - strlen (topicstr) - 1);
-                mqtt_client.subscribe(topicstr);  
+                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/window/state",sizeof(topicstr) - strlen (topicstr) - 1);
+                    mqtt_client.subscribe(topicstr);  
+                    // window target (%)
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/window/target",sizeof(topicstr) - strlen (topicstr) - 1);
+                    mqtt_client.subscribe(topicstr);  
+                    #ifdef EnvDevelop
+                        UART_DBG.println("MQTT : subscribe window "+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name));
+                    #endif
+                }
             }
         }
     }
@@ -421,12 +429,10 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                         }
                     } else if (strncmp(pt,"/window/state",13)==0) {
                         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
-                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
                                 PiControl[idx].setWindowAction(atoi(value));
                         }
                     } else if (strncmp(pt,"/window/target",14)==0) {
                         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
-                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
                                 PiControl[idx].windowOpenTarget=atoi(value);
                         }
                     }

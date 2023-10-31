@@ -180,6 +180,7 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
     result += "{\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) + "\"," +
               "\"active\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.active) + ","+
               "\"allow\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.allow) + ","+
+              "\"window\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) + ","+
               "\"link\":"+String(valvesControlConfig.valveControlConfig[x].link) + ","+
               "\"vSource\":"+String(valvesControlConfig.valveControlConfig[x].valueSource) + ","+
               "\"tSource\":"+String(valvesControlConfig.valveControlConfig[x].targetSource) + ","+
@@ -190,7 +191,7 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
               "\"ki\":"+String(valvesControlConfig.valveControlConfig[x].ki) + ","+
               "\"scheme\":"+String(valvesControlConfig.valveControlConfig[x].scheme) + ","+
               "\"startAZ\":"+String(valvesControlConfig.valveControlConfig[x].startActiveZone) + ","+
-              "\"endAZ\":"+String(valvesControlConfig.valveControlConfig[x].endActiveZone)+ "}";
+              "\"endAZ\":"+String(valvesControlConfig.valveControlConfig[x].endActiveZone) + "}";
 
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
@@ -348,6 +349,9 @@ String CWeb::getValvesStatus()
                     result +=",\"tTarget\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
                     result +=",\"tValue\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
                   }
+                 }
+                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
+                   result +=",\"window\":"+String(PiControl[x].windowState);
                  }
                  result +="}";      
     start = true;

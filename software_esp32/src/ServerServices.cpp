@@ -62,6 +62,7 @@
 #include "stmApp.h"
 #include "PIControl.h"
 #include "Messenger.h"
+#include "mqtt.h"
 
 #include <FS.h>
 #ifdef USE_LittleFS
@@ -153,6 +154,11 @@ void valvesDetect (JsonObject doc)
 void writeValvesControl (JsonObject doc)
 {  
   VdmConfig.writeValvesControlConfig(false,VdmTask.restartPiTask);
+}
+
+void mqttReconnect (JsonObject doc)
+{  
+  Mqtt.disconnect();
 }
 
 void CServerServices::postSetValve (JsonObject doc)
@@ -364,10 +370,10 @@ bool handleCmd(JsonObject doc)
 { 
   typedef void (*fp)(JsonObject doc);
   fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,&setGetFS,
-                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl} ;
+                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl,&mqttReconnect} ;
 
   char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete","getFS",
-                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave",NULL};
+                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave","mqttReconnect",NULL};
   char const **p;
   bool found = false;
 

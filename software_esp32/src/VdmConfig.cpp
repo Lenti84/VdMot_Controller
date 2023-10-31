@@ -119,6 +119,7 @@ void CVdmConfig::clearConfig()
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.active = false;
     configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.allow = allowHeatingCooling;
+    configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.windowInstalled = false;
     configFlash.valvesControlConfig.valveControlConfig[i].xp=20;
     configFlash.valvesControlConfig.valveControlConfig[i].link=0;
     configFlash.valvesControlConfig.valveControlConfig[i].offset=0;
@@ -513,6 +514,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
       for (uint8_t i =0;i<12;i++) {
         if (!doc["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["active"];
         if (!doc["allow"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.allow=doc["allow"]; 
+        if (!doc["window"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.windowInstalled=doc["window"];
         if (!doc["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].valueSource=doc["vSource"];
         if (!doc["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["tSource"];  
         if (!doc["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["scheme"];  
@@ -527,6 +529,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
         if ((idx>=0) && (idx<12)) {
           if (!doc["valves"][i]["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["valves"][i]["active"];
           if (!doc["valves"][i]["allow"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow=doc["valves"][i]["allow"];
+          if (!doc["valves"][i]["window"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.windowInstalled=doc["valves"][i]["window"];
           if (!doc["valves"][i]["link"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].link=doc["valves"][i]["link"];
           if (!doc["valves"][i]["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].valueSource=doc["valves"][i]["vSource"];
           if (!doc["valves"][i]["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["valves"][i]["tSource"];

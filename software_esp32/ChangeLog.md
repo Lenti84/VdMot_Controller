@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.2.5]
+### Added
+- window handling : activate window handling in control
+                    if window is open the background color is red in Status window
 ## [1.2.4]
 ### Added
 - window handling : mqtt flag   window/state 0 = closed, 1 = open

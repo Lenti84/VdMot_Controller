@@ -87,6 +87,8 @@ class CMqtt
 {
   public:
     CMqtt();
+    void reconnect();
+    void disconnect();
     void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort);
     void mqtt_loop();
     void callback(char* topic, byte* payload, unsigned int length);
@@ -94,7 +96,6 @@ class CMqtt
     bool mqttConnected;
     bool mqttReceived;
   private:
-    void reconnect();
     void publish_all (uint8_t publishFlags);
     void publish_common (); 
     void publish_valves ();

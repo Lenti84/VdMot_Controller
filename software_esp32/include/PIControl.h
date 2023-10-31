@@ -58,7 +58,7 @@
 
 
 enum CHECKACTION {nothing,gotoMin,gotoPark,control};
-enum WINDOWSTATE {windowIdle,windowOpenLock,windowOpen,windowClose,windowCloseRestore};
+enum WINDOWSTATE {windowIdle,windowOpenLock,windowCloseRestore};
 
 class CPiControl: public Executable
 {
@@ -71,6 +71,8 @@ public:
     startActiveZone=0;
     endActiveZone=100;
     windowOpenTarget=0;
+    windowControlState=windowIdle;
+    windowState=0;
   };
   void exec() override {
     controlValve();

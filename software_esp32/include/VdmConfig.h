@@ -119,6 +119,7 @@ typedef struct {
 typedef struct  {
   uint8_t active : 1 ;
   uint8_t allow : 3;
+  uint8_t windowInstalled : 1;
 } VDM_VALVE_CONTROL_CONFIG_FLAGS;
 
 

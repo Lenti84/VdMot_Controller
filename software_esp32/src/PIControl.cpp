@@ -104,6 +104,9 @@ float CPiControl::piCtrl(float e) {
 
 void CPiControl::setWindowAction(uint8_t windowControl)
 {
+ if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].controlFlags.windowInstalled)
+ {
+  windowState = windowControl;
   switch (windowControl) {
     case windowActionCloseRestore: {
       windowControlState = windowCloseRestore;
@@ -114,15 +117,12 @@ void CPiControl::setWindowAction(uint8_t windowControl)
       setValveWindowAction(windowOpenTarget);
       break;
     }
-    case windowActionOpen: {
-      windowControlState = windowOpen;
-      break;
-    }
-    case windowActionClose: {
-      windowControlState = windowClose;
-      break;
-    }
   }
+ } else {
+  if (windowControlState == windowOpenLock) {
+    windowControlState = windowCloseRestore;
+  }
+ }
   //UART_DBG.println("window "+String(valveIndex)+":"+String(windowControlState));
 }
 
@@ -148,6 +148,9 @@ void CPiControl::setValveWindowAction(uint8_t valvePosition) {
 CHECKACTION CPiControl::checkAction(uint8_t idx)
 {
 
+  if (!VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].controlFlags.windowInstalled) {
+    windowControlState = windowIdle;  
+  }
   if (windowControlState == windowOpenLock) {
     setPosition(windowOpenTarget);
     return(nothing);

@@ -1638,6 +1638,7 @@
 		var anyValveControlEnabled=false;
 		var stmLoaded=false;
 		var activeSetValvesDisplay = "none";
+		var reconnectMQTT=false;
 
 		// Get the modal
 		var modal = id("pwdModal");
@@ -2045,7 +2046,7 @@
 			const valvesControlTable = id('cfgValvesControlTable');	  
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesControlTable.insertRow(0);
-				for (let i = 0; i < 14; i++) {
+				for (let i = 0; i < 15; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -2203,6 +2204,14 @@
 				el.setAttribute('max','100');
 				el.setAttribute('title','Active zone (opened) of the valve (1-100%)');
 				thiscell.appendChild(el);
+
+				thiscell = valvesControlTable.rows[row].cells[14];
+				el = document.createElement('input');
+				el.setAttribute('type', 'checkbox');
+				el.setAttribute('name', 'cfgVCWindow' + row);
+				el.setAttribute('id', 'cfgVCWindow' + row);
+				el.setAttribute('onchange','setCfgVCWindow(this);');
+				thiscell.appendChild(el);
 			}
 			let col=0;
 			valvesControlTable.rows[0].cells[col++].textContent = 'No';
@@ -2229,7 +2238,9 @@
 			valvesControlTable.rows[0].cells[col].textContent = 'ki';
 			valvesControlTable.rows[0].cells[col++].title = 'Value ki for constant integral control calculation';
 			valvesControlTable.rows[0].cells[col].textContent = 'Active zone';
-			valvesControlTable.rows[0].cells[col].title = 'Active zone of the valve (0-100 %)';
+			valvesControlTable.rows[0].cells[col++].title = 'Active zone of the valve (0-100 %)';
+			valvesControlTable.rows[0].cells[col].textContent = 'Window';
+			valvesControlTable.rows[0].cells[col++].title = 'Activate window handling';
 		}
 		
 		function showBrokerIP() {
@@ -2430,7 +2441,11 @@
 			id("saveVCtrlConfig").onclick = async function(){
 				if (confirm('Are you sure you want to save control settings ?')) {
 					await postValvesControlCfg();
-					postCmd('{"action":"vCtrlSave"}');
+					await postCmd('{"action":"vCtrlSave"}');
+					if (reconnectMQTT===true) {
+						await postCmd('{"action":"mqttReconnect"}');
+						reconnectMQTT=false;
+					}
 					//reloadDoc("http:/#home",4000,true);
 				}
 			};
@@ -2794,6 +2809,7 @@
 				valveValues.no = row;
 				valveValues.active = id('cfgVCActive'+row).checked  ? 1 : 0;
 				valveValues.allow = id('cfgVCAllow'+row).value;
+				valveValues.window = id('cfgVCWindow'+row).checked  ? 1 : 0;
 				valveValues.link = id('cfgVCLink-'+row).value;
 				valveValues.vSource = id('cfgVCValue'+row).value;
 				valveValues.tSource = id('cfgVCTarget'+row).value;
@@ -2886,6 +2902,10 @@
 			if (display=='block') setCfgVCScheme(id('cfgVCScheme-'+linkNo));
 		}
 				
+		function setCfgVCWindow(thisLink){
+			reconnectMQTT=true;
+		}
+
 		function checkVCScheme()
 		{
 			let kiStatics=false;
@@ -2926,7 +2946,10 @@
 			valvesJson.forEach(function(item, index){
 				ValvesTable.rows[index+1].cells[0].textContent = item.idx;	
 				ValvesTable.rows[index+1].cells[1].textContent = item.name;	
-				ValvesTable.rows[index+1].cells[2].textContent = item.pos;	
+				ValvesTable.rows[index+1].cells[2].textContent = item.pos;
+				if ('window' in item) {
+					if (item.window==1) ValvesTable.rows[index+1].cells[4].style.backgroundColor="red"; else ValvesTable.rows[index+1].cells[4].style.backgroundColor="gray";	
+				}
 				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
 				ValvesTable.rows[index+1].cells[4].textContent = States[item.state];
 				ValvesTable.rows[index+1].cells[7].textContent = item.moves;
@@ -2994,6 +3017,7 @@
 				cfgValvesControlTable.rows[row].cells[1].textContent = cfgValvesControlJson.valves[row-1].name;
 				id('cfgVCActive'+row).checked = cfgValvesControlJson.valves[row-1].active;
 				id('cfgVCAllow'+row).value = cfgValvesControlJson.valves[row-1].allow;
+				id('cfgVCWindow'+row).checked = cfgValvesControlJson.valves[row-1].window;
 				id('cfgVCLink-'+row).value = cfgValvesControlJson.valves[row-1].link;
 				id('cfgVCValue'+row).value = cfgValvesControlJson.valves[row-1].vSource;
 				id('cfgVCTarget'+row).value = cfgValvesControlJson.valves[row-1].tSource;
