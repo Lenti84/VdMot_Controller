@@ -75,6 +75,7 @@ public:
   void clearFS();
   void setSystemState(uint8_t thisSystemState,String thisSystemMsg);
   String getUpTime();
+  String localTime();
   String getLastResetReason();
   void sendResetReason();
 

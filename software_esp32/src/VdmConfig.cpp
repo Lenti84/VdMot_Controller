@@ -102,12 +102,13 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.minBrokerDelay = 5;
   memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
   memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
-  configFlash.protConfig.protocolFlags.publishTarget = false;
+  configFlash.protConfig.protocolFlags.publishSeparate = false;
   configFlash.protConfig.protocolFlags.publishAllTemps = false;
   configFlash.protConfig.protocolFlags.publishPathAsRoot = false;
   configFlash.protConfig.protocolFlags.publishUpTime = false;
   configFlash.protConfig.protocolFlags.publishOnChange = false;
   configFlash.protConfig.protocolFlags.publishRetained = false;
+  configFlash.protConfig.protocolFlags.publishPlainText = false;
   configFlash.protConfig.keepAliveTime = 60;
 
   
@@ -436,12 +437,13 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["publish"].isNull()) configFlash.protConfig.publishInterval = doc["publish"];
   if (!doc["user"].isNull()) strncpy(configFlash.protConfig.userName,doc["user"].as<const char*>(),sizeof(configFlash.netConfig.userName));
   if (!doc["pwd"].isNull()) strncpy(configFlash.protConfig.userPwd,doc["pwd"].as<const char*>(),sizeof(configFlash.netConfig.userPwd));
-  if (!doc["pubTarget"].isNull()) configFlash.protConfig.protocolFlags.publishTarget = doc["pubTarget"];
+  if (!doc["pubSeparate"].isNull()) configFlash.protConfig.protocolFlags.publishSeparate = doc["pubSeparate"];
   if (!doc["pubAllTemps"].isNull()) configFlash.protConfig.protocolFlags.publishAllTemps = doc["pubAllTemps"];
   if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.protocolFlags.publishPathAsRoot = doc["pubPathAsRoot"];
   if (!doc["pubUpTime"].isNull()) configFlash.protConfig.protocolFlags.publishUpTime = doc["pubUpTime"];
   if (!doc["pubOnChange"].isNull()) configFlash.protConfig.protocolFlags.publishOnChange = doc["pubOnChange"];
   if (!doc["pubRetained"].isNull()) configFlash.protConfig.protocolFlags.publishRetained = doc["pubRetained"];
+  if (!doc["pubPlainText"].isNull()) configFlash.protConfig.protocolFlags.publishPlainText = doc["pubPlainText"];
   if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
   if (!doc["pubMinDelay"].isNull()) configFlash.protConfig.minBrokerDelay = doc["pubMinDelay"];
 }

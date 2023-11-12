@@ -133,7 +133,8 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"pubMinDelay\":"+String(protConfig.minBrokerDelay)+","+
                     "\"pubOnChange\":"+String(protConfig.protocolFlags.publishOnChange)+","+
                     "\"pubRetained\":"+String(protConfig.protocolFlags.publishRetained)+","+
-                    "\"pubTarget\":"+String(protConfig.protocolFlags.publishTarget)+","+
+                    "\"pubSeparate\":"+String(protConfig.protocolFlags.publishSeparate)+","+
+                    "\"pubPlainText\":"+String(protConfig.protocolFlags.publishPlainText)+","+
                     "\"pubAllTemps\":"+String(protConfig.protocolFlags.publishAllTemps)+","+
                     "\"pubPathAsRoot\":"+String(protConfig.protocolFlags.publishPathAsRoot)+","+
                     "\"pubUpTime\":"+String(protConfig.protocolFlags.publishUpTime)+","+
@@ -270,9 +271,10 @@ String CWeb::getSysDynInfo()
 {
   struct tm timeinfo;
   char buf[50];
-  String sTime;
-  String upTime;
   String sLastCalib;
+ /* String sTime;
+  String upTime;
+  
 
   if(!getLocalTime(&timeinfo)) {
     sTime = "Failed to obtain time";
@@ -280,18 +282,19 @@ String CWeb::getSysDynInfo()
     strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
     sTime = String(buf);
   }
-
+*/
   time_t lastCalib=VdmConfig.miscValues.lastCalib;
   localtime_r(&lastCalib, &timeinfo);
   strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
   sLastCalib = String(buf);
 
-  String result = "{\"locTime\":\""+sTime+"\"," +
+  String result = "{\"locTime\":\""+VdmSystem.localTime()+"\"," +
                   "\"upTime\":\""+VdmSystem.getUpTime()+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
                   "\"minheap\":\""+ConvBinUnits(ESP.getMinFreeHeap(),1)+ "\"," +
                   "\"wifirssi\":"+WiFi.RSSI()+ "," +
                   "\"wifich\":"+WiFi.channel()+ "," +
+                  "\"wifiStatus\":"+WiFi.status()+ "," +
                   "\"stmStatus\":"+String(StmApp.stmStatus)+ "," +
                   "\"stmInit\":"+String(StmApp.stmInitState);
                   if (VdmConfig.configFlash.protConfig.dataProtocol>0) {
@@ -315,9 +318,11 @@ bool CWeb::getControlActive()
 String CWeb::getValvesStatus() 
 {
   bool start=false;
+  uint8_t valveActive;
   bool controlActive = getControlActive();
   String result = "{";
   result += "\"valves\":[";
+  
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
     #ifdef ValveSimulation
       if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) StmApp.actuators[x].state=VLV_STATE_IDLE;
@@ -330,6 +335,7 @@ String CWeb::getValvesStatus()
                  "\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
                  "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
                  "\"targetPos\":" + String(StmApp.actuators[x].target_position)+ ","+
+                 "\"link\":"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link) + ","+
                  "\"moves\":" + String(StmApp.actuators[x].movements)+ ","+
                  "\"oc\":" + String(StmApp.actuators[x].opening_count)+ ","+
                  "\"cc\":" + String(StmApp.actuators[x].closing_count)+ ","+
@@ -352,6 +358,14 @@ String CWeb::getValvesStatus()
                  }
                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
                    result +=",\"window\":"+String(PiControl[x].windowState);
+                 }
+                 valveActive = 0;
+                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active==1) valveActive |= 1;
+                if (PiControl[x].controlActive) valveActive |= 2;
+                 result +=",\"controlActive\":"+String(valveActive);
+              
+                 if (StmApp.actuators[x].calibration) {
+                  result +=",\"calibration\":"+String(StmApp.actuators[x].calibration); 
                  }
                  result +="}";      
     start = true;

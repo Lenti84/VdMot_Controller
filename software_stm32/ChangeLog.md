@@ -11,6 +11,13 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+## [1.3.0]
+### Fixed
+- calibration move numbers was not set from eeprom
+- calibration function was not correct
+### Added
+- send calibration state to WTH32
+
 ## [1.2.2]
 ### Add
 - send valve movements, open counts, close counts, dead counts with cmd APP_PRE_GETVLVDATA

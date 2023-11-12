@@ -53,6 +53,7 @@ typedef struct  {
   int       temp2;                // temperature of 2nd assigned sensor
   uint8_t   lastState;
   bool      worked;
+  bool      calibration;
   uint32_t  movements;
   uint32_t  opening_count;
   uint32_t  closing_count;

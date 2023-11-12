@@ -50,6 +50,7 @@
 #define VLV_STATE_FULLOPEN  (byte) 0x07       // go directly full open
 #define VLV_STATE_PRESENT   (byte) 0x08       // connected
 
+enum CALIBSTATE {calibIdle,calibStarted,calibInProgress};
 
 struct valvemotor {
 //typedef struct valves {
@@ -65,6 +66,10 @@ struct valvemotor {
   byte target_position;
   byte actual_position;
   byte status;
+  uint8_t calibration;
+  uint8_t calibTime;
+  CALIBSTATE calibState;
+  uint8_t connected;
 };
 
 extern valvemotor myvalvemots[ACTUATOR_COUNT];

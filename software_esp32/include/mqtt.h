@@ -59,6 +59,7 @@
 #define MAX_MQTT_RETRIES 100
 
 typedef struct {
+  bool controlActive;
   uint8_t  position;
   uint8_t target;
   uint8_t state;
@@ -81,6 +82,7 @@ typedef struct {
   uint8_t heatControl;          
   uint8_t parkingPosition;
   uint8_t systemState;
+  String upTime;
 } LASTCOMMONVALUES; 
 
 class CMqtt
@@ -115,6 +117,7 @@ class CMqtt
     LASTCOMMONVALUES lastCommonValues;
     LASTVALVEVALUES lastValveValues[ACTUATOR_COUNT];
     LASTTEMPVALUES lastTempValues[TEMP_SENSORS_COUNT];
+    boolean topicsReceived;
 };
 
 extern CMqtt Mqtt;

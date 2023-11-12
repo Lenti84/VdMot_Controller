@@ -154,6 +154,16 @@
 		grid-column : span 4;
 	}
 	
+	.alignTabCellState{
+	 float: center;
+	 padding-top: 10px;
+	}
+
+	.alignTabCellImgState{
+	 float: left;
+	 padding: 5px 2px;
+	}
+
 	table.tabTable td {
 		padding-left: 5px;
 		height:21px;
@@ -385,8 +395,6 @@
 	background:gray;
 	}
 
-
-
 	#Home {background-color: gray;}
 	#Status {background-color: gray;}
 	#Network {background-color: gray;}
@@ -395,11 +403,46 @@
 	#Update {background-color: gray;}
 	#About {background-color: gray;}
 
+	.spinner {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		height:100px;
+		width:100px;
+		margin:0px auto;
+		-webkit-animation: rotation .6s infinite linear;
+		-moz-animation: rotation .6s infinite linear;
+		-o-animation: rotation .6s infinite linear;
+		animation: rotation .6s infinite linear;
+		border-left:10px solid rgba(0,174,239,.15);
+		border-right:10px solid rgba(0,174,239,.15);
+		border-bottom:10px solid rgba(0,174,239,.15);
+		border-top:10px solid rgba(0,174,239,.8);
+		border-radius:200%;
+	}
+
+	@-webkit-keyframes rotation {
+		from {-webkit-transform: rotate(0deg);}
+		to {-webkit-transform: rotate(359deg);}
+	}
+	@-moz-keyframes rotation {
+		from {-moz-transform: rotate(0deg);}
+		to {-moz-transform: rotate(359deg);}
+	}
+	@-o-keyframes rotation {
+		from {-o-transform: rotate(0deg);}
+		to {-o-transform: rotate(359deg);}
+	}
+	@keyframes rotation {
+		from {transform: rotate(0deg);}
+		to {transform: rotate(359deg);}
+	}
+
+
 </style>
 
 </head>
 <body>
-
 	<div class="topNav" id="mytopNav">
 	  <a href="#home" class="tabLink" id="defaultOpen" name="Home" onclick="openPage('Home', this, 'red')">Home</a>
 	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green')">Status</a>
@@ -410,6 +453,8 @@
 	  <a href="#about" class="tabLink" id="aboutOpen" name="About" onclick="openPage('About', this, 'darkgray')">About</a>
 	  <a href="javascript:void(0);" class="icon" onclick="resptopNav()">&#9776;</a>
 	</div>
+
+	<div id="spinner"></div>
 
 	<div id="Home" class="tabContent">
 	<div class="container1">
@@ -768,12 +813,6 @@
 				</td>
 			</tr>
 			<tr>
-				<th>Publish retained</th>
-				<td>
-					<input type="checkbox" id="protcfg-pubRetained" name="protcfg-pubRetained" title="Publish values retained"/>
-				</td>
-			</tr>
-			<tr>
 				<th>Keep alive time (s)</th>
 				<td>
 				<input type="number" class="form-input" min="100" id="protcfg-keepAliveTime" name="protcfg-keepAliveTime" title="After this time the connection will be closed if there is no traffic"/>
@@ -784,9 +823,11 @@
 		<div class="tabpframe"> 
 		<table id="protcfg-Broker1" style="display:none;" class="tabTable">
 			<tr>
-			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:8em;display:none;">
+			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:12em;display:none;">
 				<legend>Publish</legend>
-				<label><input type="checkbox" id="protcfg-pubTarget" name="theGroupP">Target </label>
+				<label><input type="checkbox" id="protcfg-pubRetained" name="theGroupP" title="Publish values retained">Retained </label>
+				<label><input type="checkbox" id="protcfg-pubPlainText" name="theGroupP" title="Publish values as plaintext instead 0/1">Plaintext </label>
+				<label><input type="checkbox" id="protcfg-pubSeparate" name="theGroupP" title="Publish values separate for write and read">Separate Topics </label>
 				<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
 				<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
 				<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
@@ -1639,6 +1680,7 @@
 		var stmLoaded=false;
 		var activeSetValvesDisplay = "none";
 		var reconnectMQTT=false;
+		var windowImageObjects = [null,null,null,null,null,null,null,null,null,null,null,null];
 
 		// Get the modal
 		var modal = id("pwdModal");
@@ -1753,7 +1795,6 @@
 		}		
 		
 		async function loadStmData() {
-			// console.log("load stm data");
 			await getMotorConfig();
 			await getTempSensorsID();
 			await getTempsStatus();
@@ -1817,8 +1858,8 @@
 
 
 		function makeValvesTable(valvesJson) {
-			const ValvesTable = id('valvesTable');
-			ValvesTable.innerHTML="";
+			const valvesTable = id('valvesTable');
+			valvesTable.innerHTML="";
 			let columnsize = 11;
 			valveTempsExists=checkIfTempExists(valvesJson);
 			if (valveTempsExists===true) {
@@ -1833,16 +1874,30 @@
 				for (let i = 0; i < columnsize; i++) {
 					cell = thisRow.insertCell();
 					if ((i==2) || (i==3)) {
-						cell.style.width = '30px';
+						cell.style.width = '20px';
 					}
 					if (i==4) {
-						cell.style.width = '90px';
+						cell.style.width = '130px';
 					}
 				}
 			}
 			for (row=1;row<valvesJson.length+1;row++) {
-				let thiscell = ValvesTable.rows[row].cells[5];
-				let el = document.createElement('input');
+				let thiscell = valvesTable.rows[row].cells[4];
+				let el = document.createElement('img');
+				el.setAttribute('name', 'windowImg' + row);
+				el.setAttribute('id', 'windowImg' + row);
+				el.setAttribute('style','height:30px;');
+				el.className = "alignTabCellImgState";
+				thiscell.appendChild(el);
+				
+				el = document.createElement('div');
+				el.className = "alignTabCellState";
+				el.appendChild(document.createTextNode(''));
+				windowImageObjects[row-1] = el;
+				thiscell.appendChild(el);
+
+				thiscell = valvesTable.rows[row].cells[5];
+				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'setValveP' + row);
 				el.setAttribute('id', 'setValveP' + row);
@@ -1852,8 +1907,9 @@
 				el.setAttribute('max' , '100');
 				el.setAttribute('style','height:15px');
 				el.setAttribute('readonly','true');
+				
 				thiscell.appendChild(el);
-				thiscell = ValvesTable.rows[row].cells[6];
+				thiscell = valvesTable.rows[row].cells[6];
 				el = document.createElement('input');
 				el.setAttribute('type', 'button');
 				el.setAttribute('name', 'setValveButton-' + valvesJson[row-1].idx);
@@ -1865,7 +1921,7 @@
 				valvesTable.rows[row].cells[0].innerHTML = row;
 				thiscell.classList.add('hide');
 			}
-			let thiscell = ValvesTable.rows[0].cells[6];
+			let thiscell = valvesTable.rows[0].cells[6];
 			thiscell.classList.add('hide');
 			valvesTable.rows[0].cells[0].textContent = 'No';
 			valvesTable.rows[0].cells[1].textContent = 'Name';
@@ -1886,7 +1942,7 @@
 				valvesTable.rows[0].cells[colIdx++].innerHTML = 'tTarget';
 				valvesTable.rows[0].cells[colIdx].innerHTML = 'tValue';
 			}
-			thiscell = ValvesTable.rows[0].cells[5];
+			thiscell = valvesTable.rows[0].cells[5];
 			el = document.createElement('input');
 			el.setAttribute('type', 'checkbox');
 			el.setAttribute('name', 'activeSetValves');
@@ -2587,12 +2643,15 @@
 		function reloadDoc (path,timeOut,clear=false,reLoad=true) {
 			if ((clear===true) && getStatusInterval) clearInterval(getStatusInterval);
 			document.body.style.cursor = 'wait';
+			id("spinner").classList.add("spinner");
+			
 			setTimeout(function() {
 					location.assign(path);
 					if (reLoad===true){
 						location.reload(true);					
 					}
 					document.body.style.cursor = 'default';
+					id("spinner").classList.remove("spinner");
 				},timeOut);
 		}
 		
@@ -2689,12 +2748,13 @@
 				protCfg.publish = id("protcfg-Publish").value;
 				protCfg.pubMinDelay = id("protcfg-pubMinDelay").value;
 				protCfg.user = id("protcfg-User").value;
-				protCfg.pubTarget = id("protcfg-pubTarget").checked ? 1 : 0;
+				protCfg.pubSeparate = id("protcfg-pubSeparate").checked ? 1 : 0;
 				protCfg.pubAllTemps = id("protcfg-pubAllTemps").checked ? 1 : 0;
 				protCfg.pubPathAsRoot = id("protcfg-pubPathAsRoot").checked ? 1 : 0;
 				protCfg.pubUpTime = id("protcfg-pubUpTime").checked ? 1 : 0;
 				protCfg.pubOnChange = id("protcfg-pubOnChange").checked ? 1 : 0;
 				protCfg.pubRetained = id("protcfg-pubRetained").checked ? 1 : 0;
+				protCfg.pubPlainText = id("protcfg-pubPlainText").checked ? 1 : 0;
 				protCfg.keepAliveTime = id("protcfg-keepAliveTime").value;
 			}
 			if (brokerPwdHasChanged===true) {
@@ -2899,6 +2959,7 @@
 			id('cfgVCKi'+linkNo).style.display=display;
 			id('cfgVCSZ'+linkNo).style.display=display;
 			id('cfgVCEZ'+linkNo).style.display=display;
+			id('cfgVCWindow'+linkNo).style.display=display;
 			if (display=='block') setCfgVCScheme(id('cfgVCScheme-'+linkNo));
 		}
 				
@@ -2930,7 +2991,8 @@
 				cfgValvesControlTable.rows[row].cells[0].style.backgroundColor = "";
 			}
 			valvesJson.forEach(function(item, index){
-				if ((item.state!=5) && (item.state!=6)) {
+				let thisState = item.state & 0x7f;
+				if ((thisState!=5) && (thisState!=6)) {
 					cfgValvesTable.rows[item.idx].cells[0].style.backgroundColor = "green";
 					cfgValvesControlTable.rows[item.idx].cells[0].style.backgroundColor = "green";
 				}
@@ -2938,41 +3000,68 @@
 		}
 		
 		function fillValvesTable (valvesJson) {
-			const ValvesTable = id('valvesTable');
-			if ((ValvesTable.rows.length != valvesJson.length+1) || (checkIfTempExists(valvesJson)!=valveTempsExists) || (checkIfMqttExists(valvesJson)!=valveMqttExists)) {
+			const valvesTable = id('valvesTable');
+			if ((valvesTable.rows.length != valvesJson.length+1) || (checkIfTempExists(valvesJson)!=valveTempsExists) || (checkIfMqttExists(valvesJson)!=valveMqttExists)) {
 				makeValvesTable(valvesJson);
 			}
 			const States = ["---","idle","opens","closes","blocked","unknown","no valve","full open","connected"];
+			let thisImg=null;
 			valvesJson.forEach(function(item, index){
-				ValvesTable.rows[index+1].cells[0].textContent = item.idx;	
-				ValvesTable.rows[index+1].cells[1].textContent = item.name;	
-				ValvesTable.rows[index+1].cells[2].textContent = item.pos;
-				if ('window' in item) {
-					if (item.window==1) ValvesTable.rows[index+1].cells[4].style.backgroundColor="red"; else ValvesTable.rows[index+1].cells[4].style.backgroundColor="gray";	
+				valvesTable.rows[index+1].cells[0].textContent = item.idx;	
+				switch (item.controlActive) {
+					case 0:
+					case 2: 
+					{
+						valvesTable.rows[index+1].cells[0].style.backgroundColor="gray";
+						break;
+					}
+					case 1: {
+						valvesTable.rows[index+1].cells[0].style.backgroundColor="red";
+						break;
+					}
+					case 3: {
+						valvesTable.rows[index+1].cells[0].style.backgroundColor="green";
+						break;
+					}
 				}
-				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
-				ValvesTable.rows[index+1].cells[4].textContent = States[item.state];
-				ValvesTable.rows[index+1].cells[7].textContent = item.moves;
-				ValvesTable.rows[index+1].cells[8].textContent = item.oc;
-				ValvesTable.rows[index+1].cells[9].textContent = item.cc;
-				ValvesTable.rows[index+1].cells[10].textContent = item.dc;
+				valvesTable.rows[index+1].cells[1].textContent = item.name;	
+				valvesTable.rows[index+1].cells[2].textContent = item.pos;
+				thisImg=id("windowImg"+(index+1));	
+				if ('window' in item) {
+					if (item.window===1) {	
+						thisImg.src="window_open.png";	
+					} else thisImg.src="window_close.png";	
+				} else thisImg.src="window_gray.png";
+				if (item.link>0) thisImg.src="blank.png";
+				valvesTable.rows[index+1].cells[3].textContent = item.meanCur;
+				if ('calibration' in item) {
+					windowImageObjects[index].childNodes[0].nodeValue="calibration";
+				} else 
+					windowImageObjects[index].childNodes[0].nodeValue = States[item.state];
+				
+				if (item.state===4) valvesTable.rows[index+1].cells[4].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[4].style.backgroundColor="gray";
+				
+				valvesTable.rows[index+1].cells[7].textContent = item.moves;
+				valvesTable.rows[index+1].cells[8].textContent = item.oc;
+				valvesTable.rows[index+1].cells[9].textContent = item.cc;
+				valvesTable.rows[index+1].cells[10].textContent = item.dc;
 				let colIdx=11;
 				if (valveTempsExists===true) {
 					if (item.temp1)
-						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.temp1;
-					else ValvesTable.rows[index+1].cells[colIdx++].textContent = "";
+						valvesTable.rows[index+1].cells[colIdx++].textContent = item.temp1;
+					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
 
 					if (item.temp2)
-						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.temp2;
-					else ValvesTable.rows[index+1].cells[colIdx++].textContent = "";
+						valvesTable.rows[index+1].cells[colIdx++].textContent = item.temp2;
+					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
 				}
 				if (valveMqttExists===true) {
 					if ('tTarget' in item)
-						ValvesTable.rows[index+1].cells[colIdx++].textContent = item.tTarget;
-					else ValvesTable.rows[index+1].cells[colIdx++].textContent = "";
+						valvesTable.rows[index+1].cells[colIdx++].textContent = item.tTarget;
+					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
 					if ('tValue' in item)
-						ValvesTable.rows[index+1].cells[colIdx].textContent = item.tValue;
-					else ValvesTable.rows[index+1].cells[colIdx].textContent = "";
+						valvesTable.rows[index+1].cells[colIdx].textContent = item.tValue;
+					else valvesTable.rows[index+1].cells[colIdx].textContent = "";
 				}
 
 				if (!(id('activeSetValves').checked)) {
@@ -2982,7 +3071,6 @@
 		}
 		
 		function fillCfgValvesTable (cfgValvesJson) {
-			const ValvesTable = id('valvesTable');
 			const cfgValvesTable = id('cfgValvesTable');
 			id('vCfg-hCalib').value = cfgValvesJson.calib.hourOfCalib;
 			let dCalib=0;	
@@ -3215,7 +3303,6 @@
 				id("netcfg-syslog-port").value=dataNetConfig.syslogPort;
 				showWifi();
 				showSyslogIP();
-				console.log('getNetConfig');
 				if (dataNetConfig["userName"]==="") {
 					activeSetValvesDisplay = "block";
 					id('activeSetValves').style.display="block";
@@ -3235,11 +3322,12 @@
 				id("protcfg-Publish").value = dataProtConfig["publish"];
 				id("protcfg-pubMinDelay").value = dataProtConfig["pubMinDelay"];
 				id("protcfg-User").value = dataProtConfig["user"];
-				id("protcfg-pubTarget").checked = dataProtConfig["pubTarget"];
+				id("protcfg-pubSeparate").checked = dataProtConfig["pubSeparate"];
 				id("protcfg-pubAllTemps").checked = dataProtConfig["pubAllTemps"];
 				id("protcfg-pubPathAsRoot").checked = dataProtConfig["pubPathAsRoot"];
 				id("protcfg-pubUpTime").checked = dataProtConfig["pubUpTime"];
 				id("protcfg-pubOnChange").checked = dataProtConfig["pubOnChange"];
+				id ("protcfg-pubPlainText").checked = dataProtConfig["pubPlainText"];
 				id ("protcfg-pubRetained").checked = dataProtConfig["pubRetained"];
 				id("protcfg-keepAliveTime").value = dataProtConfig["keepAliveTime"];
 				showBrokerIP();

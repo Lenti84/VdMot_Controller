@@ -84,12 +84,13 @@ typedef struct {
 } VDM_SYSTEM_CONFIG;
 
 typedef struct  {
-  uint8_t publishTarget : 1 ;
+  uint8_t publishSeparate : 1 ;
   uint8_t publishAllTemps : 1;
   uint8_t publishPathAsRoot : 1 ;
   uint8_t publishUpTime : 1;
   uint8_t publishOnChange : 1;
   uint8_t publishRetained : 1;
+  uint8_t publishPlainText : 1;
 } VDM_PROTOCOL_CONFIG_FLAGS;
 
 typedef struct {

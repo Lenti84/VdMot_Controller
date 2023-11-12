@@ -175,6 +175,7 @@ int16_t communication_loop (void) {
 
 	DeviceAddress currAddress;
 	uint8_t numberOfDevices = 0;
+	uint8_t calibration = 0;
 
 	availcnt = COMM_SER.available(); 
     if(availcnt>0)
@@ -249,7 +250,8 @@ int16_t communication_loop (void) {
 				#endif
 				if (y >= 0 && y <= 100 && x < ACTUATOR_COUNT) 
 				{
-					myvalvemots[x].target_position = (byte) y;
+					if (!myvalvemots[x].calibration) 
+						myvalvemots[x].target_position = (byte) y;
 					COMM_SER.println(APP_PRE_SETTARGETPOS);
 				}
 			}
@@ -296,7 +298,7 @@ int16_t communication_loop (void) {
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETVLVDATA,&cmd[0],5) == 0) {
 			#ifdef commDebug  
-				COMM_DBG.println("get valve data");
+				//COMM_DBG.println("get valve data");
 			#endif
 
 			x = atoi(arg0ptr);
@@ -322,7 +324,10 @@ int16_t communication_loop (void) {
 					strcat(sendbuffer, valbuffer);
 					strcat(sendbuffer, " ");
                     
-					itoa(myvalvemots[x].status, valbuffer, 10);      
+					calibration = myvalvemots[x].status;
+					if (myvalvemots[x].calibration) calibration|= 0x80;
+
+					itoa(calibration, valbuffer, 10);      
 					strcat(sendbuffer, valbuffer);
 					strcat(sendbuffer, " ");
                     
@@ -796,7 +801,6 @@ int16_t communication_loop (void) {
 			}
 		}
 
-
 		// set motor characteristics
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETMOTCHARS,&cmd[0],5) == 0) {
@@ -863,9 +867,7 @@ int16_t communication_loop (void) {
 			if(argcnt == 1 && x >= 0) {
 				// reset status of all valves so they will be detected again
 				if( x == 255) {
-					for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++) {
-						myvalvemots[xx].status = VLV_STATE_UNKNOWN; 
-					}
+					app_scan_valves();
 					commdbg_println(" - reset all valves");
 				}
 				else commdbg_println(" - error");

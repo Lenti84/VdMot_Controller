@@ -11,6 +11,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.3.0]
+### fixed
+- Issue #110 : MQTT sending uptime
+### Added
+- window icon
+- Issue 111 : Automatic wifi reconnect if lost 
+- MQTT : send calibration time/date of valve when calibration is in progress
+- MQTT : send link # of valve if exists
+- Website : display calibration info in status page when calibration is in progress 
+
+## [1.2.6]
+### Added
+- window handling : Icon inserted
+- MQTT  : sepererate topics handling of read/write 
+        : topics values plaintext instead of number possible 
+### Changed
+- if control is set to off then the valve go to zero position                    
+
 ## [1.2.5]
 ### Added
 - window handling : activate window handling in control

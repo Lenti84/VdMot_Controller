@@ -104,7 +104,8 @@ float CPiControl::piCtrl(float e) {
 
 void CPiControl::setWindowAction(uint8_t windowControl)
 {
- if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].controlFlags.windowInstalled)
+ if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].controlFlags.windowInstalled && controlActive && 
+    (VdmConfig.configFlash.valvesControlConfig.heatControl==1 || VdmConfig.configFlash.valvesControlConfig.heatControl==2))
  {
   windowState = windowControl;
   switch (windowControl) {
@@ -147,6 +148,7 @@ void CPiControl::setValveWindowAction(uint8_t valvePosition) {
 
 CHECKACTION CPiControl::checkAction(uint8_t idx)
 {
+  if (!controlActive) return(nothing);
 
   if (!VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].controlFlags.windowInstalled) {
     windowControlState = windowIdle;  
@@ -155,7 +157,7 @@ CHECKACTION CPiControl::checkAction(uint8_t idx)
     setPosition(windowOpenTarget);
     return(nothing);
   }
-
+  
   switch (VdmConfig.configFlash.valvesControlConfig.heatControl)
   {
     case piControlManual:
@@ -251,8 +253,20 @@ void CPiControl::doControlValve()
       }
       valvePosition=100;
     }
-
+    if (controlActive==0) valvePosition=0; 
     setPosition(valvePosition);
-
+    
 }
   
+void CPiControl::setControlActive(uint8_t thisControl)
+{
+  controlActive=thisControl;
+     // check if there are links
+     for (uint8_t i=0; i< ACTUATOR_COUNT; i++) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.active) {
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].link==(valveIndex+1)) {
+          PiControl[i].controlActive=thisControl;
+        }
+      }
+    }
+}

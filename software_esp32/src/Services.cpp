@@ -43,6 +43,7 @@
 #include "VdmTask.h"
 #include "VdmConfig.h"
 #include "VdmSystem.h"
+#include "VdmNet.h"
 #include "stmApp.h"
 #include "Queue.h"
 
@@ -85,6 +86,7 @@ void CServices::servicesLoop()
 {
   checkServiceValves();  
   checkGetNtp();
+  VdmNet.checkWifi();
 }
 
 void CServices::runOnce() 
