@@ -74,6 +74,8 @@ String CWeb::getMsgConfig (VDM_MSG_CONFIG msgConfig)
   String result = "{\"reason\":{\"valveBlocked\":"+String(msgConfig.reason.reasonFlags.valveBlocked)+","+
                   "\"notDetect\":"+String(msgConfig.reason.reasonFlags.notDetect)+","+
                   "\"reset\":"+String(msgConfig.reason.reasonFlags.reset)+","+
+                  "\"ds18Failed\":"+String(msgConfig.reason.reasonFlags.ds18Failed)+","+
+                  "\"tValueFailed\":"+String(msgConfig.reason.reasonFlags.tValueFailed)+","+
                   "\"mqttTimeOut\":"+String(msgConfig.reason.reasonFlags.mqttTimeOut)+","+
                   "\"mqttTimeOutTime\":"+String(msgConfig.reason.mqttTimeOutTime)+"},"+
                   "\"PO\":{\"active\":"+String(msgConfig.activeFlags.pushOver)+","+
@@ -129,6 +131,9 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"ip\":\""+ip2String(protConfig.brokerIp)+"\","+
                     "\"port\":\""+String(protConfig.brokerPort)+"\","+
                     "\"interval\":"+String(protConfig.brokerInterval)+","+
+                    "\"mqttTOActive\":"+String(protConfig.mqttConfig.flags.timeoutActive)+","+
+                    "\"mqttTO\":"+String(protConfig.mqttConfig.timeOut)+","+
+                    "\"mqttToPos\":"+String(protConfig.mqttConfig.toPos)+","+
                     "\"publish\":"+String(protConfig.publishInterval)+","+
                     "\"pubMinDelay\":"+String(protConfig.minBrokerDelay)+","+
                     "\"pubOnChange\":"+String(protConfig.protocolFlags.publishOnChange)+","+
@@ -272,17 +277,6 @@ String CWeb::getSysDynInfo()
   struct tm timeinfo;
   char buf[50];
   String sLastCalib;
- /* String sTime;
-  String upTime;
-  
-
-  if(!getLocalTime(&timeinfo)) {
-    sTime = "Failed to obtain time";
-  } else {
-    strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
-    sTime = String(buf);
-  }
-*/
   time_t lastCalib=VdmConfig.miscValues.lastCalib;
   localtime_r(&lastCalib, &timeinfo);
   strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
@@ -322,16 +316,18 @@ String CWeb::getValvesStatus()
   bool controlActive = getControlActive();
   String result = "{";
   result += "\"valves\":[";
-  
+  uint8_t thisState;
+
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
     #ifdef ValveSimulation
       if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) StmApp.actuators[x].state=VLV_STATE_IDLE;
     #endif
     if ((StmApp.actuators[x].state!=VLV_STATE_OPENCIR) && (StmApp.actuators[x].state!=VLV_STATE_START)) {
+      if (PiControl[x].failed) thisState=STATE_FAILED; else thisState=StmApp.actuators[x].state;
       if (start) result += ",";
       result += "{\"idx\":"+String(x+1) + ","+
                  "\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) +"\"," +
-                 "\"state\":"+String(StmApp.actuators[x].state) + ","+
+                 "\"state\":"+String(thisState) + ","+
                  "\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
                  "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
                  "\"targetPos\":" + String(StmApp.actuators[x].target_position)+ ","+
@@ -341,13 +337,17 @@ String CWeb::getValvesStatus()
                  "\"cc\":" + String(StmApp.actuators[x].closing_count)+ ","+
                  "\"dc\":" + String(StmApp.actuators[x].deadzone_count);
 
-                 if (StmApp.actuators[x].temp1>-500) {
-                    result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
+                 if (StmApp.actuators[x].tIdx1>0) { 
+                  if (StmApp.actuators[x].temp1>-500) {
+                      result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
+                  } else result +=",\"temp1\":\"failed\"";
                  }
-                 if (StmApp.actuators[x].temp2>-500) {
-                    result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
+                 if (StmApp.actuators[x].tIdx2>0) { 
+                  if (StmApp.actuators[x].temp2>-500) {
+                      result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
+                  } else result +=",\"temp2\":\"failed\"";
                  }
-                 if (controlActive) {
+                 if (controlActive || Mqtt.valveStates[x].tValueFailed) {
                   if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     result +=",\"tTarget\":" + String(((float)PiControl[x].target),1);
                     result +=",\"tValue\":" + String(((float)PiControl[x].value),1);
@@ -361,11 +361,16 @@ String CWeb::getValvesStatus()
                  }
                  valveActive = 0;
                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active==1) valveActive |= 1;
-                if (PiControl[x].controlActive) valveActive |= 2;
+                 if (PiControl[x].controlActive) valveActive |= 2;
+                 if (PiControl[x].failed) valveActive |= 4;
                  result +=",\"controlActive\":"+String(valveActive);
               
                  if (StmApp.actuators[x].calibration) {
                   result +=",\"calibration\":"+String(StmApp.actuators[x].calibration); 
+                 }
+
+                 if (Mqtt.valveStates[x].tValueFailed) {
+                  result +=",\"tValueFailed\":"+String(Mqtt.valveStates[x].tValueFailed); 
                  }
                  result +="}";      
     start = true;
@@ -380,13 +385,16 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
   String result = "[";
   int16_t temperature;
   bool start = false;
+  String s;
+
   for (uint8_t i=0;i<StmApp.tempsCount;i++) {
-    if (!findIdInValve(i)) {
+    if ((!findIdInValve(i)) && (VdmConfig.configFlash.tempsConfig.tempConfig[i].active)) {
       if (start) result += ",";
       temperature = StmApp.temps[i].temperature;
+      if (StmApp.temps[i].temperature<=-500) s="\"failed\""; else s=String(((float)temperature)/10,1);
       result += "{\"id\":\"" + String(StmApp.temps[i].id) + "\","+
                 "\"name\":\"" + String(tempsConfig.tempConfig[i].name) + "\","+
-                "\"temp\":" + String(((float)temperature)/10,1)+"}";
+                "\"temp\":" +s+"}";
       start = true;
     }
   }  

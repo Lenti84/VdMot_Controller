@@ -74,6 +74,7 @@ public:
     windowControlState=windowIdle;
     windowState=0;
     controlActive=true;
+    failed=false;
   };
   void exec() override {
     controlValve();
@@ -85,6 +86,7 @@ public:
   void setValveWindowAction(uint8_t valvePosition);
   void setPosition(uint8_t thisPosition);
   void setControlActive(uint8_t thisControl);
+  void setFailed(uint8_t thisPosition);
   uint32_t ta;
   uint32_t ti;
   volatile uint16_t xp;
@@ -102,6 +104,7 @@ public:
   WINDOWSTATE windowControlState;
   uint8_t  windowOpenTarget;
   bool controlActive;
+  bool failed;
 private:
   void doControlValve(); 
   CHECKACTION checkAction(uint8_t idx);

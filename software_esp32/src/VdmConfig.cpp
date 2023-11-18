@@ -110,7 +110,9 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.protocolFlags.publishRetained = false;
   configFlash.protConfig.protocolFlags.publishPlainText = false;
   configFlash.protConfig.keepAliveTime = 60;
-
+  configFlash.protConfig.mqttConfig.flags.timeoutActive = false;
+  configFlash.protConfig.mqttConfig.timeOut = 120;
+  configFlash.protConfig.mqttConfig.toPos = 10;
   
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesConfig.valveConfig[i].active = false;
@@ -162,6 +164,8 @@ void CVdmConfig::clearConfig()
   configFlash.messengerConfig.reason.reasonFlags.notDetect=0;
   configFlash.messengerConfig.reason.reasonFlags.reset=0;
   configFlash.messengerConfig.reason.reasonFlags.valveBlocked=0;
+  configFlash.messengerConfig.reason.reasonFlags.ds18Failed=0;
+  configFlash.messengerConfig.reason.reasonFlags.tValueFailed=0;
   configFlash.messengerConfig.reason.mqttTimeOutTime=10;
   memset(configFlash.messengerConfig.pushover.title,0,sizeof(configFlash.messengerConfig.pushover.title));
   memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
@@ -222,6 +226,10 @@ void CVdmConfig::readConfig()
     configFlash.protConfig.protocolFlags =  *(VDM_PROTOCOL_CONFIG_FLAGS *)&a;
     configFlash.protConfig.keepAliveTime = prefs.getUShort(nvsProtBrokerKeepAliveTime,60);
     configFlash.protConfig.minBrokerDelay = prefs.getUShort(nvsProtBrokerMinBrokerDelay,5);
+    a=prefs.getUChar(nvsProtBrokerMQTTFlags,0);
+    configFlash.protConfig.mqttConfig.flags = *(VDM_PROTOCOL_MQTT_CONFIG_FLAGS *)&a;
+    configFlash.protConfig.mqttConfig.timeOut =prefs.getULong(nvsProtBrokerMQTTTimeOut,120);
+    configFlash.protConfig.mqttConfig.toPos=prefs.getUChar(nvsProtBrokerMQTTToPos,10);
     prefs.end();
   }
 
@@ -332,6 +340,10 @@ void CVdmConfig::writeConfig(bool reboot)
     prefs.putUChar(nvsProtBrokerPublishFlags,a);
     prefs.putUShort(nvsProtBrokerKeepAliveTime,configFlash.protConfig.keepAliveTime);
     prefs.putUShort(nvsProtBrokerMinBrokerDelay,configFlash.protConfig.minBrokerDelay);
+    a = *(uint8_t *)&configFlash.protConfig.mqttConfig.flags;
+    prefs.putUChar(nvsProtBrokerMQTTFlags,a);
+    prefs.putULong(nvsProtBrokerMQTTTimeOut,configFlash.protConfig.mqttConfig.timeOut);
+    prefs.putUChar(nvsProtBrokerMQTTToPos,configFlash.protConfig.mqttConfig.toPos);
   }
   prefs.end();
  
@@ -446,6 +458,9 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["pubPlainText"].isNull()) configFlash.protConfig.protocolFlags.publishPlainText = doc["pubPlainText"];
   if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
   if (!doc["pubMinDelay"].isNull()) configFlash.protConfig.minBrokerDelay = doc["pubMinDelay"];
+  if (!doc["mqttTOActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutActive = doc["mqttTOActive"];
+  if (!doc["mqttTO"].isNull()) configFlash.protConfig.mqttConfig.timeOut = doc["mqttTO"];
+  if (!doc["mqttToPos"].isNull()) configFlash.protConfig.mqttConfig.toPos = doc["mqttToPos"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
@@ -588,7 +603,9 @@ void CVdmConfig::postMessengerCfg (JsonObject doc)
   if (!doc["reason"]["mqttTimeOut"].isNull()) configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=doc["reason"]["mqttTimeOut"];
   if (!doc["reason"]["mqttTimeOutTime"].isNull()) configFlash.messengerConfig.reason.mqttTimeOutTime=doc["reason"]["mqttTimeOutTime"];
   if (!doc["reason"]["reset"].isNull()) configFlash.messengerConfig.reason.reasonFlags.reset=doc["reason"]["reset"];
-  
+  if (!doc["reason"]["ds18Failed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.ds18Failed=doc["reason"]["ds18Failed"];
+  if (!doc["reason"]["tValueFailed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.tValueFailed=doc["reason"]["tValueFailed"];
+
   if (!doc["PO"]["active"].isNull()) configFlash.messengerConfig.activeFlags.pushOver=doc["PO"]["active"];
   if (!doc["PO"]["appToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.appToken,doc["PO"]["appToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.appToken));
   if (!doc["PO"]["userToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.userToken,doc["PO"]["userToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.userToken));

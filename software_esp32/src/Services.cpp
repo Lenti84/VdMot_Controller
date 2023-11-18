@@ -46,12 +46,16 @@
 #include "VdmNet.h"
 #include "stmApp.h"
 #include "Queue.h"
+#include "Messenger.h"
+#include "PIControl.h"
 
 CServices Services;
 
 CServices::CServices()
 {
   serviceValvesStarted=false;
+  for (uint8_t x = 0;x<TEMP_SENSORS_COUNT;x++) 
+    tempStates[x].timeOut=0;  
 }
 
 void CServices::checkServiceValves()
@@ -73,6 +77,43 @@ void CServices::checkServiceValves()
   }
 }
 
+void CServices::checkDS18()
+{
+  int8_t tempIdx;
+  bool messengerToSend=false;
+  String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : SYSTEM" ;
+  String s = "DS18 sensor failed for room\r\n";
+
+  for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
+    tempIdx=VdmConfig.findTempID(StmApp.temps[x].id);
+    if (tempIdx>=0) {
+      if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
+        tempStates[tempIdx].tempFailed=(StmApp.temps[tempIdx].temperature<=-500);
+        if (tempStates[tempIdx].tempFailed && (!tempStates[tempIdx].messengerSent)) {
+            tempStates[tempIdx].timeOut++;
+            if (tempStates[tempIdx].timeOut>4) {
+              s+=String(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)+"\r\n";
+              tempStates[tempIdx].messengerSent=true;
+              messengerToSend=true;
+              tempStates[tempIdx].timeOut=0;
+              if (StmApp.actuators[tempIdx].tIdx1 > 0) {
+                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[tempIdx].valueSource==1 || VdmConfig.configFlash.valvesControlConfig.valveControlConfig[tempIdx].valueSource==2)
+                  PiControl[tempIdx].setFailed(VdmConfig.configFlash.protConfig.mqttConfig.toPos);
+              }
+            }
+        }
+      }
+      if (!tempStates[tempIdx].tempFailed) {
+        tempStates[x].messengerSent= false;
+        tempStates[tempIdx].timeOut=0;
+      }
+    }
+  }
+  if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.ds18Failed) {
+    if (messengerToSend) Messenger.sendMessage (title.c_str(),s.c_str());
+  }
+}
+
 void CServices::checkGetNtp()
 {
   // check if time is 3:05 pm
@@ -87,6 +128,7 @@ void CServices::servicesLoop()
   checkServiceValves();  
   checkGetNtp();
   VdmNet.checkWifi();
+  checkDS18();
 }
 
 void CServices::runOnce() 

@@ -311,7 +311,9 @@ void CVdmNet::checkNet()
 void CVdmNet::checkWifi()
 {
   uint8_t WifiStatus = WiFi.status();
-  UART_DBG.println("Wifi status "+ String(WifiStatus));
+  #ifdef netDebug
+    UART_DBG.println("Wifi status "+ String(WifiStatus));
+  #endif
   if (wifiState==wifiConnected) {
       if (WifiStatus!= WL_CONNECTED) {
       WiFi.disconnect();

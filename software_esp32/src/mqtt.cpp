@@ -101,7 +101,10 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
     if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
         strncpy(stationName, VdmConfig.configFlash.systemConfig.stationName,sizeof(stationName));
     } else strncpy(stationName, DEVICE_HOSTNAME,sizeof(stationName));
-
+    
+    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
+        lastValveValues[x].lasttValuets=millis();
+    }
 }
 
 CMqtt::CMqtt()
@@ -214,6 +217,7 @@ void CMqtt::mqtt_loop()
          4 : MQTT_CONNECT_BAD_CREDENTIALS - the username/password were rejected
          5 : MQTT_CONNECT_UNAUTHORIZED - the client was not authorized to connect
     */
+   checktValueTimeOut();
 }
 
 void CMqtt::disconnect() {
@@ -332,15 +336,16 @@ void CMqtt::reconnect()
                 }
             }
         }
+        lastValveValues[x].lasttValuets=millis();
     }
     for (uint8_t x = 0;x<TEMP_SENSORS_COUNT;x++) {
         lastTempValues[x].ts=millis();
         lastTempValues[x].publishNow=false;
     }
+
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ON) {
         syslog.log(LOG_DEBUG, "MQTT Connected...");
     }
-   
 }
 
 void CMqtt::callback(char* topic, byte* payload, unsigned int length) 
@@ -448,7 +453,11 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
                             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].valueSource==0) {
                                 PiControl[idx].value=strtof(value, NULL);
+                                PiControl[idx].failed=false;
+                                valveStates[idx].tValueFailed=false;
+                                valveStates[idx].messengerSent=false;
                                 mqttReceived=true;
+                                lastValveValues[idx].lasttValuets=millis();
                             }
                         }
                     } else if (strncmp(pt,"/tTarget",8)==0) {
@@ -520,9 +529,12 @@ void CMqtt::publish_valves () {
     char valstr[50];
     int8_t tempIdx;
     uint8_t len;
-    const char valveStates[9][11] =  {"","idle","opens","closes","blocked","unknown","no valve","full open","connected"};
+    String s;
+    const char valveStatesStr[10][11] =  {"","idle","opens","closes","blocked","unknown","no valve","full open","connected","failed"};
 
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
+        valveStates[x].thisState=StmApp.actuators[x].state;
+        if (valveStates[x].tValueFailed) valveStates[x].thisState = STATE_FAILED;
         if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
             if (lastValveValues[x].publishNow || forcePublish) {
                 memset(topicstr,0x0,sizeof(topicstr));
@@ -553,15 +565,15 @@ void CMqtt::publish_valves () {
                     }
                 }
                 // state
-                if ((lastValveValues[x].state!=StmApp.actuators[x].state) || forcePublish || lastValveValues[x].publishTimeOut) {
+                if ((lastValveValues[x].state!=valveStates[x].thisState) || forcePublish || lastValveValues[x].publishTimeOut) {
                     topicstr[len] = '\0';
                     strncat(topicstr, "/state",sizeof(topicstr) - strlen (topicstr) - 1);
                     if (VdmConfig.configFlash.protConfig.protocolFlags.publishPlainText) {
-                        if (StmApp.actuators[x].state<9) {
-                            strcpy(valstr,valveStates[StmApp.actuators[x].state]);
+                        if (valveStates[x].thisState<10) {
+                            strcpy(valstr,valveStatesStr[valveStates[x].thisState]);
                         } else strcpy(valstr,"");
                     } else {
-                        itoa(StmApp.actuators[x].state, valstr, 10);        
+                        itoa(valveStates[x].thisState, valstr, 10);        
                     }
                     mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
                     
@@ -576,7 +588,7 @@ void CMqtt::publish_valves () {
                         strcpy(valstr,VdmConfig.configFlash.valvesConfig.valveConfig[VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link-1].name);
                         mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
                     }
-                    lastValveValues[x].state=StmApp.actuators[x].state;
+                    lastValveValues[x].state=valveStates[x].thisState;
                 }
                 // meancurrent
                 if ((lastValveValues[x].meanCurrent!=StmApp.actuators[x].meancurrent) || forcePublish || lastValveValues[x].publishTimeOut) {
@@ -587,21 +599,25 @@ void CMqtt::publish_valves () {
                     lastValveValues[x].meanCurrent=StmApp.actuators[x].meancurrent;
                 }
                 // temperature 1st sensor
-                if (StmApp.actuators[x].temp1>-50) {
+                if (StmApp.actuators[x].tIdx1>0) { 
                     if ((lastValveValues[x].temp1!=StmApp.actuators[x].temp1) || forcePublish || lastValveValues[x].publishTimeOut) {
                         topicstr[len] = '\0';
                         strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
-                        String s = String(((float)StmApp.actuators[x].temp1)/10,1); 
+                        if (StmApp.actuators[x].temp1>-500) {
+                            s = String(((float)StmApp.actuators[x].temp1)/10,1); 
+                        } else s="failed";
                         mqtt_client.publish(topicstr, (const char*) &s,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
                         lastValveValues[x].temp1=StmApp.actuators[x].temp1;
                     }
                 }
                 // temperature 2nd sensor
-                if (StmApp.actuators[x].temp2>-50) {
+                if (StmApp.actuators[x].tIdx2>0) {
                     if ((lastValveValues[x].temp2!=StmApp.actuators[x].temp2) || forcePublish || lastValveValues[x].publishTimeOut) {
                         topicstr[len] = '\0';
                         strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
-                        String s = String(((float)StmApp.actuators[x].temp2)/10,1); 
+                        if (StmApp.actuators[x].temp2>-500) {
+                            s = String(((float)StmApp.actuators[x].temp2)/10,1); 
+                        } else s="failed";
                         mqtt_client.publish(topicstr, (const char*) &s,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
                         lastValveValues[x].temp2=StmApp.actuators[x].temp2;
                     }
@@ -621,7 +637,8 @@ void CMqtt::publish_temps()
     char nrstr[11];
     int8_t tempIdx;
     uint8_t len;
-    
+    String s;
+
     for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
         if (lastTempValues[x].publishNow || forcePublish) {
             tempIdx=VdmConfig.findTempID(StmApp.temps[x].id);
@@ -643,7 +660,12 @@ void CMqtt::publish_temps()
                         // actual value
                         topicstr[len] = '\0';
                         strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
-                        String s = String(((float)StmApp.temps[x].temperature)/10,1);     
+                        
+                        if (StmApp.temps[x].temperature<=-500) {
+                            s = "failed";  
+                        } else {
+                            s = String(((float)StmApp.temps[x].temperature)/10,1);     
+                        }
                         mqtt_client.publish(topicstr,(const char*) &s,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
                     }
                 }
@@ -726,4 +748,47 @@ void CMqtt::publish_all (uint8_t publishFlags)
    if (CHECK_BIT(publishFlags,0)==1) publish_common (); 
    if (CHECK_BIT(publishFlags,1)==1) publish_valves ();
    if (CHECK_BIT(publishFlags,2)==1) publish_temps ();
+}
+
+void CMqtt::checktValueTimeOut () 
+{
+    bool messenger = false;
+    if (VdmConfig.configFlash.protConfig.mqttConfig.flags.timeoutActive) 
+    {
+        for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
+            if ((!PiControl[x].windowState) && (!valveStates[x].tValueFailed) && VdmConfig.configFlash.valvesConfig.valveConfig[x].active && VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active && PiControl[x].controlActive) 
+            {
+                if ((millis()-lastValveValues[x].lasttValuets)>(1000*60*VdmConfig.configFlash.protConfig.mqttConfig.timeOut)) {
+                    PiControl[x].setFailed(VdmConfig.configFlash.protConfig.mqttConfig.toPos);
+                    valveStates[x].tValueFailed=true;
+                    if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.tValueFailed) messenger=true;
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                        syslog.log(LOG_DEBUG, "MQTT: tValue timeout: valve "+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name)+"(#"+String(x+1));
+                    }  
+                }
+            }
+            if (!(VdmConfig.configFlash.valvesConfig.valveConfig[x].active && PiControl[x].controlActive && !PiControl[x].windowState))
+            {
+                lastValveValues[x].lasttValuets=millis();
+                valveStates[x].tValueFailed=false;
+                valveStates[x].messengerSent=false;
+                PiControl[x].failed=false;
+
+            }
+        }
+        if (messenger)
+        { 
+            bool messengerToSend=false;
+            String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : MQTT" ;
+            String s = "tValue not received for room\r\n";
+            for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
+                if (valveStates[x].tValueFailed && (!valveStates[x].messengerSent)) {
+                    s+=String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name)+"\r\n";
+                    valveStates[x].messengerSent=true;
+                    messengerToSend=true;
+                }
+            }
+            if (messengerToSend) Messenger.sendMessage (title.c_str(),s.c_str());
+        }
+    }
 }

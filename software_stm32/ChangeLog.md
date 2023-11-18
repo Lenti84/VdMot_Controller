@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+## [1.3.1]
+### fixed
+- next calibration : movements set to min. 50
+
 ## [1.3.0]
 ### Fixed
 - calibration move numbers was not set from eeprom

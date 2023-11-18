@@ -64,7 +64,7 @@ int16_t app_setup (void) {
   // match sensor address from eeprom with found sensors and set index/slot to valve struct
   app_match_sensors();
 
-  if ((eep_content.numberOfMovements>=10) && (eep_content.numberOfMovements<65535))  //wdu min 50
+  if ((eep_content.numberOfMovements>=50) && (eep_content.numberOfMovements<65535))
     learning_movements=eep_content.numberOfMovements;
     app_set_learnmovements(learning_movements);
   #ifdef appDebug

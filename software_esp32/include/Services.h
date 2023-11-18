@@ -47,6 +47,12 @@
 #define getNtpHour  3
 #define getNtpMin   5
 
+typedef struct {
+  bool tempFailed; 
+  bool messengerSent;
+  uint8_t timeOut;        
+} TEMPSTATES; 
+
 class CServices
 {
 public:
@@ -57,12 +63,13 @@ public:
   void restartSystem(bool waitQueueFinished=true);
   void restartStmApp(uint32_t ms);
   void checkServiceValves();
+  void checkDS18();
   void valvesSetLearn();
   void checkGetNtp();
 
   bool serviceValvesStarted;
 private:
-  
+  TEMPSTATES tempStates[TEMP_SENSORS_COUNT];
 };
 
 extern CServices Services;

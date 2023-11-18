@@ -11,6 +11,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.3.1]
+### fixed
+- website : reload page remains on the actual page
+### Added
+- website and mqtt : visualization of failed DS18 sensors
+- valve : timeout of mqtt received tValue : set valve to a defined position
+- valve : timeout of DS18sensor failed (fixed 5 min): set valve to a defined position in Config/Protocol/Timeout
+- messenger : send a message if tValue timeout 
+- messenger : send a message if DS18 sensor failed (fixed timeout 5 min) 
+### Changed
+- website : color for valve number changed : gray : disabled in config, green : all ok, yellow : mode=off, red : error (tsValue or DS18 failed)
+
 ## [1.3.0]
 ### fixed
 - Issue #110 : MQTT sending uptime

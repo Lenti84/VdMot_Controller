@@ -69,6 +69,7 @@ private:
 	const char *_token;
 	const char *_user;
 	HTTPClient myClient;
+	WiFiClientSecure client;
 public:
 	CPushover(const char *, const char *);
 	CPushover();

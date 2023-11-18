@@ -821,18 +821,36 @@
 		</table>
 		</div>
 		<div class="tabpframe"> 
-		<table id="protcfg-Broker1" style="display:none;" class="tabTable">
+		<table id="protcfg-Broker1" style="display:none;" class="tabTable1">
 			<tr>
-			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:12em;display:none;">
-				<legend>Publish</legend>
-				<label><input type="checkbox" id="protcfg-pubRetained" name="theGroupP" title="Publish values retained">Retained </label>
-				<label><input type="checkbox" id="protcfg-pubPlainText" name="theGroupP" title="Publish values as plaintext instead 0/1">Plaintext </label>
-				<label><input type="checkbox" id="protcfg-pubSeparate" name="theGroupP" title="Publish values separate for write and read">Separate Topics </label>
-				<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
-				<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
-				<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
-			</fieldset>
+				<th>Time out</th>
+				<td>
+				<input type="checkbox" id="protcfg-timeOutActive" name="protcfg-timeOutActive" title="Time out for receiving tValue."/>
+				</td>
 			</tr>
+			<tr>
+				<th>Time out (min)</th>
+				<td>
+				<input type="number" class="form-input" min="1" maxlength="5" style="width:60px" id="protcfg-timeOutValue" name="protcfg-timeOutValue" title="Time out for receiving tValue in minutes."/>
+				</td>
+			</tr>
+			<tr>
+				<th>Time out target position(%)</th>
+				<td>
+				<input type="number" class="form-input" min="0" max="100" maxlength="3" style="width:60px" id="protcfg-timeOutPosition" name="protcfg-timeOutPosition" title="Valve position after time out."/>
+				</td>
+			</tr>
+			<tr>
+				<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:12em;display:none;">
+					<legend>Publish</legend>
+					<label><input type="checkbox" id="protcfg-pubRetained" name="theGroupP" title="Publish values retained">Retained </label>
+					<label><input type="checkbox" id="protcfg-pubPlainText" name="theGroupP" title="Publish values as plaintext instead 0/1">Plaintext </label>
+					<label><input type="checkbox" id="protcfg-pubSeparate" name="theGroupP" title="Publish values separate for write and read">Separate Topics </label>
+					<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
+					<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
+					<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
+				</fieldset>
+				</tr>
 		</table>
 		</div>
 		</div>
@@ -991,7 +1009,7 @@
 			</table>
 		</dialog>
 		
-		<div class="rtabframe" id ="messengerTabFrame" style="height:330px">
+		<div class="rtabframe" id ="messengerTabFrame" style="height:370px">
 			<h3>Messenger</h3>
 			<table id="cfgValvesTable1" class="tabTable">
 				<tr>
@@ -1000,12 +1018,14 @@
 					<label><input type="checkbox" id="MsgPOCfg-Active" name="theGroup">Pushover <input type="button" class="buttonclass1" id="msgCfg-PushOverParam" style="height:2em;" value="..." title="Push over parameter" /></label>
 					<label><input type="checkbox" id="MsgEmailCfg-Active" name="theGroup">Email <input type="button" class="buttonclass1" id="msgCfg-emailParam" style="height:2em;" value="..." title="Email parameter" /></label>
 				</fieldset>
-				<fieldset class="checkboxgroup1" style="height:9em;" id="cfgValvesTableFieldSet2">
+				<fieldset class="checkboxgroup1" style="height:12em;" id="cfgValvesTableFieldSet2">
 					<legend>Send reasons</legend>	
 					<label><input type="checkbox" id="MsgCfg-ReasonValveBlocked" name="theGroup">Valve blocked </label>
 					<label><input type="checkbox" id="MsgCfg-ReasonValveDetect" name="theGroup">Active valve not detected </label>
 					<label><input type="checkbox" id="MsgCfg-ReasonReset" name="theGroup">Reset detected </label>
 					<label><input type="checkbox" id="MsgCfg-ReasonMQTT" name="theGroup">MQTT failed,after<input type="number" class="form-input3" maxlength="3" style="width:3em;" min="1" max="999" id="protcfg-timeOutMqtt" name="protcfg-timeOutMqtt" title="Timeout (min) to check mqtt connection to send messenge"/>min</label>
+					<label><input type="checkbox" id="MsgCfg-ReasontValueFailed" name="theGroup">tValue failed </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonDS18Failed" name="theGroup">DS18 failed </label>
 				</fieldset>
 				</tr>
 			</table>
@@ -1718,23 +1738,24 @@
 		}
 		
 		function openPage(pageName,elmnt,color) {
-		  let i, tabContent, tabLinks;
-		  tabContent = document.getElementsByClassName("tabContent");
-		  for (i = 0; i < tabContent.length; i++) {
-			tabContent[i].style.display = "none";
-		  }
-		  tabLinks = document.getElementsByClassName("tabLink");
-		  for (i = 0; i < tabLinks.length; i++) {
-			tabLinks[i].style.backgroundColor = "";
-		  }
-		  if (showThisTab(pageName)===true) {
-			  id(pageName).style.display = "block";
-			  elmnt.style.backgroundColor = color;
-		  }
+			let i, tabContent, tabLinks;	
+			localStorage.pageId=elmnt.id;
+			let thisUrl = new URL(elmnt.href);
+			localStorage.pageUrl=thisUrl.hash;
+			tabContent = document.getElementsByClassName("tabContent");
+			for (i = 0; i < tabContent.length; i++) {
+				tabContent[i].style.display = "none";
+			}
+			tabLinks = document.getElementsByClassName("tabLink");
+			for (i = 0; i < tabLinks.length; i++) {
+				tabLinks[i].style.backgroundColor = "";
+			}
+			if (showThisTab(pageName)===true) {
+				id(pageName).style.display = "block";
+				elmnt.style.backgroundColor = color;
+			}
 		}
 				
-		// Get the element with id="defaultOpen" and click on it
-		id("defaultOpen").click();
 				
 		function _isContains(json, keyname) {
 			return Object.keys(json).some(key => {
@@ -1763,10 +1784,33 @@
 			id("valvesAssembly").disabled=doDisable;
 		}
 
+		window.onhashchange = function() { 
+			 //code  
+			 if(window.location.hash) {
+			  //var hash = window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+			  //console.log ('hash changed ='+window.location.hash+': '+hash);
+			  //console.log ('hash ='+localStorage.pageUrl+': '+window.location.hash);
+			  if (localStorage.pageUrl!=null) {
+				if (localStorage.pageUrl!=window.location.hash) {
+					if (window.location.hash=="#home") id("defaultOpen").click();
+					else {
+						if (window.location.hash.indexOf('#') !== -1) {
+							let thisOpenId = window.location.hash.substring(1)+'Open';
+							id(thisOpenId).click();
+							//console.log ('OpenId  '+ thisOpenId);
+						}
+					}
+				  //console.log ('hash now changed ='+localStorage.pageUrl+': '+window.location.hash);
+				 }
+				} else id("defaultOpen").click();
+		  
+			}
+		}
+
 		window.onload = async function() {
 			await OnStart();
 		}
-
+		
 		async function OnStart() {
 			stmLoaded=false;
 			disable_enable_ValvesCfg(true);
@@ -1792,6 +1836,11 @@
 			getStatusInterval = window.setInterval(await getStatus, 2000);
 			generateOnClick();
 			showAllTabsNow();
+			if (localStorage.pageId!=null) {
+			if (id(localStorage.pageId)!=null) 
+				id(localStorage.pageId).click();
+		  	else id("defaultOpen").click();
+			} else id("defaultOpen").click();
 		}		
 		
 		async function loadStmData() {
@@ -1969,7 +2018,8 @@
 				
 				for (let i = 0; i < 3; i++) {
 					cell = thisRow.insertCell();
-					cell.innerHTML = '--';	
+					cell.innerHTML = '--';
+					if (i==2) cell.setAttribute('style','width:60px;');	
 				}
 			}
 			for (let row=1;row<NoOfSensors+1;row++) tempsTable.rows[row].cells[0].innerHTML = row;
@@ -2756,6 +2806,9 @@
 				protCfg.pubRetained = id("protcfg-pubRetained").checked ? 1 : 0;
 				protCfg.pubPlainText = id("protcfg-pubPlainText").checked ? 1 : 0;
 				protCfg.keepAliveTime = id("protcfg-keepAliveTime").value;
+				protCfg.mqttTOActive= id("protcfg-timeOutActive").checked ? 1 : 0;
+				protCfg.mqttTO= id("protcfg-timeOutValue").value;
+				protCfg.mqttToPos= id("protcfg-timeOutPosition").value;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -2775,6 +2828,8 @@
 			reason.valveBlocked = id("MsgCfg-ReasonValveBlocked").checked ? 1 : 0;
 			reason.notDetect = id("MsgCfg-ReasonValveDetect").checked ? 1 : 0;
 			reason.reset = id("MsgCfg-ReasonReset").checked ? 1 : 0;
+			reason.ds18Failed = id("MsgCfg-ReasonDS18Failed").checked ? 1 : 0;
+			reason.tValueFailed = id("MsgCfg-ReasontValueFailed").checked ? 1 : 0;
 			reason.mqttTimeOut = id("MsgCfg-ReasonMQTT").checked ? 1 : 0;
 			reason.mqttTimeOutTime = id("protcfg-timeOutMqtt").value;
 			let PO = {};
@@ -3004,26 +3059,39 @@
 			if ((valvesTable.rows.length != valvesJson.length+1) || (checkIfTempExists(valvesJson)!=valveTempsExists) || (checkIfMqttExists(valvesJson)!=valveMqttExists)) {
 				makeValvesTable(valvesJson);
 			}
-			const States = ["---","idle","opens","closes","blocked","unknown","no valve","full open","connected"];
+			const States = ["---","idle","opens","closes","blocked","unknown","no valve","full open","connected","failed"];
 			let thisImg=null;
 			valvesJson.forEach(function(item, index){
 				valvesTable.rows[index+1].cells[0].textContent = item.idx;	
 				switch (item.controlActive) {
 					case 0:
-					case 2: 
+					case 2:
+					case 4: 
+					case 6:
 					{
 						valvesTable.rows[index+1].cells[0].style.backgroundColor="gray";
+						valvesTable.rows[index+1].cells[0].style.color="white";
 						break;
 					}
-					case 1: {
-						valvesTable.rows[index+1].cells[0].style.backgroundColor="red";
+					case 1:
+					case 5: 
+					{
+						valvesTable.rows[index+1].cells[0].style.backgroundColor="yellow";
+						valvesTable.rows[index+1].cells[0].style.color="blue";
 						break;
 					}
 					case 3: {
 						valvesTable.rows[index+1].cells[0].style.backgroundColor="green";
+						valvesTable.rows[index+1].cells[0].style.color="white";
+						break;
+					}
+					case 7: {
+						valvesTable.rows[index+1].cells[0].style.backgroundColor="red";
+						valvesTable.rows[index+1].cells[0].style.color="white";
 						break;
 					}
 				}
+
 				valvesTable.rows[index+1].cells[1].textContent = item.name;	
 				valvesTable.rows[index+1].cells[2].textContent = item.pos;
 				thisImg=id("windowImg"+(index+1));	
@@ -3047,20 +3115,29 @@
 				valvesTable.rows[index+1].cells[10].textContent = item.dc;
 				let colIdx=11;
 				if (valveTempsExists===true) {
-					if (item.temp1)
-						valvesTable.rows[index+1].cells[colIdx++].textContent = item.temp1;
+					if (item.temp1) {
+						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp1;
+						if (item.temp1==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						colIdx++;
+					}
 					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
 
-					if (item.temp2)
-						valvesTable.rows[index+1].cells[colIdx++].textContent = item.temp2;
+					if (item.temp2) {
+						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp2;
+						if (item.temp2==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						colIdx++;
+					}
 					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
 				}
 				if (valveMqttExists===true) {
 					if ('tTarget' in item)
 						valvesTable.rows[index+1].cells[colIdx++].textContent = item.tTarget;
 					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
-					if ('tValue' in item)
+					if ('tValue' in item) {
 						valvesTable.rows[index+1].cells[colIdx].textContent = item.tValue;
+						if ('tValueFailed' in item) valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; 
+						else  valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+					}
 					else valvesTable.rows[index+1].cells[colIdx].textContent = "";
 				}
 
@@ -3134,6 +3211,7 @@
 				}
 				tempsJson.forEach(function (item, index) {            
 					tempsTable.rows[index+1].cells[1].textContent = item.name;
+					if (item.temp==="failed") tempsTable.rows[index+1].cells[2].style.backgroundColor="red"; else tempsTable.rows[index+1].cells[2].style.backgroundColor="gray";
 					tempsTable.rows[index+1].cells[2].textContent = item.temp;
 				});
 			}
@@ -3330,6 +3408,10 @@
 				id ("protcfg-pubPlainText").checked = dataProtConfig["pubPlainText"];
 				id ("protcfg-pubRetained").checked = dataProtConfig["pubRetained"];
 				id("protcfg-keepAliveTime").value = dataProtConfig["keepAliveTime"];
+				id("protcfg-timeOutActive").checked=dataProtConfig["mqttTOActive"];
+				id("protcfg-timeOutValue").value=dataProtConfig["mqttTO"];
+				id("protcfg-timeOutPosition").value=dataProtConfig["mqttToPos"];
+
 				showBrokerIP();
 				showMinPublish();
 			}
@@ -3340,6 +3422,8 @@
 				id ("MsgCfg-ReasonValveBlocked").checked = dataMsgConfig.reason.valveBlocked;
 				id ("MsgCfg-ReasonValveDetect").checked = dataMsgConfig.reason.notDetect;
 				id ("MsgCfg-ReasonReset").checked = dataMsgConfig.reason.reset;
+				id("MsgCfg-ReasontValueFailed").checked = dataMsgConfig.reason.tValueFailed;
+				id("MsgCfg-ReasonDS18Failed").checked = dataMsgConfig.reason.ds18Failed;
 				id ("MsgCfg-ReasonMQTT").checked = dataMsgConfig.reason.mqttTimeOut;
 				id ("protcfg-timeOutMqtt").value = dataMsgConfig.reason.mqttTimeOutTime;
 				id("MsgPOCfg-Active").checked = dataMsgConfig.PO.active;

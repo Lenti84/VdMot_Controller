@@ -57,6 +57,7 @@
 #define publishTemps    4
 
 #define MAX_MQTT_RETRIES 100
+#define STATE_FAILED 9
 
 typedef struct {
   bool controlActive;
@@ -69,6 +70,7 @@ typedef struct {
   uint32_t ts;
   bool publishNow;
   bool publishTimeOut;
+  uint32_t lasttValuets;
 } LASTVALVEVALUES; 
 
 typedef struct {
@@ -85,6 +87,13 @@ typedef struct {
   String upTime;
 } LASTCOMMONVALUES; 
 
+typedef struct {
+  bool tValueFailed; 
+  uint8_t thisState; 
+  bool messengerSent;        
+} VALVESTATE; 
+
+
 class CMqtt
 {
   public:
@@ -97,12 +106,14 @@ class CMqtt
     int mqttState;
     bool mqttConnected;
     bool mqttReceived;
+    VALVESTATE valveStates[ACTUATOR_COUNT];
   private:
     void publish_all (uint8_t publishFlags);
     void publish_common (); 
     void publish_valves ();
     void publish_temps ();
-    uint8_t checkForPublish(); 
+    uint8_t checkForPublish (); 
+    void checktValueTimeOut (); 
     bool messengerSend;
     bool firstPublish;
     char mqtt_mainTopic[MAINTOPIC_LEN];
