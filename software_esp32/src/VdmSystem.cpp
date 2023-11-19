@@ -85,6 +85,23 @@ void CVdmSystem::getSystemInfo()
     esp_chip_info(&chip_info);      
 }
 
+String CVdmSystem::localTime() {
+  struct tm timeinfo;
+  char buf[50];
+  String sTime;
+  String upTime;
+  String sLastCalib;
+
+  if(!getLocalTime(&timeinfo)) {
+    sTime = "Failed to obtain time";
+  } else {
+    strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
+    sTime = String(buf);
+  }
+  return (sTime);
+}
+
+
 String CVdmSystem::getUpTime() {
     char buf[50];
     int64_t upTimeUS = esp_timer_get_time(); // in microseconds

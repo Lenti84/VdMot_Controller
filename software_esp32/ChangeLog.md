@@ -11,6 +11,49 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.3.1]
+### fixed
+- website : reload page remains on the actual page
+### Added
+- website and mqtt : visualization of failed DS18 sensors
+- valve : timeout of mqtt received tValue : set valve to a defined position
+- valve : timeout of DS18sensor failed (fixed 5 min): set valve to a defined position in Config/Protocol/Timeout
+- messenger : send a message if tValue timeout 
+- messenger : send a message if DS18 sensor failed (fixed timeout 5 min) 
+### Changed
+- website : color for valve number changed : gray : disabled in config, green : all ok, yellow : mode=off, red : error (tsValue or DS18 failed)
+
+## [1.3.0]
+### fixed
+- Issue #110 : MQTT sending uptime
+### Added
+- window icon
+- Issue 111 : Automatic wifi reconnect if lost 
+- MQTT : send calibration time/date of valve when calibration is in progress
+- MQTT : send link # of valve if exists
+- Website : display calibration info in status page when calibration is in progress 
+
+## [1.2.6]
+### Added
+- window handling : Icon inserted
+- MQTT  : sepererate topics handling of read/write 
+        : topics values plaintext instead of number possible 
+### Changed
+- if control is set to off then the valve go to zero position                    
+
+## [1.2.5]
+### Added
+- window handling : activate window handling in control
+                    if window is open the background color is red in Status window
+## [1.2.4]
+### Added
+- window handling : mqtt flag   window/state 0 = closed, 1 = open
+                                window/target target position if window is open. no control
+
+## [1.2.3]
+### Added
+- mqtt : retained flag
+
 ## [1.2.2]
 ### Added
 - status page : display valve movements, open counts, close counts, dead counts

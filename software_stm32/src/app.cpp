@@ -51,6 +51,8 @@ int16_t app_setup (void) {
       myvalvemots[x].target_position = 50;
       myvalvemots[x].actual_position = 50;
       myvalvemots[x].status = VLV_STATE_UNKNOWN;
+      myvalvemots[x].calibration = false;
+      myvalvemots[x].calibState=calibIdle;
       myvalves[x].sensorindex1 = VALVE_SENSOR_UNKNOWN;        // marks that no slot is selected
       myvalves[x].sensorindex2 = VALVE_SENSOR_UNKNOWN;        // marks that no slot is selected
       myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
@@ -64,6 +66,7 @@ int16_t app_setup (void) {
 
   if ((eep_content.numberOfMovements>=50) && (eep_content.numberOfMovements<65535))
     learning_movements=eep_content.numberOfMovements;
+    app_set_learnmovements(learning_movements);
   #ifdef appDebug
     COMM_DBG.print("learning_movements: "); 
     COMM_DBG.println(learning_movements, DEC);
@@ -100,31 +103,33 @@ int16_t app_loop (void) {
 
           // learn all present valves if any target change happened before
           // this keeps controller calm right after startup, otherwise controller would be busy for up to 12 valve learning times (10 min ?!)
-          else if(firstchange > 0 && myvalvemots[lastvalve].status == VLV_STATE_PRESENT) {
+          else if(firstchange > 0 && myvalvemots[lastvalve].status == VLV_STATE_PRESENT)  {
             #ifdef appDebug
-              COMM_DBG.print("App: learning started for valve "); 
+              COMM_DBG.print("App 1: learning started for valve "); 
               COMM_DBG.println(lastvalve, 10);
             #endif
+            myvalvemots[lastvalve].calibState = calibInProgress;
             appsetaction(CMD_A_LEARN,lastvalve,0);        
           }
 
           // handle first found difference then break
-          if(myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
+          else if (myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
           {
-              firstchange = 1;
-
               #ifdef appDebug
                 COMM_DBG.print("App: target pos changed for valve "); 
                 COMM_DBG.println(lastvalve, 10);
               #endif
 
+              firstchange = 1;
+                    
               // check if valve was learned before              
               if(myvalvemots[lastvalve].status == VLV_STATE_PRESENT)             
               {
                 #ifdef appDebug
-                  COMM_DBG.print("App: learning started for valve "); 
+                  COMM_DBG.print("App 2: learning started for valve "); 
                   COMM_DBG.println(lastvalve, 10);
                 #endif
+                myvalvemots[lastvalve].calibState = calibInProgress;
                 appsetaction(CMD_A_LEARN,lastvalve,0);                  
               }
               else if(myvalvemots[lastvalve].status != VLV_STATE_BLOCKS)
@@ -189,17 +194,30 @@ byte app_10s_loop () {
 
   // learning movements
   if (learning_movements > 0) { 
-    for (x=0; x< ACTUATOR_COUNT; x++) {  
-      if(myvalves[x].learn_movements == 0) {
-        myvalves[x].movements = 0;
-        myvalves[x].learn_movements = learning_movements;
-        myvalvemots[x].status = VLV_STATE_PRESENT;     // mark state as unknown, net set target req will do a learning cycle
-        #ifdef appDebug
-          COMM_DBG.print("App: Valve "); 
-          COMM_DBG.print(x, 10); 
-          COMM_DBG.println(" will be learned soon");
-        #endif
-      }   
+    for (x=0; x< ACTUATOR_COUNT; x++) {
+      // timeout for calibration 
+      if (myvalvemots[x].connected) {
+        if (myvalvemots[x].calibTime>0) myvalvemots[x].calibTime--;
+        if (myvalvemots[x].calibTime==0)  {
+          myvalvemots[x].calibration=false;
+          myvalvemots[x].calibState=calibIdle;
+        }
+
+        if((myvalves[x].learn_movements == 0) && (myvalvemots[x].calibState == calibIdle)) {
+          myvalvemots[x].calibration=true;
+          myvalvemots[x].calibTime=10;
+          myvalvemots[x].calibState = calibStarted;
+          //myvalvemots[x].actual_position=0;
+          myvalves[x].movements = 0;
+          myvalves[x].learn_movements = learning_movements;
+          myvalvemots[x].status = VLV_STATE_PRESENT;     // mark state as present, net set target req will do a learning cycle
+          #ifdef appDebug
+            COMM_DBG.print("App: Valve "); 
+            COMM_DBG.print(x, 10); 
+            COMM_DBG.println(" will be learned soon");
+          #endif
+        }   
+      }
     } 
   }
 
@@ -249,20 +267,44 @@ int16_t app_set_learntime(uint32_t time) {
 int16_t app_set_valvelearning(uint16_t valve) {
 
   if(valve < ACTUATOR_COUNT) {
-    myvalvemots[valve].actual_position = 0;     // fake some position deviation
-    myvalvemots[valve].status = VLV_STATE_UNKNOWN;
+   // myvalvemots[valve].actual_position = 0;     // fake some position deviation
+    myvalvemots[valve].status = VLV_STATE_PRESENT; //VLV_STATE_UNKNOWN;
+    myvalvemots[valve].calibration = true;
+    myvalvemots[valve].calibState=calibStarted;
+    myvalvemots[valve].calibTime=10;
+    myvalves[valve].movements = 0;
+    myvalves[valve].learn_movements = learning_movements;
     return 0;
   }
   else if (valve == 255) {
     // update all valves
     for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
-      myvalvemots[xx].actual_position = 0;      // fake some position deviation
-      myvalvemots[xx].status = VLV_STATE_UNKNOWN;
+      if (myvalvemots[xx].connected) {
+        //myvalvemots[xx].actual_position = 0;      // fake some position deviation
+        myvalvemots[xx].status = VLV_STATE_PRESENT; //VLV_STATE_UNKNOWN;
+        myvalvemots[xx].calibration = true;
+        myvalvemots[xx].calibState=calibStarted;
+        myvalvemots[xx].calibTime=10;
+        myvalves[xx].movements = 0;
+        myvalves[xx].learn_movements = learning_movements;
+      }
     }
     return 0;
   }
 
   return -1;
+}
+
+
+// scan valves 
+// a learning cycle for valve will be executed
+void app_scan_valves() 
+{
+    // scan all valves
+    for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+      myvalvemots[xx].actual_position = 0;      // fake some position deviation
+      myvalvemots[xx].status = VLV_STATE_UNKNOWN;
+    }
 }
 
 

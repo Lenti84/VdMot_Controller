@@ -57,7 +57,7 @@ extern int16_t communication_loop (void);
 #define APP_PRE_SETLEARNTIME        "stlnt"		  // doc
 #define APP_PRE_SETLEARNMOVEM       "stlnm"     // doc
 #define APP_PRE_GETLEARNMOVEM       "gtlnm"     // new
-#define APP_PRE_SETVLLEARN          "staln"		  // doc	
+#define APP_PRE_SETVLLEARN          "staln"		  // doc		
 #define APP_PRE_SETMOTCHARS         "smotc"		  // doc	
 #define APP_PRE_GETMOTCHARS         "gmotc"		  // doc
 

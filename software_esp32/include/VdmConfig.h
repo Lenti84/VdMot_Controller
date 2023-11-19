@@ -84,12 +84,26 @@ typedef struct {
 } VDM_SYSTEM_CONFIG;
 
 typedef struct  {
-  uint8_t publishTarget : 1 ;
+  uint8_t publishSeparate : 1 ;
   uint8_t publishAllTemps : 1;
   uint8_t publishPathAsRoot : 1 ;
   uint8_t publishUpTime : 1;
   uint8_t publishOnChange : 1;
+  uint8_t publishRetained : 1;
+  uint8_t publishPlainText : 1;
 } VDM_PROTOCOL_CONFIG_FLAGS;
+
+typedef struct  {
+  uint8_t timeoutActive : 1 ;
+} VDM_PROTOCOL_MQTT_CONFIG_FLAGS;
+
+
+typedef struct  {
+  VDM_PROTOCOL_MQTT_CONFIG_FLAGS flags;
+  uint32_t timeOut;
+  uint8_t toPos;
+} VDM_PROTOCOL_MQTT_CONFIG;
+
 
 typedef struct {
   uint8_t  dataProtocol; // 0 = no protocol , 1 = mqtt
@@ -102,7 +116,10 @@ typedef struct {
   VDM_PROTOCOL_CONFIG_FLAGS protocolFlags;
   uint16_t keepAliveTime;
   uint32_t minBrokerDelay;
+  VDM_PROTOCOL_MQTT_CONFIG mqttConfig;
 } VDM_PROTOCOL_CONFIG;
+
+
 
 typedef struct {
   char  name[11];
@@ -118,6 +135,7 @@ typedef struct {
 typedef struct  {
   uint8_t active : 1 ;
   uint8_t allow : 3;
+  uint8_t windowInstalled : 1;
 } VDM_VALVE_CONTROL_CONFIG_FLAGS;
 
 
@@ -164,6 +182,8 @@ typedef struct  {
   uint8_t notDetect : 1;
   uint8_t mqttTimeOut : 1;
   uint8_t reset : 1;
+  uint8_t ds18Failed : 1;
+  uint8_t tValueFailed : 1;
 } VDM_MSG_REASON_CONFIG_FLAGS;
 
 typedef struct  {
@@ -244,6 +264,9 @@ typedef struct {
 #define nvsProtBrokerPublishFlags   "brokerPF"
 #define nvsProtBrokerKeepAliveTime  "brokerKAT"
 #define nvsProtBrokerMinBrokerDelay "brokerMD"
+#define nvsProtBrokerMQTTFlags      "brokerMQF"
+#define nvsProtBrokerMQTTTimeOut    "brokerMQTO"
+#define nvsProtBrokerMQTTToPos      "brokerMQToPos"
 
 #define nvsValvesCfg                "valvesCfg"
 #define nvsValvesControlCfg         "valvesCtrlCfg"

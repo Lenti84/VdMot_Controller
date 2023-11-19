@@ -102,13 +102,17 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.minBrokerDelay = 5;
   memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
   memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
-  configFlash.protConfig.protocolFlags.publishTarget = false;
+  configFlash.protConfig.protocolFlags.publishSeparate = false;
   configFlash.protConfig.protocolFlags.publishAllTemps = false;
   configFlash.protConfig.protocolFlags.publishPathAsRoot = false;
   configFlash.protConfig.protocolFlags.publishUpTime = false;
   configFlash.protConfig.protocolFlags.publishOnChange = false;
+  configFlash.protConfig.protocolFlags.publishRetained = false;
+  configFlash.protConfig.protocolFlags.publishPlainText = false;
   configFlash.protConfig.keepAliveTime = 60;
-
+  configFlash.protConfig.mqttConfig.flags.timeoutActive = false;
+  configFlash.protConfig.mqttConfig.timeOut = 120;
+  configFlash.protConfig.mqttConfig.toPos = 10;
   
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesConfig.valveConfig[i].active = false;
@@ -118,6 +122,7 @@ void CVdmConfig::clearConfig()
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.active = false;
     configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.allow = allowHeatingCooling;
+    configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.windowInstalled = false;
     configFlash.valvesControlConfig.valveControlConfig[i].xp=20;
     configFlash.valvesControlConfig.valveControlConfig[i].link=0;
     configFlash.valvesControlConfig.valveControlConfig[i].offset=0;
@@ -159,6 +164,8 @@ void CVdmConfig::clearConfig()
   configFlash.messengerConfig.reason.reasonFlags.notDetect=0;
   configFlash.messengerConfig.reason.reasonFlags.reset=0;
   configFlash.messengerConfig.reason.reasonFlags.valveBlocked=0;
+  configFlash.messengerConfig.reason.reasonFlags.ds18Failed=0;
+  configFlash.messengerConfig.reason.reasonFlags.tValueFailed=0;
   configFlash.messengerConfig.reason.mqttTimeOutTime=10;
   memset(configFlash.messengerConfig.pushover.title,0,sizeof(configFlash.messengerConfig.pushover.title));
   memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
@@ -219,6 +226,10 @@ void CVdmConfig::readConfig()
     configFlash.protConfig.protocolFlags =  *(VDM_PROTOCOL_CONFIG_FLAGS *)&a;
     configFlash.protConfig.keepAliveTime = prefs.getUShort(nvsProtBrokerKeepAliveTime,60);
     configFlash.protConfig.minBrokerDelay = prefs.getUShort(nvsProtBrokerMinBrokerDelay,5);
+    a=prefs.getUChar(nvsProtBrokerMQTTFlags,0);
+    configFlash.protConfig.mqttConfig.flags = *(VDM_PROTOCOL_MQTT_CONFIG_FLAGS *)&a;
+    configFlash.protConfig.mqttConfig.timeOut =prefs.getULong(nvsProtBrokerMQTTTimeOut,120);
+    configFlash.protConfig.mqttConfig.toPos=prefs.getUChar(nvsProtBrokerMQTTToPos,10);
     prefs.end();
   }
 
@@ -329,6 +340,10 @@ void CVdmConfig::writeConfig(bool reboot)
     prefs.putUChar(nvsProtBrokerPublishFlags,a);
     prefs.putUShort(nvsProtBrokerKeepAliveTime,configFlash.protConfig.keepAliveTime);
     prefs.putUShort(nvsProtBrokerMinBrokerDelay,configFlash.protConfig.minBrokerDelay);
+    a = *(uint8_t *)&configFlash.protConfig.mqttConfig.flags;
+    prefs.putUChar(nvsProtBrokerMQTTFlags,a);
+    prefs.putULong(nvsProtBrokerMQTTTimeOut,configFlash.protConfig.mqttConfig.timeOut);
+    prefs.putUChar(nvsProtBrokerMQTTToPos,configFlash.protConfig.mqttConfig.toPos);
   }
   prefs.end();
  
@@ -434,13 +449,18 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["publish"].isNull()) configFlash.protConfig.publishInterval = doc["publish"];
   if (!doc["user"].isNull()) strncpy(configFlash.protConfig.userName,doc["user"].as<const char*>(),sizeof(configFlash.netConfig.userName));
   if (!doc["pwd"].isNull()) strncpy(configFlash.protConfig.userPwd,doc["pwd"].as<const char*>(),sizeof(configFlash.netConfig.userPwd));
-  if (!doc["pubTarget"].isNull()) configFlash.protConfig.protocolFlags.publishTarget = doc["pubTarget"];
+  if (!doc["pubSeparate"].isNull()) configFlash.protConfig.protocolFlags.publishSeparate = doc["pubSeparate"];
   if (!doc["pubAllTemps"].isNull()) configFlash.protConfig.protocolFlags.publishAllTemps = doc["pubAllTemps"];
   if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.protocolFlags.publishPathAsRoot = doc["pubPathAsRoot"];
   if (!doc["pubUpTime"].isNull()) configFlash.protConfig.protocolFlags.publishUpTime = doc["pubUpTime"];
   if (!doc["pubOnChange"].isNull()) configFlash.protConfig.protocolFlags.publishOnChange = doc["pubOnChange"];
+  if (!doc["pubRetained"].isNull()) configFlash.protConfig.protocolFlags.publishRetained = doc["pubRetained"];
+  if (!doc["pubPlainText"].isNull()) configFlash.protConfig.protocolFlags.publishPlainText = doc["pubPlainText"];
   if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
   if (!doc["pubMinDelay"].isNull()) configFlash.protConfig.minBrokerDelay = doc["pubMinDelay"];
+  if (!doc["mqttTOActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutActive = doc["mqttTOActive"];
+  if (!doc["mqttTO"].isNull()) configFlash.protConfig.mqttConfig.timeOut = doc["mqttTO"];
+  if (!doc["mqttToPos"].isNull()) configFlash.protConfig.mqttConfig.toPos = doc["mqttToPos"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
@@ -511,6 +531,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
       for (uint8_t i =0;i<12;i++) {
         if (!doc["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["active"];
         if (!doc["allow"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.allow=doc["allow"]; 
+        if (!doc["window"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.windowInstalled=doc["window"];
         if (!doc["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].valueSource=doc["vSource"];
         if (!doc["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["tSource"];  
         if (!doc["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["scheme"];  
@@ -525,6 +546,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
         if ((idx>=0) && (idx<12)) {
           if (!doc["valves"][i]["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["valves"][i]["active"];
           if (!doc["valves"][i]["allow"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow=doc["valves"][i]["allow"];
+          if (!doc["valves"][i]["window"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.windowInstalled=doc["valves"][i]["window"];
           if (!doc["valves"][i]["link"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].link=doc["valves"][i]["link"];
           if (!doc["valves"][i]["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].valueSource=doc["valves"][i]["vSource"];
           if (!doc["valves"][i]["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["valves"][i]["tSource"];
@@ -581,7 +603,9 @@ void CVdmConfig::postMessengerCfg (JsonObject doc)
   if (!doc["reason"]["mqttTimeOut"].isNull()) configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=doc["reason"]["mqttTimeOut"];
   if (!doc["reason"]["mqttTimeOutTime"].isNull()) configFlash.messengerConfig.reason.mqttTimeOutTime=doc["reason"]["mqttTimeOutTime"];
   if (!doc["reason"]["reset"].isNull()) configFlash.messengerConfig.reason.reasonFlags.reset=doc["reason"]["reset"];
-  
+  if (!doc["reason"]["ds18Failed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.ds18Failed=doc["reason"]["ds18Failed"];
+  if (!doc["reason"]["tValueFailed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.tValueFailed=doc["reason"]["tValueFailed"];
+
   if (!doc["PO"]["active"].isNull()) configFlash.messengerConfig.activeFlags.pushOver=doc["PO"]["active"];
   if (!doc["PO"]["appToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.appToken,doc["PO"]["appToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.appToken));
   if (!doc["PO"]["userToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.userToken,doc["PO"]["userToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.userToken));

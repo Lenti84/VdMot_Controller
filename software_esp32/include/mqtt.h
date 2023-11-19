@@ -57,8 +57,10 @@
 #define publishTemps    4
 
 #define MAX_MQTT_RETRIES 100
+#define STATE_FAILED 9
 
 typedef struct {
+  bool controlActive;
   uint8_t  position;
   uint8_t target;
   uint8_t state;
@@ -68,6 +70,7 @@ typedef struct {
   uint32_t ts;
   bool publishNow;
   bool publishTimeOut;
+  uint32_t lasttValuets;
 } LASTVALVEVALUES; 
 
 typedef struct {
@@ -81,25 +84,36 @@ typedef struct {
   uint8_t heatControl;          
   uint8_t parkingPosition;
   uint8_t systemState;
+  String upTime;
 } LASTCOMMONVALUES; 
+
+typedef struct {
+  bool tValueFailed; 
+  uint8_t thisState; 
+  bool messengerSent;        
+} VALVESTATE; 
+
 
 class CMqtt
 {
   public:
     CMqtt();
+    void reconnect();
+    void disconnect();
     void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort);
     void mqtt_loop();
     void callback(char* topic, byte* payload, unsigned int length);
     int mqttState;
     bool mqttConnected;
     bool mqttReceived;
+    VALVESTATE valveStates[ACTUATOR_COUNT];
   private:
-    void reconnect();
     void publish_all (uint8_t publishFlags);
     void publish_common (); 
     void publish_valves ();
     void publish_temps ();
-    uint8_t checkForPublish(); 
+    uint8_t checkForPublish (); 
+    void checktValueTimeOut (); 
     bool messengerSend;
     bool firstPublish;
     char mqtt_mainTopic[MAINTOPIC_LEN];
@@ -114,6 +128,7 @@ class CMqtt
     LASTCOMMONVALUES lastCommonValues;
     LASTVALVEVALUES lastValveValues[ACTUATOR_COUNT];
     LASTTEMPVALUES lastTempValues[TEMP_SENSORS_COUNT];
+    boolean topicsReceived;
 };
 
 extern CMqtt Mqtt;

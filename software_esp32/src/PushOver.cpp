@@ -43,15 +43,18 @@
 #include "Pushover.h"
 #include <map>
 #include "globals.h"
+#include "VdmTask.h"
 
 const char *PUSHOVER_API_URL = "https://api.pushover.net/1/messages.json";
 
 CPushover::CPushover()
 {
+	client.setInsecure();
 }
 
 CPushover::CPushover(const char *token, const char *user) : _token(token), _user(user)
 {
+	client.setInsecure();
 }
 
 int CPushover::send(CPushoverMessage newMessage)
@@ -71,12 +74,20 @@ int CPushover::send(CPushoverMessage newMessage)
 	//messageData["sound"] = newMessage.sound;
 	//messageData["timestamp"] = ((String)newMessage.timestamp).c_str();
 	 //No attachment, so just a regular HTTPS POST request.
-	WiFiClientSecure client;
+	//WiFiClientSecure client;
 	
-	client.setInsecure();
-	if (!client.connect("api.pushover.net", 443)) {
-		UART_DBG.println("Pushover port 443 not connected");
-		return -1;
+	//client.setInsecure();
+	if (client.connected()) UART_DBG.println("Pushover already connected");
+	uint8_t loop = 0;
+	while (!client.connected()) {
+		UART_DBG.println("Pushover try connect #"+String(loop+1));
+		if (client.connect("api.pushover.net", 443)) break;
+		VdmTask.yieldTask(1000);
+		loop++;
+		if ((loop>=5) && (!client.connected())) {
+			UART_DBG.println("Pushover port 443 not connected");
+			return -1;
+		}
 	}
 	
 	beginResult = myClient.begin(client,PUSHOVER_API_URL);
@@ -93,7 +104,6 @@ int CPushover::send(CPushoverMessage newMessage)
 	UART_DBG.println("Pushover output :"+String(beginResult)+" > "+String(postmessage));
 	responseCode = myClient.POST(postmessage);
 	myClient.end();
-	client.stop();
 	return responseCode;
 }
 

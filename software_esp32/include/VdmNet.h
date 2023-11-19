@@ -99,6 +99,7 @@ public:
   void setupWifi();
   void setupNtp();
   void checkNet();
+  void checkWifi();
   void startBroker();
   void mqttBroker();
 

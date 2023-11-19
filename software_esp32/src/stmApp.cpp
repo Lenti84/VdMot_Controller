@@ -375,6 +375,7 @@ void  CStmApp::app_check_data()
     static int errorcnt = 0;
     int availcnt;
     uint8_t noToken;
+    uint8_t val8;
 
     #ifdef STMSimulation
         #warning STMSimulation active
@@ -501,7 +502,9 @@ void  CStmApp::app_check_data()
                 char* ps=argptr[1];
                 for (uint8_t idx=0; idx<nActuators;idx++) {
                     if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
-                    actuators[idx].state = atoi(ps);
+                    val8 = atoi(ps);
+                    actuators[idx].state = (val8 & 0x7f);
+                    actuators[idx].calibration =  (val8>=0x80);
                     if (cmdptr!=NULL) ps=cmdptr+1;
                     idx++;
                 }  
@@ -537,7 +540,9 @@ void  CStmApp::app_check_data()
                 if(idx < ACTUATOR_COUNT) {
                     actuators[idx].actual_position = atoi(argptr[1]);
                     actuators[idx].meancurrent = atoi(argptr[2]);
-                    actuators[idx].state = atoi(argptr[3]);
+                    val8 = atoi(argptr[3]);
+                    actuators[idx].state = (val8 & 0x7f);
+                    actuators[idx].calibration = (val8>=0x80);
                     actuators[idx].temp1 = ConvertCF(atoi(argptr[4]))+getTOffset(actuators[idx].tIdx1);
                     actuators[idx].temp2 =  ConvertCF(atoi(argptr[5]))+getTOffset(actuators[idx].tIdx2);
                     if (argcnt == 10) {

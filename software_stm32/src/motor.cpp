@@ -316,11 +316,13 @@ void valve_loop () {
                   }           
 
                   // decrement learning counter
-                  if(valvestate == A_OPEN1 || valvestate == A_CLOSE1) {
-                    if(myvalves[valveindex].learn_movements) {
-                      myvalves[valveindex].learn_movements--;
+                  if (!myvalvemots[valveindex].calibration) {
+                    if(valvestate == A_OPEN1 || valvestate == A_CLOSE1) {
+                      if(myvalves[valveindex].learn_movements) {
+                        myvalves[valveindex].learn_movements--;
+                      }
+                      myvalves[valveindex].movements++;
                     }
-                    myvalves[valveindex].movements++;
                   }
 
                   // pause temperature measurement to avoid ADC interference
@@ -612,7 +614,8 @@ void valve_loop () {
                       myvalvemots[valveindex].scaler = scaler;
                       myvalvemots[valveindex].actual_position = 0;    // because valve was closed completely                    
                       myvalvemots[valveindex].status = VLV_STATE_IDLE;
-
+                      myvalvemots[valveindex].calibration = false;
+                      myvalvemots[valveindex].calibState=calibIdle;
                       valveindex = 255;                                                                                  
                       valvestate = A_IDLE;
                     }    
@@ -622,7 +625,7 @@ void valve_loop () {
                       #endif
                       myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
                       myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
-                      
+                                          
                       valveindex = 255;
                       valvestate = A_IDLE;
                       isr_counter=0;
@@ -669,6 +672,7 @@ void valve_loop () {
     default:      valvestate = A_IDLE;
                   break;  
   }
+  if (valveindex<12) myvalvemots[valveindex].connected= (myvalvemots[valveindex].status != VLV_STATE_OPENCIR);
   result = 0;
 
   //return result;

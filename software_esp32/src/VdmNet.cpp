@@ -308,3 +308,17 @@ void CVdmNet::checkNet()
   }
 }
 
+void CVdmNet::checkWifi()
+{
+  uint8_t WifiStatus = WiFi.status();
+  #ifdef netDebug
+    UART_DBG.println("Wifi status "+ String(WifiStatus));
+  #endif
+  if (wifiState==wifiConnected) {
+      if (WifiStatus!= WL_CONNECTED) {
+      WiFi.disconnect();
+      WiFi.reconnect();
+      UART_DBG.println("Wifi reconnect");
+    }
+  }
+}  

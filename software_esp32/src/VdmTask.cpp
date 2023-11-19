@@ -177,6 +177,7 @@ void CVdmTask::startPIServices(bool startTask)
                         if (taskIdPiControl[picIdx]==TASKMGR_INVALIDID) {
                             //UART_DBG.println("Start pi tasks valve # "+String(picIdx)+":"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts));
                             taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts, &PiControl[picIdx], TIME_SECONDS);
+                            //UART_DBG.println("Start pi tasks valve #"+String(picIdx)+":"+String(taskIdPiControl[picIdx]));
                         }
                     }
                 }
@@ -204,6 +205,12 @@ void CVdmTask::startGetFS()
 void CVdmTask::deleteTask (taskid_t taskId)
 {
   taskManager.cancelTask (taskId);
+}
+
+void CVdmTask::disOrEnableTask (taskid_t taskId,bool enabled)
+{
+    if (taskId=!TASKMGR_INVALIDID) taskManager.setTaskEnabled(taskId, enabled);
+    //UART_DBG.println("task enable "+String(taskId)+":"+String(enabled));
 }
 
 bool CVdmTask::taskExists (taskid_t taskId)
