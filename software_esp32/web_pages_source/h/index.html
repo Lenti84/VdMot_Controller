@@ -282,6 +282,21 @@
 		float: left;
 	}
 
+	.checkboxgroup2{
+		width: 15em;
+		height : 12em;
+		overflow-y: auto;
+		text-align: left;
+	}
+	.checkboxgroup2 p{
+		width: 15em;
+		text-align: left;
+	}
+	.checkboxgroup2 label{
+		width: 15em;
+		float: left;
+	}
+
 	/* The Modal (background) */
 	.modal {
 	  display: none; /* Hidden by default */
@@ -735,7 +750,13 @@
 				<input type="text" class="form-input" id="netcfg-syslog-port" name="netcfg-syslog-port" placeholder="xxxx"/>
 				</td>
 			</tr>
-
+		</table>
+		<table class="tabTable"
+			<tr>
+			<td>
+			<input type="button" class="buttonclass" id="setSysLog" value="Set" title="Set syslog server values" />
+			</td>
+			</tr>
 		</table>
 		</div>
 		</div>
@@ -823,34 +844,28 @@
 		<div class="tabpframe"> 
 		<table id="protcfg-Broker1" style="display:none;" class="tabTable1">
 			<tr>
-				<th>Time out</th>
-				<td>
-				<input type="checkbox" id="protcfg-timeOutActive" name="protcfg-timeOutActive" title="Time out for receiving tValue."/>
-				</td>
-			</tr>
-			<tr>
-				<th>Time out (min)</th>
-				<td>
-				<input type="number" class="form-input" min="1" maxlength="5" style="width:60px" id="protcfg-timeOutValue" name="protcfg-timeOutValue" title="Time out for receiving tValue in minutes."/>
-				</td>
-			</tr>
-			<tr>
-				<th>Time out target position(%)</th>
-				<td>
-				<input type="number" class="form-input" min="0" max="100" maxlength="3" style="width:60px" id="protcfg-timeOutPosition" name="protcfg-timeOutPosition" title="Valve position after time out."/>
-				</td>
-			</tr>
-			<tr>
-				<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:12em;display:none;">
+				<fieldset id="protcfg-Broker2" class="checkboxgroup2" style="height:12em;display:none;">
 					<legend>Publish</legend>
 					<label><input type="checkbox" id="protcfg-pubRetained" name="theGroupP" title="Publish values retained">Retained </label>
 					<label><input type="checkbox" id="protcfg-pubPlainText" name="theGroupP" title="Publish values as plaintext instead 0/1">Plaintext </label>
-					<label><input type="checkbox" id="protcfg-pubSeparate" name="theGroupP" title="Publish values separate for write and read">Separate Topics </label>
+					<label><input type="checkbox" id="protcfg-pubSeparate" name="theGroupP" title="Handle topics strict separate for write and read. Topics sent from server has to be added a /set">Strict separate topics </label>
 					<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
 					<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
 					<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
 				</fieldset>
-				</tr>
+			</tr>
+
+			<tr>
+				<fieldset id="protcfg-Broker21" class="checkboxgroup2" style="height:7em;display:none;">
+					<legend>Failed</legend>
+					<label><input type="checkbox" id="protcfg-timeOutDSActive" name="theGroupP21" title="Time out for DS18 sensor (fixed 5 min)">DS18 </label>
+					<label><input type="checkbox" id="protcfg-timeOutTSActive" name="theGroupP21" title="If there is no tValue received via mqtt after this time the corresponding valve goes to the defined position.
+Caution : If this option is activated it is absolutely mandatory to ensure that the tValue is received within the time frame. 
+Publish on change on server side is not recommended with this option">tValue after<input type="number" class="form-input3" maxlength="4" style="width:3em;" min="10" id="protcfg-timeOutValue" name="protcfg-timeOutValue" />min</label>
+					<label><input type="number" class="form-input" min="0" max="100" maxlength="3" style="width:40px" id="protcfg-timeOutPosition" name="protcfg-timeOutPosition" title="Valve position after time out."/>Valve position </label>
+				</fieldset>
+			</tr>
+
 		</table>
 		</div>
 		</div>
@@ -874,7 +889,7 @@
 		
 			<table id="cfgValvesTable1" class="tabTable">
 			<tr>
-			<fieldset class="checkboxgroup" style="height:16em;" id="cfgValvesTableFieldSet1">
+			<fieldset class="checkboxgroup2" style="height:16em;" id="cfgValvesTableFieldSet1">
 				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
 				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour time of next calibration"> hour time</label>
@@ -886,10 +901,10 @@
 				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
 				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
 			</fieldset>
-			<fieldset class="checkboxgroup" style="height:5em;" id="cfgValvesTableFieldSet2">
+			<fieldset class="checkboxgroup2" style="height:5em;" id="cfgValvesTableFieldSet2">
 				<legend>Characteristic</legend>	
-				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low  </label>
-				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
+				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Open  </label>
+				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> Close </label>
 				<label><input type="number" min=0 max=100 maxlength=3 step=1 style="width:60px" id="vCfg-StartOnPower" name="vCfg-StartOnPower" title="Start valves % at power on"> Start % </label>
 			</fieldset>
 			</tr>
@@ -2362,6 +2377,7 @@
 			}
 			id("protcfg-Broker1").style.display=x.style.display;
 			id("protcfg-Broker2").style.display=x.style.display;
+			id("protcfg-Broker21").style.display=x.style.display;
 			id("protcfg-Broker3").style.display=x.style.display;
 			
 
@@ -2447,6 +2463,15 @@
 			id("valvesDetect").onclick = function(){
 				valvesDetect();
 			};
+			id("setSysLog").onclick = function(){
+				setSysLog();
+			};
+			id("setSysLog").onclick = async function(){
+				if (confirm('Are you sure you want to set syslog server ?')) {
+					await postSysLogCfg();
+					await postCmd('{"action":"sysLogSave"}');
+				}
+			};
 			id("factoryRestore").onclick = function(){
 				factoryRestore();
 			};
@@ -2517,7 +2542,6 @@
 			}
 			id ("VCtrlConfigHeatControl").onchange = function (){
 				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
-				id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[id("VCtrlConfigHeatControl").selectedIndex].value;
 			}
 			
 			id ("protcfg-pubOnChange").onclick = function() {
@@ -2552,7 +2576,6 @@
 						await postCmd('{"action":"mqttReconnect"}');
 						reconnectMQTT=false;
 					}
-					//reloadDoc("http:/#home",4000,true);
 				}
 			};
 			id("msgCfg-PushOverParam").addEventListener("click", () => {
@@ -2578,7 +2601,11 @@
     			testEmail();
 			});
 
-
+			id("protcfg-timeOutTSActive").addEventListener("change", () => {
+				if (id("protcfg-timeOutTSActive").checked) {
+					alert ("Caution : If this option is activated it is absolutely mandatory to ensure that the tValue is received within the time frame. Publish on change on server side is not recommended with this option");
+				}
+			});
 		}
 		
 		async function testPushOver(){
@@ -2642,7 +2669,7 @@
 				postCmd('{"action":"valvesDetect"}');
 			}
 		}
-		
+				
 		async function fileDelete() {
 			let fSelect = id("fileSelect");
 			if (fSelect.value) {
@@ -2806,7 +2833,8 @@
 				protCfg.pubRetained = id("protcfg-pubRetained").checked ? 1 : 0;
 				protCfg.pubPlainText = id("protcfg-pubPlainText").checked ? 1 : 0;
 				protCfg.keepAliveTime = id("protcfg-keepAliveTime").value;
-				protCfg.mqttTOActive= id("protcfg-timeOutActive").checked ? 1 : 0;
+				protCfg.mqttTOTSActive= id("protcfg-timeOutTSActive").checked ? 1 : 0;
+				protCfg.mqttTODSActive= id("protcfg-timeOutDSActive").checked ? 1 : 0;
 				protCfg.mqttTO= id("protcfg-timeOutValue").value;
 				protCfg.mqttToPos= id("protcfg-timeOutPosition").value;
 			}
@@ -2969,6 +2997,14 @@
 			await postJson("tempsconfig",JSON.stringify(tempsCfg));
 		}
 		
+		async function 	postSysLogCfg() {	
+			let sysLogCfg = {};
+			sysLogCfg.syslogLevel=id("netcfg-syslog-select").selectedIndex;
+			sysLogCfg.syslogIp=id("netcfg-syslog-ip").value;
+			sysLogCfg.syslogPort=id("netcfg-syslog-port").value;
+			await postJson("sysLogCfg",JSON.stringify(sysLogCfg));
+		}
+
 		async function postCmd (cmd) {
 			await postJson("cmd",cmd);
 		}
@@ -3174,7 +3210,6 @@
 			anyValveControlEnabled=false;
 			const cfgValvesControlTable = id('cfgValvesControlTable');
 			id ('VCtrlConfigHeatControl').selectedIndex=cfgValvesControlJson.common.heatControl;
-			id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[id("VCtrlConfigHeatControl").selectedIndex].value;
 			heatControl = cfgValvesControlJson.common.heatControl;
 			id ('VCtrlConfigParkPosition').value=cfgValvesControlJson.common.parkPosition;
 			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
@@ -3318,9 +3353,8 @@
 					id("net-broker").style.display="block";
 					id("net-broker-status").textContent=dataSystemDynInfo["brokerConnected"] ? "Connected" : "Not connected"; 
 				}
-				
+				id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[dataSystemDynInfo["heatControl"]].value;
 				id("miscStatusLC").textContent=dataSystemDynInfo["lastCalib"];
-
 				let newStmInit=dataSystemDynInfo["stmInit"];
 				disable_enable_ValvesCfg((newStmInit!=2) || (!stmLoaded));
 				if (newStmInit!=stmInit) {
@@ -3408,7 +3442,8 @@
 				id ("protcfg-pubPlainText").checked = dataProtConfig["pubPlainText"];
 				id ("protcfg-pubRetained").checked = dataProtConfig["pubRetained"];
 				id("protcfg-keepAliveTime").value = dataProtConfig["keepAliveTime"];
-				id("protcfg-timeOutActive").checked=dataProtConfig["mqttTOActive"];
+				id("protcfg-timeOutTSActive").checked=dataProtConfig["mqttTOTSActive"];
+				id("protcfg-timeOutDSActive").checked=dataProtConfig["mqttTODSActive"];
 				id("protcfg-timeOutValue").value=dataProtConfig["mqttTO"];
 				id("protcfg-timeOutPosition").value=dataProtConfig["mqttToPos"];
 

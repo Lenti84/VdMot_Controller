@@ -131,7 +131,8 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"ip\":\""+ip2String(protConfig.brokerIp)+"\","+
                     "\"port\":\""+String(protConfig.brokerPort)+"\","+
                     "\"interval\":"+String(protConfig.brokerInterval)+","+
-                    "\"mqttTOActive\":"+String(protConfig.mqttConfig.flags.timeoutActive)+","+
+                    "\"mqttTOTSActive\":"+String(protConfig.mqttConfig.flags.timeoutTSActive)+","+
+                    "\"mqttTODSActive\":"+String(protConfig.mqttConfig.flags.timeoutDSActive)+","+
                     "\"mqttTO\":"+String(protConfig.mqttConfig.timeOut)+","+
                     "\"mqttToPos\":"+String(protConfig.mqttConfig.toPos)+","+
                     "\"publish\":"+String(protConfig.publishInterval)+","+
@@ -179,8 +180,9 @@ String CWeb::getMotorConfig (MOTOR_CHARS motorConfig)
 String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConfig)
 {
   String result = "{\"common\":{\"heatControl\":"+String(valvesControlConfig.heatControl) + "," +
-                    "\"parkPosition\":"+String(valvesControlConfig.parkingPosition)+ "}," +
-                   "\"valves\":[" ;
+                    "\"parkPosition\":"+String(valvesControlConfig.parkingPosition) + 
+                     "}," +
+                    "\"valves\":[" ;
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
     result += "{\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) + "\"," +
@@ -296,6 +298,7 @@ String CWeb::getSysDynInfo()
                     result += ",\"brokerConnected\":"+String(Mqtt.mqttConnected);
                   }
                   result += ",\"lastCalib\":\""+String(sLastCalib)+"\"";
+                  result += ",\"heatControl\":"+String(VdmConfig.heatValues.heatControl);
                   result +="}";
   return result;  
 }
@@ -306,7 +309,7 @@ bool CWeb::getControlActive()
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) active = true;
   }
-  return (((VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOnHeating) || (VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOnCooling)) && active);
+  return (((VdmConfig.heatValues.heatControl==piControlOnHeating) || (VdmConfig.heatValues.heatControl==piControlOnCooling)) && active);
 }
 
 String CWeb::getValvesStatus() 
@@ -388,7 +391,7 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
   String s;
 
   for (uint8_t i=0;i<StmApp.tempsCount;i++) {
-    if ((!findIdInValve(i)) && (VdmConfig.configFlash.tempsConfig.tempConfig[i].active)) {
+    if ((StmApp.findTempIdxInValve(i)<0) && (VdmConfig.configFlash.tempsConfig.tempConfig[i].active)) {
       if (start) result += ",";
       temperature = StmApp.temps[i].temperature;
       if (StmApp.temps[i].temperature<=-500) s="\"failed\""; else s=String(((float)temperature)/10,1);

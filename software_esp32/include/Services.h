@@ -59,7 +59,8 @@ public:
   CServices();
   void servicesLoop();
   void runOnce();
-  void runOnceDelayed();
+  void runOnceDelayed10();
+  void runOnceDelayed60();
   void restartSystem(bool waitQueueFinished=true);
   void restartStmApp(uint32_t ms);
   void checkServiceValves();

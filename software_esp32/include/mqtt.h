@@ -41,8 +41,9 @@
 #pragma once
 
 #include "globals.h"
+#include "VdmConfig.h"
 
-#define MAINTOPIC_LEN 50
+#define MAINTOPIC_LEN 100
 
 // MQTT settings
 #define DEFAULT_MAINTOPIC    "VdMotFBH/"           //  /VdMotFBH/valve/1/actual
@@ -85,6 +86,7 @@ typedef struct {
   uint8_t parkingPosition;
   uint8_t systemState;
   String upTime;
+  String systemMessage;
 } LASTCOMMONVALUES; 
 
 typedef struct {
@@ -114,15 +116,20 @@ class CMqtt
     void publish_temps ();
     uint8_t checkForPublish (); 
     void checktValueTimeOut (); 
+    bool checkTopicName(char* topic,char* ref,bool set=true);
+    bool checkTopicPath(char* topic,char* ref);
+    void subscribe (char* topicstr, char* thisTopic, uint8_t size, bool publishValue=false);
+    void publishValue (char* topicstr, char* valstr);
     bool messengerSend;
     bool firstPublish;
-    char mqtt_mainTopic[MAINTOPIC_LEN];
-    char mqtt_commonTopic[MAINTOPIC_LEN];
-    char mqtt_valvesTopic[MAINTOPIC_LEN];
-    char mqtt_tempsTopic[MAINTOPIC_LEN];
-    char mqtt_callbackTopic[MAINTOPIC_LEN];
-    char stationName[MAINTOPIC_LEN];
+    char mqtt_mainTopic[MAINTOPIC_LEN] = {0};
+    char mqtt_commonTopic[MAINTOPIC_LEN] = {0};
+    char mqtt_valvesTopic[MAINTOPIC_LEN]= {0};
+    char mqtt_tempsTopic[MAINTOPIC_LEN]= {0};
+    char mqtt_callbackTopic[MAINTOPIC_LEN]= {0};
+    char stationName[sizeof(VdmConfig.configFlash.systemConfig.stationName)+5]= {0};
     uint32_t tsPublish;
+    uint32_t tsForcePublish;
     bool forcePublish;
     uint32_t connectTimeout;
     LASTCOMMONVALUES lastCommonValues;

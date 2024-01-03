@@ -75,26 +75,29 @@ public:
     windowState=0;
     controlActive=true;
     failed=false;
+    esum = 0;
   };
   void exec() override {
     controlValve();
 	}
-  float piCtrl(float e);
+  float piCtrl(float target,float value);
+  void updateControllerGains(float observedError);
   uint8_t calcValve();
   void controlValve();
   void setWindowAction(uint8_t windowControl);
-  void setValveWindowAction(uint8_t valvePosition);
+  void setValveAction(uint8_t valvePosition);
   void setPosition(uint8_t thisPosition);
   void setControlActive(uint8_t thisControl);
   void setFailed(uint8_t thisPosition);
   uint32_t ta;
   uint32_t ti;
   volatile uint16_t xp;
+  float kp;
   volatile float ki;
   volatile int8_t offset;
   volatile int8_t dynOffset;
   volatile float target;
-  volatile float value;
+  volatile float value; 
   uint8_t valveIndex;
   uint8_t scheme;
   uint8_t startActiveZone;
@@ -105,14 +108,16 @@ public:
   uint8_t  windowOpenTarget;
   bool controlActive;
   bool failed;
+  float esum;
 private:
   void doControlValve(); 
   CHECKACTION checkAction(uint8_t idx);
-
+  
   float iProp;
   time_t ts;
   bool start;
-  float esum;
+  
+  uint8_t lastControlPosition;
 };
 
 extern CPiControl PiControl[ACTUATOR_COUNT];

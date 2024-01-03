@@ -79,7 +79,8 @@ public:
   taskid_t taskIdResetSystem;
   taskid_t restartStmApp;
   taskid_t taskIdRunOnce;
-  taskid_t taskIdRunOnceDelayed;
+  taskid_t taskIdRunOnceDelayed10;
+  taskid_t taskIdRunOnceDelayed60;
   taskid_t taskIdwaitForFinishQueue;
   taskid_t taskIdPiControl[ACTUATOR_COUNT];
   taskid_t taskIdRunOnceClearFS;
@@ -87,6 +88,7 @@ public:
   
   TsetFactoryCfgState setFactoryCfgState;
   bool restartPiTask;
+  bool piTaskInitiated;
 
   bool sendMessenger;
 };

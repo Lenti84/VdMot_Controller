@@ -11,6 +11,33 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.3.2]
+### Breaking Change
+- Configuration MQTT :  Strict separate topics - publish values separated for read and write.
+                        if config/protocol/publish 'strict separate topics' is activated then values are published with '/value' added.
+                        E.g. (Station name).common.heatControl/value.
+                        if config/protocol/publish 'strict separate topics' is activated then only write topics are accepted with '/set' added.
+                        E.g. (Station name).common.heatControl/set. These topics are not published by VDMot
+
+                        For IOBroker : config/protocol/publish 'strict separate topics' is not needed to activate. You can activate in the mqtt iobroker adapter 'different topic names for read and write'. IOBroker added a '/set' to the write topic. VDMot accept this automatically.
+                        
+                        For Mosquito and other mqtt server  : It is mandotary to activate config/protocol/publish 'strict separate topics'. Otherwise the system will fail. (Loop malfunction)
+                        Please see also : https://github.com/Lenti84/VdMot_Controller/wiki/MQTT
+
+                        actual topic removed, the value is published with target.
+
+### Fixed
+- pi controller : sometimes the valves starts with 50% after power up / restart -> pi controller starts after 60sec
+- pi controller : problem with window handling
+- mqtt : problem with force publish
+### Added
+- Config : seperate checkbox for timeout tsValue and DS18 failed
+### Changed
+- Heat Control, Park Position : via mqtt is only temporary now. Control page shows the permanent values, status page shows the temporary values. 
+                                After reboot the permanent values are copied into the temporary values.
+- syslog configuration : set syslog without reboot.
+- website : rename motor characteristic low/high in open/close
+
 ## [1.3.1]
 ### fixed
 - website : reload page remains on the actual page

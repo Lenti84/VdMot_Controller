@@ -86,8 +86,6 @@ CVdmNet VdmNet;
 
 // server handles --------------------------------------------------
 
-
-
 CVdmNet::CVdmNet()
 {
 }
@@ -289,22 +287,34 @@ void CVdmNet::checkNet()
         UART_DBG.println("MDNS responder started");
       }
     #endif
-    // prepare syslog configuration here (can be anywhere before first call of 
-    // log/logf method)
-    if (VdmConfig.configFlash.netConfig.syslogLevel>0) {
-      syslog.server(IPAddress(VdmConfig.configFlash.netConfig.syslogIp), VdmConfig.configFlash.netConfig.syslogPort);
-      syslog.deviceHostname(DEVICE_HOSTNAME);
-      syslog.appName(APP_NAME);
-      syslog.defaultPriority(LOG_KERN);
-    }
-    delay (3000);
-    VdmTask.startApp();
+   
+    startSysLog();
+    //delay (3000);
+    //VdmTask.startApp();
     //delay (2000);
     VdmTask.startServices();
    
   } else {
     // check if net is connected
     setup();
+  }
+}
+
+void CVdmNet::startSysLog()
+{
+  // prepare syslog configuration here (can be anywhere before first call of 
+  // log/logf method)
+  if (VdmConfig.configFlash.netConfig.syslogLevel>0) {
+      if (!syslogStarted) {
+      #ifdef netDebug
+        UART_DBG.println("start syslog server : level = "+ String(VdmConfig.configFlash.netConfig.syslogLevel));
+      #endif
+      syslog.server(IPAddress(VdmConfig.configFlash.netConfig.syslogIp), VdmConfig.configFlash.netConfig.syslogPort);
+      syslog.deviceHostname(DEVICE_HOSTNAME);
+      syslog.appName(APP_NAME);
+      syslog.defaultPriority(LOG_KERN);
+      syslogStarted=true;
+    }
   }
 }
 
