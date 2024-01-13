@@ -53,6 +53,7 @@ extern int16_t communication_loop (void);
 
 #define APP_PRE_SETONEWIRESEARCH    "stons"		  // doc
 #define APP_PRE_GETVERSION			    "gvers"     // doc
+#define APP_PRE_GETHWINFO 			    "ghwin"     // doc
 #define APP_PRE_GETTARGETPOS       	"gtgtp"	    // doc 
 #define APP_PRE_SETLEARNTIME        "stlnt"		  // doc
 #define APP_PRE_SETLEARNMOVEM       "stlnm"     // doc

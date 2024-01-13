@@ -51,6 +51,10 @@
 #define     STM32OTA_STARTBLANK     0x45
 #define     STM32OTA_BLOCKSIZE      256
 
+#define     otaDelayFlash           50
+#define     otaDelayErase           50
+#define     otaDelayCmd             50
+
 typedef struct {
   File fsfile;
   uint32_t size;
@@ -60,7 +64,7 @@ typedef struct {
 } flashfile;
 
 
-enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updFinished,updError};
+enum otaUpdateStatus  {updNotStarted,updStarted,updInProgress,updErasing,updFlashing,upVerifying,updFinished,updRestart,updError};
 
 
 enum ota_state {STM32OTA_IDLE, STM32OTA_PREPARE, STM32OTA_SENDSIGN, \

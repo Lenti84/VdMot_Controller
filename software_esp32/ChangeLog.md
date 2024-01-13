@@ -10,6 +10,13 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 ## [Unreleased] - Development
+## [1.3.3]
+### Added
+- Website :     Show chip and program size information
+                More info during flashing on website
+- Syslog :      added with ota STM32
+### Changed
+- OTA STM32 :   more relaxed timing, replace infinite loop with timeout.
 
 ## [1.3.2]
 ### Breaking Change

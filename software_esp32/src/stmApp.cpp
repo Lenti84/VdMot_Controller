@@ -60,7 +60,7 @@
 static const char* commCmds [] = 
                {APP_PRE_SETTARGETPOS,APP_PRE_GETONEWIRECNT,APP_PRE_GETONEWIREDATA,
                 APP_PRE_SETONEWIRESEARCH,APP_PRE_SETALLVLVOPEN,APP_PRE_GETVLVDATA,
-                APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETTARGETPOS,
+                APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETHWINFO,APP_PRE_GETTARGETPOS,
                 APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,APP_PRE_SETVLVSENSOR,
                 APP_PRE_GETONEWIRESETT,APP_PRE_SETLEARNMOVEM,APP_PRE_GETLEARNMOVEM,
                 APP_PRE_GETVLSTATUS,APP_PRE_SETDETECTVLV,APP_PRE_MATCHSENS,
@@ -201,6 +201,7 @@ void CStmApp::getParametersFromSTM()
     stmInitState=STM_INIT_STARTED;
     fastQueueMode=true;  
     app_cmd(APP_PRE_GETVERSION);
+    app_cmd(APP_PRE_GETHWINFO);
     app_cmd(APP_PRE_GETMOTCHARS);
     app_cmd(APP_PRE_GETLEARNMOVEM);
     app_cmd(APP_PRE_GETONEWIRECNT,String(255));
@@ -674,6 +675,14 @@ void  CStmApp::app_check_data()
             }
             if(argcnt > 1) {
                  VdmSystem.stmBuild=atoi(argptr[1]);
+            }
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+            appState=APP_IDLE;
+        }
+
+        else if(memcmp(APP_PRE_GETHWINFO,cmd,5) == 0) {
+            if(argcnt > 0) {
+                VdmSystem.stmID=atoi(argptr[0]); 
             }
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
             appState=APP_IDLE;

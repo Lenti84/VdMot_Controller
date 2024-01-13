@@ -58,7 +58,7 @@ int16_t app_setup (void) {
       myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
       myvalves[x].movements = 0;
       // distribute learn timing equaly over valve slots
-      myvalves[x].learn_time = (unsigned int) (((long)LEARN_AFTER_TIME_DEFAULT * ((long)x+1)) / (long)ACTUATOR_COUNT);
+      myvalves[x].learn_time = (unsigned int) (((long)LEARN_AFTER_TIME_DEFAULT * ((long)x+1)) / (long)ACTUATOR_COUNT);  
   }
 
   // match sensor address from eeprom with found sensors and set index/slot to valve struct

@@ -192,7 +192,12 @@
 <script>	
 
 
-const updStatus = ["Not started","Started","In progress","Finished","Error"];
+const updStatus = ["Not started","Started","In progress","Erasing","Flashing","Verifying","Finished","Restart","Error"];
+const updFinished = 6;
+const updRestart = 7;
+const updError = 8;
+
+
 var getUpdateStatusInterval = null;
 var getFSIntervalID = null;
 //var loopGetFSCnt=0;
@@ -293,15 +298,28 @@ var getFSIntervalID = null;
 				id("chipId").textContent = stmUpdStatus.chipId;
 				id("chipName").textContent = stmUpdStatus.chipName;
 
-				if (stmUpdStatus.status==4) {
+				if (stmUpdStatus.status==updError) {
 					id("progressValue").textContent="Error";
 					if (getUpdateStatusInterval!=null) {
 						window.clearInterval(getUpdateStatusInterval);
+						getUpdateStatusInterval=null;
 					}
 				}
-				if (stmUpdStatus.status==3) {
-					if (getUpdateStatusInterval!=null) window.clearInterval(getUpdateStatusInterval);
+				if (stmUpdStatus.status==updFinished) {
+					if (getUpdateStatusInterval!=null) {
+						window.clearInterval(getUpdateStatusInterval);
+						getUpdateStatusInterval=null;
+					}
 					id("progressValue").textContent = "Update finished"
+					const button = id("back"); 
+					button.style.display = "block";
+				}
+				if (stmUpdStatus.status==updRestart) {
+					if (getUpdateStatusInterval!=null) {
+						window.clearInterval(getUpdateStatusInterval);
+						getUpdateStatusInterval=null;
+					}
+					id("progressValue").textContent = "Restart"
 					const button = id("back"); 
 					button.style.display = "block";
 				}

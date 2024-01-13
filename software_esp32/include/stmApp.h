@@ -96,6 +96,7 @@ typedef struct {
 #define APP_PRE_GETVLSTATUS         "gvlst"   
 
 #define APP_PRE_GETVERSION			    "gvers"
+#define APP_PRE_GETHWINFO 			    "ghwin"   
 #define APP_PRE_GETTARGETPOS       	"gtgtp"			
 
 #define APP_PRE_SETMOTCHARS         "smotc"

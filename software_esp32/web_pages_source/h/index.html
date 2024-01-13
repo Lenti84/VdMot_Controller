@@ -346,7 +346,7 @@
 	.container1 {  
 		display: grid;  
 		grid-gap: 2px;  
-		grid-template-columns: repeat(auto-fit, 300px);
+		grid-template-columns: repeat(auto-fit, 350px);
 		grid-template-rows:  masonry;
 	}
 	
@@ -499,14 +499,34 @@
 		<h3>WT32 Controller</h3>
 		<table id="homeInfo" class="tabTable">
 			<tr>
-				<th>Version</th>
+				<th width=100>SW Version</th>
 				<td id="sysWt32-Version"></td>
 			</tr>
 			<tr>
-				<th>Heap</th>
+				<th>Model</th>
+				<td id="wt32-ChipModel"></td>
+			</tr>
+			<tr>
+				<th>Cores</th>
+				<td id="wt32-ChipCores"></td>
+			</tr>
+			<tr>
+				<th>Version</th>
+				<td id="wt32-ChipVersion"></td>
+			</tr>
+			<tr>
+				<th>Flash size used</th>
+				<td id="wt32-Sketch"></td>
+				<td width=50 id="wt32-FlashUsed" ></td>
+			</tr>
+			<tr>
+				<th>Stack size</th>
+				<td id="wt32-ChipStack"></td>
+			</tr>
+			<tr>
+				<th>Heap/Min</th>
 				<td id="heap"></td>
-				<th>min</th>
-				<td id="min-heap"></td>
+				<td width=70 id="min-heap"></td>
 			</tr>	
 			<tr id="tr-rssi">
 				<th>RSSI</th>
@@ -520,6 +540,10 @@
 			<tr>
 				<th>Version</th>
 				<td id="sysSTM32-Version"></td>
+			</tr>
+			<tr>
+				<th>Chip Id</th>
+				<td id="sysSTM32-ChipId"></td>
 			</tr>
 		</table>
 		</div>
@@ -3337,7 +3361,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 			const dataSystemInfo=await getJson("sysinfo");
 			if (dataSystemInfo) {
 				id("sysWt32-Version").textContent = dataSystemInfo["wt32version"];
+				id("wt32-ChipModel").textContent = dataSystemInfo["wt32ChipModel"];
+				id("wt32-ChipCores").textContent = dataSystemInfo["wt32ChipCores"];
+				id("wt32-ChipVersion").textContent = dataSystemInfo["wt32ChipCoreRev"];
+				id("wt32-Sketch").textContent = dataSystemInfo["wt32Sketch"]+" bytes";
+			 	id("wt32-FlashUsed").textContent = dataSystemInfo["wt32FlashUsed"]+" %";
+				id("wt32-ChipStack").textContent = dataSystemInfo["wt32ChipStack"]+" bytes";
 				id("sysSTM32-Version").textContent = dataSystemInfo["stm32version"];
+				id("sysSTM32-ChipId").textContent = dataSystemInfo["stm32ChipId"];
 			}
 		}
 		

@@ -84,6 +84,7 @@ public:
   uint8_t stm32Address(uint32_t addr);
   void stm32SendCommand(uint8_t commd);
   uint8_t stm32SendData(uint8_t * data, uint8_t wrlen);
+  String checkChipName (uint32_t thisID);
   uint32_t chipId;
   String chipName;
 
@@ -92,9 +93,7 @@ private:
   uint8_t stm32Erase();
   uint8_t stm32Erasen();
   uint8_t stm32Read(uint8_t * rdbuf, uint32_t rdaddress, uint16_t rdlen);
-  
   uint8_t stm32Run();
-  String checkChipName (uint32_t thisID);
 };
 
 extern CStmOta StmOta;

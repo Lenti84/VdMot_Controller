@@ -54,6 +54,7 @@
 #include "stm32ota.h"
 #include "mqtt.h"
 #include "compile_time.h"
+#include "esp_system.h"
  
 CWeb Web;
 
@@ -262,14 +263,17 @@ String CWeb::getSysInfo()
     strftime (buf, sizeof(buf), " build %d.%m.%Y %H:%M", tmp);
     stmBuild = String (buf);
   }
-  
-
+  float usedFlashProz = 100 * (float) ESP.getSketchSize()/ (float)ESP.getFreeSketchSpace();
 
   String result = "{\"wt32version\":\""+String(FIRMWARE_VERSION)+wt32Build+"\"," +
-                  "\"wt32cores\":"+VdmSystem.chip_info.cores+ "," +
-                  "\"wt32coreRev\":"+VdmSystem.chip_info.revision+","+
-                  "\"wt32stack\":"+VdmSystem.stackSize+","+
-                  "\"stm32version\":\""+VdmSystem.stmVersion+stmBuild+"\""+
+                  "\"wt32ChipModel\":\""+VdmSystem.getChipModel()+"\"," +
+                  "\"wt32ChipCores\":"+VdmSystem.chip_info.cores+ "," +
+                  "\"wt32ChipCoreRev\":"+VdmSystem.chip_info.revision+","+
+                  "\"wt32ChipStack\":"+VdmSystem.stackSize+","+
+                  "\"wt32Sketch\":"+ESP.getSketchSize()+","+
+                  "\"wt32FlashUsed\":"+String(usedFlashProz,1)+","+
+                  "\"stm32version\":\""+VdmSystem.stmVersion+stmBuild+"\","+
+                  "\"stm32ChipId\":\"0x"+String(VdmSystem.stmID,16)+" "+String(StmOta.checkChipName(VdmSystem.stmID))+"\""+
                   "}";
   return result;  
 }

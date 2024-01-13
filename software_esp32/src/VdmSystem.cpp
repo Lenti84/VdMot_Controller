@@ -85,6 +85,25 @@ void CVdmSystem::getSystemInfo()
     esp_chip_info(&chip_info);      
 }
 
+String CVdmSystem::getChipModel()
+{  
+  getSystemInfo();
+  switch (chip_info.model) {
+      case 1:
+        return "ESP32";
+      case 2:
+        return "ESP32-S2";
+      case 9:
+        return "ESP32-S3";
+      case 5:
+        return "ESP32-C3";
+      case 6:
+        return "ESP32-H2";
+      default:
+        return "ESP32 (Unknown)";
+  }
+}
+
 String CVdmSystem::localTime() {
   struct tm timeinfo;
   char buf[50];

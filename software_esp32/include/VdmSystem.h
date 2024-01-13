@@ -68,6 +68,7 @@ class CVdmSystem
 public:
   CVdmSystem();
   void getSystemInfo();
+  String getChipModel();
   void setGetFS();
   void getFSDirectory();
   void fileDelete(String fName);
@@ -83,6 +84,7 @@ public:
   fileinfo Filenames[maxFiles]; // Enough for most purposes!
   uint8_t numfiles;
   String stmVersion;
+  uint32_t stmID;
   time_t stmBuild;
   uint8_t systemState;
   String systemMessage;
