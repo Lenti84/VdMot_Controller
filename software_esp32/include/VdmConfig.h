@@ -94,7 +94,8 @@ typedef struct  {
 } VDM_PROTOCOL_CONFIG_FLAGS;
 
 typedef struct  {
-  uint8_t timeoutActive : 1 ;
+  uint8_t timeoutTSActive : 1 ;
+  uint8_t timeoutDSActive : 1 ;
 } VDM_PROTOCOL_MQTT_CONFIG_FLAGS;
 
 
@@ -153,6 +154,14 @@ typedef struct {
   uint8_t startActiveZone;
   uint8_t endActiveZone;
 } VDM_VALVE_CONTROL_CONFIG;
+
+typedef struct {
+  float alpha;
+} VDM_VALVE_CONTROL_CONFIG_ALPHA;
+
+typedef struct {
+  uint8_t usePrediction : 1; 
+} VDM_VALVES_CONTROL_CONFIG_FLAGS;
 
 typedef struct {
   VDM_VALVE_CONTROL_CONFIG valveControlConfig[ACTUATOR_COUNT];
@@ -231,6 +240,11 @@ typedef struct {
   time_t lastCalib; 
 } MISC_VALUES;
 
+typedef struct {
+  uint8_t heatControl;
+  uint8_t parkPosition; 
+} HEATCFG_VALUES;
+
 #define nvsNetCfg                   "netCfg"
 #define nvsNetEthwifi               "ethwifi"
 #define nvsNetDhcp                  "dhcp"
@@ -272,8 +286,10 @@ typedef struct {
 #define nvsValvesControlCfg         "valvesCtrlCfg"
 #define nvsValves                   "valves"
 #define nvsValvesControl            "valvesCtrl"
+#define nvsValvesControlAlpha       "vCtrlAlpha"
 #define nvsValvesControlHeatControl "vCtrlHeat"
 #define nvsValvesControlParkPos     "vCtrlParkPos"
+#define nvsValvesControlFlags       "vCtrlFlags"
 
 #define nvsTempsCfg                 "tempsCfg"
 #define nvsTemps                    "temps"
@@ -320,7 +336,9 @@ public:
   void resetConfig (bool reboot=false);
   void restoreConfig (bool reboot=false);
   void writeValvesControlConfig(bool reboot=false, bool restartTask=true);
+  void writeSysLogValues();
   void postNetCfg (JsonObject doc);
+  void postSysLogCfg (JsonObject doc);
   void postProtCfg (JsonObject doc);
   void postValvesCfg (JsonObject doc);
   void postValvesControlCfg (JsonObject doc);
@@ -329,7 +347,6 @@ public:
   void postMessengerCfg (JsonObject doc);
   String handleAuth (JsonObject doc);
   uint32_t doc2IPAddress(String id);
-  int8_t findTempID (char* tempId);
   void checkToResetCfg();
   void writeMiscValues();
 
@@ -338,6 +355,7 @@ public:
   CONFIG_FLASH configFlash;
 
   MISC_VALUES miscValues;
+  HEATCFG_VALUES heatValues;
 };
 
 extern CVdmConfig VdmConfig;

@@ -161,6 +161,13 @@ void mqttReconnect (JsonObject doc)
   Mqtt.disconnect();
 }
 
+void sysLogSave (JsonObject doc)
+{  
+  VdmConfig.writeSysLogValues();
+  VdmNet.syslogStarted=false;
+  VdmNet.startSysLog();
+}
+
 void CServerServices::postSetValve (JsonObject doc)
 {
   uint8_t index;
@@ -370,10 +377,10 @@ bool handleCmd(JsonObject doc)
 { 
   typedef void (*fp)(JsonObject doc);
   fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,&setGetFS,
-                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl,&mqttReconnect} ;
+                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl,&mqttReconnect,&sysLogSave} ;
 
   char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete","getFS",
-                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave","mqttReconnect",NULL};
+                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave","mqttReconnect","sysLogSave",NULL};
   char const **p;
   bool found = false;
 
@@ -505,6 +512,15 @@ void  CServerServices::initServer()
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(netCfgHandler);
+
+  AsyncCallbackJsonWebHandler* sysLogCfgHandler = new AsyncCallbackJsonWebHandler("/sysLogCfg", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postSysLogCfg (jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(sysLogCfgHandler);  
   
   AsyncCallbackJsonWebHandler* protCfgHandler = new AsyncCallbackJsonWebHandler("/protconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
     if (json.is<JsonObject>()) {

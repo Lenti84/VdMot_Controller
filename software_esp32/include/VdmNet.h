@@ -102,7 +102,7 @@ public:
   void checkWifi();
   void startBroker();
   void mqttBroker();
-
+  void startSysLog();
    
   TWifiState wifiState;
   TEthState ethState;
@@ -110,6 +110,9 @@ public:
   bool serverIsStarted;
   bool dataBrokerIsStarted;
   struct tm startTimeinfo;
+  bool syslogStarted;
+
+private :
 };
 
 extern CVdmNet VdmNet;

@@ -171,6 +171,7 @@ void loop_system() {
   static uint32_t loop_1000ms = 0;
 
   static uint8_t buttontest = 0;
+  static uint8_t ledTimer = 0;
 
   int16_t recvcmd;
   
@@ -186,7 +187,7 @@ void loop_system() {
     }
     else time10s++;
 
-    digitalWrite(LED, !digitalRead(LED));   // toggle LED    
+    //digitalWrite(LED, !digitalRead(LED));   // toggle LED    
     eepromloop();
 
   }
@@ -195,7 +196,14 @@ void loop_system() {
   // 100 ms loop
   if ((millis()-loop_100ms) > (uint32_t) 100 ) {  
     loop_100ms = millis();  
-
+    ledTimer++;
+    if (ledTimer==30) {
+      digitalWrite(LED,LOW);  
+    }
+    if (ledTimer==31) {
+      digitalWrite(LED,HIGH);
+      ledTimer=0;  
+    }
     recvcmd = Terminal_Serve();
     
     // button test
@@ -205,9 +213,7 @@ void loop_system() {
       COMM_DBG.println("Button pressed");
     }
     else buttontest = 0;
-    //if (!digitalRead(BUTTON)) buttontest = 0;
-
-    
+      
   }
 
 
@@ -215,26 +221,8 @@ void loop_system() {
   if ((millis()-loop_10ms) > (uint32_t) 10 ) {  
     loop_10ms = millis();  
     
-    app_loop();
-
-    //valve_loop();   
-    
+    app_loop();  
     communication_loop();
-
     temperature_loop();
-
-    //eepromloop();
-
-    //mycan_loop();         // can hardware testcode
-
-    //rs485_loop();         // rs485 hardware testcode
-
-    // while(Serial.available()>0) {
-    //   int testchar;
-    //   testchar = Serial.read();
-    //   //Serial.write(testchar);    // echo for test
-    //   COMM_DBG.write(testchar);
-    // }
-
   }
 }

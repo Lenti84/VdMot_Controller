@@ -130,6 +130,7 @@ void sendValvesTempsId (uint8_t idx, char delimiter)
 	}
 }
 
+
 void communication_setup (void) {
 	
 	// UART to ESP32
@@ -397,9 +398,6 @@ int16_t communication_loop (void) {
 		// get onewire sensor count
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIRECNT,&cmd[0],5) == 0) {
-			#ifdef commDebug 
-				COMM_DBG.println("cmd: get onewire sensor count");
-			#endif
 			
 			if(argcnt == 0) {
 				COMM_SER.print(APP_PRE_GETONEWIRECNT);
@@ -432,9 +430,6 @@ int16_t communication_loop (void) {
 		// get onewire sensor data of sensor x (adress and temperature)
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIREDATA,&cmd[0],5) == 0) {
-			#ifdef commDebug 
-				COMM_DBG.println("cmd: get onewire sensor data");
-			#endif
 
 			x = atoi(arg0ptr);
 
@@ -900,6 +895,19 @@ int16_t communication_loop (void) {
 				COMM_SER.print(FIRMWARE_BUILD);
   			#endif
 
+			COMM_SER.println(" ");	
+		}
+
+		// get hw Info request
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETHWINFO,&cmd[0],5) == 0) {
+			#ifdef commDebug 
+				COMM_DBG.println("got hw info request");
+			#endif
+			COMM_SER.print(APP_PRE_GETHWINFO);
+			COMM_SER.print(" ");			
+			// read ID
+			COMM_SER.print(HAL_GetDEVID());
 			COMM_SER.println(" ");	
 		}
 

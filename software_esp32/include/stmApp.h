@@ -96,6 +96,7 @@ typedef struct {
 #define APP_PRE_GETVLSTATUS         "gvlst"   
 
 #define APP_PRE_GETVERSION			    "gvers"
+#define APP_PRE_GETHWINFO 			    "ghwin"   
 #define APP_PRE_GETTARGETPOS       	"gtgtp"			
 
 #define APP_PRE_SETMOTCHARS         "smotc"
@@ -162,7 +163,9 @@ public:
   void setMotorChars();
   void getParametersFromSTM();
   void softReset();
-
+  int8_t findTempID(char* ID);
+  int8_t findTempIdxInValve (uint8_t tempIdx);
+  
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
   TEMP_STRUC temps[TEMP_SENSORS_COUNT];
   TEMPID_STRUC tempsId[TEMP_SENSORS_COUNT];
@@ -183,7 +186,6 @@ private:
   void app_comm_machine();
   void app_comm_send(String thisAppCmd,uint8_t * value1=NULL,uint8_t * value2=NULL);
   void app_web_cmd_check();
-  int8_t findTempID(char* ID);
   void setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2); 
   int16_t ConvertCF(int16_t cValue);
   int16_t getTOffset(uint8_t tIdx);

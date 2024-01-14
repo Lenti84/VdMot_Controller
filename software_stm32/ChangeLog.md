@@ -11,6 +11,14 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+## [1.3.3]
+### Added
+- get chip id
+
+## [1.3.2]
+### Changed
+- led heartbeat : change frequency 3s off / 100ms on
+
 ## [1.3.1]
 ### fixed
 - next calibration : movements set to min. 50

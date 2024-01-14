@@ -82,23 +82,24 @@ void CStmOta::stm32SendCommand(uint8_t commd)
 {    // Tested
   delayMicroseconds(1000);
   UART_STM32.write(commd);
-  delayMicroseconds(50);
+  delayMicroseconds(otaDelayCmd);
   UART_STM32.write(~commd);
-  delayMicroseconds(50);
+  delayMicroseconds(otaDelayCmd);
 }
 
 uint8_t CStmOta::stm32Erase() 
 {     // Tested
   Stm32.clearUART_STM32Buffer();
   stm32SendCommand(STM32ERASE);
-  while (!UART_STM32.available());
+
+  if (!Stm32.waitForSTMResponse(60000)) return STM32ERR;
   if (UART_STM32.read() == STM32ACK)
   {
     UART_STM32.write(0xFF);
     UART_STM32.write(0x00);
   }
   else return STM32ERR;
-  while (!UART_STM32.available());
+  if (!Stm32.waitForSTMResponse(60000)) return STM32ERR;
   return UART_STM32.read();
 }
 
@@ -106,7 +107,7 @@ uint8_t CStmOta::stm32Erasen()
 {     // Tested
   Stm32.clearUART_STM32Buffer();
   stm32SendCommand(STM32ERASEN);
-  while (!UART_STM32.available());
+  if (!Stm32.waitForSTMResponse(60000)) return STM32ERR;
   if (UART_STM32.read() == STM32ACK)
   {
     UART_STM32.write(0xFF);
@@ -114,7 +115,7 @@ uint8_t CStmOta::stm32Erasen()
     UART_STM32.write(0x00);
   }
   else return STM32ERR;
-  while (!UART_STM32.available());
+  if (!Stm32.waitForSTMResponse(60000)) return STM32ERR;
   return UART_STM32.read();
 }
 
@@ -135,7 +136,7 @@ uint8_t CStmOta::stm32ErasenStart()
       }
       else return STM32ERR;
     }
-    delayMicroseconds(10);
+    delayMicroseconds(otaDelayErase);
   }
   return STM32ERR;
 }
@@ -145,7 +146,8 @@ uint8_t CStmOta::stm32Run()
 {
   Stm32.clearUART_STM32Buffer();
   stm32SendCommand(STM32RUN);
-  while (!UART_STM32.available());
+
+  if (!Stm32.waitForSTMResponse(60000)) return STM32ERR;
   if (UART_STM32.read() == STM32ACK) {
     stm32Address(STM32STADDR);
     return STM32ACK;
@@ -165,7 +167,7 @@ uint8_t CStmOta::stm32Read(uint8_t * rdbuf, uint32_t rdaddress, uint16_t rdlen)
   stm32SendCommand(STM32RD);  
 
   // wait for ACK
-  while (!UART_STM32.available());
+  if (!Stm32.waitForSTMResponse(60000)) return STM32ERR;
   if (UART_STM32.read() == STM32ACK) {
 
     // send read address
@@ -179,7 +181,7 @@ uint8_t CStmOta::stm32Read(uint8_t * rdbuf, uint32_t rdaddress, uint16_t rdlen)
   else return STM32ERR;
 
   // wait for ACK
-  while (!UART_STM32.available());
+  if (!Stm32.waitForSTMResponse(60000)) return STM32ERR;
   if (UART_STM32.read() == STM32ACK) {
 
     // wait for requested data
@@ -211,7 +213,7 @@ uint8_t CStmOta::stm32Address(uint32_t addr)
     addcheck ^= sendaddr[i];
   }
   UART_STM32.write(addcheck);
-  while (!UART_STM32.available());
+  if (!Stm32.waitForSTMResponse(60000)) return STM32ERR;
   return UART_STM32.read();
 }
 
@@ -221,7 +223,7 @@ uint8_t CStmOta::stm32SendData(uint8_t * data, uint8_t wrlen)
   for (int i = 0; i <= wrlen; i++) {
     UART_STM32.write(*data);
     data++;
-    delayMicroseconds(20);
+    delayMicroseconds(otaDelayFlash);
   }
   //Stm32.clearUART_STM32Buffer();
   //UART_STM32.write(getChecksum(data, wrlen));
@@ -254,7 +256,7 @@ char CStmOta::stm32Version()
       }
     }
     else Serial.println("Error GetVersion: no data");
-    delayMicroseconds(20);
+    delayMicroseconds(otaDelayCmd);
   }
 
   return STM32ERR;  
@@ -296,7 +298,7 @@ uint8_t CStmOta::stm32GetId()
         return 0;
       }
     }    
-    delayMicroseconds(20);
+    delayMicroseconds(otaDelayCmd);
   }
   #ifdef EnvDevelop
     UART_DBG.println("- Error: no data");

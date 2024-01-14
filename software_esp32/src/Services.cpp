@@ -48,6 +48,7 @@
 #include "Queue.h"
 #include "Messenger.h"
 #include "PIControl.h"
+#include "stmApp.h"
 
 CServices Services;
 
@@ -80,31 +81,40 @@ void CServices::checkServiceValves()
 void CServices::checkDS18()
 {
   int8_t tempIdx;
+  int8_t valveIdx;
   bool messengerToSend=false;
   String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : SYSTEM" ;
   String s = "DS18 sensor failed for room\r\n";
 
   for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
-    tempIdx=VdmConfig.findTempID(StmApp.temps[x].id);
+    tempIdx=StmApp.findTempID(StmApp.temps[x].id);  // starts with 0 
     if (tempIdx>=0) {
       if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
-        tempStates[tempIdx].tempFailed=(StmApp.temps[tempIdx].temperature<=-500);
-        if (tempStates[tempIdx].tempFailed && (!tempStates[tempIdx].messengerSent)) {
+        tempStates[tempIdx].tempFailed=(StmApp.temps[x].temperature<=-500);
+        if (tempStates[tempIdx].tempFailed) {
             tempStates[tempIdx].timeOut++;
             if (tempStates[tempIdx].timeOut>4) {
-              s+=String(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)+"\r\n";
-              tempStates[tempIdx].messengerSent=true;
-              messengerToSend=true;
+              if (!tempStates[tempIdx].messengerSent) {
+                s+=String(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)+"\r\n";
+                tempStates[tempIdx].messengerSent=true;
+                messengerToSend=true;
+              }
               tempStates[tempIdx].timeOut=0;
-              if (StmApp.actuators[tempIdx].tIdx1 > 0) {
-                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[tempIdx].valueSource==1 || VdmConfig.configFlash.valvesControlConfig.valveControlConfig[tempIdx].valueSource==2)
-                  PiControl[tempIdx].setFailed(VdmConfig.configFlash.protConfig.mqttConfig.toPos);
+              if (VdmConfig.configFlash.protConfig.mqttConfig.flags.timeoutDSActive) {
+                valveIdx=StmApp.findTempIdxInValve (tempIdx);
+                if ((valveIdx>=0) && (valveIdx<ACTUATOR_COUNT)) {
+                  if (((StmApp.actuators[valveIdx].tIdx1 > 0) && (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIdx].valueSource==1)) ||
+                    ((StmApp.actuators[valveIdx].tIdx2 > 0) && (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIdx].valueSource==2)))
+                  {
+                      PiControl[valveIdx].setFailed(VdmConfig.configFlash.protConfig.mqttConfig.toPos);
+                  }
+                }
               }
             }
         }
       }
       if (!tempStates[tempIdx].tempFailed) {
-        tempStates[x].messengerSent= false;
+        tempStates[tempIdx].messengerSent= false;
         tempStates[tempIdx].timeOut=0;
       }
     }
@@ -136,10 +146,16 @@ void CServices::runOnce()
     StmApp.getParametersFromSTM();
 }
 
-void CServices::runOnceDelayed()
+void CServices::runOnceDelayed10()
+{
+  VdmTask.startApp();
+  VdmNet.startBroker();
+}
+
+void CServices::runOnceDelayed60()
 {
   VdmTask.startPIServices();
-  VdmNet.startBroker();
+  VdmTask.piTaskInitiated=true;
 }
 
 void CServices::restartSystem(bool waitQueueFinished) {

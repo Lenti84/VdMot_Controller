@@ -118,7 +118,7 @@ void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
     Stm32.STM32ota_setup();
     Stm32.STM32ota_start(command,thisFileName);
     if (taskIdStm32Ota==TASKMGR_INVALIDID) {
-        taskIdStm32Ota = taskManager.scheduleFixedRate(30, [] {         // 30 ms good for 115200 baud UART speed and blocksize of 256
+        taskIdStm32Ota = taskManager.scheduleFixedRate(50, [] {         // 50 ms good for 115200 baud UART speed and blocksize of 256
             Stm32.STM32ota_loop();
         });
     } else {
@@ -131,15 +131,23 @@ void CVdmTask::startServices()
     #ifdef EnvDevelop
         UART_DBG.println("Start services");
     #endif
+    
     taskIdRunOnce = taskManager.scheduleOnce(1000, [] {
                 Services.runOnce();
     });
-    taskIdRunOnceDelayed = taskManager.scheduleOnce(10000, [] {
-                Services.runOnceDelayed();
-    });
+    
+    taskIdRunOnceDelayed10 = taskManager.scheduleOnce(10, [] {
+                Services.runOnceDelayed10();
+    },TIME_SECONDS);
+    
+    taskIdRunOnceDelayed60 = taskManager.scheduleOnce(60, [] {
+                Services.runOnceDelayed60();
+    },TIME_SECONDS);
+
     taskIdServices = taskManager.scheduleFixedRate(60, [] { 
         Services.servicesLoop();
     },TIME_SECONDS);  
+
     VdmSystem.sendResetReason();
 }
 
@@ -165,12 +173,15 @@ void CVdmTask::startPIServices(bool startTask)
                 PiControl[picIdx].valveIndex=picIdx;
                 PiControl[picIdx].ti=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ti;
                 PiControl[picIdx].xp=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].xp;
+                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].xp!=0)
+                    PiControl[picIdx].kp=100.0/VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].xp;
+                else PiControl[picIdx].kp=1;
                 PiControl[picIdx].offset=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].offset; 
                 PiControl[picIdx].ki=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ki; 
                 PiControl[picIdx].scheme=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].scheme;
                 PiControl[picIdx].startActiveZone=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].startActiveZone;
                 PiControl[picIdx].endActiveZone=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].endActiveZone;
-                if (StmApp.motorChars.startOnPower>100) StmApp.motorChars.startOnPower=50;
+                if (StmApp.motorChars.startOnPower>100) StmApp.motorChars.startOnPower=0;
                 PiControl[picIdx].startValvePos=StmApp.motorChars.startOnPower;
                 if (startTask) {
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts>0) {

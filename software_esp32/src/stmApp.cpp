@@ -60,7 +60,7 @@
 static const char* commCmds [] = 
                {APP_PRE_SETTARGETPOS,APP_PRE_GETONEWIRECNT,APP_PRE_GETONEWIREDATA,
                 APP_PRE_SETONEWIRESEARCH,APP_PRE_SETALLVLVOPEN,APP_PRE_GETVLVDATA,
-                APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETTARGETPOS,
+                APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETHWINFO,APP_PRE_GETTARGETPOS,
                 APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,APP_PRE_SETVLVSENSOR,
                 APP_PRE_GETONEWIRESETT,APP_PRE_SETLEARNMOVEM,APP_PRE_GETLEARNMOVEM,
                 APP_PRE_GETVLSTATUS,APP_PRE_SETDETECTVLV,APP_PRE_MATCHSENS,
@@ -79,25 +79,12 @@ CStmApp::CStmApp()
     bufptr = buffer;
     buflen = 0;
     argcnt = 0;
-    /*
-    argptr[0] = arg0;
-	argptr[1] = arg1;
-    argptr[2] = arg2;
-    argptr[3] = arg3;
-    argptr[4] = arg4;
-    argptr[5] = arg5;
-    argptr[6] = arg6;
-    argptr[7] = arg7;
-    argptr[8] = arg8;
-    argptr[9] = arg9;
-*/
-	argcnt = 0;
     tempsPrivCount=0;
     tempsCount=0;
     setTempIdxActive=false;
     waitForFinishQueue=false;
     setMotorCharsActive=false;
-    motorChars.startOnPower=50;
+    motorChars.startOnPower=0;
     fastQueueMode=false;
     stmStatus=STM_NOT_READY;
     getindex = 0;
@@ -121,9 +108,9 @@ void  CStmApp::app_setup() {
     UART_STM32.begin(115200, SERIAL_8N1, STM32_RX, STM32_TX, false, 20000UL); 
     
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
-        actuators[x].actual_position = 100;
+        actuators[x].actual_position = 0;
         actuators[x].target_position = 0;
-        actuators[x].meancurrent = 342;
+        actuators[x].meancurrent = 0;
         actuators[x].state = VLV_STATE_START; //VLV_STATE_IDLE;
         actuators[x].temp1 = -500;
         actuators[x].temp2 = -500;
@@ -137,9 +124,14 @@ void  CStmApp::app_setup() {
         target_position_mirror[x] = actuators[x].target_position;
     }
     commstate=COMM_IDLE;
+    appState=APP_IDLE;
     #ifdef EnvDevelop
         UART_DBG.println("application setup finished");
     #endif
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+        syslog.log(LOG_DEBUG, "stmApp: application setup finished");
+    }
+    UART_STM32.println("123456"); // dummy send
 }
 
 void  CStmApp::setupStartPosition(uint8_t thisStartPosition) 
@@ -209,6 +201,7 @@ void CStmApp::getParametersFromSTM()
     stmInitState=STM_INIT_STARTED;
     fastQueueMode=true;  
     app_cmd(APP_PRE_GETVERSION);
+    app_cmd(APP_PRE_GETHWINFO);
     app_cmd(APP_PRE_GETMOTCHARS);
     app_cmd(APP_PRE_GETLEARNMOVEM);
     app_cmd(APP_PRE_GETONEWIRECNT,String(255));
@@ -354,12 +347,24 @@ void  CStmApp::app_cmd(String command,String args)
 int8_t CStmApp::findTempID(char* ID) 
 {
     for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
-        if (strncmp(ID,VdmConfig.configFlash.tempsConfig.tempConfig[i].ID,sizeof(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID))==0) {
-           return (i);
+        if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID)>0) {
+            if (strncmp(ID,VdmConfig.configFlash.tempsConfig.tempConfig[i].ID,sizeof(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID))==0) {
+            return (i);
+            }
         }
     }
     return -1;
 }
+
+int8_t CStmApp::findTempIdxInValve (uint8_t tempIdx)
+{
+  uint8_t idx=0;
+  for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
+    if ((StmApp.actuators[i].tIdx1==tempIdx+1) || (StmApp.actuators[i].tIdx2==tempIdx+1)) return (i);
+  }
+  return (-1);
+}
+
 
 void CStmApp::setSensorIndex(uint8_t valveIndex,char* sensor1,char* sensor2)
 {
@@ -387,7 +392,7 @@ void  CStmApp::app_check_data()
 
     availcnt = UART_STM32.available();
     found=false;
-   
+ 
     if (availcnt > 0) {
 
         for (int c = 0; c < availcnt; c++)
@@ -675,6 +680,14 @@ void  CStmApp::app_check_data()
             appState=APP_IDLE;
         }
 
+        else if(memcmp(APP_PRE_GETHWINFO,cmd,5) == 0) {
+            if(argcnt > 0) {
+                VdmSystem.stmID=atoi(argptr[0]); 
+            }
+            if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
+            appState=APP_IDLE;
+        }
+
         else if(memcmp(APP_PRE_GETONEWIRESETT,cmd,5) == 0) {
             if(argcnt == 3) {
                 setSensorIndex(atoi(argptr[0]),argptr[1],argptr[2]);
@@ -814,7 +827,8 @@ void CStmApp::appHandler()
                 } 
                 VdmSystem.setSystemState(systemStateError,systemMsgSTMReset);
                 appTimeOuts=0; 
-                Stm32.ResetSTM32(true); 
+                Stm32.ResetSTM32(true);
+                Messenger.sendMessage ("STM failed","STM failed: max app timeouts reached, reset STM"); 
                 appState=APP_IDLE; 
             } else {
                 commstate = COMM_GETDATA;
@@ -921,7 +935,7 @@ void  CStmApp::app_comm_machine()
                 app_comm_send(APP_PRE_GETVLVDATA,&getindex);
 
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG, sendbuffer);
+                    syslog.log(LOG_DEBUG, "STMApp cmd = "+String(sendbuffer));
                 }
                 appState=APP_PENDING;
                 break;

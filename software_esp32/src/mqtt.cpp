@@ -115,7 +115,6 @@ CMqtt::CMqtt()
 uint8_t CMqtt::checkForPublish() 
 {
     uint8_t result=publishNothing;
-    // if (!topicsReceived) return result;
     uint8_t i;
 
     forcePublish = true;
@@ -124,15 +123,24 @@ uint8_t CMqtt::checkForPublish()
     }
     if (!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) {
         if ((millis()-tsPublish)>(1000*VdmConfig.configFlash.protConfig.publishInterval)) {
+            tsPublish = millis();
             return publishCommon+publishValves+publishTemps;    
         }
     } else {
+        if ((millis()-tsForcePublish)>(1000*VdmConfig.configFlash.protConfig.publishInterval)) {
+            #ifdef EnvDevelop
+                 UART_DBG.println("force publish");
+            #endif
+            tsForcePublish = millis();
+            return publishCommon+publishValves+publishTemps;    
+        }
         forcePublish = false;
         if ((millis()-tsPublish)>(1000*VdmConfig.configFlash.protConfig.minBrokerDelay)) {
+            tsPublish = millis();
             // common
             if (VdmSystem.systemMessage.length()>0) result = publishCommon; 
-            if (lastCommonValues.heatControl!=VdmConfig.configFlash.valvesControlConfig.heatControl) result = publishCommon; 
-            if (lastCommonValues.parkingPosition!=VdmConfig.configFlash.valvesControlConfig.parkingPosition) result = publishCommon; 
+            if (lastCommonValues.heatControl!=VdmConfig.heatValues.heatControl) result = publishCommon; 
+            if (lastCommonValues.parkingPosition!=VdmConfig.heatValues.parkPosition) result = publishCommon; 
             if (lastCommonValues.systemState!=VdmSystem.systemState) result = publishCommon;
             String upTime = VdmSystem.getUpTime();
             if (lastCommonValues.upTime!=upTime) result = publishCommon;
@@ -186,7 +194,6 @@ void CMqtt::mqtt_loop()
         uint8_t check=checkForPublish();
        
         if (check!=0) { 
-            tsPublish = millis();
             firstPublish=false;
             publish_all(check);
         }
@@ -224,15 +231,32 @@ void CMqtt::disconnect() {
      mqtt_client.disconnect();
 } 
 
+void CMqtt::subscribe (char* topicstr, char* thisTopic, uint8_t size, bool publishValue)
+{
+    strncat(topicstr, thisTopic,size - strlen (topicstr) - 1);
+    uint8_t len = strlen(topicstr);
+    if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
+       /* if (publishValue) {
+            strncat(topicstr, "/value",size - strlen (topicstr) - 1);
+            mqtt_client.subscribe(topicstr); 
+            topicstr[len]=0;
+        }*/
+        strncat(topicstr, "/set",size - strlen (topicstr) - 1);   
+    } 
+    mqtt_client.subscribe(topicstr);  
+}
+
 void CMqtt::reconnect() 
 {
     topicsReceived=false;
-    char topicstr[MAINTOPIC_LEN+50];
-    char nrstr[11];
+    char topicstr[MAINTOPIC_LEN+80];
+    char nrstr[21];
     char* mqttUser = NULL;
     char* mqttPwd = NULL;
     uint8_t len;
+
     tsPublish = millis();
+    tsForcePublish = millis();
     if ((strlen(VdmConfig.configFlash.protConfig.userName)>0) && (strlen(VdmConfig.configFlash.protConfig.userPwd)>0)) {
         mqttUser = VdmConfig.configFlash.protConfig.userName;
         mqttPwd = VdmConfig.configFlash.protConfig.userPwd;
@@ -268,19 +292,14 @@ void CMqtt::reconnect()
     memset(topicstr,0x0,sizeof(topicstr));
     strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
     len = strlen(topicstr);
-    if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
-        strncat(topicstr, "setHeatControl",sizeof(topicstr) - strlen (topicstr) - 1);
-    } else {
-        strncat(topicstr, "heatControl",sizeof(topicstr) - strlen (topicstr) - 1);
-    }
-    mqtt_client.subscribe(topicstr);    
+    subscribe (topicstr, (char*) "heatControl",sizeof(topicstr),true);
+    //strncat(topicstr, "heatControl",sizeof(topicstr) - strlen (topicstr) - 1);
+    //mqtt_client.subscribe(topicstr);    
+    
     topicstr[len] = '\0';
-    if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
-        strncat(topicstr, "setParkPosition",sizeof(topicstr) - strlen (topicstr) - 1);
-    } else {
-        strncat(topicstr, "parkPosition",sizeof(topicstr) - strlen (topicstr) - 1);
-    }
-    mqtt_client.subscribe(topicstr);    
+    subscribe (topicstr, (char*) "parkPosition",sizeof(topicstr),true);
+    //strncat(topicstr, "parkPosition",sizeof(topicstr) - strlen (topicstr) - 1);
+    //mqtt_client.subscribe(topicstr);    
 
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         lastValveValues[x].ts=millis();
@@ -298,41 +317,47 @@ void CMqtt::reconnect()
             len = strlen(topicstr);
 
             // target value
-            strncat(topicstr, "/target",sizeof(topicstr) - strlen (topicstr) - 1);
-            mqtt_client.subscribe(topicstr);
+            subscribe (topicstr, (char*) "/target",sizeof(topicstr),true);
+            //strncat(topicstr, "/target",sizeof(topicstr) - strlen (topicstr) - 1);
+            //mqtt_client.subscribe(topicstr);
 
             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) {
                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].valueSource==0) {
                         // temp value
                         topicstr[len] = '\0';
-                        strncat(topicstr, "/tValue",sizeof(topicstr) - strlen (topicstr) - 1);
-                        mqtt_client.subscribe(topicstr);    
+                        subscribe (topicstr, (char*) "/tValue",sizeof(topicstr));
+                        //strncat(topicstr, "/tValue",sizeof(topicstr) - strlen (topicstr) - 1);
+                        //mqtt_client.subscribe(topicstr);    
                     } 
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].targetSource==0) {
                         // temp target
                         topicstr[len] = '\0';
-                        strncat(topicstr, "/tTarget",sizeof(topicstr) - strlen (topicstr) - 1);
-                        mqtt_client.subscribe(topicstr);    
+                        subscribe (topicstr, (char*) "/tTarget",sizeof(topicstr));
+                        //strncat(topicstr, "/tTarget",sizeof(topicstr) - strlen (topicstr) - 1);
+                        //mqtt_client.subscribe(topicstr);    
                     } 
                 }
                 // window state
                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
                         topicstr[len] = '\0';
-                        strncat(topicstr, "/window/state",sizeof(topicstr) - strlen (topicstr) - 1);
-                        mqtt_client.subscribe(topicstr);  
+                        subscribe (topicstr, (char*) "/window/state",sizeof(topicstr));
+                        //strncat(topicstr, "/window/state",sizeof(topicstr) - strlen (topicstr) - 1);
+                        //mqtt_client.subscribe(topicstr);  
                         // window target (%)
                         topicstr[len] = '\0';
-                        strncat(topicstr, "/window/target",sizeof(topicstr) - strlen (topicstr) - 1);
-                        mqtt_client.subscribe(topicstr);  
+                        subscribe (topicstr, (char*) "/window/target",sizeof(topicstr));
+                        //strncat(topicstr, "/window/target",sizeof(topicstr) - strlen (topicstr) - 1);
+                        //mqtt_client.subscribe(topicstr);  
                     }
                 }
                  // control active
                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     topicstr[len] = '\0';
-                    strncat(topicstr, "/control/mode",sizeof(topicstr) - strlen (topicstr) - 1);
-                    mqtt_client.subscribe(topicstr);                 
+                    subscribe (topicstr, (char*) "/control/mode",sizeof(topicstr));
+                    //strncat(topicstr, "/control/mode",sizeof(topicstr) - strlen (topicstr) - 1);
+                    //mqtt_client.subscribe(topicstr);                 
                 }
             }
         }
@@ -348,41 +373,105 @@ void CMqtt::reconnect()
     }
 }
 
+bool CMqtt::checkTopicName(char* topic,char* ref,bool set)
+{
+    char refSet[100] = {0};
+    char* topic1 = topic;
+    char* ref1 = ref;
+    uint8_t len;
+    if (topic1[0]=='/') topic1++;
+    if (ref1[0]=='/') ref1++;
+    
+    if (strlen(topic1)==0) return false;
+    
+    strncpy(refSet,ref1, sizeof(refSet));
+    if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
+        strncat(refSet, "/set",sizeof(refSet) - strlen (refSet) - 1);    
+    }
+    
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+        syslog.log(LOG_DEBUG, "MQTT: checkTopic "+String(topic1)+" : "+String(refSet));
+    }
+
+    len = (strlen(topic1)>=strlen(refSet)) ? strlen(topic1) : strlen(refSet);
+    if (strncmp(topic1,refSet,len)==0) {
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+            syslog.log(LOG_DEBUG, "MQTT: checkTopic found");
+        }
+        return true; 
+    }
+
+    // add /set for iobroker if separate topics used
+    strncat(refSet, "/set",sizeof(refSet) - strlen (refSet) - 1);
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+        syslog.log(LOG_DEBUG, "MQTT: checkTopic (/set) "+String(topic1)+" : "+String(refSet));
+    }
+
+    len = (strlen(topic1)>=strlen(refSet)) ? strlen(topic1) : strlen(refSet);
+    if (strncmp(topic1,refSet,len)==0) {
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+            syslog.log(LOG_DEBUG, "MQTT: checkTopic (/set) found");
+        }
+        return true;   
+    }    
+    
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                syslog.log(LOG_DEBUG, "MQTT: checkTopic not found");
+    }
+    return (false);
+}
+
+bool CMqtt::checkTopicPath(char* topic,char* ref)
+{
+    char* topic1 = topic;
+    char* ref1 = ref;
+    uint8_t len;
+
+    if (topic1[0]=='/') topic1++;
+    if (ref1[0]=='/') ref1++;
+    return (memcmp((const char*)topic1,(const char*) ref1, strlen(ref1))==0);
+}
+
 void CMqtt::callback(char* topic, byte* payload, unsigned int length) 
 {
     bool found;
-    char item[20];
+    char item[50];
     char* pt;
+    char* pRef;
     uint8_t i;
     uint8_t idx;
     uint8_t val8;
     bool topicFound = false;
+    char value[32] = {0};
 
+    // local zero terminated copy of payload
+    memcpy(value, payload, std::min<size_t>(sizeof(value) - 1, length));
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-               syslog.log(LOG_DEBUG, "MQTT: callback "+String(topic));
+               syslog.log(LOG_DEBUG, "MQTT: callback "+String(topic)+" : "+String(value));
     }
+
     if (length>0) {
-        if (!VdmConfig.configFlash.protConfig.protocolFlags.publishPathAsRoot) {
+        //if (!VdmConfig.configFlash.protConfig.protocolFlags.publishPathAsRoot) {
             if (topic[0]=='/') {
                 topic++;        // adjust topic 
             }
+        //}
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+            syslog.log(LOG_DEBUG, "MQTT: check callback common "+String(topic)+" : "+String(mqtt_commonTopic));
         }
-
-        // local zero terminated copy of payload
-        char value[32] = {0};
-        memcpy(value, payload, std::min<size_t>(sizeof(value) - 1, length));
-
-        if (memcmp(mqtt_commonTopic,(const char*) topic, strlen(mqtt_commonTopic))==0) {
+        if (checkTopicPath(topic,mqtt_commonTopic)) {
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                syslog.log(LOG_DEBUG, "MQTT: callback common found");
+            }
             memset(item,0x0,sizeof(item));
             pt= (char*) topic;
-            pt+= strlen(mqtt_commonTopic);
-            if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
-                topicFound = (strncmp(pt,"setHeatControl",sizeof("setHeatControl"))==0);
-            } else {
-                topicFound = (strncmp(pt,"heatControl",sizeof("heatControl"))==0);
-            }
+            pRef=mqtt_commonTopic;
+            if (pRef[0]=='/') pRef++;
+           // pt+= strlen(mqtt_commonTopic);
+            pt+=strlen(pRef);
+            topicFound = checkTopicName(pt,(char*)"/heatControl");
             if (topicFound) {
-                val8=VdmConfig.configFlash.valvesControlConfig.heatControl;
+                val8=VdmConfig.heatValues.heatControl;
                 if (isFloat(value)) {
                     val8=atoi(value);
                 } else {
@@ -391,141 +480,146 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                     if (strncmp(value,"cool",sizeof("cool"))==0) val8=2;
                     if (strncmp(value,"off",sizeof("off"))==0) val8=3;
                 }
-                if (val8!=VdmConfig.configFlash.valvesControlConfig.heatControl) {
-                    VdmConfig.configFlash.valvesControlConfig.heatControl=val8;
-                    VdmConfig.writeValvesControlConfig(false,false); 
-                }
+                VdmConfig.heatValues.heatControl=val8;             
             } 
-            if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
-                topicFound = (strncmp(pt,"setParkPosition",sizeof("setParkPosition"))==0);
-            } else {
-                topicFound = (strncmp(pt,"parkPosition",sizeof("parkPosition"))==0);
-            }
+            topicFound = checkTopicName(pt,(char*) "/parkPosition");
             if (topicFound) {
                 val8=atoi(value); 
-                if (val8!=VdmConfig.configFlash.valvesControlConfig.heatControl) {
-                    VdmConfig.configFlash.valvesControlConfig.parkingPosition=val8;
-                    VdmConfig.writeValvesControlConfig(false,false); 
-                }
+                VdmConfig.heatValues.parkPosition=val8;
             }    
         }
-
-        else if (memcmp(mqtt_valvesTopic,(const char*) topic, strlen(mqtt_valvesTopic))==0) {
-            memset(item,0x0,sizeof(item));
-            pt= (char*) topic;
-            pt+= strlen(mqtt_valvesTopic);
-            idx=0;
-            for (i=strlen(mqtt_valvesTopic);i<strlen(topic);i++) {
-                if (*pt=='/') break;
-                item[idx]=*pt;
-                idx++;
-                pt++;
-            } 
-            
-            // find approbiated valve
-            idx=0;
-            found = false;
-            for (i=0;i<ACTUATOR_COUNT;i++) {
-                if (strncmp(VdmConfig.configFlash.valvesConfig.valveConfig[i].name,item,sizeof(VdmConfig.configFlash.valvesConfig.valveConfig[i].name))==0) {
-                    found = true;
-                    break;
-                }
-                idx++;    
+        else { 
+            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                syslog.log(LOG_DEBUG, "MQTT: check callback valve "+String(topic)+" : "+String(mqtt_valvesTopic));
             }
-            if (!found) {
-                if (isNumber(item)) {
-                    idx=atoi(item)-1;
-                    found=true;
+            if (checkTopicPath(topic,mqtt_valvesTopic)) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_DEBUG, "MQTT: callback valves found");
                 }
-            }
+                memset(item,0x0,sizeof(item));
+                pt= (char*) topic;
+                //pt+= strlen(mqtt_valvesTopic);
+                pRef=mqtt_valvesTopic;
+                if (pRef[0]=='/') pRef++;
+                pt+=strlen(pRef);
+                idx=0;
+                for (i=strlen(mqtt_valvesTopic);i<strlen(topic);i++) {
+                    if (*pt=='/') break;
+                    item[idx]=*pt;
+                    idx++;
+                    pt++;
+                } 
+                
+                // find approbiated valve
+                idx=0;
+                found = false;
+                for (i=0;i<ACTUATOR_COUNT;i++) {
+                    if (strncmp(VdmConfig.configFlash.valvesConfig.valveConfig[i].name,item,sizeof(VdmConfig.configFlash.valvesConfig.valveConfig[i].name))==0) {
+                        found = true;
+                        break;
+                    }
+                    idx++;    
+                }
+                if (!found) {
+                    if (isNumber(item)) {
+                        idx=atoi(item)-1;
+                        found=true;
+                    }
+                }
 
-            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-               syslog.log(LOG_DEBUG, "MQTT: payload "+String(topic)+" : "+String(value));
-            }  
-            if (found) {
-               
-                if (isFloat(value)) {
-                    if (strncmp(pt,"/target",7)==0) {
-                        if (VdmConfig.configFlash.valvesConfig.valveConfig[idx].active) {
-                            StmApp.actuators[idx].target_position = atoi(value);
-                        }
-                    } else if (strncmp(pt,"/tValue",7)==0) {
-                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
-                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].valueSource==0) {
-                                PiControl[idx].value=strtof(value, NULL);
-                                PiControl[idx].failed=false;
-                                valveStates[idx].tValueFailed=false;
-                                valveStates[idx].messengerSent=false;
-                                mqttReceived=true;
-                                lastValveValues[idx].lasttValuets=millis();
+                if (found) {
+                // 'set' is added for iobroker different topic for read and write
+                    if (isFloat(value)) {
+                        if (checkTopicName(pt,(char*) "/target")) {
+                            if (VdmConfig.configFlash.valvesConfig.valveConfig[idx].active) {
+                                StmApp.actuators[idx].target_position = atoi(value);
                             }
-                        }
-                    } else if (strncmp(pt,"/tTarget",8)==0) {
-                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
-                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0) {
-                                PiControl[idx].target=strtof(value, NULL);
-                                mqttReceived=true;
-                            }
-                        }
-                    } else if (strncmp(pt,"/dynOffs",8)==0) {
-                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
-                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
-                                PiControl[idx].dynOffset=atoi(value);
-                        }
-                    } 
-                    else if (strncmp(pt,"/window/target",14)==0) {
-                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].link==0) {
+                        } else if (checkTopicName(pt,(char*) "/tValue")) {
                             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
-                                    PiControl[idx].windowOpenTarget=atoi(value);
+                                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].valueSource==0) {
+                                    PiControl[idx].value=strtof(value, NULL);
+                                    PiControl[idx].failed=false;
+                                    valveStates[idx].tValueFailed=false;
+                                    valveStates[idx].messengerSent=false;
+                                    mqttReceived=true;
+                                    lastValveValues[idx].lasttValuets=millis();
+                                }
                             }
+                        } else if (checkTopicName(pt,(char*) "/tTarget")) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
+                                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0) {
+                                    PiControl[idx].target=strtof(value, NULL);
+                                    mqttReceived=true;
+                                }
+                            }
+                        } else if (checkTopicName(pt,(char*) "/dynOffs")) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
+                                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
+                                    PiControl[idx].dynOffset=atoi(value);
+                            }
+                        } 
+                        else if (checkTopicName(pt,(char*) "/window/target")) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].link==0) {
+                                if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
+                                        PiControl[idx].windowOpenTarget=atoi(value);
+                                }
+                            }
+                        }
+                        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                            syslog.log(LOG_DEBUG, "MQTT: found topic "+String(item)+String(pt)+" : "+String(value));
+                        }
+                    } else {
+                        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                            syslog.log(LOG_DEBUG, "MQTT: found topic, but not a number "+String(item)+String(pt)+" : "+String(value));
+                        }  
+                    }
+                    // handling for plain text
+                    if (checkTopicName(pt,(char*) "/control/mode")) { 
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].link==0) {
+                            if (isFloat(value)) {
+                                val8=atoi(value);
+                                PiControl[idx].controlActive=bool(val8);
+                            } else {
+                                if (strncmp(value,"off",3)==0)  PiControl[idx].setControlActive(0); 
+                                if (strncmp(value,"auto",4)==0)  PiControl[idx].setControlActive(1);
+                            } 
+                            if (PiControl[idx].controlActive==0) PiControl[idx].setPosition(0);    
                         }
                     }
-                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                        syslog.log(LOG_DEBUG, "MQTT: found topic "+String(item)+String(pt)+" : "+String(value));
+                    if (checkTopicName(pt,(char*) "/window/state")) { 
+                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].link==0) {
+                            if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
+                                if (isFloat(value)) {
+                                    PiControl[idx].setWindowAction(atoi(value));
+                                } else {
+                                    if (strncmp(value,"close",5)==0)  PiControl[idx].setWindowAction(0);
+                                    if (strncmp(value,"open",4)==0)  PiControl[idx].setWindowAction(1);
+                                }       
+                            }
+                        }
                     }
                 } else {
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                        syslog.log(LOG_DEBUG, "MQTT: found topic, but not a number "+String(item)+String(pt)+" : "+String(value));
-                    }  
+                        syslog.log(LOG_DEBUG, "MQTT: not found topic "+String(item));
+                    }   
                 }
-                // handling for plain text
-                if (strncmp(pt,"/control/mode",13)==0) {
-                    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].link==0) {
-                        if (isFloat(value)) {
-                            val8=atoi(value);
-                            PiControl[idx].controlActive=bool(val8);
-                        } else {
-                            if (strncmp(value,"off",3)==0)  PiControl[idx].setControlActive(0); //PiControl[idx].controlActive=0;
-                            if (strncmp(value,"auto",4)==0)  PiControl[idx].setControlActive(1); //controlActive=1;
-                        } 
-                        if (PiControl[idx].controlActive==0) PiControl[idx].setPosition(0);    
-                    }
-                }
-                if (strncmp(pt,"/window/state",13)==0) {
-                    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].link==0) {
-                        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
-                            if (isFloat(value)) {
-                                PiControl[idx].setWindowAction(atoi(value));
-                            } else {
-                                if (strncmp(value,"close",5)==0)  PiControl[idx].setWindowAction(0);
-                                if (strncmp(value,"open",4)==0)  PiControl[idx].setWindowAction(1);
-                            }       
-                        }
-                    }
-                }
-            } else {
-                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG, "MQTT: not found topic "+String(item));
-                }   
             }
         }
     }
     if (!topicsReceived && found) topicsReceived=true; 
 }
 
+void CMqtt::publishValue (char* topicstr, char* valstr) 
+{
+    if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
+        strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
+    }
+    mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
+}
+
 void CMqtt::publish_valves () {
-    char topicstr[MAINTOPIC_LEN+30];
-    char nrstr[11];
+    char topicstr[MAINTOPIC_LEN+50];
+    char nrstr[21];
     char valstr[50];
     int8_t tempIdx;
     uint8_t len;
@@ -546,23 +640,22 @@ void CMqtt::publish_valves () {
                 strncat(topicstr, mqtt_valvesTopic,sizeof(topicstr) - strlen (topicstr) - 1);
                 strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
                 len = strlen(topicstr);
-
+                /*
                 // actual value
                 if ((lastValveValues[x].position!=StmApp.actuators[x].actual_position) || forcePublish || lastValveValues[x].publishTimeOut) {
                     strncat(topicstr, "/actual",sizeof(topicstr) - strlen (topicstr) - 1);
                     itoa(StmApp.actuators[x].actual_position, valstr, 10);        
-                    mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
+                    publishValue(topicstr, valstr);
                     lastValveValues[x].position=StmApp.actuators[x].actual_position;
                 }
+                */
                 // target
-                if (!VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate)  {
-                    if ((lastValveValues[x].target!=StmApp.actuators[x].target_position) || forcePublish || lastValveValues[x].publishTimeOut) {
-                        topicstr[len] = '\0';
-                        strncat(topicstr, "/target",sizeof(topicstr) - strlen (topicstr) - 1);
-                        itoa(StmApp.actuators[x].target_position, valstr, 10);
-                        mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
-                        lastValveValues[x].target=StmApp.actuators[x].target_position;
-                    }
+                if ((lastValveValues[x].target!=StmApp.actuators[x].target_position) || forcePublish || lastValveValues[x].publishTimeOut) {
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/target",sizeof(topicstr) - strlen (topicstr) - 1);
+                    itoa(StmApp.actuators[x].target_position, valstr, 10);
+                    publishValue(topicstr, valstr);
+                    lastValveValues[x].target=StmApp.actuators[x].target_position;
                 }
                 // state
                 if ((lastValveValues[x].state!=valveStates[x].thisState) || forcePublish || lastValveValues[x].publishTimeOut) {
@@ -575,18 +668,18 @@ void CMqtt::publish_valves () {
                     } else {
                         itoa(valveStates[x].thisState, valstr, 10);        
                     }
-                    mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
-                    
+                    publishValue(topicstr, valstr);
+
                     if (StmApp.actuators[x].calibration) {
                         topicstr[len] = '\0';
                         strncat(topicstr, "/calibration",sizeof(topicstr) - strlen (topicstr) - 1);
-                        mqtt_client.publish(topicstr, VdmSystem.localTime().c_str(),VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
+                        publishValue(topicstr, (char*) VdmSystem.localTime().c_str());
                     }
                     if ((VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link>0) && (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link<13)) {
                         topicstr[len] = '\0';
                         strncat(topicstr, "/control/link",sizeof(topicstr) - strlen (topicstr) - 1);
                         strcpy(valstr,VdmConfig.configFlash.valvesConfig.valveConfig[VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link-1].name);
-                        mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
+                        publishValue(topicstr, valstr);
                     }
                     lastValveValues[x].state=valveStates[x].thisState;
                 }
@@ -595,7 +688,7 @@ void CMqtt::publish_valves () {
                     topicstr[len] = '\0';
                     strncat(topicstr, "/meancur",sizeof(topicstr) - strlen (topicstr) - 1);
                     itoa(StmApp.actuators[x].meancurrent, valstr, 10);
-                    mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
+                    publishValue(topicstr, valstr);
                     lastValveValues[x].meanCurrent=StmApp.actuators[x].meancurrent;
                 }
                 // temperature 1st sensor
@@ -606,7 +699,7 @@ void CMqtt::publish_valves () {
                         if (StmApp.actuators[x].temp1>-500) {
                             s = String(((float)StmApp.actuators[x].temp1)/10,1); 
                         } else s="failed";
-                        mqtt_client.publish(topicstr, (const char*) &s,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
+                        publishValue(topicstr, (char*) &s);
                         lastValveValues[x].temp1=StmApp.actuators[x].temp1;
                     }
                 }
@@ -618,7 +711,7 @@ void CMqtt::publish_valves () {
                         if (StmApp.actuators[x].temp2>-500) {
                             s = String(((float)StmApp.actuators[x].temp2)/10,1); 
                         } else s="failed";
-                        mqtt_client.publish(topicstr, (const char*) &s,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
+                        publishValue(topicstr, (char*) &s);
                         lastValveValues[x].temp2=StmApp.actuators[x].temp2;
                     }
                 }
@@ -633,18 +726,18 @@ void CMqtt::publish_valves () {
 
 void CMqtt::publish_temps()
 {
-    char topicstr[MAINTOPIC_LEN+30];
-    char nrstr[11];
+    char topicstr[MAINTOPIC_LEN+50];
+    char nrstr[21];
     int8_t tempIdx;
     uint8_t len;
     String s;
 
     for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
         if (lastTempValues[x].publishNow || forcePublish) {
-            tempIdx=VdmConfig.findTempID(StmApp.temps[x].id);
+            tempIdx=StmApp.findTempID(StmApp.temps[x].id);
             if (tempIdx>=0) {
                 if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
-                    if ((!Web.findIdInValve (tempIdx)) || VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps) {
+                    if ((StmApp.findTempIdxInValve (tempIdx)<0) || VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps) {
                         memset(topicstr,0x0,sizeof(topicstr));
                         memset(nrstr,0x0,sizeof(nrstr));
                         itoa((x+1), nrstr, 10);
@@ -656,7 +749,7 @@ void CMqtt::publish_temps()
                         len = strlen(topicstr);
                         // id
                         strncat(topicstr, "/id",sizeof(topicstr) - strlen (topicstr) - 1);     
-                        mqtt_client.publish(topicstr,StmApp.temps[x].id,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
+                        publishValue(topicstr, StmApp.temps[x].id);
                         // actual value
                         topicstr[len] = '\0';
                         strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
@@ -666,7 +759,7 @@ void CMqtt::publish_temps()
                         } else {
                             s = String(((float)StmApp.temps[x].temperature)/10,1);     
                         }
-                        mqtt_client.publish(topicstr,(const char*) &s,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
+                        publishValue(topicstr, (char*) &s);
                     }
                 }
             }
@@ -679,9 +772,9 @@ void CMqtt::publish_temps()
 
 void CMqtt::publish_common () 
 {
-    char topicstr[MAINTOPIC_LEN+30];
-    char nrstr[11];
-    char valstr[20];
+    char topicstr[MAINTOPIC_LEN+50];
+    char nrstr[21];
+    char valstr[50];
     int8_t tempIdx;
     uint8_t len;
     const char heatControlStates[4][11] =  {"manual","heat","cool","off"};
@@ -690,29 +783,30 @@ void CMqtt::publish_common ()
     memset(topicstr,0x0,sizeof(topicstr));
     strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
     len = strlen(topicstr);
-    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || (lastCommonValues.heatControl!=VdmConfig.configFlash.valvesControlConfig.heatControl)) {
+   
+    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || forcePublish || (lastCommonValues.heatControl!=VdmConfig.heatValues.heatControl)) {
         strncat(topicstr, "heatControl",sizeof(topicstr) - strlen (topicstr) - 1);
         if (VdmConfig.configFlash.protConfig.protocolFlags.publishPlainText) {
-            if (VdmConfig.configFlash.valvesControlConfig.heatControl<4) {
-                strcpy(valstr,heatControlStates[VdmConfig.configFlash.valvesControlConfig.heatControl]);
+            if (VdmConfig.heatValues.heatControl<4) {
+                strcpy(valstr,heatControlStates[VdmConfig.heatValues.heatControl]);
             } else strcpy(valstr,"");
         } else {
-            itoa(VdmConfig.configFlash.valvesControlConfig.heatControl, valstr, 10);        
+            itoa(VdmConfig.heatValues.heatControl, valstr, 10);        
         }
-        mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained); 
-        lastCommonValues.heatControl=VdmConfig.configFlash.valvesControlConfig.heatControl; 
+        publishValue(topicstr, valstr);
+        lastCommonValues.heatControl=VdmConfig.heatValues.heatControl; 
     }
 
     topicstr[len] = '\0';
-    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || (lastCommonValues.parkingPosition!=VdmConfig.configFlash.valvesControlConfig.parkingPosition)) {
+    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || forcePublish || (lastCommonValues.parkingPosition!=VdmConfig.heatValues.parkPosition)) {
         strncat(topicstr, "parkPosition",sizeof(topicstr) - strlen (topicstr) - 1);
-        itoa(VdmConfig.configFlash.valvesControlConfig.parkingPosition, valstr, 10);        
-        mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);  
-        lastCommonValues.parkingPosition=VdmConfig.configFlash.valvesControlConfig.parkingPosition; 
+        itoa(VdmConfig.heatValues.parkPosition, valstr, 10);         
+        publishValue(topicstr, valstr);
+        lastCommonValues.parkingPosition=VdmConfig.heatValues.parkPosition; 
     }
     topicstr[len] = '\0';
     
-    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || (lastCommonValues.systemState!=VdmSystem.systemState)) {
+    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || forcePublish || (lastCommonValues.systemState!=VdmSystem.systemState)) {
         strncat(topicstr, "state",sizeof(topicstr) - strlen (topicstr) - 1);
         if (VdmConfig.configFlash.protConfig.protocolFlags.publishPlainText) {
             if (VdmSystem.systemState<3) {
@@ -721,25 +815,25 @@ void CMqtt::publish_common ()
         } else {
             itoa(VdmSystem.systemState , valstr, 10);        
         }
-        mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);  
+        publishValue(topicstr, valstr);
         lastCommonValues.systemState=VdmSystem.systemState;
     }
     topicstr[len] = '\0';
     if (VdmConfig.configFlash.protConfig.protocolFlags.publishUpTime) {
         strncat(topicstr, "uptime",sizeof(topicstr) - strlen (topicstr) - 1);
         String upTime = VdmSystem.getUpTime();
-        if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || (lastCommonValues.upTime!=upTime)) {
+        if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || forcePublish || (lastCommonValues.upTime!=upTime)) {
             lastCommonValues.upTime = upTime;
-            mqtt_client.publish(topicstr, (const char*) (upTime.c_str()),VdmConfig.configFlash.protConfig.protocolFlags.publishRetained); 
+            publishValue(topicstr, (char*) upTime.c_str());
         }
     }
     
     topicstr[len] = '\0';
-    if (VdmSystem.systemMessage.length()>0) {
+    if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || forcePublish || (lastCommonValues.systemMessage!=VdmSystem.systemMessage)) {
         topicstr[len] = '\0';
-        strncat(topicstr, "message",sizeof(topicstr) - strlen (topicstr) - 1);       
-        mqtt_client.publish(topicstr,VdmSystem.systemMessage.c_str(),VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);  
-        VdmSystem.systemMessage=""; 
+        strncat(topicstr, "message",sizeof(topicstr) - strlen (topicstr) - 1);        
+        publishValue(topicstr, (char*) VdmSystem.systemMessage.c_str());
+        lastCommonValues.systemMessage=VdmSystem.systemMessage; 
     }
 }
     
@@ -753,7 +847,7 @@ void CMqtt::publish_all (uint8_t publishFlags)
 void CMqtt::checktValueTimeOut () 
 {
     bool messenger = false;
-    if (VdmConfig.configFlash.protConfig.mqttConfig.flags.timeoutActive) 
+    if (VdmConfig.configFlash.protConfig.mqttConfig.flags.timeoutTSActive) 
     {
         for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
             if ((!PiControl[x].windowState) && (!valveStates[x].tValueFailed) && VdmConfig.configFlash.valvesConfig.valveConfig[x].active && VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active && PiControl[x].controlActive) 

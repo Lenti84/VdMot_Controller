@@ -110,7 +110,8 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.protocolFlags.publishRetained = false;
   configFlash.protConfig.protocolFlags.publishPlainText = false;
   configFlash.protConfig.keepAliveTime = 60;
-  configFlash.protConfig.mqttConfig.flags.timeoutActive = false;
+  configFlash.protConfig.mqttConfig.flags.timeoutTSActive = false;
+  configFlash.protConfig.mqttConfig.flags.timeoutDSActive = false;
   configFlash.protConfig.mqttConfig.timeOut = 120;
   configFlash.protConfig.mqttConfig.toPos = 10;
   
@@ -137,7 +138,7 @@ void CVdmConfig::clearConfig()
   }
   configFlash.valvesControlConfig.heatControl=0;
   configFlash.valvesControlConfig.parkingPosition=10;
-
+ 
   for (uint8_t i=0; i<TEMP_SENSORS_COUNT; i++) {
     configFlash.tempsConfig.tempConfig[i].active = false;
     configFlash.tempsConfig.tempConfig[i].offset = 0;
@@ -246,6 +247,8 @@ void CVdmConfig::readConfig()
       prefs.getBytes(nvsValvesControl, (void *) configFlash.valvesControlConfig.valveControlConfig, sizeof(configFlash.valvesControlConfig.valveControlConfig));
       configFlash.valvesControlConfig.heatControl=prefs.getUChar (nvsValvesControlHeatControl,0);
       configFlash.valvesControlConfig.parkingPosition=prefs.getUChar (nvsValvesControlParkPos,10);
+      heatValues.heatControl=configFlash.valvesControlConfig.heatControl;
+      heatValues.parkPosition=configFlash.valvesControlConfig.parkingPosition;
     }
     prefs.end();
   }
@@ -391,7 +394,7 @@ void CVdmConfig::writeConfig(bool reboot)
 void CVdmConfig::writeMiscValues()
 {
   prefs.begin(nvsMisc,false);
-    prefs.putLong(nvsMiscLastCalib,miscValues.lastCalib);
+  prefs.putLong(nvsMiscLastCalib,miscValues.lastCalib);
   prefs.end();
 }
 
@@ -406,9 +409,20 @@ void CVdmConfig::writeValvesControlConfig(bool reboot, bool restartTask)
   if (reboot) {
     Services.restartSystem();
   } else {
-    if (restartTask) VdmTask.stopPIServices();
-    VdmTask.startPIServices(restartTask);
+    if (VdmTask.piTaskInitiated) {
+      if (restartTask) VdmTask.stopPIServices();
+      VdmTask.startPIServices(restartTask);
+    }
   }
+}
+
+void CVdmConfig::writeSysLogValues()
+{
+  prefs.begin(nvsNetCfg,false);
+  prefs.putUChar(nvsNetSysLogEnable,configFlash.netConfig.syslogLevel);
+  prefs.putULong(nvsNetSysLogIp,configFlash.netConfig.syslogIp);
+  prefs.putUShort(nvsNetSysLogPort,configFlash.netConfig.syslogPort);
+  prefs.end();
 }
 
 uint32_t CVdmConfig::doc2IPAddress(String id)
@@ -437,7 +451,13 @@ void CVdmConfig::postNetCfg (JsonObject doc)
   if (!doc["syslogPort"].isNull()) configFlash.netConfig.syslogPort=doc["syslogPort"];
   if (!doc["tz"].isNull()) strncpy(configFlash.timeZoneConfig.tz,doc["tz"].as<const char*>(),sizeof(configFlash.timeZoneConfig.tz));
   if (!doc["tzCode"].isNull()) strncpy(configFlash.timeZoneConfig.tzCode,doc["tzCode"].as<const char*>(),sizeof(configFlash.timeZoneConfig.tzCode));
+}
 
+void CVdmConfig::postSysLogCfg (JsonObject doc)
+{
+  if (!doc["syslogLevel"].isNull()) configFlash.netConfig.syslogLevel=doc["syslogLevel"];
+  if (!doc["syslogIp"].isNull()) configFlash.netConfig.syslogIp=doc2IPAddress(doc["syslogIp"]);
+  if (!doc["syslogPort"].isNull()) configFlash.netConfig.syslogPort=doc["syslogPort"];
 }
 
 void CVdmConfig::postProtCfg (JsonObject doc)
@@ -458,7 +478,8 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["pubPlainText"].isNull()) configFlash.protConfig.protocolFlags.publishPlainText = doc["pubPlainText"];
   if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
   if (!doc["pubMinDelay"].isNull()) configFlash.protConfig.minBrokerDelay = doc["pubMinDelay"];
-  if (!doc["mqttTOActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutActive = doc["mqttTOActive"];
+  if (!doc["mqttTOTSActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutTSActive = doc["mqttTOTSActive"];
+  if (!doc["mqttTODSActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutDSActive = doc["mqttTODSActive"];
   if (!doc["mqttTO"].isNull()) configFlash.protConfig.mqttConfig.timeOut = doc["mqttTO"];
   if (!doc["mqttToPos"].isNull()) configFlash.protConfig.mqttConfig.toPos = doc["mqttToPos"];
 }
@@ -524,9 +545,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
 {
   uint8_t idx=0;
   size_t size=doc["valves"].size();
-   #ifdef EnvDevelop
-      UART_DBG.println("size "+String(size));
-    #endif
+
   if (size==0) {
       for (uint8_t i =0;i<12;i++) {
         if (!doc["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["active"];
@@ -536,7 +555,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
         if (!doc["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["tSource"];  
         if (!doc["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["scheme"];  
         if (!doc["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["startAZ"];  
-        if (!doc["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["endAZ"];  
+        if (!doc["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["endAZ"]; 
       }
   } else {
     for (uint8_t i=0; i<size; i++) {
@@ -568,9 +587,11 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
   }
   if (!doc["common"]["heatControl"].isNull()) {
     configFlash.valvesControlConfig.heatControl=doc["common"]["heatControl"];
+    heatValues.heatControl=configFlash.valvesControlConfig.heatControl;
   } 
   if (!doc["common"]["parkPosition"].isNull()) {
     configFlash.valvesControlConfig.parkingPosition=doc["common"]["parkPosition"];
+    heatValues.parkPosition=configFlash.valvesControlConfig.parkingPosition;
   } 
 }
 
@@ -639,17 +660,6 @@ String CVdmConfig::handleAuth (JsonObject doc)
 }
 
 
-int8_t CVdmConfig::findTempID (char* tempId)
-{
-  uint8_t idx=0;
-  for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
-    if (strncmp (tempId,configFlash.tempsConfig.tempConfig[i].ID,sizeof(configFlash.tempsConfig.tempConfig[i].ID)) == 0) { 
-      return (idx);
-    }
-    idx++;
-  }
-  return (-1);
-}
 
 void CVdmConfig::checkToResetCfg() {
   pinMode(pinSetFactoryCfg, INPUT_PULLUP);
