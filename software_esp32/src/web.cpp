@@ -344,16 +344,19 @@ String CWeb::getValvesStatus()
                  "\"cc\":" + String(StmApp.actuators[x].closing_count)+ ","+
                  "\"dc\":" + String(StmApp.actuators[x].deadzone_count);
 
-                 if (StmApp.actuators[x].tIdx1>0) { 
-                  if (StmApp.actuators[x].temp1>-500) {
-                      result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
-                  } else result +=",\"temp1\":\"failed\"";
+                 if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
+                  if (StmApp.actuators[x].tIdx1>0) { 
+                    if (StmApp.actuators[x].temp1>-500) {
+                        result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
+                    } else result +=",\"temp1\":\"failed\"";
+                  }
+                  if (StmApp.actuators[x].tIdx2>0) { 
+                    if (StmApp.actuators[x].temp2>-500) {
+                        result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
+                    } else result +=",\"temp2\":\"failed\"";
+                  }
                  }
-                 if (StmApp.actuators[x].tIdx2>0) { 
-                  if (StmApp.actuators[x].temp2>-500) {
-                      result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
-                  } else result +=",\"temp2\":\"failed\"";
-                 }
+
                  if (controlActive || Mqtt.valveStates[x].tValueFailed) {
                   if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     result +=",\"tTarget\":" + String(((float)PiControl[x].target),1);
@@ -363,9 +366,11 @@ String CWeb::getValvesStatus()
                     result +=",\"tValue\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
                   }
                  }
+
                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
                    result +=",\"window\":"+String(PiControl[x].windowState);
                  }
+                 
                  valveActive = 0;
                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active==1) valveActive |= 1;
                  if (PiControl[x].controlActive) valveActive |= 2;

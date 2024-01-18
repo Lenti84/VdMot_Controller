@@ -100,6 +100,7 @@ CStmApp::CStmApp()
     waitEEPFinished=false;
     stmInitState=STM_INIT_NOT_STARTED;
     fastGetOneWire=false;
+    oneWireAllRead=false;
     
 }
 
@@ -626,7 +627,10 @@ void  CStmApp::app_check_data()
                 }
                 tempsCount=tempsPrivCount;
             }
-            if (tempsPrivCount==0) fastGetOneWire=false;
+            if (tempsPrivCount==0) {
+                fastGetOneWire=false;
+                oneWireAllRead=true;
+            }
             appState=APP_IDLE;
         }
 
@@ -649,6 +653,7 @@ void  CStmApp::app_check_data()
                 if (tempIndex>=tempsCount) {  // all temp sensors read
                     tempIndex=0;
                     fastGetOneWire=false;
+                    oneWireAllRead=true;
                 }
                 #ifdef AppDebug
                     UART_DBG.println("read onwire "+String(tempIndex)+":"+String(fastGetOneWire));
@@ -663,6 +668,7 @@ void  CStmApp::app_check_data()
                 if (tempIndex>=tempsCount) {  // all temp sensors read
                     tempIndex=0;
                     fastGetOneWire=false;
+                    oneWireAllRead=true;
                 }
             }
             appState=APP_IDLE;

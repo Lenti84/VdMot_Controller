@@ -692,30 +692,31 @@ void CMqtt::publish_valves () {
                     lastValveValues[x].meanCurrent=StmApp.actuators[x].meancurrent;
                 }
                 // temperature 1st sensor
-                if (StmApp.actuators[x].tIdx1>0) { 
-                    if ((lastValveValues[x].temp1!=StmApp.actuators[x].temp1) || forcePublish || lastValveValues[x].publishTimeOut) {
-                        topicstr[len] = '\0';
-                        strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
-                        if (StmApp.actuators[x].temp1>-500) {
-                            s = String(((float)StmApp.actuators[x].temp1)/10,1); 
-                        } else s="failed";
-                        publishValue(topicstr, (char*) &s);
-                        lastValveValues[x].temp1=StmApp.actuators[x].temp1;
+                if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
+                    if (StmApp.actuators[x].tIdx1>0) { 
+                        if ((lastValveValues[x].temp1!=StmApp.actuators[x].temp1) || forcePublish || lastValveValues[x].publishTimeOut) {
+                            topicstr[len] = '\0';
+                            strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
+                            if (StmApp.actuators[x].temp1>-500) {
+                                s = String(((float)StmApp.actuators[x].temp1)/10,1); 
+                            } else s="failed";
+                            publishValue(topicstr, (char*) &s);
+                            lastValveValues[x].temp1=StmApp.actuators[x].temp1;
+                        }
+                    }
+                    // temperature 2nd sensor
+                    if (StmApp.actuators[x].tIdx2>0) {
+                        if ((lastValveValues[x].temp2!=StmApp.actuators[x].temp2) || forcePublish || lastValveValues[x].publishTimeOut) {
+                            topicstr[len] = '\0';
+                            strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
+                            if (StmApp.actuators[x].temp2>-500) {
+                                s = String(((float)StmApp.actuators[x].temp2)/10,1); 
+                            } else s="failed";
+                            publishValue(topicstr, (char*) &s);
+                            lastValveValues[x].temp2=StmApp.actuators[x].temp2;
+                        }
                     }
                 }
-                // temperature 2nd sensor
-                if (StmApp.actuators[x].tIdx2>0) {
-                    if ((lastValveValues[x].temp2!=StmApp.actuators[x].temp2) || forcePublish || lastValveValues[x].publishTimeOut) {
-                        topicstr[len] = '\0';
-                        strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
-                        if (StmApp.actuators[x].temp2>-500) {
-                            s = String(((float)StmApp.actuators[x].temp2)/10,1); 
-                        } else s="failed";
-                        publishValue(topicstr, (char*) &s);
-                        lastValveValues[x].temp2=StmApp.actuators[x].temp2;
-                    }
-                }
-         
                 lastValveValues[x].publishNow=false;
                 lastValveValues[x].publishTimeOut=false;
                 lastValveValues[x].ts=millis();
@@ -731,41 +732,43 @@ void CMqtt::publish_temps()
     int8_t tempIdx;
     uint8_t len;
     String s;
-
-    for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
-        if (lastTempValues[x].publishNow || forcePublish) {
-            tempIdx=StmApp.findTempID(StmApp.temps[x].id);
-            if (tempIdx>=0) {
-                if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
-                    if ((StmApp.findTempIdxInValve (tempIdx)<0) || VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps) {
-                        memset(topicstr,0x0,sizeof(topicstr));
-                        memset(nrstr,0x0,sizeof(nrstr));
-                        itoa((x+1), nrstr, 10);
-                        if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0)
-                            strncpy(nrstr,VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name,sizeof(nrstr));
-                        // prepare prefix
-                        strncat(topicstr, mqtt_tempsTopic,sizeof(topicstr) - strlen (topicstr) - 1);
-                        strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
-                        len = strlen(topicstr);
-                        // id
-                        strncat(topicstr, "/id",sizeof(topicstr) - strlen (topicstr) - 1);     
-                        publishValue(topicstr, StmApp.temps[x].id);
-                        // actual value
-                        topicstr[len] = '\0';
-                        strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
-                        
-                        if (StmApp.temps[x].temperature<=-500) {
-                            s = "failed";  
-                        } else {
-                            s = String(((float)StmApp.temps[x].temperature)/10,1);     
+    
+    if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
+        for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
+            if (lastTempValues[x].publishNow || forcePublish) {
+                tempIdx=StmApp.findTempID(StmApp.temps[x].id);
+                if (tempIdx>=0) {
+                    if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
+                        if ((StmApp.findTempIdxInValve (tempIdx)<0) || VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps) {
+                            memset(topicstr,0x0,sizeof(topicstr));
+                            memset(nrstr,0x0,sizeof(nrstr));
+                            itoa((x+1), nrstr, 10);
+                            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0)
+                                strncpy(nrstr,VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name,sizeof(nrstr));
+                            // prepare prefix
+                            strncat(topicstr, mqtt_tempsTopic,sizeof(topicstr) - strlen (topicstr) - 1);
+                            strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
+                            len = strlen(topicstr);
+                            // id
+                            strncat(topicstr, "/id",sizeof(topicstr) - strlen (topicstr) - 1);     
+                            publishValue(topicstr, StmApp.temps[x].id);
+                            // actual value
+                            topicstr[len] = '\0';
+                            strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
+                            
+                            if (StmApp.temps[x].temperature<=-500) {
+                                s = "failed";  
+                            } else {
+                                s = String(((float)StmApp.temps[x].temperature)/10,1);     
+                            }
+                            publishValue(topicstr, (char*) &s);
                         }
-                        publishValue(topicstr, (char*) &s);
                     }
                 }
+                lastTempValues[x].temperature=StmApp.temps[x].temperature;
+                lastTempValues[x].publishNow=false;
+                lastTempValues[x].ts=millis();
             }
-            lastTempValues[x].temperature=StmApp.temps[x].temperature;
-            lastTempValues[x].publishNow=false;
-            lastTempValues[x].ts=millis();
         }
     }
 } 

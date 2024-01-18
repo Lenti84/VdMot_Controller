@@ -180,7 +180,8 @@ public:
   bool matchSensorRequest;
   EEP_STATE eepState;
   bool waitEEPFinished;
-
+  bool oneWireAllRead;
+  
 private:
   void appHandler();
   void app_comm_machine();
@@ -209,7 +210,7 @@ private:
   uint8_t checkTempsCount;
   uint8_t tempsPrivCount;
   String cmd_buffer;
-
+  
   char buffer[1200];
   char sendbuffer[50];
   char *bufptr;

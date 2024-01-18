@@ -628,6 +628,7 @@
 	</div>
 	
 	<div id="Config" class="tabContent">
+	<div id="spinner-Config"></div>
 	<div class="container">
 		<div class="rtabframe">
 		<h3>Network</h3>
@@ -3397,7 +3398,11 @@ Publish on change on server side is not recommended with this option">tValue aft
 						},5000);
 					}
 				}
-
+				if (!stmLoaded) {
+					id("spinner-Config").classList.add("spinner");
+				} else {
+					id("spinner-Config").classList.remove("spinner");
+				}
 				if (!checkCfgTempsID()) {
 					await getTempSensorsID();
 				}
