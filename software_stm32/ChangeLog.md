@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 ## [1.3.4]
 ### Changed
 - faster motor end detection
+### Added
+- min. pulse in eeprom
 
 ## [1.3.3]
 ### Added

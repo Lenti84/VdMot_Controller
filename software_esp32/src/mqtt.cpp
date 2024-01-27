@@ -624,7 +624,7 @@ void CMqtt::publish_valves () {
     int8_t tempIdx;
     uint8_t len;
     String s;
-    const char valveStatesStr[10][11] =  {"","idle","opens","closes","blocked","unknown","no valve","full open","connected","failed"};
+    const char valveStatesStr[10][11] =  {"","idle","opens","closes","failed","unknown","no valve","full open","connected","blocked"};
 
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         valveStates[x].thisState=StmApp.actuators[x].state;
@@ -640,15 +640,6 @@ void CMqtt::publish_valves () {
                 strncat(topicstr, mqtt_valvesTopic,sizeof(topicstr) - strlen (topicstr) - 1);
                 strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
                 len = strlen(topicstr);
-                /*
-                // actual value
-                if ((lastValveValues[x].position!=StmApp.actuators[x].actual_position) || forcePublish || lastValveValues[x].publishTimeOut) {
-                    strncat(topicstr, "/actual",sizeof(topicstr) - strlen (topicstr) - 1);
-                    itoa(StmApp.actuators[x].actual_position, valstr, 10);        
-                    publishValue(topicstr, valstr);
-                    lastValveValues[x].position=StmApp.actuators[x].actual_position;
-                }
-                */
                 // target
                 if ((lastValveValues[x].target!=StmApp.actuators[x].target_position) || forcePublish || lastValveValues[x].publishTimeOut) {
                     topicstr[len] = '\0';

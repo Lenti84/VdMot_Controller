@@ -191,6 +191,7 @@ struct eeprom_layout {
 	struct ds1820_eeprom_layout owsensors2[ACTUATOR_COUNT];	// a lot of ds1820 sensors - second sensor of valve
 	struct ds1820_eeprom_layout owsensors[ADDITIONAL_SENSOR_COUNT];	// some other ds1820 sensors
   uint8_t startOnPower;
+  uint16_t noOfMinPulses;
 };
 
 

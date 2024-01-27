@@ -164,9 +164,10 @@ void CVdmConfig::clearConfig()
   configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=0;
   configFlash.messengerConfig.reason.reasonFlags.notDetect=0;
   configFlash.messengerConfig.reason.reasonFlags.reset=0;
-  configFlash.messengerConfig.reason.reasonFlags.valveBlocked=0;
+  configFlash.messengerConfig.reason.reasonFlags.valveFailed=0;
   configFlash.messengerConfig.reason.reasonFlags.ds18Failed=0;
   configFlash.messengerConfig.reason.reasonFlags.tValueFailed=0;
+  configFlash.messengerConfig.reason.reasonFlags.valveBlocked=0;
   configFlash.messengerConfig.reason.mqttTimeOutTime=10;
   memset(configFlash.messengerConfig.pushover.title,0,sizeof(configFlash.messengerConfig.pushover.title));
   memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
@@ -525,6 +526,10 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
     StmApp.motorChars.startOnPower=doc["motor"]["startOnPower"];
     StmApp.setMotorCharsActive=true;
   }
+  if (!doc["motor"]["noOfMinPulses"].isNull()) {
+    StmApp.motorChars.noOfMinPulses=doc["motor"]["noOfMinPulses"];
+    StmApp.setMotorCharsActive=true;
+  }
   
   if (StmApp.setMotorCharsActive) {
     StmApp.setMotorChars();
@@ -619,13 +624,14 @@ void CVdmConfig::postSysCfg (JsonObject doc)
 
 void CVdmConfig::postMessengerCfg (JsonObject doc)
 {
-  if (!doc["reason"]["valveBlocked"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveBlocked=doc["reason"]["valveBlocked"];
+  if (!doc["reason"]["valveFailed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveFailed=doc["reason"]["valveFailed"];
   if (!doc["reason"]["notDetect"].isNull()) configFlash.messengerConfig.reason.reasonFlags.notDetect=doc["reason"]["notDetect"];
   if (!doc["reason"]["mqttTimeOut"].isNull()) configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=doc["reason"]["mqttTimeOut"];
   if (!doc["reason"]["mqttTimeOutTime"].isNull()) configFlash.messengerConfig.reason.mqttTimeOutTime=doc["reason"]["mqttTimeOutTime"];
   if (!doc["reason"]["reset"].isNull()) configFlash.messengerConfig.reason.reasonFlags.reset=doc["reason"]["reset"];
   if (!doc["reason"]["ds18Failed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.ds18Failed=doc["reason"]["ds18Failed"];
   if (!doc["reason"]["tValueFailed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.tValueFailed=doc["reason"]["tValueFailed"];
+   if (!doc["reason"]["valveBlocked"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveBlocked=doc["reason"]["valveBlocked"];
 
   if (!doc["PO"]["active"].isNull()) configFlash.messengerConfig.activeFlags.pushOver=doc["PO"]["active"];
   if (!doc["PO"]["appToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.appToken,doc["PO"]["appToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.appToken));

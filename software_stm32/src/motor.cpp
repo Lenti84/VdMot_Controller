@@ -127,7 +127,7 @@ int currentbound_low;                     // lower current limit for detection o
 int currentbound_high;                    // upper current limit for detection of end stop
 
 uint8_t startOnPower = 50;
-
+uint16_t noOfMinPulses = NO_OF_MIN_PULSES;
 
 //volatile uint32_t revcounter;
 
@@ -419,7 +419,7 @@ void valve_loop () {
                       COMM_DBG.println("A: opening valve failed, timeout");
                     #endif
                     valvestate = A_IDLE;
-                    myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                    myvalvemots[valveindex].status = VLV_STATE_FAILED;
                     myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                   }                                     
                   break;
@@ -486,7 +486,7 @@ void valve_loop () {
                       COMM_DBG.println("A: closing valve failed, timeout");
                     #endif
                     valvestate = A_IDLE;
-                    myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                    myvalvemots[valveindex].status = VLV_STATE_FAILED;
                     myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                   }                   
                   break;                  
@@ -536,7 +536,7 @@ void valve_loop () {
                         COMM_DBG.println("A: closing valve failed, timeout");
                       #endif
                       valvestate = A_IDLE;
-                      myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      myvalvemots[valveindex].status = VLV_STATE_FAILED;
                       myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                     }           
                   }               
@@ -581,7 +581,7 @@ void valve_loop () {
                         COMM_DBG.println("A: opening valve failed, timeout");
                       #endif
                       valvestate = A_IDLE;
-                      myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      myvalvemots[valveindex].status = VLV_STATE_FAILED;
                       myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                     }                
                   }              
@@ -596,7 +596,6 @@ void valve_loop () {
                         COMM_DBG.println("A: closed valve for learning");                  
                       #endif
                       closing_count = isr_counter;  
-
                       if(m_meancurrent > 0) {
                         #ifdef motDebug
                           COMM_DBG.print("A: learned mean current = "); 
@@ -618,8 +617,13 @@ void valve_loop () {
                       myvalvemots[valveindex].opening_count = opening_count;
                       myvalvemots[valveindex].deadzone_count = deadzone_count;
                       myvalvemots[valveindex].scaler = scaler;
-                      myvalvemots[valveindex].actual_position = 0;    // because valve was closed completely                    
-                      myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                      myvalvemots[valveindex].actual_position = 0;    // because valve was closed completely  
+                      COMM_DBG.print("A: counts = "); COMM_DBG.println(myvalvemots[valveindex].closing_count); 
+                      COMM_DBG.println(myvalvemots[valveindex].opening_count);  
+                      COMM_DBG.println(noOfMinPulses);                  
+                      if ((closing_count<noOfMinPulses) || (opening_count<noOfMinPulses)) myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      else  myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                      COMM_DBG.println(myvalvemots[valveindex].status); 
                       myvalvemots[valveindex].calibration = false;
                       myvalvemots[valveindex].calibState=calibIdle;
                       valveindex = 255;                                                                                  
@@ -641,7 +645,7 @@ void valve_loop () {
                         COMM_DBG.println("A: closing valve failed, timeout");
                       #endif
                       valvestate = A_IDLE;
-                      myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      myvalvemots[valveindex].status = VLV_STATE_FAILED;
                       myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                     }        
                   }           

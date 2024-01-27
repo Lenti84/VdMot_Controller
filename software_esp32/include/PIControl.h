@@ -89,6 +89,7 @@ public:
   void setPosition(uint8_t thisPosition);
   void setControlActive(uint8_t thisControl);
   void setFailed(uint8_t thisPosition);
+  bool getValueFromSource();
   uint32_t ta;
   uint32_t ti;
   volatile uint16_t xp;

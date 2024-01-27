@@ -73,6 +73,7 @@ typedef struct {
   uint16_t maxHighCurrent;
   uint16_t maxLowCurrent;
   uint8_t startOnPower;
+  uint16_t noOfMinPulses;
 } MOTOR_CHARS;
 
 
@@ -119,11 +120,13 @@ typedef struct {
 #define VLV_STATE_IDLE        0x01 // nothing to do
 #define VLV_STATE_OPENING     0x02 // opens
 #define VLV_STATE_CLOSING     0x03 // closes
-#define VLV_STATE_BLOCKS      0x04 // valve is blocked
+#define VLV_STATE_FAILED      0x04 // failed (e.g jump away)
 #define VLV_STATE_UNKNOWN     0x05 // initial state
 #define VLV_STATE_OPENCIR     0x06 // open circuit detected, no valve connected
 #define VLV_STATE_FULLOPEN    0x07 // go directly full open
 #define VLV_STATE_CONNECTED   0x08 // valve is connected
+#define VLV_STATE_BLOCKS      0x09 // valve is blocked
+
 
 #define COMM_ALIVE_CYCLE      30        // send "Alive" cycle in 100 ms cycles
 

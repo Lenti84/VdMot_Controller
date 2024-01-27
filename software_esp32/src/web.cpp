@@ -72,7 +72,8 @@ String CWeb::getSysConfig (VDM_SYSTEM_CONFIG sysConfig)
 
 String CWeb::getMsgConfig (VDM_MSG_CONFIG msgConfig)
 {
-  String result = "{\"reason\":{\"valveBlocked\":"+String(msgConfig.reason.reasonFlags.valveBlocked)+","+
+  String result = "{\"reason\":{\"valveFailed\":"+String(msgConfig.reason.reasonFlags.valveFailed)+","+
+                  "\"valveBlocked\":"+String(msgConfig.reason.reasonFlags.valveBlocked)+","+
                   "\"notDetect\":"+String(msgConfig.reason.reasonFlags.notDetect)+","+
                   "\"reset\":"+String(msgConfig.reason.reasonFlags.reset)+","+
                   "\"ds18Failed\":"+String(msgConfig.reason.reasonFlags.ds18Failed)+","+
@@ -174,6 +175,7 @@ String CWeb::getMotorConfig (MOTOR_CHARS motorConfig)
         result +=   "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
                     "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
                     "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
+                    "\"noOfMinPulses\":"+String(motorConfig.noOfMinPulses)+ "," +
                     "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}}";
   return result;  
 }

@@ -162,10 +162,12 @@ int16_t communication_loop (void) {
     char        cmd[10];
     char		arg0[30];	
     char        arg1[30];		
-	char        arg2[30];		
+	char        arg2[30];
+	char        arg3[30];		
 	char*		arg0ptr = arg0;
 	char*		arg1ptr = arg1;
 	char*		arg2ptr = arg2;
+	char*		arg3ptr = arg3;
 	uint8_t		argcnt = 0;
     
 	uint16_t		x = 0;
@@ -218,14 +220,15 @@ int16_t communication_loop (void) {
 		// ****************************************
 		cmdptr = buffer;
 
-		for(unsigned int xx=0;xx<4;xx++){
+		for(unsigned int xx=0;xx<5;xx++){
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
 				if(xx==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
 				else if(xx==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
-				else if(xx==2) {	strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
-				else if(xx==3) {	strncpy(arg2,cmdptr,sizeof(arg2)-1); argcnt=3;	} 	// 3nd argument
+				else if(xx==2) { strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
+				else if(xx==3) { strncpy(arg2,cmdptr,sizeof(arg2)-1); argcnt=3;	} 	// 3nd argument
+				else if(xx==4) {strncpy(arg3,cmdptr,sizeof(arg3)-1); argcnt=4;	} 	// 4th argument
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -803,7 +806,7 @@ int16_t communication_loop (void) {
 				COMM_DBG.print("got set motor characteristics request ");
 			#endif
 
-			if(argcnt == 3) {
+			if (argcnt >= 3) {
 				x = atoi(arg0ptr);
 				y = atoi(arg1ptr);
 
@@ -815,6 +818,10 @@ int16_t communication_loop (void) {
 					eep_content.currentbound_low_fac = currentbound_low_fac;
 					eep_content.currentbound_high_fac = currentbound_high_fac;
 					eep_content.startOnPower = startOnPower;
+					if (argcnt == 4) {
+						noOfMinPulses = atoi (arg3ptr);
+						eep_content.noOfMinPulses = noOfMinPulses;	
+					}
 					eeprom_changed();
 					COMM_SER.println(APP_PRE_SETMOTCHARS);
 					#ifdef commDebug 
@@ -848,6 +855,8 @@ int16_t communication_loop (void) {
 			COMM_SER.print(currentbound_high_fac, DEC);
 			COMM_SER.print(" ");		
 			COMM_SER.print(startOnPower, DEC);
+			COMM_SER.print(" ");		
+			COMM_SER.print(noOfMinPulses, DEC);
 			COMM_SER.println(" ");			
 		} 
 

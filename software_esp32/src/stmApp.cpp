@@ -291,7 +291,7 @@ void CStmApp::setMotorChars()
 {
     waitForFinishQueue=true;
     waitEEPFinished=true;
-    app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent)+ARG_DELIMITER+String(motorChars.startOnPower));   
+    app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent)+ARG_DELIMITER+String(motorChars.startOnPower)+ARG_DELIMITER+String(motorChars.noOfMinPulses));   
     fastQueueMode=true;
 }
 
@@ -571,11 +571,11 @@ void  CStmApp::app_check_data()
                                 actuators[idx].worked = true;
                                 break;    
                             }
-                            case VLV_STATE_BLOCKS:
+                            case VLV_STATE_FAILED:
                             {
-                                if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.valveBlocked) {
+                                if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.valveFailed) {
                                     String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : Valve" ;
-                                    String s = "Valve "+String(idx+1)+" is blocked";
+                                    String s = "Valve "+String(idx+1)+" failed";
                                     Messenger.sendMessage (title.c_str(),s.c_str());
                                 }
                                 break;
@@ -588,6 +588,15 @@ void  CStmApp::app_check_data()
                                         String s = "Valve "+String(idx+1)+" is not connected";
                                         Messenger.sendMessage (title.c_str(),s.c_str());
                                     }
+                                }
+                                break;
+                            }
+                            case VLV_STATE_BLOCKS:
+                            {
+                                if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.valveBlocked) {
+                                    String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : Valve" ;
+                                    String s = "Valve "+String(idx+1)+" is blocked";
+                                    Messenger.sendMessage (title.c_str(),s.c_str());
                                 }
                                 break;
                             }
@@ -757,15 +766,16 @@ void  CStmApp::app_check_data()
         }
 
         else if(memcmp(APP_PRE_GETMOTCHARS,cmd,5) == 0) {
-            if(argcnt == 2) {
+            if(argcnt >= 2) {
                 motorChars.maxLowCurrent=atoi(argptr[0]);
                 motorChars.maxHighCurrent=atoi(argptr[1]);
             }
-            if(argcnt == 3) {
-                motorChars.maxLowCurrent=atoi(argptr[0]);
-                motorChars.maxHighCurrent=atoi(argptr[1]);
+            if(argcnt >= 3) {
                 motorChars.startOnPower=atoi(argptr[2]);
                 setupStartPosition(motorChars.startOnPower);
+            }
+            if(argcnt == 4) {
+                motorChars.noOfMinPulses=atoi(argptr[3]);
             }
             appState=APP_IDLE;
         }

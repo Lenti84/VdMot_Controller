@@ -10,6 +10,11 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 ## [Unreleased] - Development
+
+## [1.3.4]
+### Added
+- Website :     min. pulse
+
 ## [1.3.3]
 ### Added
 - Website :     Show chip and program size information
