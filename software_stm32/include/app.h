@@ -39,7 +39,7 @@
 
 #define LEARN_AFTER_MOVEMENTS_DEFAULT     2000          // after x movements a learning cycle will be executed
 #define LEARN_AFTER_TIME_DEFAULT          7*24*3600   // after x seconds a learning cycle will be executed
-#define NO_OF_MIN_PULSES                  3000
+#define NO_OF_MIN_COUNTS                  3000
 
 #define VALVE_INIT_TEMPERATURE            -2000   // init value for struct value of temperature
 #define VALVE_SENSOR_UNKNOWN              65535   // marks that no sensor slot is selected

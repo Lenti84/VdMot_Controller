@@ -73,7 +73,11 @@ int16_t app_setup (void) {
     COMM_DBG.println(learning_movements, DEC);
   #endif
 
-  noOfMinPulses = eep_content.noOfMinPulses;
+  noOfMinCounts = eep_content.noOfMinCounts;
+  if (noOfMinCounts > 60000) noOfMinCounts = 3000;
+  
+  maxCalibRetries = eep_content.maxCalibRetries;
+  if (maxCalibRetries > 2) maxCalibRetries = 2; 
   return 0;
 }
 

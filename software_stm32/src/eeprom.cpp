@@ -320,8 +320,9 @@ int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 	x=0;
 	buf[x++] =  lay->startOnPower;
 	pb=(uint16_t*) &buf[x];
-	*pb = lay->noOfMinPulses;
+	*pb = lay->noOfMinCounts;
 	x+=2; 
+	buf[x++] =  lay->maxCalibRetries;
 	eeprom.writeBlock(address, buf, x);
 
 	EEPROM_DEBUG("finished\r\n");
@@ -430,9 +431,12 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 	address++;
 	eeprom.readBlock(address, buf, 2);
 	pb=(uint16_t*) &buf[0];
-	lay->noOfMinPulses = *pb;
+	lay->noOfMinCounts = *pb;
+	address+=2;
+	eeprom.readBlock(address, buf, 1);
+	lay->maxCalibRetries = buf[0];
+	address++;
 	eep_content.status = EEP_VALID;
-
 	EEPROM_DEBUG("finished\r\n");
 
 	return 0;

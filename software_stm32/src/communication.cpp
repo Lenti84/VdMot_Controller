@@ -160,19 +160,20 @@ int16_t communication_loop (void) {
 	char*       cmdptr;
     char*	    cmdptrend;
     char        cmd[10];
-    char		arg0[30];	
-    char        arg1[30];		
-	char        arg2[30];
-	char        arg3[30];		
-	char*		arg0ptr = arg0;
-	char*		arg1ptr = arg1;
-	char*		arg2ptr = arg2;
-	char*		arg3ptr = arg3;
+	
+    char		arg0[ARG_SIZE];	
+    char        arg1[ARG_SIZE];		
+	char        arg2[ARG_SIZE];
+	char        arg3[ARG_SIZE];	
+	char        arg4[ARG_SIZE];	
+
+	char *argptr[NO_OF_ARGS]={arg0,arg1,arg2,arg3,arg4};
+
 	uint8_t		argcnt = 0;
     
-	uint16_t		x = 0;
-	uint32_t		xu32 = 0;
-	uint16_t		y = 0;
+	uint16_t	x = 0;
+	uint32_t	xu32 = 0;
+	uint16_t	y = 0;
 	char sendbuffer[60];
     char valbuffer[10];
 
@@ -220,15 +221,20 @@ int16_t communication_loop (void) {
 		// ****************************************
 		cmdptr = buffer;
 
-		for(unsigned int xx=0;xx<5;xx++){
+		for(uint8_t xx=0;xx<NO_OF_ARGS+1;xx++){
 			cmdptrend = strchr(cmdptr,' ');
 			if (cmdptrend!=NULL) {
 				*cmdptrend = '\0';
-				if(xx==0) 		strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
-				else if(xx==1) { strncpy(arg0,cmdptr,sizeof(arg0)-1); argcnt=1;	} 	// 1st argument
-				else if(xx==2) { strncpy(arg1,cmdptr,sizeof(arg1)-1); argcnt=2;	} 	// 2nd argument
-				else if(xx==3) { strncpy(arg2,cmdptr,sizeof(arg2)-1); argcnt=3;	} 	// 3nd argument
-				else if(xx==4) {strncpy(arg3,cmdptr,sizeof(arg3)-1); argcnt=4;	} 	// 4th argument
+				if(xx==0) strncpy(cmd,cmdptr,sizeof(cmd)-1);		// command
+				else  { 
+					strncpy(argptr[xx-1],cmdptr,ARG_SIZE-1); 
+					argcnt=xx;	
+				} 	// arguments
+
+				/*else if(xx==1) { strncpy(argptr[0],cmdptr,ARG_SIZE-1); argcnt=1;	} 	// 1st argument
+				else if(xx==2) { strncpy(argptr[1],cmdptr,ARG_SIZE-1); argcnt=2;	} 	// 2nd argument
+				else if(xx==3) { strncpy(argptr[2],cmdptr,ARG_SIZE-1); argcnt=3;	} 	// 3nd argument
+				else if(xx==4) { strncpy(argptr[3],cmdptr,ARG_SIZE-1); argcnt=4;	} 	// 4th argument*/
 				cmdptr = cmdptrend + 1;
 			}
 		}
@@ -245,8 +251,8 @@ int16_t communication_loop (void) {
 				COMM_DBG.println("set target pos"); 
 			#endif
 
-			x = atoi(arg0ptr);
-			y = atoi(arg1ptr);
+			x = atoi(argptr[0]);
+			y = atoi(argptr[1]);
 
 			if(argcnt == 2) {				
 				#ifdef commDebug 
@@ -274,7 +280,7 @@ int16_t communication_loop (void) {
 				COMM_DBG.println("get target pos");
 			#endif
 
-			x = atoi(arg0ptr);
+			x = atoi(argptr[0]);
 
 			if(argcnt == 1) {				
 				#ifdef commDebug 
@@ -305,7 +311,7 @@ int16_t communication_loop (void) {
 				//COMM_DBG.println("get valve data");
 			#endif
 
-			x = atoi(arg0ptr);
+			x = atoi(argptr[0]);
 
 			if(argcnt == 1) {				
 				if (x < ACTUATOR_COUNT) 
@@ -409,7 +415,7 @@ int16_t communication_loop (void) {
 				COMM_SER.println(" ");
 			}	
 			if(argcnt == 1) {	
-				x = atoi(arg0ptr);
+				x = atoi(argptr[0]);
 				if (x==255) {
 					// get all onewire detected sensor
 					uint8_t nDevices = sensors.getDeviceCount();
@@ -434,7 +440,7 @@ int16_t communication_loop (void) {
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIREDATA,&cmd[0],5) == 0) {
 
-			x = atoi(arg0ptr);
+			x = atoi(argptr[0]);
 
 			if(argcnt == 1) {
 
@@ -469,7 +475,7 @@ int16_t communication_loop (void) {
 				COMM_DBG.print("cmd: get 1st and 2nd onewire sensor addresses");
 			#endif
 
-			x = atoi(arg0ptr);
+			x = atoi(argptr[0]);
 
 			if(argcnt == 1) {
 
@@ -542,7 +548,7 @@ int16_t communication_loop (void) {
 			#ifdef commDebug 
 				COMM_DBG.print("set valve learning time to ");
 			#endif
-			xu32 = atol(arg0ptr);
+			xu32 = atol(argptr[0]);
 
 			if(argcnt == 1 && xu32 >= 0) {
 				if(app_set_learntime(xu32) == 0) {
@@ -571,7 +577,7 @@ int16_t communication_loop (void) {
 			#ifdef commDebug
 				COMM_DBG.print("set valve learning movements to ");
 			#endif
-			x = atoi(arg0ptr);
+			x = atoi(argptr[0]);
 
 			if(argcnt == 1 && x >= 0) {
 				if(app_set_learnmovements(x) == 0) {
@@ -628,8 +634,8 @@ int16_t communication_loop (void) {
 		// y - temp sensor index
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SET1STSENSORINDEX,&cmd[0],5) == 0) {
-			x = atoi(arg0ptr); // valve index
-			y = atoi(arg1ptr); // temp sensor index
+			x = atoi(argptr[0]); // valve index
+			y = atoi(argptr[1]); // temp sensor index
 
 			if(argcnt == 2) {				
 				#ifdef commDebug 
@@ -672,8 +678,8 @@ int16_t communication_loop (void) {
 		// y - temp sensor index
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SET2NDSENSORINDEX,&cmd[0],5) == 0) {
-			x = atoi(arg0ptr); // valve index
-			y = atoi(arg1ptr); // temp sensor index
+			x = atoi(argptr[0]); // valve index
+			y = atoi(argptr[1]); // temp sensor index
 
 			if(argcnt == 2) {				
 				#ifdef commDebug 
@@ -718,14 +724,14 @@ int16_t communication_loop (void) {
 		// if hex address == 00-00-00-00-00-00-00-00 this sensor will be ignored
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_SETVLVSENSOR,&cmd[0],5) == 0) {
-			x = atoi(arg0ptr); // valve index
+			x = atoi(argptr[0]); // valve index
 			
 			if(argcnt == 3) {				
 				#ifdef commDebug 
 					COMM_DBG.println("comm: set valve sensors");
 				#endif
-				setValveIDSensor (x,arg1ptr,(uint8_t*) &eep_content.owsensors1[x]);
-				setValveIDSensor (x,arg2ptr,(uint8_t*) &eep_content.owsensors2[x]);
+				setValveIDSensor (x,argptr[1],(uint8_t*) &eep_content.owsensors1[x]);
+				setValveIDSensor (x,argptr[2],(uint8_t*) &eep_content.owsensors2[x]);
 				COMM_SER.print(APP_PRE_SETVLVSENSOR);
 				COMM_SER.print(" ");
 				COMM_SER.println(x,DEC);
@@ -745,7 +751,7 @@ int16_t communication_loop (void) {
 				COMM_DBG.print("got open valve request for ");
 			#endif
 
-			x = atoi(arg0ptr);
+			x = atoi(argptr[0]);
 
 			if(argcnt == 1 && x >= 0) {
 				if( app_set_valveopen(x) == 0) {
@@ -777,7 +783,7 @@ int16_t communication_loop (void) {
 				COMM_DBG.print("start learning for valve ");
 			#endif
 			
-			x = atoi(arg0ptr);
+			x = atoi(argptr[0]);
 
 			if(argcnt == 1 && x >= 0) {
 				if(app_set_valvelearning(x) == 0) {
@@ -807,20 +813,24 @@ int16_t communication_loop (void) {
 			#endif
 
 			if (argcnt >= 3) {
-				x = atoi(arg0ptr);
-				y = atoi(arg1ptr);
+				x = atoi(argptr[0]);
+				y = atoi(argptr[1]);
 
 				if (x>=5 && x<=50 && y>=5 && y<=50) {
-					currentbound_low_fac = atoi(arg0ptr);
-					currentbound_high_fac = atoi(arg1ptr);
-					startOnPower = atoi (arg2ptr);
+					currentbound_low_fac = atoi(argptr[0]);
+					currentbound_high_fac = atoi(argptr[1]);
+					startOnPower = atoi (argptr[2]);
 
 					eep_content.currentbound_low_fac = currentbound_low_fac;
 					eep_content.currentbound_high_fac = currentbound_high_fac;
 					eep_content.startOnPower = startOnPower;
-					if (argcnt == 4) {
-						noOfMinPulses = atoi (arg3ptr);
-						eep_content.noOfMinPulses = noOfMinPulses;	
+					if (argcnt >= 4) {
+						noOfMinCounts = atoi (argptr[3]);
+						eep_content.noOfMinCounts = noOfMinCounts;	
+					}
+					if (argcnt == 5) {
+						maxCalibRetries = atoi (argptr[4]);
+						eep_content.maxCalibRetries = maxCalibRetries;	
 					}
 					eeprom_changed();
 					COMM_SER.println(APP_PRE_SETMOTCHARS);
@@ -856,7 +866,9 @@ int16_t communication_loop (void) {
 			COMM_SER.print(" ");		
 			COMM_SER.print(startOnPower, DEC);
 			COMM_SER.print(" ");		
-			COMM_SER.print(noOfMinPulses, DEC);
+			COMM_SER.print(noOfMinCounts, DEC);
+			COMM_SER.print(" ");		
+			COMM_SER.print(maxCalibRetries, DEC);
 			COMM_SER.println(" ");			
 		} 
 
@@ -866,7 +878,7 @@ int16_t communication_loop (void) {
 		else if(memcmp(APP_PRE_SETDETECTVLV,&cmd[0],5) == 0) {
 			commdbg_print("got detect valve status request");
 
-			x = atoi(arg0ptr);
+			x = atoi(argptr[0]);
 
 			if(argcnt == 1 && x >= 0) {
 				// reset status of all valves so they will be detected again

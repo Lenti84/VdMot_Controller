@@ -127,7 +127,9 @@ int currentbound_low;                     // lower current limit for detection o
 int currentbound_high;                    // upper current limit for detection of end stop
 
 uint8_t startOnPower = 50;
-uint16_t noOfMinPulses = NO_OF_MIN_PULSES;
+uint16_t noOfMinCounts = NO_OF_MIN_COUNTS;
+uint8_t maxCalibRetries = 0;
+uint8_t calibRetries = 0;
 
 //volatile uint32_t revcounter;
 
@@ -298,6 +300,7 @@ void valve_loop () {
                     PSU_ON(); 
                     psuofftimer = 0;
                     waittimer = 50; 
+                    calibRetries = 0;
                   }
                   else if (command == CMD_A_TEST) { 
                     #ifdef motDebug                   
@@ -502,7 +505,6 @@ void valve_loop () {
                   waittimer = 20;
                   m_meancurrent = myvalvemots[valveindex].meancurrent;
                   isr_target = 65535;       // max value to disable stopping
-                
                   break;
 
     case A_LEARN2:  // goto start position
@@ -620,8 +622,22 @@ void valve_loop () {
                       myvalvemots[valveindex].actual_position = 0;    // because valve was closed completely  
                       COMM_DBG.print("A: counts = "); COMM_DBG.println(myvalvemots[valveindex].closing_count); 
                       COMM_DBG.println(myvalvemots[valveindex].opening_count);  
-                      COMM_DBG.println(noOfMinPulses);                  
-                      if ((closing_count<noOfMinPulses) || (opening_count<noOfMinPulses)) myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      COMM_DBG.println(noOfMinCounts);                  
+                      if ((closing_count<noOfMinCounts) || (opening_count<noOfMinCounts)) 
+                      { 
+                        calibRetries++;
+                        if (calibRetries>maxCalibRetries)
+                          myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                        else {
+                          valvestate = A_LEARN1;
+                          PSU_ON(); 
+                          psuofftimer = 0;
+                          waittimer = 50; 
+                          COMM_DBG.print("A: calibration retry  = "); COMM_DBG.println(calibRetries); 
+                          break;
+                        }
+
+                      }
                       else  myvalvemots[valveindex].status = VLV_STATE_IDLE;
                       COMM_DBG.println(myvalvemots[valveindex].status); 
                       myvalvemots[valveindex].calibration = false;

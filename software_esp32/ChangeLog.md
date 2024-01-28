@@ -13,7 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ## [1.3.4]
 ### Added
-- Website :     min. pulse
+- Website :     min. couts
+                max. calibration retries
 
 ## [1.3.3]
 ### Added

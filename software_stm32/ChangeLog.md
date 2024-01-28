@@ -15,7 +15,8 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - faster motor end detection
 ### Added
-- min. pulse in eeprom
+- min. counts in eeprom
+- calibration retries if counts less than min. counts in config
 
 ## [1.3.3]
 ### Added

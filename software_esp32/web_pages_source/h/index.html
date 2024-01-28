@@ -914,7 +914,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 			<table id="cfgValvesTable1" class="tabTable">
 			<tr>
-			<fieldset class="checkboxgroup2" style="height:16em;" id="cfgValvesTableFieldSet1">
+			<fieldset class="checkboxgroup2" style="height:17em;" id="cfgValvesTableFieldSet1">
 				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
 				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour time of next calibration"> hour time</label>
@@ -926,12 +926,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
 				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
 			</fieldset>
-			<fieldset class="checkboxgroup2" style="height:7em;" id="cfgValvesTableFieldSet2">
+			<fieldset class="checkboxgroup2" style="height:8em;" id="cfgValvesTableFieldSet2">
 				<legend>Characteristic</legend>	
 				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Open  </label>
 				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> Close </label>
 				<label><input type="number" min=0 max=100 maxlength=3 step=1 style="width:60px" id="vCfg-StartOnPower" name="vCfg-StartOnPower" title="Start valves % at power on"> Start % </label>
-				<label><input type="number" min=0 max=65535 maxlength=5 step=1 style="width:60px" id="vCfg-NoOfMinPulses" name="vCfg-NoOfMinPulses" title="Number of minimum pulses detetced during calibration"> min. Pulses </label>
+				<label><input type="number" min=0 max=60000 maxlength=5 step=1 style="width:60px" id="vCfg-noOfMinCounts" name="vCfg-noOfMinCounts" title="Number of minimum counts detetced during calibration"> Min. Counts </label>
+				<label><input type="number" min=0 max=2 maxlength=5 step=1 style="width:60px" id="vCfg-maxCalibRetries" name="vCfg-maxCalibRetries" title="Max. number of consecutive calibration retries if minimum counts detected"> Max. Calib. Retries </label>
+	
 			</fieldset>
 			</tr>
 			</table>
@@ -1062,7 +1064,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				<fieldset class="checkboxgroup1" style="height:14em;" id="cfgValvesTableFieldSet2">
 					<legend>Send reasons</legend>	
 					<label><input type="checkbox" id="MsgCfg-ReasonValveFailed" name="theGroup" title="If a time out occured. Maybe the motor is dropped">Valve failed </label>
-					<label><input type="checkbox" id="MsgCfg-ReasonValveBlocked" name="theGroup" title="If the valve is blocked (number of detected pulses less than motor config)">Valve blocked </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonValveBlocked" name="theGroup" title="If the valve is blocked (number of detected counts less than motor config)">Valve blocked </label>
 					<label><input type="checkbox" id="MsgCfg-ReasonValveDetect" name="theGroup">Active valve not detected </label>
 					<label><input type="checkbox" id="MsgCfg-ReasonReset" name="theGroup">Reset detected </label>
 					<label><input type="checkbox" id="MsgCfg-ReasonMQTT" name="theGroup">MQTT failed,after<input type="number" class="form-input3" maxlength="3" style="width:3em;" min="1" max="999" id="protcfg-timeOutMqtt" name="protcfg-timeOutMqtt" title="Timeout (min) to check mqtt connection to send messenge"/>min</label>
@@ -2555,7 +2557,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id ("vCfg-StartOnPower").onchange = function (){
 				motorCharsHasChanged=true;
 			}
-			id ("vCfg-NoOfMinPulses").onchange = function (){
+			id ("vCfg-noOfMinCounts").onchange = function (){
+				motorCharsHasChanged=true;
+			}
+			id ("vCfg-maxCalibRetries").onchange = function (){
 				motorCharsHasChanged=true;
 			}
 			id ("vCfg-movCalib").onchange = function (){
@@ -2957,7 +2962,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 					motor.lowC=Math.round(id("vCfg-lowC").value*10);
 					motor.highC=Math.round(id("vCfg-highC").value*10);
 					motor.startOnPower=id("vCfg-StartOnPower").value;
-					motor.noOfMinPulses=id("vCfg-NoOfMinPulses").value;
+					motor.noOfMinCounts=id("vCfg-noOfMinCounts").value;
+					motor.maxCalRetries= id("vCfg-maxCalibRetries").value;
 					valvesCfg.motor=motor;
 				}
 			}
@@ -3236,7 +3242,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id("vCfg-lowC").value=cfgMotorJson.motor.lowC/10;
 			id("vCfg-highC").value=cfgMotorJson.motor.highC/10;
 			id("vCfg-StartOnPower").value=cfgMotorJson.motor.startOnPower;
-			id("vCfg-NoOfMinPulses").value=cfgMotorJson.motor.noOfMinPulses;
+			id("vCfg-noOfMinCounts").value=cfgMotorJson.motor.noOfMinCounts;
+			id("vCfg-maxCalibRetries").value=cfgMotorJson.motor.maxCalRetries;
 		}
 		
 		function fillCfgValvesControlTable (cfgValvesControlJson) {
