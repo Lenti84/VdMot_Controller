@@ -528,12 +528,12 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
     StmApp.motorChars.startOnPower=doc["motor"]["startOnPower"];
     StmApp.setMotorCharsActive=true;
   }
-  if (!doc["motor"]["noOfMinCounts"].isNull()) {
-    StmApp.motorChars.noOfMinCounts=doc["motor"]["noOfMinCounts"];
+  if (!doc["motor"]["noOfMinCount"].isNull()) {
+    StmApp.motorChars.noOfMinCount=doc["motor"]["noOfMinCount"];
     StmApp.setMotorCharsActive=true;
   }
-  if (!doc["motor"]["maxCalRetries"].isNull()) {
-    StmApp.motorChars.maxCalibRetries=doc["motor"]["maxCalRetries"];
+  if (!doc["motor"]["maxCalReps"].isNull()) {
+    StmApp.motorChars.maxCalReps=doc["motor"]["maxCalReps"];
     StmApp.setMotorCharsActive=true;
   }
   if (StmApp.setMotorCharsActive) {

@@ -74,8 +74,8 @@ typedef struct {
   uint16_t maxHighCurrent;
   uint16_t maxLowCurrent;
   uint8_t startOnPower;
-  uint16_t noOfMinCounts;
-  uint8_t maxCalibRetries;
+  uint16_t noOfMinCount;
+  uint8_t maxCalReps;
 } MOTOR_CHARS;
 
 

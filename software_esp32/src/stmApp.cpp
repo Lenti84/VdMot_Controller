@@ -294,7 +294,7 @@ void CStmApp::setMotorChars()
     waitForFinishQueue=true;
     waitEEPFinished=true;
     app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent)+
-        ARG_DELIMITER+String(motorChars.startOnPower)+ARG_DELIMITER+String(motorChars.noOfMinCounts)+ARG_DELIMITER+String(motorChars.maxCalibRetries));   
+        ARG_DELIMITER+String(motorChars.startOnPower)+ARG_DELIMITER+String(motorChars.noOfMinCount)+ARG_DELIMITER+String(motorChars.maxCalReps));   
     fastQueueMode=true;
 }
 
@@ -780,10 +780,10 @@ void  CStmApp::app_check_data()
                 setupStartPosition(motorChars.startOnPower);
             }
             if(argcnt >= 4) {
-                motorChars.noOfMinCounts=atoi(argptr[3]);
+                motorChars.noOfMinCount=atoi(argptr[3]);
             }
             if(argcnt == 5) {
-                motorChars.maxCalibRetries=atoi(argptr[4]);
+                motorChars.maxCalReps=atoi(argptr[4]);
             }
             appState=APP_IDLE;
         }

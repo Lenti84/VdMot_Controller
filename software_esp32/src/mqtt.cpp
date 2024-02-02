@@ -676,10 +676,10 @@ void CMqtt::publish_valves () {
                     lastValveValues[x].state=valveStates[x].thisState;
                 }
 
-                // calibration retries
+                // calibration repetitions
                 if ((lastValveValues[x].calibRetries!=StmApp.actuators[x].calibRetries) || forcePublish || lastValveValues[x].publishTimeOut) {
                     topicstr[len] = '\0';
-                    strncat(topicstr, "/calibration/retries",sizeof(topicstr) - strlen (topicstr) - 1);
+                    strncat(topicstr, "/calibration/repetitions",sizeof(topicstr) - strlen (topicstr) - 1);
                     itoa(StmApp.actuators[x].calibRetries, valstr, 10);
                     publishValue(topicstr, valstr);
                     lastValveValues[x].calibRetries=StmApp.actuators[x].calibRetries;
@@ -697,21 +697,21 @@ void CMqtt::publish_valves () {
                     // counts
                     if ((lastValveValues[x].openCount!=StmApp.actuators[x].opening_count) || forcePublish || lastValveValues[x].publishTimeOut) {
                         topicstr[len] = '\0';
-                        strncat(topicstr, "/diag/openCounts",sizeof(topicstr) - strlen (topicstr) - 1);
+                        strncat(topicstr, "/diag/openCount",sizeof(topicstr) - strlen (topicstr) - 1);
                         itoa(StmApp.actuators[x].opening_count, valstr, 10);
                         publishValue(topicstr, valstr);
                         lastValveValues[x].openCount=StmApp.actuators[x].opening_count;
                     }
                     if ((lastValveValues[x].closeCount!=StmApp.actuators[x].closing_count) || forcePublish || lastValveValues[x].publishTimeOut) {
                         topicstr[len] = '\0';
-                        strncat(topicstr, "/diag/closeCounts",sizeof(topicstr) - strlen (topicstr) - 1);
+                        strncat(topicstr, "/diag/closeCount",sizeof(topicstr) - strlen (topicstr) - 1);
                         itoa(StmApp.actuators[x].closing_count, valstr, 10);
                         publishValue(topicstr, valstr);
                         lastValveValues[x].closeCount=StmApp.actuators[x].closing_count;
                     }
                     if ((lastValveValues[x].deadzoneCount!=StmApp.actuators[x].deadzone_count) || forcePublish || lastValveValues[x].publishTimeOut) {
                         topicstr[len] = '\0';
-                        strncat(topicstr, "/diag/deadZoneCounts",sizeof(topicstr) - strlen (topicstr) - 1);
+                        strncat(topicstr, "/diag/deadZoneCount",sizeof(topicstr) - strlen (topicstr) - 1);
                         itoa(StmApp.actuators[x].deadzone_count, valstr, 10);
                         publishValue(topicstr, valstr);
                         lastValveValues[x].deadzoneCount=StmApp.actuators[x].deadzone_count;

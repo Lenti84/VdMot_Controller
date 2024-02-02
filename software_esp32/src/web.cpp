@@ -176,8 +176,8 @@ String CWeb::getMotorConfig (MOTOR_CHARS motorConfig)
         result +=   "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
                     "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
                     "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
-                    "\"noOfMinCounts\":"+String(motorConfig.noOfMinCounts)+ "," +
-                    "\"maxCalRetries\":"+String(motorConfig.maxCalibRetries)+ "," +
+                    "\"noOfMinCount\":"+String(motorConfig.noOfMinCount)+ "," +
+                    "\"maxCalReps\":"+String(motorConfig.maxCalReps)+ "," +
                     "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}}";
   return result;  
 }
