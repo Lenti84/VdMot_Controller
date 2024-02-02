@@ -869,7 +869,7 @@
 		<div class="tabpframe"> 
 		<table id="protcfg-Broker1" style="display:none;" class="tabTable1">
 			<tr>
-				<fieldset id="protcfg-Broker2" class="checkboxgroup2" style="height:12em;display:none;">
+				<fieldset id="protcfg-Broker2" class="checkboxgroup2" style="height:14em;display:none;">
 					<legend>Publish</legend>
 					<label><input type="checkbox" id="protcfg-pubRetained" name="theGroupP" title="Publish values retained">Retained </label>
 					<label><input type="checkbox" id="protcfg-pubPlainText" name="theGroupP" title="Publish values as plaintext instead 0/1">Plaintext </label>
@@ -877,6 +877,7 @@
 					<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
 					<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
 					<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
+					<label><input type="checkbox" id="protcfg-pubDiag" name="theGroupP">Diag </label>
 				</fieldset>
 			</tr>
 
@@ -2864,6 +2865,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				protCfg.pubAllTemps = id("protcfg-pubAllTemps").checked ? 1 : 0;
 				protCfg.pubPathAsRoot = id("protcfg-pubPathAsRoot").checked ? 1 : 0;
 				protCfg.pubUpTime = id("protcfg-pubUpTime").checked ? 1 : 0;
+				protCfg.pubDiag = id("protcfg-pubDiag").checked ? 1 : 0;
 				protCfg.pubOnChange = id("protcfg-pubOnChange").checked ? 1 : 0;
 				protCfg.pubRetained = id("protcfg-pubRetained").checked ? 1 : 0;
 				protCfg.pubPlainText = id("protcfg-pubPlainText").checked ? 1 : 0;
@@ -3181,7 +3183,24 @@ Publish on change on server side is not recommended with this option">tValue aft
 				} else 
 					windowImageObjects[index].childNodes[0].nodeValue = States[item.state];
 				
-				if ((item.state===4) || (item.state===9)) valvesTable.rows[index+1].cells[4].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[4].style.backgroundColor="gray";
+				switch (item.state) {
+					case 4 :
+					case 9 : {
+						valvesTable.rows[index+1].cells[4].style.backgroundColor="red";
+						valvesTable.rows[index+1].cells[4].style.color="white";
+						break;
+					}
+					default : {
+						if (item.cr>0) {
+							valvesTable.rows[index+1].cells[4].style.backgroundColor="yellow";
+							valvesTable.rows[index+1].cells[4].style.color="blue";
+						} else {
+							valvesTable.rows[index+1].cells[4].style.backgroundColor="gray";
+							valvesTable.rows[index+1].cells[4].style.color="white";
+						}
+						break;
+					}
+				}
 				
 				valvesTable.rows[index+1].cells[7].textContent = item.moves;
 				valvesTable.rows[index+1].cells[8].textContent = item.oc;
@@ -3489,6 +3508,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id("protcfg-pubAllTemps").checked = dataProtConfig["pubAllTemps"];
 				id("protcfg-pubPathAsRoot").checked = dataProtConfig["pubPathAsRoot"];
 				id("protcfg-pubUpTime").checked = dataProtConfig["pubUpTime"];
+				id("protcfg-pubDiag").checked = dataProtConfig["pubDiag"];
 				id("protcfg-pubOnChange").checked = dataProtConfig["pubOnChange"];
 				id ("protcfg-pubPlainText").checked = dataProtConfig["pubPlainText"];
 				id ("protcfg-pubRetained").checked = dataProtConfig["pubRetained"];

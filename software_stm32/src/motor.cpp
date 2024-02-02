@@ -175,6 +175,7 @@ byte valve_setup () {
     myvalvemots[x].target_position = startOnPower;
     myvalvemots[x].meancurrent = 20;       // 20 mA
     myvalvemots[x].scaler = 89;
+    myvalvemots[x].calibRetries = 0;
   }
 
   valvestate = A_INIT;
@@ -301,6 +302,7 @@ void valve_loop () {
                     psuofftimer = 0;
                     waittimer = 50; 
                     calibRetries = 0;
+                    myvalvemots[valveindex].calibRetries=0;
                   }
                   else if (command == CMD_A_TEST) { 
                     #ifdef motDebug                   
@@ -626,6 +628,7 @@ void valve_loop () {
                       if ((closing_count<noOfMinCounts) || (opening_count<noOfMinCounts)) 
                       { 
                         calibRetries++;
+                        myvalvemots[valveindex].calibRetries++;
                         if (calibRetries>maxCalibRetries)
                           myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
                         else {

@@ -91,6 +91,7 @@ typedef struct  {
   uint8_t publishOnChange : 1;
   uint8_t publishRetained : 1;
   uint8_t publishPlainText : 1;
+  uint8_t publishDiag : 1;
 } VDM_PROTOCOL_CONFIG_FLAGS;
 
 typedef struct  {

@@ -71,6 +71,7 @@ struct valvemotor {
   uint8_t calibTime;
   CALIBSTATE calibState;
   uint8_t connected;
+  uint8_t calibRetries;
 };
 
 extern valvemotor myvalvemots[ACTUATOR_COUNT];

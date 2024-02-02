@@ -370,7 +370,9 @@ int16_t communication_loop (void) {
 					strcat(sendbuffer, " ");
 					itoa(myvalvemots[x].deadzone_count, valbuffer, 10);  
 					strcat(sendbuffer, valbuffer);
-					
+					strcat(sendbuffer, " ");
+					itoa(myvalvemots[x].calibRetries, valbuffer, 10);  
+					strcat(sendbuffer, valbuffer);
 					// end
 					strcat(sendbuffer, " ");
 					COMM_SER.println(sendbuffer);			

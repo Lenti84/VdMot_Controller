@@ -146,6 +146,7 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"pubAllTemps\":"+String(protConfig.protocolFlags.publishAllTemps)+","+
                     "\"pubPathAsRoot\":"+String(protConfig.protocolFlags.publishPathAsRoot)+","+
                     "\"pubUpTime\":"+String(protConfig.protocolFlags.publishUpTime)+","+
+                    "\"pubDiag\":"+String(protConfig.protocolFlags.publishDiag)+","+
                     "\"keepAliveTime\":"+String(protConfig.keepAliveTime)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
@@ -345,7 +346,8 @@ String CWeb::getValvesStatus()
                  "\"moves\":" + String(StmApp.actuators[x].movements)+ ","+
                  "\"oc\":" + String(StmApp.actuators[x].opening_count)+ ","+
                  "\"cc\":" + String(StmApp.actuators[x].closing_count)+ ","+
-                 "\"dc\":" + String(StmApp.actuators[x].deadzone_count);
+                 "\"dc\":" + String(StmApp.actuators[x].deadzone_count)+ ","+
+                 "\"cr\":" + String(StmApp.actuators[x].calibRetries);
 
                  if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
                   if (StmApp.actuators[x].tIdx1>0) { 

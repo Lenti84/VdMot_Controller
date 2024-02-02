@@ -15,6 +15,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Website :     min. couts
                 max. calibration retries
+                publish diag information
+- MQTT :        counts in topic diag
+### Breaking Change
+- MQTT :        meancur is now in topic diag/meancurrent
 
 ## [1.3.3]
 ### Added

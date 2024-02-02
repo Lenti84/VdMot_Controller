@@ -109,6 +109,7 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.protocolFlags.publishOnChange = false;
   configFlash.protConfig.protocolFlags.publishRetained = false;
   configFlash.protConfig.protocolFlags.publishPlainText = false;
+  configFlash.protConfig.protocolFlags.publishDiag = false;
   configFlash.protConfig.keepAliveTime = 60;
   configFlash.protConfig.mqttConfig.flags.timeoutTSActive = false;
   configFlash.protConfig.mqttConfig.flags.timeoutDSActive = false;
@@ -477,6 +478,7 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["pubOnChange"].isNull()) configFlash.protConfig.protocolFlags.publishOnChange = doc["pubOnChange"];
   if (!doc["pubRetained"].isNull()) configFlash.protConfig.protocolFlags.publishRetained = doc["pubRetained"];
   if (!doc["pubPlainText"].isNull()) configFlash.protConfig.protocolFlags.publishPlainText = doc["pubPlainText"];
+  if (!doc["pubDiag"].isNull()) configFlash.protConfig.protocolFlags.publishDiag = doc["pubDiag"];
   if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
   if (!doc["pubMinDelay"].isNull()) configFlash.protConfig.minBrokerDelay = doc["pubMinDelay"];
   if (!doc["mqttTOTSActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutTSActive = doc["mqttTOTSActive"];
