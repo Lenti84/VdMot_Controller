@@ -31,7 +31,8 @@ Please proceed according following steps:
         - X23:Pin3 (TX)  -> FT232 RX 
     2. Short jumper X22 - this brings ESP32 into flash mode
     3. Power up VdMot Controller
-    4. Start upload directly from Platformio in Visual Studio Code. 
+    4. Remove jumper X22
+    5. Start upload directly from Platformio in Visual Studio Code.
 
 
 
@@ -55,7 +56,8 @@ Please proceed according following steps:
         - X23:Pin3 (TX)  -> FT232 RX 
     2. Short jumper X22 - this brings ESP32 into flash mode
     3. Power up VdMot Controller
-    4. Click start
+    4. Remove jumper X22
+    5. Click start
     
 
 ## Initial STM32 Flash via VdMot Controller
@@ -84,7 +86,7 @@ Flashing can be done fully remote by using the web UI. No need to crawl to the h
 
 Please proceed according following steps:
 
-    1. Jumper X20 has to be shorted
+    1. Jumper X20 has to be shorted (simply leave it plugged as it is needed for every further flash update)
     2. Power up VdMot Controller
     3. Open VdMot Controller website and goto "Update"
     4. Click on "Update STM32"
