@@ -50,6 +50,7 @@
 #include "VdmNet.h"
 #include "VdmSystem.h"
 #include "VdmConfig.h"
+#include "VdmTask.h"
 #include "stm32.h"
 #include "Queue.h"
 #include "Messenger.h"
@@ -100,6 +101,7 @@ CStmApp::CStmApp()
     waitEEPFinished=false;
     stmInitState=STM_INIT_NOT_STARTED;
     fastGetOneWire=false;
+    oneWireAllRead=false;
     
 }
 
@@ -118,6 +120,7 @@ void  CStmApp::app_setup() {
         actuators[x].tIdx2 = 0;
         actuators[x].lastState = actuators[x].state;
         actuators[x].worked = false;
+        actuators[x].calibRetries = 0;
    }
 
     for (uint8_t x = 0; x<ACTUATOR_COUNT; x++) {
@@ -290,7 +293,8 @@ void CStmApp::setMotorChars()
 {
     waitForFinishQueue=true;
     waitEEPFinished=true;
-    app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent)+ARG_DELIMITER+String(motorChars.startOnPower));   
+    app_cmd(APP_PRE_SETMOTCHARS,String(motorChars.maxLowCurrent)+ARG_DELIMITER+String(motorChars.maxHighCurrent)+
+        ARG_DELIMITER+String(motorChars.startOnPower)+ARG_DELIMITER+String(motorChars.noOfMinCount)+ARG_DELIMITER+String(motorChars.maxCalReps));   
     fastQueueMode=true;
 }
 
@@ -550,13 +554,15 @@ void  CStmApp::app_check_data()
                     actuators[idx].calibration = (val8>=0x80);
                     actuators[idx].temp1 = ConvertCF(atoi(argptr[4]))+getTOffset(actuators[idx].tIdx1);
                     actuators[idx].temp2 =  ConvertCF(atoi(argptr[5]))+getTOffset(actuators[idx].tIdx2);
-                    if (argcnt == 10) {
+                    if (argcnt >= 10) {
                         actuators[idx].movements = atoi(argptr[6]);   
                         actuators[idx].opening_count = atoi(argptr[7]);
                         actuators[idx].closing_count = atoi(argptr[8]);
                         actuators[idx].deadzone_count = atoi(argptr[9]); 
                     }
-
+                    if (argcnt >= 11) {
+                        actuators[idx].calibRetries = atoi(argptr[10]); 
+                    }
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                         syslog.log(LOG_DEBUG, "STMApp:got valve data #"+String(argptr[0])+" pos:"+String(argptr[1])+
                         " mean:"+String(argptr[2])+" state:"+String(argptr[3])+" t1:"+String(argptr[4])+" t2:"+String(argptr[5]));
@@ -570,11 +576,11 @@ void  CStmApp::app_check_data()
                                 actuators[idx].worked = true;
                                 break;    
                             }
-                            case VLV_STATE_BLOCKS:
+                            case VLV_STATE_FAILED:
                             {
-                                if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.valveBlocked) {
+                                if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.valveFailed) {
                                     String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : Valve" ;
-                                    String s = "Valve "+String(idx+1)+" is blocked";
+                                    String s = "Valve "+String(idx+1)+" failed";
                                     Messenger.sendMessage (title.c_str(),s.c_str());
                                 }
                                 break;
@@ -587,6 +593,15 @@ void  CStmApp::app_check_data()
                                         String s = "Valve "+String(idx+1)+" is not connected";
                                         Messenger.sendMessage (title.c_str(),s.c_str());
                                     }
+                                }
+                                break;
+                            }
+                            case VLV_STATE_BLOCKS:
+                            {
+                                if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.valveBlocked) {
+                                    String title = String(VdmConfig.configFlash.systemConfig.stationName) + " : Valve" ;
+                                    String s = "Valve "+String(idx+1)+" is blocked";
+                                    Messenger.sendMessage (title.c_str(),s.c_str());
                                 }
                                 break;
                             }
@@ -626,7 +641,10 @@ void  CStmApp::app_check_data()
                 }
                 tempsCount=tempsPrivCount;
             }
-            if (tempsPrivCount==0) fastGetOneWire=false;
+            if (tempsPrivCount==0) {
+                fastGetOneWire=false;
+               // oneWireAllRead=true;
+            }
             appState=APP_IDLE;
         }
 
@@ -649,6 +667,7 @@ void  CStmApp::app_check_data()
                 if (tempIndex>=tempsCount) {  // all temp sensors read
                     tempIndex=0;
                     fastGetOneWire=false;
+                    if (VdmTask.piTaskInitiated) oneWireAllRead=true;
                 }
                 #ifdef AppDebug
                     UART_DBG.println("read onwire "+String(tempIndex)+":"+String(fastGetOneWire));
@@ -663,6 +682,7 @@ void  CStmApp::app_check_data()
                 if (tempIndex>=tempsCount) {  // all temp sensors read
                     tempIndex=0;
                     fastGetOneWire=false;
+                    if (VdmTask.piTaskInitiated) oneWireAllRead=true;
                 }
             }
             appState=APP_IDLE;
@@ -751,15 +771,19 @@ void  CStmApp::app_check_data()
         }
 
         else if(memcmp(APP_PRE_GETMOTCHARS,cmd,5) == 0) {
-            if(argcnt == 2) {
+            if(argcnt >= 2) {
                 motorChars.maxLowCurrent=atoi(argptr[0]);
                 motorChars.maxHighCurrent=atoi(argptr[1]);
             }
-            if(argcnt == 3) {
-                motorChars.maxLowCurrent=atoi(argptr[0]);
-                motorChars.maxHighCurrent=atoi(argptr[1]);
+            if(argcnt >= 3) {
                 motorChars.startOnPower=atoi(argptr[2]);
                 setupStartPosition(motorChars.startOnPower);
+            }
+            if(argcnt >= 4) {
+                motorChars.noOfMinCount=atoi(argptr[3]);
+            }
+            if(argcnt == 5) {
+                motorChars.maxCalReps=atoi(argptr[4]);
             }
             appState=APP_IDLE;
         }

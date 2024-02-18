@@ -42,6 +42,7 @@ struct valve myvalves[ACTUATOR_COUNT];
 unsigned int learning_time = LEARN_AFTER_TIME_DEFAULT;
 unsigned int learning_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
 
+
 unsigned int reset_request = 0;
 
 int16_t app_setup (void) { 
@@ -71,6 +72,12 @@ int16_t app_setup (void) {
     COMM_DBG.print("learning_movements: "); 
     COMM_DBG.println(learning_movements, DEC);
   #endif
+
+  noOfMinCounts = eep_content.noOfMinCounts;
+  if (noOfMinCounts > 60000) noOfMinCounts = 3000;
+  
+  maxCalibRetries = eep_content.maxCalibRetries;
+  if (maxCalibRetries > 2) maxCalibRetries = 2; 
   return 0;
 }
 
@@ -132,7 +139,7 @@ int16_t app_loop (void) {
                 myvalvemots[lastvalve].calibState = calibInProgress;
                 appsetaction(CMD_A_LEARN,lastvalve,0);                  
               }
-              else if(myvalvemots[lastvalve].status != VLV_STATE_BLOCKS)
+              else if ((myvalvemots[lastvalve].status != VLV_STATE_FAILED) && (myvalvemots[lastvalve].status != VLV_STATE_BLOCKS))
               {
                 // should valve be opened
                 if(myvalvemots[lastvalve].target_position > myvalvemots[lastvalve].actual_position) {                  

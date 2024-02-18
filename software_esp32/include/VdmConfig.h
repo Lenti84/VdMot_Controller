@@ -91,6 +91,7 @@ typedef struct  {
   uint8_t publishOnChange : 1;
   uint8_t publishRetained : 1;
   uint8_t publishPlainText : 1;
+  uint8_t publishDiag : 1;
 } VDM_PROTOCOL_CONFIG_FLAGS;
 
 typedef struct  {
@@ -187,12 +188,13 @@ typedef struct  {
 } VDM_MSG_ACTIVE_CONFIG_FLAGS;
 
 typedef struct  {
-  uint8_t valveBlocked : 1 ;
+  uint8_t valveFailed : 1 ;
   uint8_t notDetect : 1;
   uint8_t mqttTimeOut : 1;
   uint8_t reset : 1;
   uint8_t ds18Failed : 1;
   uint8_t tValueFailed : 1;
+  uint8_t valveBlocked : 1;
 } VDM_MSG_REASON_CONFIG_FLAGS;
 
 typedef struct  {

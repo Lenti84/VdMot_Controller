@@ -72,6 +72,11 @@ typedef struct {
   bool publishNow;
   bool publishTimeOut;
   uint32_t lasttValuets;
+  uint8_t calibRetries;
+  uint32_t openCount;
+  uint32_t closeCount;
+  int32_t deadzoneCount; 
+  uint32_t movements;
 } LASTVALVEVALUES; 
 
 typedef struct {

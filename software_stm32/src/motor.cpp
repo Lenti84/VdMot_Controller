@@ -127,7 +127,9 @@ int currentbound_low;                     // lower current limit for detection o
 int currentbound_high;                    // upper current limit for detection of end stop
 
 uint8_t startOnPower = 50;
-
+uint16_t noOfMinCounts = NO_OF_MIN_COUNTS;
+uint8_t maxCalibRetries = 0;
+uint8_t calibRetries = 0;
 
 //volatile uint32_t revcounter;
 
@@ -173,6 +175,7 @@ byte valve_setup () {
     myvalvemots[x].target_position = startOnPower;
     myvalvemots[x].meancurrent = 20;       // 20 mA
     myvalvemots[x].scaler = 89;
+    myvalvemots[x].calibRetries = 0;
   }
 
   valvestate = A_INIT;
@@ -298,6 +301,8 @@ void valve_loop () {
                     PSU_ON(); 
                     psuofftimer = 0;
                     waittimer = 50; 
+                    calibRetries = 0;
+                    myvalvemots[valveindex].calibRetries=0;
                   }
                   else if (command == CMD_A_TEST) { 
                     #ifdef motDebug                   
@@ -419,7 +424,7 @@ void valve_loop () {
                       COMM_DBG.println("A: opening valve failed, timeout");
                     #endif
                     valvestate = A_IDLE;
-                    myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                    myvalvemots[valveindex].status = VLV_STATE_FAILED;
                     myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                   }                                     
                   break;
@@ -486,7 +491,7 @@ void valve_loop () {
                       COMM_DBG.println("A: closing valve failed, timeout");
                     #endif
                     valvestate = A_IDLE;
-                    myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                    myvalvemots[valveindex].status = VLV_STATE_FAILED;
                     myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                   }                   
                   break;                  
@@ -502,7 +507,6 @@ void valve_loop () {
                   waittimer = 20;
                   m_meancurrent = myvalvemots[valveindex].meancurrent;
                   isr_target = 65535;       // max value to disable stopping
-                
                   break;
 
     case A_LEARN2:  // goto start position
@@ -536,7 +540,7 @@ void valve_loop () {
                         COMM_DBG.println("A: closing valve failed, timeout");
                       #endif
                       valvestate = A_IDLE;
-                      myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      myvalvemots[valveindex].status = VLV_STATE_FAILED;
                       myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                     }           
                   }               
@@ -581,7 +585,7 @@ void valve_loop () {
                         COMM_DBG.println("A: opening valve failed, timeout");
                       #endif
                       valvestate = A_IDLE;
-                      myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      myvalvemots[valveindex].status = VLV_STATE_FAILED;
                       myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                     }                
                   }              
@@ -596,7 +600,6 @@ void valve_loop () {
                         COMM_DBG.println("A: closed valve for learning");                  
                       #endif
                       closing_count = isr_counter;  
-
                       if(m_meancurrent > 0) {
                         #ifdef motDebug
                           COMM_DBG.print("A: learned mean current = "); 
@@ -618,8 +621,28 @@ void valve_loop () {
                       myvalvemots[valveindex].opening_count = opening_count;
                       myvalvemots[valveindex].deadzone_count = deadzone_count;
                       myvalvemots[valveindex].scaler = scaler;
-                      myvalvemots[valveindex].actual_position = 0;    // because valve was closed completely                    
-                      myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                      myvalvemots[valveindex].actual_position = 0;    // because valve was closed completely  
+                      COMM_DBG.print("A: counts = "); COMM_DBG.println(myvalvemots[valveindex].closing_count); 
+                      COMM_DBG.println(myvalvemots[valveindex].opening_count);  
+                      COMM_DBG.println(noOfMinCounts);                  
+                      if ((closing_count<noOfMinCounts) || (opening_count<noOfMinCounts)) 
+                      { 
+                        calibRetries++;
+                        myvalvemots[valveindex].calibRetries++;
+                        if (calibRetries>maxCalibRetries)
+                          myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                        else {
+                          valvestate = A_LEARN1;
+                          PSU_ON(); 
+                          psuofftimer = 0;
+                          waittimer = 50; 
+                          COMM_DBG.print("A: calibration retry  = "); COMM_DBG.println(calibRetries); 
+                          break;
+                        }
+
+                      }
+                      else  myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                      COMM_DBG.println(myvalvemots[valveindex].status); 
                       myvalvemots[valveindex].calibration = false;
                       myvalvemots[valveindex].calibState=calibIdle;
                       valveindex = 255;                                                                                  
@@ -641,7 +664,7 @@ void valve_loop () {
                         COMM_DBG.println("A: closing valve failed, timeout");
                       #endif
                       valvestate = A_IDLE;
-                      myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      myvalvemots[valveindex].status = VLV_STATE_FAILED;
                       myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                     }        
                   }           

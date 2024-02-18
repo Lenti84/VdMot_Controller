@@ -109,6 +109,7 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.protocolFlags.publishOnChange = false;
   configFlash.protConfig.protocolFlags.publishRetained = false;
   configFlash.protConfig.protocolFlags.publishPlainText = false;
+  configFlash.protConfig.protocolFlags.publishDiag = false;
   configFlash.protConfig.keepAliveTime = 60;
   configFlash.protConfig.mqttConfig.flags.timeoutTSActive = false;
   configFlash.protConfig.mqttConfig.flags.timeoutDSActive = false;
@@ -164,9 +165,10 @@ void CVdmConfig::clearConfig()
   configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=0;
   configFlash.messengerConfig.reason.reasonFlags.notDetect=0;
   configFlash.messengerConfig.reason.reasonFlags.reset=0;
-  configFlash.messengerConfig.reason.reasonFlags.valveBlocked=0;
+  configFlash.messengerConfig.reason.reasonFlags.valveFailed=0;
   configFlash.messengerConfig.reason.reasonFlags.ds18Failed=0;
   configFlash.messengerConfig.reason.reasonFlags.tValueFailed=0;
+  configFlash.messengerConfig.reason.reasonFlags.valveBlocked=0;
   configFlash.messengerConfig.reason.mqttTimeOutTime=10;
   memset(configFlash.messengerConfig.pushover.title,0,sizeof(configFlash.messengerConfig.pushover.title));
   memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
@@ -476,6 +478,7 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["pubOnChange"].isNull()) configFlash.protConfig.protocolFlags.publishOnChange = doc["pubOnChange"];
   if (!doc["pubRetained"].isNull()) configFlash.protConfig.protocolFlags.publishRetained = doc["pubRetained"];
   if (!doc["pubPlainText"].isNull()) configFlash.protConfig.protocolFlags.publishPlainText = doc["pubPlainText"];
+  if (!doc["pubDiag"].isNull()) configFlash.protConfig.protocolFlags.publishDiag = doc["pubDiag"];
   if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
   if (!doc["pubMinDelay"].isNull()) configFlash.protConfig.minBrokerDelay = doc["pubMinDelay"];
   if (!doc["mqttTOTSActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutTSActive = doc["mqttTOTSActive"];
@@ -525,7 +528,14 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
     StmApp.motorChars.startOnPower=doc["motor"]["startOnPower"];
     StmApp.setMotorCharsActive=true;
   }
-  
+  if (!doc["motor"]["noOfMinCount"].isNull()) {
+    StmApp.motorChars.noOfMinCount=doc["motor"]["noOfMinCount"];
+    StmApp.setMotorCharsActive=true;
+  }
+  if (!doc["motor"]["maxCalReps"].isNull()) {
+    StmApp.motorChars.maxCalReps=doc["motor"]["maxCalReps"];
+    StmApp.setMotorCharsActive=true;
+  }
   if (StmApp.setMotorCharsActive) {
     StmApp.setMotorChars();
     StmApp.setMotorCharsActive=false;
@@ -619,13 +629,14 @@ void CVdmConfig::postSysCfg (JsonObject doc)
 
 void CVdmConfig::postMessengerCfg (JsonObject doc)
 {
-  if (!doc["reason"]["valveBlocked"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveBlocked=doc["reason"]["valveBlocked"];
+  if (!doc["reason"]["valveFailed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveFailed=doc["reason"]["valveFailed"];
   if (!doc["reason"]["notDetect"].isNull()) configFlash.messengerConfig.reason.reasonFlags.notDetect=doc["reason"]["notDetect"];
   if (!doc["reason"]["mqttTimeOut"].isNull()) configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=doc["reason"]["mqttTimeOut"];
   if (!doc["reason"]["mqttTimeOutTime"].isNull()) configFlash.messengerConfig.reason.mqttTimeOutTime=doc["reason"]["mqttTimeOutTime"];
   if (!doc["reason"]["reset"].isNull()) configFlash.messengerConfig.reason.reasonFlags.reset=doc["reason"]["reset"];
   if (!doc["reason"]["ds18Failed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.ds18Failed=doc["reason"]["ds18Failed"];
   if (!doc["reason"]["tValueFailed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.tValueFailed=doc["reason"]["tValueFailed"];
+   if (!doc["reason"]["valveBlocked"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveBlocked=doc["reason"]["valveBlocked"];
 
   if (!doc["PO"]["active"].isNull()) configFlash.messengerConfig.activeFlags.pushOver=doc["PO"]["active"];
   if (!doc["PO"]["appToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.appToken,doc["PO"]["appToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.appToken));

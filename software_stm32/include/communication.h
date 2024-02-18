@@ -72,7 +72,8 @@ extern int16_t communication_loop (void);
 #define APP_PRE_GETACTUALPOS       	"gactp"     // not implemented
 #define APP_PRE_GETMEANCURR        	"gmenc"     // not implemented
 
-
+#define NO_OF_ARGS                   5
+#define ARG_SIZE                     30
 
 #endif //_COMMUNICATION_H
 

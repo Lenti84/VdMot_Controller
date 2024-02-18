@@ -11,6 +11,13 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+## [1.3.4]
+### Changed
+- faster motor end detection
+### Added
+- min. counts in eeprom
+- calibration retries if counts less than min. counts in config
+
 ## [1.3.3]
 ### Added
 - get chip id

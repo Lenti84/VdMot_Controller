@@ -624,7 +624,7 @@ void CMqtt::publish_valves () {
     int8_t tempIdx;
     uint8_t len;
     String s;
-    const char valveStatesStr[10][11] =  {"","idle","opens","closes","blocked","unknown","no valve","full open","connected","failed"};
+    const char valveStatesStr[10][11] =  {"","idle","opens","closes","failed","unknown","no valve","full open","connected","blocked"};
 
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         valveStates[x].thisState=StmApp.actuators[x].state;
@@ -640,15 +640,6 @@ void CMqtt::publish_valves () {
                 strncat(topicstr, mqtt_valvesTopic,sizeof(topicstr) - strlen (topicstr) - 1);
                 strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
                 len = strlen(topicstr);
-                /*
-                // actual value
-                if ((lastValveValues[x].position!=StmApp.actuators[x].actual_position) || forcePublish || lastValveValues[x].publishTimeOut) {
-                    strncat(topicstr, "/actual",sizeof(topicstr) - strlen (topicstr) - 1);
-                    itoa(StmApp.actuators[x].actual_position, valstr, 10);        
-                    publishValue(topicstr, valstr);
-                    lastValveValues[x].position=StmApp.actuators[x].actual_position;
-                }
-                */
                 // target
                 if ((lastValveValues[x].target!=StmApp.actuators[x].target_position) || forcePublish || lastValveValues[x].publishTimeOut) {
                     topicstr[len] = '\0';
@@ -672,9 +663,10 @@ void CMqtt::publish_valves () {
 
                     if (StmApp.actuators[x].calibration) {
                         topicstr[len] = '\0';
-                        strncat(topicstr, "/calibration",sizeof(topicstr) - strlen (topicstr) - 1);
+                        strncat(topicstr, "/calibration/date",sizeof(topicstr) - strlen (topicstr) - 1);
                         publishValue(topicstr, (char*) VdmSystem.localTime().c_str());
                     }
+
                     if ((VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link>0) && (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link<13)) {
                         topicstr[len] = '\0';
                         strncat(topicstr, "/control/link",sizeof(topicstr) - strlen (topicstr) - 1);
@@ -683,39 +675,83 @@ void CMqtt::publish_valves () {
                     }
                     lastValveValues[x].state=valveStates[x].thisState;
                 }
-                // meancurrent
-                if ((lastValveValues[x].meanCurrent!=StmApp.actuators[x].meancurrent) || forcePublish || lastValveValues[x].publishTimeOut) {
+
+                // calibration repetitions
+                if ((lastValveValues[x].calibRetries!=StmApp.actuators[x].calibRetries) || forcePublish || lastValveValues[x].publishTimeOut) {
                     topicstr[len] = '\0';
-                    strncat(topicstr, "/meancur",sizeof(topicstr) - strlen (topicstr) - 1);
-                    itoa(StmApp.actuators[x].meancurrent, valstr, 10);
+                    strncat(topicstr, "/calibration/repetitions",sizeof(topicstr) - strlen (topicstr) - 1);
+                    itoa(StmApp.actuators[x].calibRetries, valstr, 10);
                     publishValue(topicstr, valstr);
-                    lastValveValues[x].meanCurrent=StmApp.actuators[x].meancurrent;
+                    lastValveValues[x].calibRetries=StmApp.actuators[x].calibRetries;
                 }
+                // diag
+                if (VdmConfig.configFlash.protConfig.protocolFlags.publishDiag) {
+                    // meancurrent
+                    if ((lastValveValues[x].meanCurrent!=StmApp.actuators[x].meancurrent) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/diag/meanCurrrent",sizeof(topicstr) - strlen (topicstr) - 1);
+                        itoa(StmApp.actuators[x].meancurrent, valstr, 10);
+                        publishValue(topicstr, valstr);
+                        lastValveValues[x].meanCurrent=StmApp.actuators[x].meancurrent;
+                    }
+                    // counts
+                    if ((lastValveValues[x].openCount!=StmApp.actuators[x].opening_count) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/diag/openCount",sizeof(topicstr) - strlen (topicstr) - 1);
+                        itoa(StmApp.actuators[x].opening_count, valstr, 10);
+                        publishValue(topicstr, valstr);
+                        lastValveValues[x].openCount=StmApp.actuators[x].opening_count;
+                    }
+                    if ((lastValveValues[x].closeCount!=StmApp.actuators[x].closing_count) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/diag/closeCount",sizeof(topicstr) - strlen (topicstr) - 1);
+                        itoa(StmApp.actuators[x].closing_count, valstr, 10);
+                        publishValue(topicstr, valstr);
+                        lastValveValues[x].closeCount=StmApp.actuators[x].closing_count;
+                    }
+                    if ((lastValveValues[x].deadzoneCount!=StmApp.actuators[x].deadzone_count) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/diag/deadZoneCount",sizeof(topicstr) - strlen (topicstr) - 1);
+                        itoa(StmApp.actuators[x].deadzone_count, valstr, 10);
+                        publishValue(topicstr, valstr);
+                        lastValveValues[x].deadzoneCount=StmApp.actuators[x].deadzone_count;
+                    }
+                    // moves
+                    if ((lastValveValues[x].movements!=StmApp.actuators[x].movements) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/diag/moves",sizeof(topicstr) - strlen (topicstr) - 1);
+                        itoa(StmApp.actuators[x].movements, valstr, 10);
+                        publishValue(topicstr, valstr);
+                        lastValveValues[x].movements=StmApp.actuators[x].movements;
+                    }
+                }
+
                 // temperature 1st sensor
-                if (StmApp.actuators[x].tIdx1>0) { 
-                    if ((lastValveValues[x].temp1!=StmApp.actuators[x].temp1) || forcePublish || lastValveValues[x].publishTimeOut) {
-                        topicstr[len] = '\0';
-                        strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
-                        if (StmApp.actuators[x].temp1>-500) {
-                            s = String(((float)StmApp.actuators[x].temp1)/10,1); 
-                        } else s="failed";
-                        publishValue(topicstr, (char*) &s);
-                        lastValveValues[x].temp1=StmApp.actuators[x].temp1;
+                if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
+                    if (StmApp.actuators[x].tIdx1>0) { 
+                        if ((lastValveValues[x].temp1!=StmApp.actuators[x].temp1) || forcePublish || lastValveValues[x].publishTimeOut) {
+                            topicstr[len] = '\0';
+                            strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
+                            if (StmApp.actuators[x].temp1>-500) {
+                                s = String(((float)StmApp.actuators[x].temp1)/10,1); 
+                            } else s="failed";
+                            publishValue(topicstr, (char*) &s);
+                            lastValveValues[x].temp1=StmApp.actuators[x].temp1;
+                        }
+                    }
+                    // temperature 2nd sensor
+                    if (StmApp.actuators[x].tIdx2>0) {
+                        if ((lastValveValues[x].temp2!=StmApp.actuators[x].temp2) || forcePublish || lastValveValues[x].publishTimeOut) {
+                            topicstr[len] = '\0';
+                            strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
+                            if (StmApp.actuators[x].temp2>-500) {
+                                s = String(((float)StmApp.actuators[x].temp2)/10,1); 
+                            } else s="failed";
+                            publishValue(topicstr, (char*) &s);
+                            lastValveValues[x].temp2=StmApp.actuators[x].temp2;
+                        }
                     }
                 }
-                // temperature 2nd sensor
-                if (StmApp.actuators[x].tIdx2>0) {
-                    if ((lastValveValues[x].temp2!=StmApp.actuators[x].temp2) || forcePublish || lastValveValues[x].publishTimeOut) {
-                        topicstr[len] = '\0';
-                        strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
-                        if (StmApp.actuators[x].temp2>-500) {
-                            s = String(((float)StmApp.actuators[x].temp2)/10,1); 
-                        } else s="failed";
-                        publishValue(topicstr, (char*) &s);
-                        lastValveValues[x].temp2=StmApp.actuators[x].temp2;
-                    }
-                }
-         
                 lastValveValues[x].publishNow=false;
                 lastValveValues[x].publishTimeOut=false;
                 lastValveValues[x].ts=millis();
@@ -731,41 +767,43 @@ void CMqtt::publish_temps()
     int8_t tempIdx;
     uint8_t len;
     String s;
-
-    for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
-        if (lastTempValues[x].publishNow || forcePublish) {
-            tempIdx=StmApp.findTempID(StmApp.temps[x].id);
-            if (tempIdx>=0) {
-                if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
-                    if ((StmApp.findTempIdxInValve (tempIdx)<0) || VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps) {
-                        memset(topicstr,0x0,sizeof(topicstr));
-                        memset(nrstr,0x0,sizeof(nrstr));
-                        itoa((x+1), nrstr, 10);
-                        if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0)
-                            strncpy(nrstr,VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name,sizeof(nrstr));
-                        // prepare prefix
-                        strncat(topicstr, mqtt_tempsTopic,sizeof(topicstr) - strlen (topicstr) - 1);
-                        strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
-                        len = strlen(topicstr);
-                        // id
-                        strncat(topicstr, "/id",sizeof(topicstr) - strlen (topicstr) - 1);     
-                        publishValue(topicstr, StmApp.temps[x].id);
-                        // actual value
-                        topicstr[len] = '\0';
-                        strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
-                        
-                        if (StmApp.temps[x].temperature<=-500) {
-                            s = "failed";  
-                        } else {
-                            s = String(((float)StmApp.temps[x].temperature)/10,1);     
+    
+    if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
+        for (uint8_t x = 0;x<StmApp.tempsCount;x++) {
+            if (lastTempValues[x].publishNow || forcePublish) {
+                tempIdx=StmApp.findTempID(StmApp.temps[x].id);
+                if (tempIdx>=0) {
+                    if (VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].active) {
+                        if ((StmApp.findTempIdxInValve (tempIdx)<0) || VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps) {
+                            memset(topicstr,0x0,sizeof(topicstr));
+                            memset(nrstr,0x0,sizeof(nrstr));
+                            itoa((x+1), nrstr, 10);
+                            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0)
+                                strncpy(nrstr,VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name,sizeof(nrstr));
+                            // prepare prefix
+                            strncat(topicstr, mqtt_tempsTopic,sizeof(topicstr) - strlen (topicstr) - 1);
+                            strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
+                            len = strlen(topicstr);
+                            // id
+                            strncat(topicstr, "/id",sizeof(topicstr) - strlen (topicstr) - 1);     
+                            publishValue(topicstr, StmApp.temps[x].id);
+                            // actual value
+                            topicstr[len] = '\0';
+                            strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
+                            
+                            if (StmApp.temps[x].temperature<=-500) {
+                                s = "failed";  
+                            } else {
+                                s = String(((float)StmApp.temps[x].temperature)/10,1);     
+                            }
+                            publishValue(topicstr, (char*) &s);
                         }
-                        publishValue(topicstr, (char*) &s);
                     }
                 }
+                lastTempValues[x].temperature=StmApp.temps[x].temperature;
+                lastTempValues[x].publishNow=false;
+                lastTempValues[x].ts=millis();
             }
-            lastTempValues[x].temperature=StmApp.temps[x].temperature;
-            lastTempValues[x].publishNow=false;
-            lastTempValues[x].ts=millis();
         }
     }
 } 

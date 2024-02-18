@@ -72,7 +72,8 @@ String CWeb::getSysConfig (VDM_SYSTEM_CONFIG sysConfig)
 
 String CWeb::getMsgConfig (VDM_MSG_CONFIG msgConfig)
 {
-  String result = "{\"reason\":{\"valveBlocked\":"+String(msgConfig.reason.reasonFlags.valveBlocked)+","+
+  String result = "{\"reason\":{\"valveFailed\":"+String(msgConfig.reason.reasonFlags.valveFailed)+","+
+                  "\"valveBlocked\":"+String(msgConfig.reason.reasonFlags.valveBlocked)+","+
                   "\"notDetect\":"+String(msgConfig.reason.reasonFlags.notDetect)+","+
                   "\"reset\":"+String(msgConfig.reason.reasonFlags.reset)+","+
                   "\"ds18Failed\":"+String(msgConfig.reason.reasonFlags.ds18Failed)+","+
@@ -145,6 +146,7 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"pubAllTemps\":"+String(protConfig.protocolFlags.publishAllTemps)+","+
                     "\"pubPathAsRoot\":"+String(protConfig.protocolFlags.publishPathAsRoot)+","+
                     "\"pubUpTime\":"+String(protConfig.protocolFlags.publishUpTime)+","+
+                    "\"pubDiag\":"+String(protConfig.protocolFlags.publishDiag)+","+
                     "\"keepAliveTime\":"+String(protConfig.keepAliveTime)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
@@ -174,6 +176,8 @@ String CWeb::getMotorConfig (MOTOR_CHARS motorConfig)
         result +=   "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
                     "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
                     "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
+                    "\"noOfMinCount\":"+String(motorConfig.noOfMinCount)+ "," +
+                    "\"maxCalReps\":"+String(motorConfig.maxCalReps)+ "," +
                     "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}}";
   return result;  
 }
@@ -342,18 +346,22 @@ String CWeb::getValvesStatus()
                  "\"moves\":" + String(StmApp.actuators[x].movements)+ ","+
                  "\"oc\":" + String(StmApp.actuators[x].opening_count)+ ","+
                  "\"cc\":" + String(StmApp.actuators[x].closing_count)+ ","+
-                 "\"dc\":" + String(StmApp.actuators[x].deadzone_count);
+                 "\"dc\":" + String(StmApp.actuators[x].deadzone_count)+ ","+
+                 "\"cr\":" + String(StmApp.actuators[x].calibRetries);
 
-                 if (StmApp.actuators[x].tIdx1>0) { 
-                  if (StmApp.actuators[x].temp1>-500) {
-                      result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
-                  } else result +=",\"temp1\":\"failed\"";
+                 if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
+                  if (StmApp.actuators[x].tIdx1>0) { 
+                    if (StmApp.actuators[x].temp1>-500) {
+                        result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
+                    } else result +=",\"temp1\":\"failed\"";
+                  }
+                  if (StmApp.actuators[x].tIdx2>0) { 
+                    if (StmApp.actuators[x].temp2>-500) {
+                        result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
+                    } else result +=",\"temp2\":\"failed\"";
+                  }
                  }
-                 if (StmApp.actuators[x].tIdx2>0) { 
-                  if (StmApp.actuators[x].temp2>-500) {
-                      result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
-                  } else result +=",\"temp2\":\"failed\"";
-                 }
+
                  if (controlActive || Mqtt.valveStates[x].tValueFailed) {
                   if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     result +=",\"tTarget\":" + String(((float)PiControl[x].target),1);
@@ -363,9 +371,11 @@ String CWeb::getValvesStatus()
                     result +=",\"tValue\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
                   }
                  }
+
                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
                    result +=",\"window\":"+String(PiControl[x].windowState);
                  }
+                 
                  valveActive = 0;
                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active==1) valveActive |= 1;
                  if (PiControl[x].controlActive) valveActive |= 2;

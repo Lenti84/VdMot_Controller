@@ -242,19 +242,25 @@ void CPiControl::setPosition(uint8_t thisPosition)
     }
 }
   
-void CPiControl::doControlValve() 
+bool CPiControl::getValueFromSource()
 {
-    uint8_t valvePosition;
-    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==1) {
+  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==1) {
       if (StmApp.actuators[valveIndex].temp1>-500) 
         value=((float)StmApp.actuators[valveIndex].temp1)/10;
-      else return;
+      else return (false);
     }
     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==2) {
       if (StmApp.actuators[valveIndex].temp2>-500) 
         value=((float)StmApp.actuators[valveIndex].temp2)/10;
-      else return;
+      else return (false);
     }
+    return (true);
+}
+
+void CPiControl::doControlValve() 
+{
+    uint8_t valvePosition;
+    if (!getValueFromSource()) return;
     float newValveValue=calcValve();
     if (endActiveZone>startActiveZone) {
       valvePosition=round((((float)(endActiveZone-startActiveZone))*newValveValue/100.0)+startActiveZone); 

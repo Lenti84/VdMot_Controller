@@ -57,7 +57,8 @@ typedef struct  {
   uint32_t  movements;
   uint32_t  opening_count;
   uint32_t  closing_count;
-  int32_t  deadzone_count;
+  int32_t   deadzone_count;
+  uint8_t   calibRetries;
 } ACTUATOR_STRUC;
 
 typedef struct  {
@@ -73,6 +74,8 @@ typedef struct {
   uint16_t maxHighCurrent;
   uint16_t maxLowCurrent;
   uint8_t startOnPower;
+  uint16_t noOfMinCount;
+  uint8_t maxCalReps;
 } MOTOR_CHARS;
 
 
@@ -119,11 +122,13 @@ typedef struct {
 #define VLV_STATE_IDLE        0x01 // nothing to do
 #define VLV_STATE_OPENING     0x02 // opens
 #define VLV_STATE_CLOSING     0x03 // closes
-#define VLV_STATE_BLOCKS      0x04 // valve is blocked
+#define VLV_STATE_FAILED      0x04 // failed (e.g jump away)
 #define VLV_STATE_UNKNOWN     0x05 // initial state
 #define VLV_STATE_OPENCIR     0x06 // open circuit detected, no valve connected
 #define VLV_STATE_FULLOPEN    0x07 // go directly full open
 #define VLV_STATE_CONNECTED   0x08 // valve is connected
+#define VLV_STATE_BLOCKS      0x09 // valve is blocked
+
 
 #define COMM_ALIVE_CYCLE      30        // send "Alive" cycle in 100 ms cycles
 
@@ -180,7 +185,8 @@ public:
   bool matchSensorRequest;
   EEP_STATE eepState;
   bool waitEEPFinished;
-
+  bool oneWireAllRead;
+  
 private:
   void appHandler();
   void app_comm_machine();
@@ -209,7 +215,7 @@ private:
   uint8_t checkTempsCount;
   uint8_t tempsPrivCount;
   String cmd_buffer;
-
+  
   char buffer[1200];
   char sendbuffer[50];
   char *bufptr;
@@ -223,7 +229,7 @@ private:
   char*	  cmdptrend;
 
   #define noOfLargeArgs 2
-  #define noOfSmallArgs 8
+  #define noOfSmallArgs 10
   #define noOfArgs noOfLargeArgs+noOfSmallArgs
   #define cmdSize 50
   #define largeArgSize 1200
@@ -239,10 +245,13 @@ private:
         arg6[smallArgSize],
         arg7[smallArgSize],
         arg8[smallArgSize],
-        arg9[smallArgSize];
+        arg9[smallArgSize],
+        arg10[smallArgSize],
+        arg11[smallArgSize];
 
-  char *argptr[noOfArgs]={arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9};
-  uint16_t argSize[noOfArgs]={sizeof(arg0),sizeof(arg1),sizeof(arg2),sizeof(arg3),sizeof(arg4),sizeof(arg5),sizeof(arg6),sizeof(arg7),sizeof(arg8),sizeof(arg9)};
+
+  char *argptr[noOfArgs]={arg0,arg1,arg2,arg3,arg4,arg5,arg6,arg7,arg8,arg9,arg10,arg11};
+  uint16_t argSize[noOfArgs]={sizeof(arg0),sizeof(arg1),sizeof(arg2),sizeof(arg3),sizeof(arg4),sizeof(arg5),sizeof(arg6),sizeof(arg7),sizeof(arg8),sizeof(arg9),sizeof(arg10),sizeof(arg11)};
 
 	uint8_t	argcnt;
   
