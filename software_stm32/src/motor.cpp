@@ -95,10 +95,13 @@ STM32Timer ITimer0(TIM1);
 
 //int counter;
 //unsigned long time;
-volatile int current_mA = 0;                     // current valve motor in 1/10 mA
+volatile int current_mA = 0;                     // current valve motor in 1/10 mA for normal mode
+volatile int current_mA_old = 0;                 // filter memory
 
-volatile int analog_current = 0;                 // current valve motor in 1/10 mA read by analog pin
-volatile int analog_current_old = 0;             // filter
+volatile int analog_current = 0;                 // current valve motor in 1/10 mA for test mode
+volatile int analog_current_old = 0;             // filter memory
+
+
 
 // unsigned int idlecurrent = 2048;        // idle current adc value (digits)
 // unsigned int idlecurrent_old = 2048;    // filter
@@ -1233,22 +1236,36 @@ int16_t appsetaction(char cmd, unsigned int valveindex, byte posdelta) {
 }
 
 
-void TimerHandler0()
+void TimerHandler0()        // called every 1 ms
 {
-  static unsigned int rampcnt = 0;      // makes duty cycle of pwm
-  static unsigned int cnt = 0;          // makes periode time of pwm
+  int analog_value;                     // current valve motor in 1/10 mA read by analog pin
+
+  static int debouncecnt = 0;           // to ignore motor inrush current
+  static int overcnt = 0;
 
   // current measurement
-  analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
-  analog_current = (int) (((int32_t) analog_current_old * 950 + (int32_t) analog_current * 50) / 1000);
+  analog_value = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
+
+  // filter test mode
+  analog_current = (int) (((int32_t) analog_current_old * 9800 + (int32_t) analog_value * 200) / 10000);
   analog_current_old = analog_current;
 
   if(isr_turning) {
-    current_mA = analog_current;          // only update when turning, otherwise slower handling will read odd values
+    //current_mA = analog_current;          // only update when turning, otherwise slower handling will read odd values
+    if (debouncecnt < 255) debouncecnt++;
+
+    // filter normal mode
+    if(debouncecnt > 250) {
+      current_mA = (int) (((int32_t) current_mA_old * 9800 + (int32_t) analog_value * 200) / 10000);
+      current_mA_old = current_mA;
+    }
+
+    if (current_mA > 600 || current_mA < -600) if(overcnt<255) overcnt++;
 
     // overcurrent detection
-    if(current_mA > currentbound_high || current_mA < currentbound_low ||  
-        current_mA > 1000 || current_mA < -1000)         // safety mechanism, limit at +- 100 mA
+    if(current_mA > 1000 || current_mA < -1000 ||     // safety mechanismn
+      overcnt > 10 ||
+      (debouncecnt > 250 && (current_mA > currentbound_high || current_mA < currentbound_low)))
     {
       // stop motor immediately
       detachInterrupt(digitalPinToInterrupt(REVINPIN));                           
@@ -1257,30 +1274,16 @@ void TimerHandler0()
       isr_overcurrentevent = 1;
     }
   }
+  else {
+    overcnt = 0;
+    debouncecnt = 0;
+    current_mA = 0;
+    current_mA_old = 0;
+  } 
 
-  // ENA PWM
+  // ENA valve
   if(isr_timer_go && !isr_timer_fin) {
-    
-    if(cnt<=rampcnt) {        
-      //ENA0_ON();
-      ena_motor(isr_valvenr, 1);
-    }
-    else {
-      //ENA0_OFF();
-      ena_motor(isr_valvenr, 0);
-    }
-
-    // do counters
-    if(cnt<16) cnt++;
-    else {
-      cnt = 0;  
-      
-      if(rampcnt<16) rampcnt++;
-      else {    // finish & reset
-        isr_timer_fin = 1;
-        cnt = 0;
-        rampcnt = 0;
-      }
-    }
+    isr_timer_fin = 1;
+    ena_motor(isr_valvenr, 1);
   }
 }

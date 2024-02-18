@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+## [1.3.5]
+### Changed
+- rework motor end detection (filtering of motor current, no soft PWM for motor turn on anymore)
+
 ## [1.3.4]
 ### Changed
 - faster motor end detection
