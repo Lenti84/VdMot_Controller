@@ -103,6 +103,7 @@ public:
   void startBroker();
   void mqttBroker();
   void startSysLog();
+  bool checkSntpReachable();
    
   TWifiState wifiState;
   TEthState ethState;
@@ -111,7 +112,8 @@ public:
   bool dataBrokerIsStarted;
   struct tm startTimeinfo;
   bool syslogStarted;
-
+  bool sntpActive;
+  bool sntpReachable;
 private :
 };
 

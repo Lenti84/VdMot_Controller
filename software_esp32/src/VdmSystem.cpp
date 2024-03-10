@@ -107,17 +107,32 @@ String CVdmSystem::getChipModel()
 String CVdmSystem::localTime() {
   struct tm timeinfo;
   char buf[50];
-  String sTime;
+  String sTime="Failed to obtain time";
   String upTime;
   String sLastCalib;
-
-  if(!getLocalTime(&timeinfo)) {
-    sTime = "Failed to obtain time";
-  } else {
-    strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
-    sTime = String(buf);
+  if (VdmNet.sntpActive) {
+    if(getLocalTime(&timeinfo)) {
+      strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
+      sTime = String(buf);
+    }
   }
   return (sTime);
+}
+
+bool CVdmSystem::getLocalTime(struct tm * info)
+{
+    uint32_t start = millis();
+    uint32_t ms=10;
+    time_t now;
+   // while((millis()-start) <= ms) {
+        time(&now);
+        localtime_r(&now, info);
+        if(info->tm_year > (2016 - 1900)){
+            return true;
+        }
+   //     delay(10);
+   // }
+    return false;
 }
 
 

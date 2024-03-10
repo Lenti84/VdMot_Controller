@@ -96,6 +96,8 @@ void CVdmNet::init()
   wifiState = wifiIdle;
   ethState = ethIdle;
   dataBrokerIsStarted = false;
+  sntpActive = false;
+  sntpReachable=false;
   if (!SPIFFS.begin(true)) {
     #ifdef EnvDevelop
       UART_DBG.println("An Error has occurred while mounting SPIFFS");
@@ -247,15 +249,22 @@ void CVdmNet::setupWifi()
   }
 }
 
+bool CVdmNet::checkSntpReachable()
+{
+  return sntp_getreachability(0)==1;
+}
+
 void CVdmNet::setupNtp() 
 {
   // Init and get the time
   
-  //configTime(VdmConfig.configFlash.netConfig.timeOffset, 
-  //           VdmConfig.configFlash.netConfig.daylightOffset, 
-  //           VdmConfig.configFlash.netConfig.timeServer);
-  configTzTime(VdmConfig.configFlash.timeZoneConfig.tzCode ,VdmConfig.configFlash.netConfig.timeServer);
-  getLocalTime(&startTimeinfo);
+  VdmNet.sntpActive=strlen(VdmConfig.configFlash.netConfig.timeServer)>0; 
+  if (VdmNet.sntpActive)
+  {
+    UART_DBG.println("Get time from server "+String(VdmConfig.configFlash.netConfig.timeServer));
+    configTzTime(VdmConfig.configFlash.timeZoneConfig.tzCode ,VdmConfig.configFlash.netConfig.timeServer);
+    VdmSystem.getLocalTime(&startTimeinfo);
+  }
 }
 
 void CVdmNet::startBroker()

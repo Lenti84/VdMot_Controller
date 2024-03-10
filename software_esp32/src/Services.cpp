@@ -50,6 +50,7 @@
 #include "PIControl.h"
 #include "stmApp.h"
 
+
 CServices Services;
 
 CServices::CServices()
@@ -62,19 +63,23 @@ CServices::CServices()
 void CServices::checkServiceValves()
 {
   struct tm timeinfo;
-  getLocalTime(&timeinfo);
-  uint8_t i = 1<<timeinfo.tm_wday;
-  time_t now;
-  time (&now);
-    
-  if ((VdmConfig.configFlash.valvesConfig.dayOfCalib & i) !=0) { // day fits
-    if (VdmConfig.configFlash.valvesConfig.hourOfCalib==timeinfo.tm_hour) { // hour fits
-        if (!serviceValvesStarted) {
-          serviceValvesStarted=true;
-          // start service valves
-          StmApp.valvesCalibration();
-        }
-    } else serviceValvesStarted=false;
+  //UART_DBG.println("checkServiceValves");
+  if (VdmNet.sntpActive) {
+    if (VdmSystem.getLocalTime(&timeinfo)) {
+      uint8_t i = 1<<timeinfo.tm_wday;
+      time_t now;
+      time (&now);
+        
+      if ((VdmConfig.configFlash.valvesConfig.dayOfCalib & i) !=0) { // day fits
+        if (VdmConfig.configFlash.valvesConfig.hourOfCalib==timeinfo.tm_hour) { // hour fits
+            if (!serviceValvesStarted) {
+              serviceValvesStarted=true;
+              // start service valves
+              StmApp.valvesCalibration();
+            }
+        } else serviceValvesStarted=false;
+      }
+    }
   }
 }
 
@@ -126,10 +131,23 @@ void CServices::checkDS18()
 
 void CServices::checkGetNtp()
 {
-  // check if time is 3:05 pm
-  getLocalTime(&VdmNet.startTimeinfo);
-  if ((VdmNet.startTimeinfo.tm_hour==getNtpHour) && (VdmNet.startTimeinfo.tm_min==getNtpMin)) {
-    VdmNet.setupNtp();
+  // check if time is 3:05 am
+  if (VdmNet.sntpActive) {
+    VdmNet.sntpReachable=VdmNet.checkSntpReachable();
+    #ifdef EnvDevelop
+        UART_DBG.println("checkGetNtp : "+String(VdmNet.sntpReachable));
+      #endif
+    if (VdmNet.sntpReachable) {
+      if (VdmSystem.getLocalTime(&VdmNet.startTimeinfo)) {
+        if ((VdmNet.startTimeinfo.tm_hour==getNtpHour) && (VdmNet.startTimeinfo.tm_min==getNtpMin)) {
+          VdmNet.setupNtp();
+        }
+      }
+    }
+    else 
+    {
+      VdmNet.setupNtp(); 
+    }
   }
 }
 
@@ -150,6 +168,7 @@ void CServices::runOnceDelayed10()
 {
   VdmTask.startApp();
   VdmNet.startBroker();
+  checkGetNtp();
 }
 
 void CServices::runOnceDelayed60()

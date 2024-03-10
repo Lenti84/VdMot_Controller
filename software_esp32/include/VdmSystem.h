@@ -77,6 +77,7 @@ public:
   void setSystemState(uint8_t thisSystemState,String thisSystemMsg);
   String getUpTime();
   String localTime();
+  bool getLocalTime(struct tm * info);
   String getLastResetReason();
   void sendResetReason();
 
@@ -90,7 +91,6 @@ public:
   String systemMessage;
   bool getFSInProgress;
   uint32_t stackSize;
-
 private:
   bool spiffsStarted;
   

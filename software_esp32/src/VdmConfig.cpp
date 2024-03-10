@@ -204,12 +204,12 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
     if (prefs.isKey(nvsNetTimeServer))
       prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
-    
+    /*
     if (strlen(configFlash.netConfig.timeServer) == 0) {
       memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
       strncpy(configFlash.netConfig.timeServer,"pool.ntp.org",sizeof(configFlash.netConfig.timeServer));
     }
-    
+    */
     configFlash.netConfig.syslogLevel=prefs.getUChar(nvsNetSysLogEnable);
     configFlash.netConfig.syslogIp=prefs.getULong(nvsNetSysLogIp);
     configFlash.netConfig.syslogPort=prefs.getUShort(nvsNetSysLogPort);

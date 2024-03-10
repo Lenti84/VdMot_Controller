@@ -291,8 +291,10 @@ String CWeb::getSysDynInfo()
   localtime_r(&lastCalib, &timeinfo);
   strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
   sLastCalib = String(buf);
-
+  
   String result = "{\"locTime\":\""+VdmSystem.localTime()+"\"," +
+                  "\"sntpActive\":"+String(VdmNet.sntpActive)+"," +
+                  "\"sntpReachable\":"+String(VdmNet.sntpReachable)+"," +
                   "\"upTime\":\""+VdmSystem.getUpTime()+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
                   "\"minheap\":\""+ConvBinUnits(ESP.getMinFreeHeap(),1)+ "\"," +

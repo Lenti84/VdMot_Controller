@@ -969,7 +969,7 @@ int16_t communication_loop (void) {
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_EEPSTATE,&cmd[0],5) == 0) {
 			#ifdef commDebug 
-				COMM_DBG.println("got get motor characteristics request ");
+				COMM_DBG.println("got get eeprom status request ");
 			#endif
 			COMM_SER.print(APP_PRE_EEPSTATE);
 			COMM_SER.print(" ");			
