@@ -75,7 +75,7 @@ void CServices::checkServiceValves()
             if (!serviceValvesStarted) {
               serviceValvesStarted=true;
               // start service valves
-              StmApp.valvesCalibration();
+              StmApp.valvesCalibration(255);
             }
         } else serviceValvesStarted=false;
       }

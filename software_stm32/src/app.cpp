@@ -340,7 +340,12 @@ int16_t app_set_valveopen(int16_t valve) {
 
 // match sensor address from eeprom with found sensors and set index/slot to valve struct
 int16_t app_match_sensors() {
-  
+  for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
+       myvalves[i].sensorindex1 = VALVE_SENSOR_UNKNOWN;
+       myvalves[i].sensorindex2 = VALVE_SENSOR_UNKNOWN;
+  }
+
+
   uint8_t   numberOfDevices = 0;
   DeviceAddress currAddress;
   uint8_t   found1 = 0, found2 = 0;
@@ -371,23 +376,17 @@ int16_t app_match_sensors() {
                 }
             }           
         }
-        if (found1 == 7) 
-        {          
-          valveindex1 = ACTUATOR_COUNT; // end for loop
-          break;
-        }
+       
+        if (found1 == 7)
+        {
+            #ifdef appDebug
+              COMM_DBG.print(" found as 1st sensor at valve: ");
+              COMM_DBG.println(String(valveindexlast)+":"+String(owsensorindex));
+            #endif
+            myvalves[valveindexlast].sensorindex1 = owsensorindex;
+        } 
       }
-      if (found1 == 7)
-      {
-          #ifdef appDebug
-            COMM_DBG.print(" found as 1st sensor at valve: ");
-            COMM_DBG.println(valveindexlast, DEC);
-          #endif
-          myvalves[valveindexlast].sensorindex1 = owsensorindex;
-      } else {
-        myvalves[valveindexlast].sensorindex1 = VALVE_SENSOR_UNKNOWN;
-      }
-      
+     
       // second sensor of valve
       // step through all possible valves
       for (unsigned int valveindex = 0;valveindex<ACTUATOR_COUNT;valveindex++) {
@@ -402,23 +401,17 @@ int16_t app_match_sensors() {
                 }
             }           
         }
-        if (found2 == 7) 
-        {          
-          valveindex = ACTUATOR_COUNT; // end for loop
-          break;
+       
+        if (found2 == 7)
+        {     
+            #ifdef appDebug     
+              COMM_DBG.print(" found as 2nd sensor at valve: ");
+              COMM_DBG.println(valveindexlast, DEC);
+            #endif
+            myvalves[valveindexlast].sensorindex2 = owsensorindex;
         }
       }
-      if (found2 == 7)
-      {     
-          #ifdef appDebug     
-            COMM_DBG.print(" found as 2nd sensor at valve: ");
-            COMM_DBG.println(valveindexlast, DEC);
-          #endif
-          myvalves[valveindexlast].sensorindex2 = owsensorindex;
-      }  else {
-        myvalves[valveindexlast].sensorindex2 = VALVE_SENSOR_UNKNOWN;
-      }
-
+    
       if(found1==0 && found2==0) {
         #ifdef appDebug
           COMM_DBG.println(" not found");

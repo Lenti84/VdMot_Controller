@@ -157,8 +157,8 @@ public:
   void app_check_data();
   void app_cmd(String command, String args="");
   bool checkCmdIsAvailable (String thisCmd);
-  void valvesCalibration();
-  void valvesAssembly();
+  void valvesCalibration(uint8_t index);
+  void valvesAssembly(uint8_t index);
   void valvesDetect();
   void scanValves();
   void scanTemps();

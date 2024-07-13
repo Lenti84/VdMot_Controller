@@ -955,19 +955,18 @@ Publish on change on server side is not recommended with this option">tValue aft
 	
 			</fieldset>
 			</tr>
+			<fieldset class="checkboxgroup2" style="height:4em;" id="cfgValvesTableFieldSet2">
+				<legend>Assembly/Calibration</legend>	
+				<label> 
+					<select id="valvesAsmCalib-select">
+					</select>	
+					<input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set valves to assembly position">
+					<input type="button" class="buttonclass" id="valvesStartCalib" value="Calib" title="Start manual calibration of valves" />
+				</label>	
+			</fieldset>
 			</table>
-			<table id="cfgValvesTable2" class="tabTable">
-			<tr>
-				<td>
-                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start manual calibration of all valves" />
-                </td>
-				<td>
-                <input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set all valves to assembly position" />
-                </td>
-			</tr>
-			</table>
-		</div>
-		
+	
+		</div>	
 			<div class="rtabframe2">
 			<h3>Temperature sensor</h3>
 			<div style="height:390px;overflow-y:scroll">
@@ -991,7 +990,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				</table>
 			</div>
 		</div>
-		
+
 		<dialog id="pushOverParameterDialog" class="dialogClass">
 			<h3>PushOver</h3>
 			<table id="cfgPushOverParam" class="tabTable">
@@ -2719,14 +2718,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 		}
 		
 		function valvesStartCalib(){
-			if (confirm('Are you sure you want to start calibration of all valves ?')) {
-				postCmd('{"action":"vCalib"}');
+			if (confirm('Are you sure you want to start calibration of valve ?')) {
+				postCmd('{"action":"vCalib","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
 		function valvesAssembly(){
-			if (confirm('Are you sure you want to set all valves to assembly position ?')) {
-				postCmd('{"action":"vAssembly"}');
+			if (confirm('Are you sure you want to set valve to assembly position ?')) {
+				postCmd('{"action":"vAssembly","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
@@ -2827,9 +2826,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 				await postSystemConfig();
 				await postValvesCfg();
 				await postValvesControlCfg();
-				await postTempsCfg(1,11);
-				await postTempsCfg(12,23);
-				await postTempsCfg(24,34);
+				//await postTempsCfg(1,11);
+				//await postTempsCfg(12,23);
+				//await postTempsCfg(24,34);
+				postTempsCfg(1,34);
 				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
@@ -2949,9 +2949,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 		}
 		
 		async function postValvesCfg() {
-			await postChunkValvesCfg(1,4,true);
-			await postChunkValvesCfg(5,8);
-			await postChunkValvesCfg(9,12,false,true);
+		//	await postChunkValvesCfg(1,4,true);
+		//	await postChunkValvesCfg(5,8);
+		//	await postChunkValvesCfg(9,12,false,true);
+		await postChunkValvesCfg(1,12,true,true);
 		}
 		
 		async function postChunkValvesCfg(chunkStart,chunkEnd,postMotor=false,postSetTempTdx=false) {
@@ -3008,10 +3009,11 @@ Publish on change on server side is not recommended with this option">tValue aft
 		}
 		
 		async function postValvesControlCfg() {
-			await postChunkValvesControlCfg(1,3);
-			await postChunkValvesControlCfg(4,6);
-			await postChunkValvesControlCfg(7,9);
-			await postChunkValvesControlCfg(10,12);
+			//await postChunkValvesControlCfg(1,3);
+			//await postChunkValvesControlCfg(4,6);
+			//await postChunkValvesControlCfg(7,9);
+			//await postChunkValvesControlCfg(10,12);
+			await postChunkValvesControlCfg(1,12);
 		}
 		
 		async function postChunkValvesControlCfg(chunkStart,chunkEnd) {
@@ -3271,6 +3273,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 					id('setValveP'+(index+1)).value=item.targetPos;
 				}
 			});
+			if (statusWarning == 0) id("statusImg").style.visibility="hidden"; else id("statusImg").style.visibility="visible";
 			id("statusImg").src=tabImageSrc[statusWarning];
 		}
 		
@@ -3287,6 +3290,22 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id('cfgVActive'+row).checked = cfgValvesJson.valves[row-1].active;
 				id('cfgVTIdx1-'+row).value = cfgValvesJson.valves[row-1].tIdx1;
 				id('cfgVTIdx2-'+row).value = cfgValvesJson.valves[row-1].tIdx2;
+				
+			}
+			fillAssemblyListBox (cfgValvesJson);
+		}
+
+		function fillAssemblyListBox (cfgValvesJson) {
+			let AsmSelectBox= id("valvesAsmCalib-select");
+			AsmSelectBox.options.length=0;
+			let newOption = new Option("All",255);
+			AsmSelectBox.add(newOption,undefined);
+
+			for (let row = 1; row<13; row++) {
+				if (cfgValvesJson.valves[row-1].active) {
+					let newOption = new Option(cfgValvesJson.valves[row-1].name,row);
+					AsmSelectBox.add(newOption,undefined);
+				}
 			}
 		}
 

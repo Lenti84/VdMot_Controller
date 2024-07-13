@@ -178,19 +178,18 @@ bool CStmApp::checkNewTarget() {
     return (false);
 }
 
-void CStmApp::valvesCalibration()
+void CStmApp::valvesCalibration(uint8_t index)
 {
-    uint8_t i=255;
-    app_cmd(APP_PRE_SETVLLEARN,String(i));
+    app_cmd(APP_PRE_SETVLLEARN,String(index));
     time_t now;
     time (&now);
     VdmConfig.miscValues.lastCalib=now;
     VdmConfig.writeMiscValues();
 }
 
-void CStmApp::valvesAssembly()
+void CStmApp::valvesAssembly(uint8_t index)
 {
-    app_cmd(APP_PRE_SETALLVLVOPEN, "255");
+    app_cmd(APP_PRE_SETALLVLVOPEN, String(index));
 }
 
 void CStmApp::valvesDetect()
@@ -271,7 +270,9 @@ void CStmApp::setTempIdx()
         waitForFinishQueue=true;
         fastQueueMode=true;
         waitEEPFinished=true;
+        UART_DBG.println("tIdx : "+String(i+1)+"="+String(tIdx1)+":"+s1+","+String(tIdx2)+s2);
         app_cmd(APP_PRE_SETVLVSENSOR,String(i)+ARG_DELIMITER+s1+ARG_DELIMITER+s2);
+
         fastQueueMode=true;
 
         if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
@@ -720,6 +721,7 @@ void  CStmApp::app_check_data()
                 if (nItems>0) {
                     char* cmdptr;
                     char* ps=argptr[1];
+                    
                     for (uint8_t idx=0; idx<nItems;idx++) {
                         if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
                         strncpy(argptr[4],ps,argSize[4]);
@@ -728,6 +730,7 @@ void  CStmApp::app_check_data()
                         strncpy(argptr[5],ps,argSize[5]); 
                         setSensorIndex(idx,argptr[4],argptr[5]);
                         if (cmdptr!=NULL) ps=cmdptr+1;
+                        
                     }
                 }
                 

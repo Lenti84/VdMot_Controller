@@ -11,6 +11,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+
+## [1.3.7]
+### Changed
+- System :      increase DYNAMIC_JSON_DOCUMENT_SIZE to 4096
+- WebUI  :      Config Assembly / Calibration select valve added
+
 ## [1.3.6]
 ### Fixed
 - System :      fix bug if no network time exists

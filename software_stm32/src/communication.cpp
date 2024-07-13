@@ -105,7 +105,8 @@ void sendValvesTempsId (uint8_t idx, char delimiter)
 {
 	char mySendBuffer[30];
 	// 1st sensor 8 Byte adress
-	uint8_t y = myvalves[idx].sensorindex1;					
+	uint8_t y = myvalves[idx].sensorindex1;	
+				
 	if(y!=VALVE_SENSOR_UNKNOWN) {
 		memset (mySendBuffer,0x0,sizeof(mySendBuffer));				// reset sendbuffer
 		// 8 Byte adress
