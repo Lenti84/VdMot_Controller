@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html>
@@ -162,6 +161,10 @@
 	.alignTabCellImgState{
 	 float: left;
 	 padding: 5px 2px;
+	}
+
+	table.tabTable {
+		width : 100%
 	}
 
 	table.tabTable td {
@@ -364,6 +367,12 @@
 		grid-template-rows:  masonry;
 	}
 		
+	div[disabled]
+	{
+		pointer-events: none;     
+		opacity: 0.4;
+	}
+
 	/* slider checkbox */ 
 	[type="checkbox"] {
 	--s:18px; /* adjust this to control the size*/
@@ -460,7 +469,7 @@
 <body>
 	<div class="topNav" id="mytopNav">
 	  <a href="#home" class="tabLink" id="defaultOpen" name="Home" onclick="openPage('Home', this, 'red')">Home</a>
-	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green')">Status</a>
+	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green');">Status<img id="statusImg" src="" style="margin-left:5px;height:16px;width:16px"></a>
 	  <a href="#network" class="tabLink" id="networkOpen" name="Network" style ="display:none" onclick="openPage('Network', this, 'blue')">Network</a>
 	  <a href="#config" class="tabLink" id="configOpen" name="Config" style ="display:none" onclick="openPage('Config', this, 'gray')">Config</a>
 	  <a href="#control" class="tabLink" id="controlOpen" name="Control" style ="display:none" onclick="openPage('Control', this, 'gray')">Control</a>
@@ -622,6 +631,10 @@
 				<th>MQTT</th>
 				<td id="net-broker-status"></td>
 			</tr>
+			<tr>
+				<th>SNTP</th>
+				<td id="net-sntp-status"></td>
+			</tr>
 			
 		</table>
 		</div>
@@ -660,47 +673,50 @@
 			<tr>
 				<th>DHCP</th>
 				<td>
-				<select id="netcfg-dhcp" style="width: 50px;">
+				<select id="netcfg-dhcp" style="width: 60px;">
                     <option>OFF</option>
                     <option>ON</option>
 				</select>
 				</td>
-            </tr>                    
-			<tr>
-				<th>IP</th>
-				<td>
-				<input type="text" class="form-input" id="netcfg-ip" name="netcfg-ip" placeholder="xxx.xxx.xxx.xxx"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Subnet Mask</th>
-				<td>
-				<input type="text" class="form-input" id="netcfg-mask" name="netcfg-mask" placeholder="xxx.xxx.xxx.xxx"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Gateway</th>
-				<td>
-				<input type="text" class="form-input" id="netcfg-gw" name="netcfg-gw" placeholder="xxx.xxx.xxx.xxx"/>
-				</td>
-			</tr>
-			<tr>
-				<th>DNS</th>
-				<td>
-				<input type="text" class="form-input" id="netcfg-dns" name="netcfg-dns" placeholder="xxx.xxx.xxx.xxx"/>
-				</td>
-			</tr>
-			<tr></tr>
-			<tr> 
-				<th>Eth/Wifi</th>
-				<td>
-				<select id="netcfg-EthWifi" style="width: 50px;">
-					<option>Auto</option>
-                    <option>Eth</option>
-                    <option>Wifi</option>
-				</select>
-				</td>
             </tr>  
+			<table id="netcfg-Tdhcp" style="display:none;" class="tabTable1">                 
+				<tr>
+					<th>IP</th>
+					<td>
+					<input type="text" class="form-input" id="netcfg-ip" name="netcfg-ip" placeholder="xxx.xxx.xxx.xxx"/>
+					</td>
+				</tr>
+				<tr>
+					<th>Subnet Mask</th>
+					<td>
+					<input type="text" class="form-input" id="netcfg-mask" name="netcfg-mask" placeholder="xxx.xxx.xxx.xxx"/>
+					</td>
+				</tr>
+				<tr>
+					<th>Gateway</th>
+					<td>
+					<input type="text" class="form-input" id="netcfg-gw" name="netcfg-gw" placeholder="xxx.xxx.xxx.xxx"/>
+					</td>
+				</tr>
+				<tr>
+					<th>DNS</th>
+					<td>
+					<input type="text" class="form-input" id="netcfg-dns" name="netcfg-dns" placeholder="xxx.xxx.xxx.xxx"/>
+					</td>
+				</tr>
+			</table> 
+			<table class="tabTable1"> 
+				<tr> 
+					<th>Eth/Wifi</th>
+					<td>
+					<select id="netcfg-EthWifi" style="width: 60px;">
+						<option>Auto</option>
+						<option>Eth</option>
+						<option>Wifi</option>
+					</select>
+					</td>
+				</tr>  
+			</table>
 		</table>
 		
 		<table id="netcfg-wifi" style="display:none;" class="tabTable1">
@@ -776,7 +792,7 @@
 				</td>
 			</tr>
 		</table>
-		<table class="tabTable"
+		<table class="tabTable">
 			<tr>
 			<td>
 			<input type="button" class="buttonclass" id="setSysLog" value="Set" title="Set syslog server values" />
@@ -901,7 +917,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center;">
 		
 		</table>
-		<table class="tabTable"
+		<table class="tabTable">
 			<tr>
 			<td>
 			<input type="button" class="buttonclass" id="valvesDetect" value="Scan" title="Detect valves" />
@@ -918,14 +934,16 @@ Publish on change on server side is not recommended with this option">tValue aft
 			<fieldset class="checkboxgroup2" style="height:17em;" id="cfgValvesTableFieldSet1">
 				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
-				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour time of next calibration"> Hour time</label>
-				<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
-				<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
-				<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
-				<label><input type="checkbox" id="vCfg-d3" name="theGroup">Wednesday </label>
-				<label><input type="checkbox" id="vCfg-d4" name="theGroup">Thursday </label>
-				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
-				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
+				<div id="calibDate"> 
+					<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour time of next calibration"> Hour time</label>
+					<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
+					<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
+					<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
+					<label><input type="checkbox" id="vCfg-d3" name="theGroup">Wednesday </label>
+					<label><input type="checkbox" id="vCfg-d4" name="theGroup">Thursday </label>
+					<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
+					<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
+				</div>
 			</fieldset>
 			<fieldset class="checkboxgroup2" style="height:8em;" id="cfgValvesTableFieldSet2">
 				<legend>Characteristic</legend>	
@@ -937,19 +955,18 @@ Publish on change on server side is not recommended with this option">tValue aft
 	
 			</fieldset>
 			</tr>
+			<fieldset class="checkboxgroup2" style="height:4em;" id="cfgValvesTableFieldSet2">
+				<legend>Assembly/Calibration</legend>	
+				<label> 
+					<select id="valvesAsmCalib-select">
+					</select>	
+					<input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set valves to assembly position">
+					<input type="button" class="buttonclass" id="valvesStartCalib" value="Calib" title="Start manual calibration of valves" />
+				</label>	
+			</fieldset>
 			</table>
-			<table id="cfgValvesTable2" class="tabTable">
-			<tr>
-				<td>
-                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start manual calibration of all valves" />
-                </td>
-				<td>
-                <input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set all valves to assembly position" />
-                </td>
-			</tr>
-			</table>
-		</div>
-		
+	
+		</div>	
 			<div class="rtabframe2">
 			<h3>Temperature sensor</h3>
 			<div style="height:390px;overflow-y:scroll">
@@ -973,7 +990,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				</table>
 			</div>
 		</div>
-		
+
 		<dialog id="pushOverParameterDialog" class="dialogClass">
 			<h3>PushOver</h3>
 			<table id="cfgPushOverParam" class="tabTable">
@@ -1209,7 +1226,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		along with this program.  If not, see http://www.gnu.org/licenses/.
 		</p>
 		<p>
-		Copyright (C) 2021-2023 Lenti84  https://github.com/Lenti84/VdMot_Controller
+		Copyright (C) 2021-2024 Lenti84  https://github.com/Lenti84/VdMot_Controller
 		</p>	
 		<p>
 		Contributor : SurfGargano
@@ -1746,6 +1763,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		var activeSetValvesDisplay = "none";
 		var reconnectMQTT=false;
 		var windowImageObjects = [null,null,null,null,null,null,null,null,null,null,null,null];
+	    const tabImageSrc = ["","warning_yellow.png","warning_red.png"];
 
 		// Get the modal
 		var modal = id("pwdModal");
@@ -2434,7 +2452,15 @@ Publish on change on server side is not recommended with this option">tValue aft
 				e.style.display = "";
 			}
 		}
-		
+
+		function showDHCP(select) {
+			let x = id("netcfg-Tdhcp");
+			if (select === 1) {
+				x.style.display = "none";
+			} else {
+				x.style.display = "block";
+			}
+		}
 		function showSyslogIP(){
 			let x = id("netcfg-syslog-table");
 			let select = id("netcfg-syslog-select").selectedIndex;
@@ -2477,6 +2503,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 		function generateOnClick() {
 			id("netcfg-EthWifi").onclick = function(){
 				showWifi();
+			}
+			id("netcfg-dhcp").onclick = function(){
+				showDHCP(id("netcfg-dhcp").selectedIndex);
 			}
 			id("netcfg-syslog-select").onclick = function(){
 				showSyslogIP();
@@ -2689,14 +2718,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 		}
 		
 		function valvesStartCalib(){
-			if (confirm('Are you sure you want to start calibration of all valves ?')) {
-				postCmd('{"action":"vCalib"}');
+			if (confirm('Are you sure you want to start calibration of valve ?')) {
+				postCmd('{"action":"vCalib","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
 		function valvesAssembly(){
-			if (confirm('Are you sure you want to set all valves to assembly position ?')) {
-				postCmd('{"action":"vAssembly"}');
+			if (confirm('Are you sure you want to set valve to assembly position ?')) {
+				postCmd('{"action":"vAssembly","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
@@ -2797,9 +2826,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 				await postSystemConfig();
 				await postValvesCfg();
 				await postValvesControlCfg();
-				await postTempsCfg(1,11);
-				await postTempsCfg(12,23);
-				await postTempsCfg(24,34);
+				//await postTempsCfg(1,11);
+				//await postTempsCfg(12,23);
+				//await postTempsCfg(24,34);
+				postTempsCfg(1,34);
 				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
@@ -2919,9 +2949,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 		}
 		
 		async function postValvesCfg() {
-			await postChunkValvesCfg(1,4,true);
-			await postChunkValvesCfg(5,8);
-			await postChunkValvesCfg(9,12,false,true);
+		//	await postChunkValvesCfg(1,4,true);
+		//	await postChunkValvesCfg(5,8);
+		//	await postChunkValvesCfg(9,12,false,true);
+		await postChunkValvesCfg(1,12,true,true);
 		}
 		
 		async function postChunkValvesCfg(chunkStart,chunkEnd,postMotor=false,postSetTempTdx=false) {
@@ -2978,10 +3009,11 @@ Publish on change on server side is not recommended with this option">tValue aft
 		}
 		
 		async function postValvesControlCfg() {
-			await postChunkValvesControlCfg(1,3);
-			await postChunkValvesControlCfg(4,6);
-			await postChunkValvesControlCfg(7,9);
-			await postChunkValvesControlCfg(10,12);
+			//await postChunkValvesControlCfg(1,3);
+			//await postChunkValvesControlCfg(4,6);
+			//await postChunkValvesControlCfg(7,9);
+			//await postChunkValvesControlCfg(10,12);
+			await postChunkValvesControlCfg(1,12);
 		}
 		
 		async function postChunkValvesControlCfg(chunkStart,chunkEnd) {
@@ -3137,6 +3169,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 			const States = ["---","idle","opens","closes","failed","unknown","no valve","full open","connected","blocked"];
 			let thisImg=null;
+			let statusWarning = 0;
 			valvesJson.forEach(function(item, index){
 				valvesTable.rows[index+1].cells[0].textContent = item.idx;	
 				switch (item.controlActive) {
@@ -3188,12 +3221,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 					case 9 : {
 						valvesTable.rows[index+1].cells[4].style.backgroundColor="red";
 						valvesTable.rows[index+1].cells[4].style.color="white";
+						statusWarning=2;
 						break;
 					}
 					default : {
 						if (item.cr>0) {
 							valvesTable.rows[index+1].cells[4].style.backgroundColor="yellow";
 							valvesTable.rows[index+1].cells[4].style.color="blue";
+							statusWarning=1;
 						} else {
 							valvesTable.rows[index+1].cells[4].style.backgroundColor="gray";
 							valvesTable.rows[index+1].cells[4].style.color="white";
@@ -3238,6 +3273,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 					id('setValveP'+(index+1)).value=item.targetPos;
 				}
 			});
+			if (statusWarning == 0) id("statusImg").style.visibility="hidden"; else id("statusImg").style.visibility="visible";
+			id("statusImg").src=tabImageSrc[statusWarning];
 		}
 		
 		function fillCfgValvesTable (cfgValvesJson) {
@@ -3253,6 +3290,22 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id('cfgVActive'+row).checked = cfgValvesJson.valves[row-1].active;
 				id('cfgVTIdx1-'+row).value = cfgValvesJson.valves[row-1].tIdx1;
 				id('cfgVTIdx2-'+row).value = cfgValvesJson.valves[row-1].tIdx2;
+				
+			}
+			fillAssemblyListBox (cfgValvesJson);
+		}
+
+		function fillAssemblyListBox (cfgValvesJson) {
+			let AsmSelectBox= id("valvesAsmCalib-select");
+			AsmSelectBox.options.length=0;
+			let newOption = new Option("All",255);
+			AsmSelectBox.add(newOption,undefined);
+
+			for (let row = 1; row<13; row++) {
+				if (cfgValvesJson.valves[row-1].active) {
+					let newOption = new Option(cfgValvesJson.valves[row-1].name,row);
+					AsmSelectBox.add(newOption,undefined);
+				}
 			}
 		}
 
@@ -3411,6 +3464,15 @@ Publish on change on server side is not recommended with this option">tValue aft
 			const dataSystemDynInfo=await getJson("sysdyninfo");
 			if (dataSystemDynInfo) {
 				id("locTime").textContent = dataSystemDynInfo["locTime"];
+				
+				if (dataSystemDynInfo["sntpActive"]==0) {
+					id("calibDate").style = "display:none;";
+					id ("cfgValvesTableFieldSet1").style = "height:3em;";
+				}
+				else {
+					id("calibDate").style = "display:block;";
+					id ("cfgValvesTableFieldSet1").style = "height:17em;";
+				}
 				id("upTime").textContent = dataSystemDynInfo["upTime"];
 				id("heap").textContent = dataSystemDynInfo["heap"];
 				id("min-heap").textContent = dataSystemDynInfo["minheap"];
@@ -3419,6 +3481,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 					id("net-broker").style.display="block";
 					id("net-broker-status").textContent=dataSystemDynInfo["brokerConnected"] ? "Connected" : "Not connected"; 
 				}
+				
+				id("net-sntp-status").textContent=dataSystemDynInfo["sntpActive"] ? dataSystemDynInfo["sntpReachable"] ? "Connected" : "Not connected" : "Not defined"; 	
+
 				id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[dataSystemDynInfo["heatControl"]].value;
 				id("miscStatusLC").textContent=dataSystemDynInfo["lastCalib"];
 				let newStmInit=dataSystemDynInfo["stmInit"];
@@ -3484,6 +3549,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id("netcfg-syslog-ip").value=dataNetConfig.syslogIp;
 				id("netcfg-syslog-port").value=dataNetConfig.syslogPort;
 				showWifi();
+				showDHCP(dataNetConfig["dhcp"]);
 				showSyslogIP();
 				if (dataNetConfig["userName"]==="") {
 					activeSetValvesDisplay = "block";

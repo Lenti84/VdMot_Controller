@@ -138,12 +138,22 @@ void scanTSensors (JsonObject doc)
 
 void valvesCalibration (JsonObject doc)
 {  
-  StmApp.valvesCalibration();
+  uint8_t index=255;
+  if (!doc["valve"].isNull()) {
+    index=(doc["valve"].as<uint8_t>());
+    if (index!=255) index--;
+  }
+  StmApp.valvesCalibration(index);
 }
 
 void valvesAssembly (JsonObject doc)
 {  
-  StmApp.valvesAssembly();
+  uint8_t index=255;
+  if (!doc["valve"].isNull()) {
+    index=(doc["valve"].as<uint8_t>());
+    if (index!=255) index--;
+  }
+  StmApp.valvesAssembly(index);
 }
 
 void valvesDetect (JsonObject doc)
