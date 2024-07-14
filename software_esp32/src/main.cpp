@@ -47,6 +47,14 @@
 #include "stm32.h"
 #include "esp_task_wdt.h"
 #include "esp_err.h"
+#include "Messenger.h"
+#include "VdmTask.h"
+
+uint32_t * StackPtrAtStart;
+uint32_t * StackPtrEnd;
+UBaseType_t watermarkStart;
+uint32_t stackSize;
+
 
 void setup(void) {
   disableCore0WDT();
@@ -54,17 +62,37 @@ void setup(void) {
   disableLoopWDT(); 
 
   UART_DBG.begin(115200);
-  UART_DBG.println("VdMot_Controller");
+
+  uint32_t* SpStart = NULL;
+  StackPtrAtStart = (uint32_t *)&SpStart;
+  watermarkStart =  uxTaskGetStackHighWaterMark(NULL);
+  StackPtrEnd = StackPtrAtStart - watermarkStart;
+  stackSize = StackPtrAtStart - StackPtrEnd;
+
+  #ifdef EnvDevelop
+    UART_DBG.println("VdMot_Controller");
+    UART_DBG.printf("\r\n\r\nAddress of Stackpointer near start is:  %p \r\n",  (uint32_t *)StackPtrAtStart);
+    UART_DBG.printf("End of Stack is near: %p \r\n",  (uint32_t *)StackPtrEnd);
+    UART_DBG.printf("Free Stack near start is:  %d \r\n",  (uint32_t)StackPtrAtStart - (uint32_t)StackPtrEnd);
+    UART_DBG.printf("Free Prefs entries  %d \r\n",  VdmConfig.prefs.freeEntries());
+    UART_DBG.printf("Config space  %d bytes (max 20k) \r\n",  sizeof(VdmConfig.configFlash));
+  #endif
 
   Stm32.STM32ota_setup();
-  UART_DBG.println("Start Config");
-
+  uint8_t rr=esp_reset_reason();
+  if (rr!=1) {  // not at power on reset
+    Stm32.ResetSTM32(false);
+  }
+  #ifdef EnvDevelop
+    UART_DBG.println("Start Config");
+  #endif
   // init config, read from flash, init network
+  VdmSystem.stackSize = stackSize;
   VdmConfig.init();
   VdmConfig.checkToResetCfg();
   VdmNet.init();
   VdmTask.init();
-  VdmSystem.getFSDirectory();
+  VdmSystem.getFSDirectory(); 
 }
 
 void loop(void) {

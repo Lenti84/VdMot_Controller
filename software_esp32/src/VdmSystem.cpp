@@ -37,12 +37,36 @@
 
 *END************************************************************************/
 
-
+#include "globals.h"
 #include "VdmSystem.h"
-#include <SPIFFS.h> 
+#include "VdmNet.h"
+#include "Messenger.h"
 #include "esp_spi_flash.h" 
 #include "helper.h"
 #include <esp_task_wdt.h>
+
+#include <FS.h>
+#ifdef USE_LittleFS
+  #define SPIFFS LittleFS
+  #include <LITTLEFS.h> 
+#else
+  #include <SPIFFS.h>
+#endif 
+
+String ResetReason[] =  {
+    "UNKNOWN",    //!< Reset reason can not be determined
+    "POWERON",    //!< Reset due to power-on event
+    "EXT",        //!< Reset by external pin (not applicable for ESP32)
+    "SW",         //!< Software reset via esp_restart
+    "PANIC",      //!< Software reset due to exception/panic
+    "INT_WDT",    //!< Reset (software or hardware) due to interrupt watchdog
+    "TASK_WDT",   //!< Reset due to task watchdog
+    "WDT",        //!< Reset due to other watchdogs
+    "DEEPSLEEP",  //!< Reset after exiting deep sleep mode
+    "BROWNOUT",   //!< Brownout reset (software or hardware)
+    "SDIO"       //!< Reset over SDIO
+};
+
 
 CVdmSystem VdmSystem;
 
@@ -51,7 +75,7 @@ CVdmSystem::CVdmSystem()
   spiffsStarted=false;
   numfiles  = 0;
   stmBuild = 0;
-  memset (systemMessage,0,sizeof(systemMessage));
+  systemMessage="";
   systemState = systemStateOK;
   getFSInProgress = false;
 }
@@ -59,6 +83,87 @@ CVdmSystem::CVdmSystem()
 void CVdmSystem::getSystemInfo()
 {   
     esp_chip_info(&chip_info);      
+}
+
+String CVdmSystem::getChipModel()
+{  
+  getSystemInfo();
+  switch (chip_info.model) {
+      case 1:
+        return "ESP32";
+      case 2:
+        return "ESP32-S2";
+      case 9:
+        return "ESP32-S3";
+      case 5:
+        return "ESP32-C3";
+      case 6:
+        return "ESP32-H2";
+      default:
+        return "ESP32 (Unknown)";
+  }
+}
+
+String CVdmSystem::localTime() {
+  struct tm timeinfo;
+  char buf[50];
+  String sTime="Failed to obtain time";
+  String upTime;
+  String sLastCalib;
+  if (VdmNet.sntpActive) {
+    if(getLocalTime(&timeinfo)) {
+      strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
+      sTime = String(buf);
+    }
+  }
+  return (sTime);
+}
+
+bool CVdmSystem::getLocalTime(struct tm * info)
+{
+    uint32_t start = millis();
+    uint32_t ms=10;
+    time_t now;
+   // while((millis()-start) <= ms) {
+        time(&now);
+        localtime_r(&now, info);
+        if(info->tm_year > (2016 - 1900)){
+            return true;
+        }
+   //     delay(10);
+   // }
+    return false;
+}
+
+
+String CVdmSystem::getUpTime() {
+    char buf[50];
+    int64_t upTimeUS = esp_timer_get_time(); // in microseconds
+    int64_t seconds = upTimeUS/1000000;
+    uint32_t days = (uint32_t)seconds/86400;
+    uint32_t hr=(uint32_t)seconds % 86400 /  3600;
+    uint32_t min=(uint32_t)seconds %  3600 / 60;
+    uint32_t sec=(uint32_t)seconds % 60;
+    snprintf (buf,sizeof(buf),"%dd %d:%02d:%02d", days, hr, min, sec);
+    return String(buf);
+}
+
+
+void CVdmSystem::sendResetReason() {
+  String ResetMsg = systemMsgReset+':'+getLastResetReason();
+  VdmSystem.setSystemState(systemStateInfo,ResetMsg);
+  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+      syslog.log(LOG_DEBUG, ResetMsg);
+  }   
+  if (VdmConfig.configFlash.messengerConfig.reason.reasonFlags.reset) {
+    uint8_t rr=esp_reset_reason();
+    if (rr>10) rr=0;
+    if ((rr>=4) && (rr<=7) || (rr==9)) {
+      if (VdmConfig.configFlash.messengerConfig.activeFlags.pushOver) {
+        Messenger.sendMessage(systemMsgReset,getLastResetReason().c_str());
+      }
+    }
+  }
 }
 
 void CVdmSystem::getFSDirectory() 
@@ -75,8 +180,10 @@ void CVdmSystem::getFSDirectory()
       Filenames[numfiles].filename = (String(file.name()).startsWith("/") ? String(file.name()).substring(1) : file.name());
       Filenames[numfiles].ftype    = (file.isDirectory() ? "Dir" : "File");
       Filenames[numfiles].fsize    = ConvBinUnits(file.size(), 1);
-      UART_DBG.print("get file : ");
-      UART_DBG.println(file.name());
+      #ifdef EnvDevelop
+        UART_DBG.print("get file : ");
+        UART_DBG.println(file.name());
+      #endif
       file = root.openNextFile();
       numfiles++;
       if (numfiles>maxFiles) break;
@@ -92,12 +199,11 @@ void CVdmSystem::clearFS()
   spiffsStarted=true;
   //esp_task_wdt_init(30, false);
   bool formatSuccess = SPIFFS.format();
-
-  UART_DBG.print("Format success: ");
-  UART_DBG.println(formatSuccess);
+  #ifdef EnvDevelop
+    UART_DBG.print("Format success: ");
+    UART_DBG.println(formatSuccess);
+  #endif
   getFSDirectory();
-
-  //ESP.restart();
 }
 
 void CVdmSystem::fileDelete (String fileName)
@@ -109,10 +215,18 @@ void CVdmSystem::fileDelete (String fileName)
   SPIFFS.remove(thisFileName);
 }
 
-void CVdmSystem::setSystemState(uint8_t thisSystemState,char const *thisSystemMsg)
+void CVdmSystem::setSystemState(uint8_t thisSystemState,String thisSystemMsg)
 {
   systemState=thisSystemState; 
-  strncpy (systemMessage,thisSystemMsg,sizeof(systemMessage));
+  systemMessage= String(thisSystemMsg);
+  
   UART_DBG.print("SystemMsg: ");
   UART_DBG.println(systemMessage);
+}
+
+String CVdmSystem::getLastResetReason()
+{
+  uint8_t rr=esp_reset_reason();
+  if (rr>10) rr=0;
+  return (ResetReason[rr]);
 }

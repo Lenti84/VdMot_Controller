@@ -42,6 +42,8 @@
 
 #include <Arduino.h>
 
+#define CHECK_BIT(var,pos) ((var>>pos) & 1)
+
 // #define CONFIG_ASYNC_TCP_USE_WDT 0
 
 #define ACTUATOR_COUNT      12
@@ -71,4 +73,3 @@
 #define STM32_RX            5
 #define STM32_TX            17
 
-enum TRestartMode {soft,hard};

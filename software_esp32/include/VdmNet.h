@@ -40,6 +40,8 @@
 
 #pragma once
 
+#include <Pushover.h>
+
 
 #define USING_CORE_ESP32_CORE_V200_PLUS     true
 // Debug Level from 0 to 4
@@ -97,15 +99,22 @@ public:
   void setupWifi();
   void setupNtp();
   void checkNet();
+  void checkWifi();
   void startBroker();
   void mqttBroker();
- 
+  void startSysLog();
+  bool checkSntpReachable();
+   
   TWifiState wifiState;
   TEthState ethState;
   VDM_NETWORK_INFO networkInfo;
   bool serverIsStarted;
   bool dataBrokerIsStarted;
   struct tm startTimeinfo;
+  bool syslogStarted;
+  bool sntpActive;
+  bool sntpReachable;
+private :
 };
 
 extern CVdmNet VdmNet;

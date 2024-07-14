@@ -37,9 +37,9 @@
 
 
 
-#define LEARN_AFTER_MOVEMENTS_DEFAULT     100          // after x movements a learning cycle will be executed
+#define LEARN_AFTER_MOVEMENTS_DEFAULT     2000          // after x movements a learning cycle will be executed
 #define LEARN_AFTER_TIME_DEFAULT          7*24*3600   // after x seconds a learning cycle will be executed
-
+#define NO_OF_MIN_COUNTS                  3000
 
 #define VALVE_INIT_TEMPERATURE            -2000   // init value for struct value of temperature
 #define VALVE_SENSOR_UNKNOWN              65535   // marks that no sensor slot is selected
@@ -51,6 +51,7 @@ byte app_10s_loop ();
 int16_t app_set_learnmovements(uint16_t cycles);
 int16_t app_set_learntime(uint32_t time);
 int16_t app_set_valvelearning(uint16_t valve);
+void app_scan_valves();
 int16_t app_set_valveopen(int16_t valve);
 int16_t app_match_sensors();
 void reset_check();
@@ -79,6 +80,7 @@ struct valve {
   unsigned int sensorindex2;
   unsigned int learn_time;
   unsigned int learn_movements;
+  unsigned int movements;
 //   byte target_position;
 //   byte actual_position;
   byte statusm;

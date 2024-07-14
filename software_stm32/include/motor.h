@@ -44,12 +44,14 @@
 #define VLV_STATE_IDLE      (byte) 0x01       // nothing to do
 #define VLV_STATE_OPENING   (byte) 0x02       // opens
 #define VLV_STATE_CLOSING   (byte) 0x03       // closes
-#define VLV_STATE_BLOCKS    (byte) 0x04       // valve is blocked
+#define VLV_STATE_FAILED    (byte) 0x04       // failed (e.g jump away)
 #define VLV_STATE_UNKNOWN   (byte) 0x05       // initial state
 #define VLV_STATE_OPENCIR   (byte) 0x06       // open circuit detected
 #define VLV_STATE_FULLOPEN  (byte) 0x07       // go directly full open
 #define VLV_STATE_PRESENT   (byte) 0x08       // connected
+#define VLV_STATE_BLOCKS    (byte) 0x09       // valve is blocked
 
+enum CALIBSTATE {calibIdle,calibStarted,calibInProgress};
 
 struct valvemotor {
 //typedef struct valves {
@@ -65,6 +67,11 @@ struct valvemotor {
   byte target_position;
   byte actual_position;
   byte status;
+  uint8_t calibration;
+  uint8_t calibTime;
+  CALIBSTATE calibState;
+  uint8_t connected;
+  uint8_t calibRetries;
 };
 
 extern valvemotor myvalvemots[ACTUATOR_COUNT];
@@ -78,7 +85,7 @@ extern enum ASTATE valvestate;
 
 
 
-byte valve_loop ();
+void valve_loop ();
 //byte valve_setup (struct valve *valvedata);
 //byte valve_setup (struct valvemotor *valvedata);
 byte valve_setup ();
@@ -89,5 +96,7 @@ int16_t appsetaction(char cmd, unsigned int valveindex, byte pos);
 extern uint8_t currentbound_low_fac;      // lower current limit factor for detection of end stop
 extern uint8_t currentbound_high_fac;     // upper current limit factor for detection of end stop
 extern uint8_t startOnPower;              // valve % on power start 
+extern uint16_t noOfMinCounts;
+extern uint8_t maxCalibRetries;
 
 #endif     //_MOTOR_H

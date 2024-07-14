@@ -320,12 +320,10 @@ int16_t eeprom_write_layout (struct eeprom_layout* lay) {
 	x=0;
 	buf[x++] =  lay->startOnPower;
 	pb=(uint16_t*) &buf[x];
-	*pb = lay->numberOfMovements;
-	x++; 
-  	//eep.write(address, buf, x);
+	*pb = lay->noOfMinCounts;
+	x+=2; 
+	buf[x++] =  lay->maxCalibRetries;
 	eeprom.writeBlock(address, buf, x);
-
-
 
 	EEPROM_DEBUG("finished\r\n");
 
@@ -371,7 +369,6 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 	pb=(uint16_t*) &buf[x];
 	lay->numberOfMovements = *pb;
 	x+=2; 
-	// then read sensor data
 	address = EE_GENERALDATA_ADR + x;
 	
 
@@ -431,9 +428,15 @@ int16_t eeprom_read_layout (struct eeprom_layout* lay) {
 
 	eeprom.readBlock(address, buf, 1);
 	lay->startOnPower = buf[0];
-
+	address++;
+	eeprom.readBlock(address, buf, 2);
+	pb=(uint16_t*) &buf[0];
+	lay->noOfMinCounts = *pb;
+	address+=2;
+	eeprom.readBlock(address, buf, 1);
+	lay->maxCalibRetries = buf[0];
+	address++;
 	eep_content.status = EEP_VALID;
-
 	EEPROM_DEBUG("finished\r\n");
 
 	return 0;

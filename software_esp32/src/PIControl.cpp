@@ -49,12 +49,14 @@
 
 CPiControl PiControl[ACTUATOR_COUNT];
 
-float CPiControl::piCtrl(float e) {
+
+float CPiControl::piCtrl(float target,float value) {
   float p;
   float y;
-  float kp;
-  if (xp==0) return (startValvePos);
-  kp = 100/xp;
+  float e;
+  
+  if ((xp==0) || (ti==0)) return (startValvePos);
+ 
   time_t now;
   if (!start) {
     time(&ts);
@@ -65,13 +67,26 @@ float CPiControl::piCtrl(float e) {
   time(&now);
   ta=difftime(now,ts);      // in sec
   time(&ts);
+ 
+  if (windowControlState == windowCloseRestore) {
+    ta = VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].ts;
+    windowControlState = windowIdle;
+  }
+  
+  if (VdmConfig.heatValues.heatControl==piControlOnHeating)
+  {
+    e=target-value;
+  } else {
+    e=value-target;
+  } 
 
   // p - proportion
   y = kp * e;
   p = y + 50 + offset + dynOffset;
   if (p > 100.0) p = 100.0;
   if (p < 0.0) p = 0.0;
-  if (ti==0) return (startValvePos);
+  
+
   if (scheme==0) {
     // i - proportion
     iProp += ((float)ta / (float)ti) * y;
@@ -83,7 +98,7 @@ float CPiControl::piCtrl(float e) {
   // pi
   y = p + iProp;
   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-      syslog.log(LOG_DEBUG, "pic:calc valve position : #"+String(valveIndex+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[valveIndex].name)+") tTarget = "+String(target)+" tValue = "+String(value)+" diff = "+String(e)+" iProp = "+String(iProp)+" p = "+String(p)+" y = "+String(y));
+      syslog.log(LOG_DEBUG, "pic:calc valve position : #"+String(valveIndex+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[valveIndex].name)+") tTarget = "+String(target)+" tValue = "+String(value)+" diff = "+String(e)+" iProp = "+String(iProp)+" kp = "+String(kp)+" esum = "+String(esum)+" p = "+String(p)+" y = "+String(y));
   }
   if (y > 100.0) {
     y = 100.0;
@@ -93,34 +108,162 @@ float CPiControl::piCtrl(float e) {
     y = 0.0;
     iProp = 0.0 - p;
   }
-  
+   
   return y;
 }
 
+void CPiControl::setWindowAction(uint8_t windowControl)
+{
+ if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].controlFlags.windowInstalled && controlActive && 
+    (VdmConfig.heatValues.heatControl==1 || VdmConfig.heatValues.heatControl==2))
+ {
+  windowState = windowControl;
+  switch (windowControl) {
+    case windowActionCloseRestore: {
+      windowControlState = windowCloseRestore;
+      setValveAction(lastControlPosition);
+      break;
+    }
+    case windowActionOpenLock: {
+      windowControlState = windowOpenLock;
+      setValveAction(windowOpenTarget);
+      break;
+    }
+  }
+ } else {
+  if (windowControlState == windowOpenLock) {
+    windowControlState = windowCloseRestore;
+    setValveAction(lastControlPosition);
+  }
+ }
+}
+
+void CPiControl::setValveAction(uint8_t valvePosition) {
+  if (!(failed) && (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].controlFlags.active && controlActive)) {
+    StmApp.actuators[valveIndex].target_position=valvePosition;
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+      syslog.log(LOG_DEBUG, "pic: setValveAction valve position has changed : "+String(VdmConfig.configFlash.valvesConfig.valveConfig[valveIndex].name)+"(#"+String(valveIndex+1)+") = "+String(valvePosition)+" Ttarget "+String(target)+" Tvalue "+String(value));
+    }
+    // check if there are links
+    for (uint8_t i=0; i< ACTUATOR_COUNT; i++) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.active) {
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].link==(valveIndex+1)) {
+          StmApp.actuators[i].target_position=valvePosition;
+          if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+            syslog.log(LOG_DEBUG, "pic:setValveAction link valve position has changed : "+String(VdmConfig.configFlash.valvesConfig.valveConfig[i].name)+"(#"+String(i+1)+") = "+String(valvePosition));
+          }
+        }
+      }
+    }
+  }
+}
+
+
+CHECKACTION CPiControl::checkAction(uint8_t idx)
+{
+  if (!controlActive) return(nothing);
+  if (!VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].controlFlags.active)  return(nothing);
+  if (failed) return(nothing);
+
+  if (!VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].controlFlags.windowInstalled) {
+    windowControlState = windowIdle;  
+  }
+  if (windowControlState == windowOpenLock) {
+    setPosition(windowOpenTarget);
+    return(nothing);
+  }
+  
+  switch (VdmConfig.heatValues.heatControl)
+  {
+    case piControlManual:
+      return(nothing);
+    case piControlOnHeating:
+      if ((VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow==piControlAllowedHeatingCooling) || (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow==piControlAllowedHeating))
+      {
+        return(control); 
+      }
+      else {
+        return(gotoMin);  
+      }
+    case piControlOnCooling:
+      if ((VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow==piControlAllowedHeatingCooling) || (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow==piControlAllowedCooling))
+      {
+        return(control); 
+      }
+      else {
+        return(gotoMin);  
+      }
+    case piControlOff:
+      return (gotoPark);
+  } 
+  return (nothing);
+}
+
+
 uint8_t CPiControl::calcValve()
 {
-    float piValue=piCtrl(target-value);
-    return (round(piValue));
+  float piValue=0;
+  piValue=piCtrl(target,value);
+  return (round(piValue));
 }
 
 void CPiControl::controlValve() 
 {
-  if (VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOff) {
-     StmApp.actuators[valveIndex].target_position=VdmConfig.configFlash.valvesControlConfig.parkingPosition;
-     return;
+  CHECKACTION check=checkAction(valveIndex);
+ 
+  switch (check) {
+    case nothing:
+      break;
+    case gotoMin:
+      setPosition(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].startActiveZone);
+      break;
+    case gotoPark:
+      setPosition(VdmConfig.heatValues.parkPosition);
+      break;
+    case control:
+      doControlValve();
+      break;
   }
+}
+
+void CPiControl::setPosition(uint8_t thisPosition)
+{
+  StmApp.actuators[valveIndex].target_position=thisPosition;
+     // check if there are links
+     for (uint8_t i=0; i< ACTUATOR_COUNT; i++) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.active) {
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].link==(valveIndex+1)) {
+          StmApp.actuators[i].target_position=thisPosition;
+          if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+            syslog.log(LOG_DEBUG, "pic:link valve position has changed to : "+String(VdmConfig.configFlash.valvesConfig.valveConfig[i].name)+"(#"+String(i+1)+") = "+String(thisPosition));
+          }
+        }
+      }
+    }
+}
   
-  if (VdmConfig.configFlash.valvesControlConfig.heatControl==piControlOn) {
-    uint8_t valvePosition;
-    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==1) {
-      value=((float)StmApp.actuators[valveIndex].temp1)/10;
+bool CPiControl::getValueFromSource()
+{
+  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==1) {
+      if (StmApp.actuators[valveIndex].temp1>-500) 
+        value=((float)StmApp.actuators[valveIndex].temp1)/10;
+      else return (false);
     }
     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].valueSource==2) {
-      value=((float)StmApp.actuators[valveIndex].temp2)/10;
+      if (StmApp.actuators[valveIndex].temp2>-500) 
+        value=((float)StmApp.actuators[valveIndex].temp2)/10;
+      else return (false);
     }
+    return (true);
+}
+
+void CPiControl::doControlValve() 
+{
+    uint8_t valvePosition;
+    if (!getValueFromSource()) return;
     float newValveValue=calcValve();
     if (endActiveZone>startActiveZone) {
-      valvePosition=round((((float)(endActiveZone-startActiveZone))*newValveValue/100)+startActiveZone); 
+      valvePosition=round((((float)(endActiveZone-startActiveZone))*newValveValue/100.0)+startActiveZone); 
     } else valvePosition=round(newValveValue);
     if (valvePosition>100) {
       if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
@@ -128,22 +271,32 @@ void CPiControl::controlValve()
       }
       valvePosition=100;
     }
-
-    StmApp.actuators[valveIndex].target_position=valvePosition;
-    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-      syslog.log(LOG_DEBUG, "pic:valve position has changed : "+String(VdmConfig.configFlash.valvesConfig.valveConfig[valveIndex].name)+"(#"+String(valveIndex+1)+") = "+String(valvePosition)+" Ttarget "+String(target)+" Tvalue "+String(value));
-    }
-    // check if there are links
-    for (uint8_t i=0; i< ACTUATOR_COUNT; i++) {
-      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].active) {
-        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].link==(valveIndex+1)) {
-          StmApp.actuators[i].target_position=valvePosition;
-          if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-            syslog.log(LOG_DEBUG, "pic:link valve position has changed : "+String(VdmConfig.configFlash.valvesConfig.valveConfig[i].name)+"(#"+String(i+1)+") = "+String(valvePosition));
-          }
-        }
+    if (controlActive==0) valvePosition=0; 
+    setPosition(valvePosition);
+    lastControlPosition=valvePosition;
+}
+  
+void CPiControl::setControlActive(uint8_t thisControl)
+{
+  controlActive=thisControl;
+  // check if there are links
+   for (uint8_t i=0; i< ACTUATOR_COUNT; i++) {
+    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.active) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].link==(valveIndex+1)) {
+        PiControl[i].controlActive=thisControl;
       }
     }
   }
 }
-  
+
+void CPiControl::setFailed(uint8_t thisPosition)
+{
+  failed=true;
+  StmApp.actuators[valveIndex].target_position=thisPosition;
+  // check if there are links
+  for (uint8_t i=0; i< ACTUATOR_COUNT; i++) {
+    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[i].link==(valveIndex+1)) {
+      StmApp.actuators[i].target_position=thisPosition;
+    }
+  }
+}

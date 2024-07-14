@@ -55,14 +55,22 @@
 #include "stm32ota.h"
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
-#include <SPIFFS.h>
-#include <FS.h>
 #include "ServerServices.h"
 #include "VdmSystem.h"
 #include "VdmTask.h"
 #include "Services.h"
 #include "stmApp.h"
 #include "PIControl.h"
+#include "Messenger.h"
+#include "mqtt.h"
+
+#include <FS.h>
+#ifdef USE_LittleFS
+  #define SPIFFS LittleFS
+  #include <LITTLEFS.h> 
+#else
+  #include <SPIFFS.h>
+#endif 
 
 extern "C" {
   #include "tfs_data.h"
@@ -88,8 +96,7 @@ CServerServices ServerServices;
 
 void restart (JsonObject doc)
 {  
-  Services.restartSTM=true;
-  Services.restartSystem(hard,false);
+  Services.restartSystem(false);
 }
 
 void writeConfig (JsonObject doc)
@@ -131,12 +138,22 @@ void scanTSensors (JsonObject doc)
 
 void valvesCalibration (JsonObject doc)
 {  
-  StmApp.valvesCalibration();
+  uint8_t index=255;
+  if (!doc["valve"].isNull()) {
+    index=(doc["valve"].as<uint8_t>());
+    if (index!=255) index--;
+  }
+  StmApp.valvesCalibration(index);
 }
 
 void valvesAssembly (JsonObject doc)
 {  
-  StmApp.valvesAssembly();
+  uint8_t index=255;
+  if (!doc["valve"].isNull()) {
+    index=(doc["valve"].as<uint8_t>());
+    if (index!=255) index--;
+  }
+  StmApp.valvesAssembly(index);
 }
 
 void valvesDetect (JsonObject doc)
@@ -146,7 +163,19 @@ void valvesDetect (JsonObject doc)
 
 void writeValvesControl (JsonObject doc)
 {  
-  VdmConfig.writeValvesControlConfig(true);
+  VdmConfig.writeValvesControlConfig(false,VdmTask.restartPiTask);
+}
+
+void mqttReconnect (JsonObject doc)
+{  
+  Mqtt.disconnect();
+}
+
+void sysLogSave (JsonObject doc)
+{  
+  VdmConfig.writeSysLogValues();
+  VdmNet.syslogStarted=false;
+  VdmNet.startSysLog();
 }
 
 void CServerServices::postSetValve (JsonObject doc)
@@ -158,12 +187,22 @@ void CServerServices::postSetValve (JsonObject doc)
       if (VdmConfig.configFlash.valvesConfig.valveConfig[index].active) {
         if (!doc["value"].isNull()) StmApp.actuators[index].target_position = doc["value"];
       }
-      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].active) {
-        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].valueSource==1) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].controlFlags.active) {
+        if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].valueSource==3) {
           if (!doc["ctrlValue"].isNull()) PiControl[index].value = doc["ctrlValue"];
+          #ifdef EnvDevelop
+            UART_DBG.println("ctrlValue : "+String(PiControl[index].value));
+          #endif
+          jsonSetValveReceived=true;
         }
         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[index].targetSource==1) {
-          if (!doc["ctrlTarget"].isNull()) PiControl[index].target = doc["ctrlTarget"];
+          if (!doc["ctrlTarget"].isNull()) {
+            PiControl[index].target = doc["ctrlTarget"];
+            #ifdef EnvDevelop
+            UART_DBG.println("ctrlTarget : "+String(PiControl[index].target));
+            #endif
+            jsonSetValveReceived=true;
+          }
           if (!doc["ctrlDynOffs"].isNull()) PiControl[index].dynOffset = doc["ctrlDynOffs"];
         }
       }
@@ -284,7 +323,12 @@ void handleProtConfig(AsyncWebServerRequest *request)
 
 void handleValvesConfig(AsyncWebServerRequest *request)
 {
-  request->send(200,aj,Web.getValvesConfig (VdmConfig.configFlash.valvesConfig, StmApp.motorChars));
+  request->send(200,aj,Web.getValvesConfig (VdmConfig.configFlash.valvesConfig));
+}
+
+void handleMotorConfig(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,Web.getMotorConfig (StmApp.motorChars));
 }
 
 void handleValvesControlConfig(AsyncWebServerRequest *request)
@@ -317,6 +361,11 @@ void handleGetSysConfig(AsyncWebServerRequest *request)
   request->send(200,aj,Web.getSysConfig(VdmConfig.configFlash.systemConfig));
 }
 
+void handleGetMsgConfig(AsyncWebServerRequest *request) 
+{ 
+  request->send(200,aj,Web.getMsgConfig(VdmConfig.configFlash.messengerConfig));
+}
+
 void handleGetStm(AsyncWebServerRequest *request) 
 { 
   // generate callback with request parameter
@@ -338,10 +387,10 @@ bool handleCmd(JsonObject doc)
 { 
   typedef void (*fp)(JsonObject doc);
   fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,&setGetFS,
-                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl} ;
+                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl,&mqttReconnect,&sysLogSave} ;
 
   char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete","getFS",
-                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave",NULL};
+                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave","mqttReconnect","sysLogSave",NULL};
   char const **p;
   bool found = false;
 
@@ -367,32 +416,38 @@ void handleUploadFile(AsyncWebServerRequest *request, const String& filename, si
   if(!index){
     String thisFileName = filename;
     // open the file on first call and store the file handle in the request object
-    UART_DBG.println("file has arguments : "+String(request->args()));
+    #ifdef EnvDevelop
+      UART_DBG.println("file has arguments : "+String(request->args()));
+    #endif
     if (request->args()) {
-        UART_DBG.println("file has argument "+request->arg("dir"));
-        //thisFileName = "/"+request->arg("dir")+"/"+filename; 
+        #ifdef EnvDevelop      
+          UART_DBG.println("file has argument "+request->arg("dir"));
+        #endif
         thisFileName = "/"+filename; 
     }
-
-     UART_DBG.println("filename : "+thisFileName);
+    #ifdef EnvDevelop
+      UART_DBG.println("filename : "+thisFileName);
+    #endif
     request->_tempFile = SPIFFS.open(thisFileName, "w");
   }
   if(len) {
     // stream the incoming chunk to the opened file
     request->_tempFile.write(data,len);
-  //  UART_DBG.println("file chunk");
   }
   if(final){
     // close the file handle as the upload is now done
     request->_tempFile.close();
     request->send(200, aj, Web.getFSDir()); 
-    UART_DBG.println("upload finished");
+    #ifdef EnvDevelop
+      UART_DBG.println("upload finished");
+    #endif
   }
   
 }
 
 CServerServices::CServerServices()
 {
+  jsonSetValveReceived=false;
 }
 
 void CServerServices::stmDoUpdate(JsonObject doc)
@@ -403,7 +458,9 @@ void CServerServices::stmDoUpdate(JsonObject doc)
     String thisFileName = doc["file"].as<const char*>();
     if (!thisFileName.startsWith("/")) thisFileName = "/"+thisFileName;
     uint8_t command = doc["cmd"];
-    UART_DBG.println("file : "+thisFileName + " Command "+ String(command));
+    #ifdef EnvDevelop
+      UART_DBG.println("file : "+thisFileName + " Command "+ String(command));
+    #endif
     if (command==0) VdmTask.startStm32Ota(STM32OTA_START,thisFileName);
     if (command==1) VdmTask.startStm32Ota(STM32OTA_STARTBLANK,thisFileName);
   }
@@ -421,6 +478,7 @@ void  CServerServices::initServer()
   server.on("/netconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleNetConfig(request);});
   server.on("/protconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleProtConfig(request);});
   server.on("/valvesconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesConfig(request);});
+  server.on("/motorconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleMotorConfig(request);});
   server.on("/valvesctrlconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesControlConfig(request);});
   server.on("/tempsconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleTempsConfig(request);});
   server.on("/sysinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysInfo(request);});
@@ -430,6 +488,7 @@ void  CServerServices::initServer()
   server.on("/stmupdstatus", HTTP_GET, [](AsyncWebServerRequest * request) {handleStmUpdStatus(request);});
   server.on("/tempsensorsid", HTTP_GET, [](AsyncWebServerRequest * request) {handleTempSensorsID(request);});
   server.on("/sysconfig", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetSysConfig(request);});
+  server.on("/msgconfig", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetMsgConfig(request);});
   server.on("/stm?", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetStm(request);});
   
   server.on("/fupload", HTTP_POST, [](AsyncWebServerRequest *request) {},
@@ -463,6 +522,15 @@ void  CServerServices::initServer()
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(netCfgHandler);
+
+  AsyncCallbackJsonWebHandler* sysLogCfgHandler = new AsyncCallbackJsonWebHandler("/sysLogCfg", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postSysLogCfg (jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(sysLogCfgHandler);  
   
   AsyncCallbackJsonWebHandler* protCfgHandler = new AsyncCallbackJsonWebHandler("/protconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
     if (json.is<JsonObject>()) {
@@ -528,6 +596,33 @@ AsyncCallbackJsonWebHandler* valvesControlCfgHandler = new AsyncCallbackJsonWebH
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(sysCfgHandler);
+  
+AsyncCallbackJsonWebHandler* msgCfgHandler = new AsyncCallbackJsonWebHandler("/msgconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postMessengerCfg (jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(msgCfgHandler);
+
+AsyncCallbackJsonWebHandler* testPOHandler = new AsyncCallbackJsonWebHandler("/testPO", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      Messenger.testPO(jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(testPOHandler);  
+
+AsyncCallbackJsonWebHandler* testEmailHandler = new AsyncCallbackJsonWebHandler("/testEmail", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      Messenger.testEmail(jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(testEmailHandler);  
 
   WT32AsyncOTA.begin(&server);    // Start WT32OTA
   server.begin();

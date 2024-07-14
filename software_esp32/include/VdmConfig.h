@@ -49,6 +49,10 @@
 
 enum protType  {protTypeNone=0,protTypeMqtt=1};
 
+#define allowHeatingCooling 0
+#define allowHeating 1
+#define allowCooling 2
+
 typedef struct {
   uint8_t eth_wifi;
   bool dhcpEnabled;
@@ -79,17 +83,45 @@ typedef struct {
   char stationName[21];
 } VDM_SYSTEM_CONFIG;
 
+typedef struct  {
+  uint8_t publishSeparate : 1 ;
+  uint8_t publishAllTemps : 1;
+  uint8_t publishPathAsRoot : 1 ;
+  uint8_t publishUpTime : 1;
+  uint8_t publishOnChange : 1;
+  uint8_t publishRetained : 1;
+  uint8_t publishPlainText : 1;
+  uint8_t publishDiag : 1;
+} VDM_PROTOCOL_CONFIG_FLAGS;
+
+typedef struct  {
+  uint8_t timeoutTSActive : 1 ;
+  uint8_t timeoutDSActive : 1 ;
+} VDM_PROTOCOL_MQTT_CONFIG_FLAGS;
+
+
+typedef struct  {
+  VDM_PROTOCOL_MQTT_CONFIG_FLAGS flags;
+  uint32_t timeOut;
+  uint8_t toPos;
+} VDM_PROTOCOL_MQTT_CONFIG;
+
+
 typedef struct {
   uint8_t  dataProtocol; // 0 = no protocol , 1 = mqtt
   uint32_t brokerIp;
   uint16_t brokerPort;
   uint32_t brokerInterval;
+  uint32_t publishInterval;
   char userName[65];
   char userPwd[65];
-  bool publishTarget;
-  bool publishAllTemps;
-  bool publishPathAsRoot;
+  VDM_PROTOCOL_CONFIG_FLAGS protocolFlags;
+  uint16_t keepAliveTime;
+  uint32_t minBrokerDelay;
+  VDM_PROTOCOL_MQTT_CONFIG mqttConfig;
 } VDM_PROTOCOL_CONFIG;
+
+
 
 typedef struct {
   char  name[11];
@@ -102,8 +134,15 @@ typedef struct {
   uint8_t hourOfCalib;
 } VDM_VALVES_CONFIG;
 
+typedef struct  {
+  uint8_t active : 1 ;
+  uint8_t allow : 3;
+  uint8_t windowInstalled : 1;
+} VDM_VALVE_CONTROL_CONFIG_FLAGS;
+
+
 typedef struct {
-  bool active;
+  VDM_VALVE_CONTROL_CONFIG_FLAGS controlFlags;
   uint8_t link;
   uint8_t valueSource;
   uint8_t targetSource;
@@ -116,6 +155,14 @@ typedef struct {
   uint8_t startActiveZone;
   uint8_t endActiveZone;
 } VDM_VALVE_CONTROL_CONFIG;
+
+typedef struct {
+  float alpha;
+} VDM_VALVE_CONTROL_CONFIG_ALPHA;
+
+typedef struct {
+  uint8_t usePrediction : 1; 
+} VDM_VALVES_CONTROL_CONFIG_FLAGS;
 
 typedef struct {
   VDM_VALVE_CONTROL_CONFIG valveControlConfig[ACTUATOR_COUNT];
@@ -135,6 +182,50 @@ typedef struct {
   VDM_TEMP_CONFIG tempConfig[TEMP_SENSORS_COUNT];
 } VDM_TEMPS_CONFIG;
 
+typedef struct  {
+  uint8_t pushOver : 1 ;
+  uint8_t email : 1 ;
+} VDM_MSG_ACTIVE_CONFIG_FLAGS;
+
+typedef struct  {
+  uint8_t valveFailed : 1 ;
+  uint8_t notDetect : 1;
+  uint8_t mqttTimeOut : 1;
+  uint8_t reset : 1;
+  uint8_t ds18Failed : 1;
+  uint8_t tValueFailed : 1;
+  uint8_t valveBlocked : 1;
+} VDM_MSG_REASON_CONFIG_FLAGS;
+
+typedef struct  {
+  VDM_MSG_REASON_CONFIG_FLAGS reasonFlags;
+  uint16_t mqttTimeOutTime;
+} VDM_MSG_REASON_CONFIG;
+
+typedef struct {
+  // pushover
+  char userToken[31];
+  char appToken[31];
+  char title[31];
+} VDM_MSG_PUSHOVER_CONFIG;
+
+typedef struct {
+  // email
+  char user[65];
+  char pwd[65];
+  char host[65]; 
+  uint16_t port;
+  char recipient[65];
+  char title[31];
+} VDM_MSG_EMAIL_CONFIG;
+
+typedef struct {
+  VDM_MSG_ACTIVE_CONFIG_FLAGS activeFlags;
+  VDM_MSG_REASON_CONFIG reason;
+  VDM_MSG_PUSHOVER_CONFIG pushover;
+  VDM_MSG_EMAIL_CONFIG email;
+} VDM_MSG_CONFIG;
+
 typedef struct 
 {
   VDM_NETWORK_CONFIG netConfig;
@@ -144,8 +235,17 @@ typedef struct
   VDM_SYSTEM_CONFIG systemConfig;
   VDM_VALVES_CONTROL_CONFIG valvesControlConfig;
   VDM_SYSTEM_TIME_ZONE_CONFIG timeZoneConfig;
+  VDM_MSG_CONFIG messengerConfig;
 } CONFIG_FLASH;
 
+typedef struct {
+  time_t lastCalib; 
+} MISC_VALUES;
+
+typedef struct {
+  uint8_t heatControl;
+  uint8_t parkPosition; 
+} HEATCFG_VALUES;
 
 #define nvsNetCfg                   "netCfg"
 #define nvsNetEthwifi               "ethwifi"
@@ -174,18 +274,24 @@ typedef struct
 #define nvsProtBrokerIp             "brokerIp"
 #define nvsProtBrokerPort           "brokerPort"
 #define nvsProtBrokerInterval       "brokerInterval"
+#define nvsProtPublishInterval      "publishInterval"
 #define nvsProtBrokerUser           "brokerUser"
 #define nvsProtBrokerPwd            "brokerPwd"
-#define nvsProtBrokerPublishTarget  "brokerPT"
-#define nvsProtBrokerPublishAllTemps  "brokerPAT"
-#define nvsProtBrokerPublishPathAsRoot  "brokerPaR"
+#define nvsProtBrokerPublishFlags   "brokerPF"
+#define nvsProtBrokerKeepAliveTime  "brokerKAT"
+#define nvsProtBrokerMinBrokerDelay "brokerMD"
+#define nvsProtBrokerMQTTFlags      "brokerMQF"
+#define nvsProtBrokerMQTTTimeOut    "brokerMQTO"
+#define nvsProtBrokerMQTTToPos      "brokerMQToPos"
 
 #define nvsValvesCfg                "valvesCfg"
 #define nvsValvesControlCfg         "valvesCtrlCfg"
 #define nvsValves                   "valves"
 #define nvsValvesControl            "valvesCtrl"
+#define nvsValvesControlAlpha       "vCtrlAlpha"
 #define nvsValvesControlHeatControl "vCtrlHeat"
 #define nvsValvesControlParkPos     "vCtrlParkPos"
+#define nvsValvesControlFlags       "vCtrlFlags"
 
 #define nvsTempsCfg                 "tempsCfg"
 #define nvsTemps                    "temps"
@@ -202,6 +308,24 @@ typedef struct
 #define nvsSystemCelsiusFahrenheit  "CF"
 #define nvsSystemStationName        "stName"
 
+#define nvsMsgCfg                   "msgCfg"
+#define nvsMsgCfgFlags              "msgFlags"
+#define nvsMsgCfgReason             "msgReas"
+#define nvsMsgCfgMqttTimeout        "msgMQTO"
+#define nvsMsgCfgPOAppToken         "POAppTk"
+#define nvsMsgCfgPOUserToken        "POUserTk"
+#define nvsMsgCfgPOTitle            "POTitle"
+
+#define nvsMsgCfgEmailUser          "EUser"
+#define nvsMsgCfgEmailPwd           "EPwd"
+#define nvsMsgCfgEMailHost          "EHost"
+#define nvsMsgCfgEmailPort          "EPort"
+#define nvsMsgCfgEmailRecipient     "ERep"
+#define nvsMsgCfgEmailTitle         "ETitle"
+
+#define nvsMisc                     "Misc"
+#define nvsMiscLastCalib            "MiscLC"
+
 class CVdmConfig
 {
 public:
@@ -213,21 +337,27 @@ public:
   void writeConfig(bool reboot=false);
   void resetConfig (bool reboot=false);
   void restoreConfig (bool reboot=false);
-  void writeValvesControlConfig(bool reboot=false);
+  void writeValvesControlConfig(bool reboot=false, bool restartTask=true);
+  void writeSysLogValues();
   void postNetCfg (JsonObject doc);
+  void postSysLogCfg (JsonObject doc);
   void postProtCfg (JsonObject doc);
   void postValvesCfg (JsonObject doc);
   void postValvesControlCfg (JsonObject doc);
   void postTempsCfg (JsonObject doc);
   void postSysCfg (JsonObject doc);
+  void postMessengerCfg (JsonObject doc);
   String handleAuth (JsonObject doc);
   uint32_t doc2IPAddress(String id);
-  int8_t findTempID (char* tempId);
   void checkToResetCfg();
+  void writeMiscValues();
 
   Preferences prefs;
 
   CONFIG_FLASH configFlash;
+
+  MISC_VALUES miscValues;
+  HEATCFG_VALUES heatValues;
 };
 
 extern CVdmConfig VdmConfig;

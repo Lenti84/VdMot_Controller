@@ -64,7 +64,7 @@ void CVdmConfig::resetConfig (bool reboot)
   clearConfig(); 
   writeConfig();
   writeValvesControlConfig();
-  if (reboot) Services.restartSystem(hard,false);
+  if (reboot) Services.restartSystem(false);
 }
 
 void CVdmConfig::restoreConfig (bool reboot)
@@ -72,7 +72,7 @@ void CVdmConfig::restoreConfig (bool reboot)
   setDefault();
   writeConfig();
   writeValvesControlConfig();
-  if (reboot) Services.restartSystem(hard,false);
+  if (reboot) Services.restartSystem(false);
 }
 
 void CVdmConfig::setDefault()
@@ -97,12 +97,24 @@ void CVdmConfig::clearConfig()
   configFlash.protConfig.dataProtocol = 0;
   configFlash.protConfig.brokerIp = 0;
   configFlash.protConfig.brokerPort = 0;
-  configFlash.protConfig.brokerInterval = 2000;
+  configFlash.protConfig.brokerInterval = 1000;
+  configFlash.protConfig.publishInterval = 10;
+  configFlash.protConfig.minBrokerDelay = 5;
   memset (configFlash.protConfig.userName,0,sizeof(configFlash.protConfig.userName));
   memset (configFlash.protConfig.userPwd,0,sizeof(configFlash.protConfig.userPwd));
-  configFlash.protConfig.publishTarget = false;
-  configFlash.protConfig.publishAllTemps = false;
-  configFlash.protConfig.publishPathAsRoot = false;
+  configFlash.protConfig.protocolFlags.publishSeparate = false;
+  configFlash.protConfig.protocolFlags.publishAllTemps = false;
+  configFlash.protConfig.protocolFlags.publishPathAsRoot = false;
+  configFlash.protConfig.protocolFlags.publishUpTime = false;
+  configFlash.protConfig.protocolFlags.publishOnChange = false;
+  configFlash.protConfig.protocolFlags.publishRetained = false;
+  configFlash.protConfig.protocolFlags.publishPlainText = false;
+  configFlash.protConfig.protocolFlags.publishDiag = false;
+  configFlash.protConfig.keepAliveTime = 60;
+  configFlash.protConfig.mqttConfig.flags.timeoutTSActive = false;
+  configFlash.protConfig.mqttConfig.flags.timeoutDSActive = false;
+  configFlash.protConfig.mqttConfig.timeOut = 120;
+  configFlash.protConfig.mqttConfig.toPos = 10;
   
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
     configFlash.valvesConfig.valveConfig[i].active = false;
@@ -110,7 +122,9 @@ void CVdmConfig::clearConfig()
   }
 
   for (uint8_t i=0; i<ACTUATOR_COUNT; i++) {
-    configFlash.valvesControlConfig.valveControlConfig[i].active = false;
+    configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.active = false;
+    configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.allow = allowHeatingCooling;
+    configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.windowInstalled = false;
     configFlash.valvesControlConfig.valveControlConfig[i].xp=20;
     configFlash.valvesControlConfig.valveControlConfig[i].link=0;
     configFlash.valvesControlConfig.valveControlConfig[i].offset=0;
@@ -125,7 +139,7 @@ void CVdmConfig::clearConfig()
   }
   configFlash.valvesControlConfig.heatControl=0;
   configFlash.valvesControlConfig.parkingPosition=10;
-
+ 
   for (uint8_t i=0; i<TEMP_SENSORS_COUNT; i++) {
     configFlash.tempsConfig.tempConfig[i].active = false;
     configFlash.tempsConfig.tempConfig[i].offset = 0;
@@ -146,6 +160,22 @@ void CVdmConfig::clearConfig()
   configFlash.netConfig.syslogLevel=0;
   configFlash.netConfig.syslogIp=0;
   configFlash.netConfig.syslogPort=0; 
+
+  configFlash.messengerConfig.activeFlags.pushOver=0;
+  configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=0;
+  configFlash.messengerConfig.reason.reasonFlags.notDetect=0;
+  configFlash.messengerConfig.reason.reasonFlags.reset=0;
+  configFlash.messengerConfig.reason.reasonFlags.valveFailed=0;
+  configFlash.messengerConfig.reason.reasonFlags.ds18Failed=0;
+  configFlash.messengerConfig.reason.reasonFlags.tValueFailed=0;
+  configFlash.messengerConfig.reason.reasonFlags.valveBlocked=0;
+  configFlash.messengerConfig.reason.mqttTimeOutTime=10;
+  memset(configFlash.messengerConfig.pushover.title,0,sizeof(configFlash.messengerConfig.pushover.title));
+  memset(configFlash.messengerConfig.pushover.appToken,0,sizeof(configFlash.messengerConfig.pushover.appToken));
+  memset(configFlash.messengerConfig.pushover.userToken,0,sizeof(configFlash.messengerConfig.pushover.userToken));
+
+  miscValues.lastCalib=0;
+
 }
 
 void CVdmConfig::readConfig()
@@ -174,12 +204,12 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
     if (prefs.isKey(nvsNetTimeServer))
       prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
-    
+    /*
     if (strlen(configFlash.netConfig.timeServer) == 0) {
       memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
       strncpy(configFlash.netConfig.timeServer,"pool.ntp.org",sizeof(configFlash.netConfig.timeServer));
     }
-    
+    */
     configFlash.netConfig.syslogLevel=prefs.getUChar(nvsNetSysLogEnable);
     configFlash.netConfig.syslogIp=prefs.getULong(nvsNetSysLogIp);
     configFlash.netConfig.syslogPort=prefs.getUShort(nvsNetSysLogPort);
@@ -189,14 +219,20 @@ void CVdmConfig::readConfig()
     configFlash.protConfig.dataProtocol = prefs.getUChar(nvsProtDataProt);
     configFlash.protConfig.brokerIp = prefs.getULong(nvsProtBrokerIp);
     configFlash.protConfig.brokerPort = prefs.getUShort(nvsProtBrokerPort);
-    configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,2000);
+    configFlash.protConfig.brokerInterval = prefs.getULong(nvsProtBrokerInterval,1000);
+    configFlash.protConfig.publishInterval = prefs.getULong(nvsProtPublishInterval,10);
     if (prefs.isKey(nvsProtBrokerUser))
       prefs.getString(nvsProtBrokerUser,(char*) configFlash.protConfig.userName,sizeof(configFlash.protConfig.userName));
     if (prefs.isKey(nvsProtBrokerPwd))
       prefs.getString(nvsProtBrokerPwd,(char*) configFlash.protConfig.userPwd,sizeof(configFlash.protConfig.userPwd));
-    configFlash.protConfig.publishTarget = prefs.getUChar(nvsProtBrokerPublishTarget);
-    configFlash.protConfig.publishAllTemps = prefs.getUChar(nvsProtBrokerPublishAllTemps);
-    configFlash.protConfig.publishPathAsRoot = prefs.getUChar(nvsProtBrokerPublishPathAsRoot);
+    uint8_t a=prefs.getUChar(nvsProtBrokerPublishFlags,7);
+    configFlash.protConfig.protocolFlags =  *(VDM_PROTOCOL_CONFIG_FLAGS *)&a;
+    configFlash.protConfig.keepAliveTime = prefs.getUShort(nvsProtBrokerKeepAliveTime,60);
+    configFlash.protConfig.minBrokerDelay = prefs.getUShort(nvsProtBrokerMinBrokerDelay,5);
+    a=prefs.getUChar(nvsProtBrokerMQTTFlags,0);
+    configFlash.protConfig.mqttConfig.flags = *(VDM_PROTOCOL_MQTT_CONFIG_FLAGS *)&a;
+    configFlash.protConfig.mqttConfig.timeOut =prefs.getULong(nvsProtBrokerMQTTTimeOut,120);
+    configFlash.protConfig.mqttConfig.toPos=prefs.getUChar(nvsProtBrokerMQTTToPos,10);
     prefs.end();
   }
 
@@ -213,15 +249,17 @@ void CVdmConfig::readConfig()
       prefs.getBytes(nvsValvesControl, (void *) configFlash.valvesControlConfig.valveControlConfig, sizeof(configFlash.valvesControlConfig.valveControlConfig));
       configFlash.valvesControlConfig.heatControl=prefs.getUChar (nvsValvesControlHeatControl,0);
       configFlash.valvesControlConfig.parkingPosition=prefs.getUChar (nvsValvesControlParkPos,10);
+      heatValues.heatControl=configFlash.valvesControlConfig.heatControl;
+      heatValues.parkPosition=configFlash.valvesControlConfig.parkingPosition;
     }
     prefs.end();
   }
  
- if (prefs.begin(nvsTempsCfg,false)) {
-  if (prefs.isKey(nvsTemps))
-    prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
-  prefs.end();
- }
+  if (prefs.begin(nvsTempsCfg,false)) {
+    if (prefs.isKey(nvsTemps))
+      prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
+    prefs.end();
+  }
 
   if (prefs.begin(nvsTZCfg,false)) {
     if (prefs.isKey(nvsTZ))
@@ -230,11 +268,45 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsTZCode,(char*) configFlash.timeZoneConfig.tzCode,sizeof(configFlash.timeZoneConfig.tzCode));
     prefs.end();
   }
+
+  if (prefs.begin(nvsMsgCfg,false)) {
+    uint8_t a=prefs.getUChar(nvsMsgCfgFlags,0);
+    configFlash.messengerConfig.activeFlags =  *(VDM_MSG_ACTIVE_CONFIG_FLAGS *)&a;
+    a=prefs.getUChar(nvsMsgCfgReason,0);
+    configFlash.messengerConfig.reason.reasonFlags =  *(VDM_MSG_REASON_CONFIG_FLAGS *)&a;
+    if (prefs.isKey(nvsMsgCfgMqttTimeout))
+      configFlash.messengerConfig.reason.mqttTimeOutTime =prefs.getShort(nvsMsgCfgMqttTimeout,10);
+    
+    if (prefs.isKey(nvsMsgCfgPOAppToken))
+      prefs.getString(nvsMsgCfgPOAppToken,(char*) configFlash.messengerConfig.pushover.appToken,sizeof(configFlash.messengerConfig.pushover.appToken));
+    if (prefs.isKey(nvsMsgCfgPOUserToken))
+      prefs.getString(nvsMsgCfgPOUserToken,(char*) configFlash.messengerConfig.pushover.userToken,sizeof(configFlash.messengerConfig.pushover.userToken));
+    if (prefs.isKey(nvsMsgCfgPOTitle))
+      prefs.getString(nvsMsgCfgPOTitle,(char*) configFlash.messengerConfig.pushover.title,sizeof(configFlash.messengerConfig.pushover.title));  
+    
+    if (prefs.isKey(nvsMsgCfgEmailUser))
+      prefs.getString(nvsMsgCfgEmailUser,(char*) configFlash.messengerConfig.email.user,sizeof(configFlash.messengerConfig.email.user));
+    if (prefs.isKey(nvsMsgCfgEmailPwd))
+      prefs.getString(nvsMsgCfgEmailPwd,(char*) configFlash.messengerConfig.email.pwd,sizeof(configFlash.messengerConfig.email.pwd));
+    if (prefs.isKey(nvsMsgCfgEMailHost))
+      prefs.getString(nvsMsgCfgEMailHost,(char*) configFlash.messengerConfig.email.host,sizeof(configFlash.messengerConfig.email.host));
+    configFlash.messengerConfig.email.port = prefs.getShort(nvsMsgCfgEmailPort,465);
+    if (prefs.isKey(nvsMsgCfgEmailRecipient))
+      prefs.getString(nvsMsgCfgEmailRecipient,(char*) configFlash.messengerConfig.email.recipient,sizeof(configFlash.messengerConfig.email.recipient));
+    if (prefs.isKey(nvsMsgCfgEmailTitle))
+      prefs.getString(nvsMsgCfgEmailTitle,(char*) configFlash.messengerConfig.email.title,sizeof(configFlash.messengerConfig.email.title));
+    prefs.end();
+  }
+
+  if (prefs.begin(nvsMisc,false)) {
+    if (prefs.isKey(nvsMiscLastCalib))
+      miscValues.lastCalib=prefs.getLong(nvsMiscLastCalib,0);
+    prefs.end();
+  }
 }
 
 void CVdmConfig::writeConfig(bool reboot)
 {
-
   prefs.begin(nvsSystemCfg,false);
   prefs.clear();
   prefs.putUChar(nvsSystemCelsiusFahrenheit,configFlash.systemConfig.celsiusFahrenheit);
@@ -266,11 +338,17 @@ void CVdmConfig::writeConfig(bool reboot)
     prefs.putULong(nvsProtBrokerIp,configFlash.protConfig.brokerIp);
     prefs.putUShort(nvsProtBrokerPort,configFlash.protConfig.brokerPort);
     prefs.putULong(nvsProtBrokerInterval,configFlash.protConfig.brokerInterval);
+    prefs.putULong(nvsProtPublishInterval,configFlash.protConfig.publishInterval);
     prefs.putString(nvsProtBrokerUser,configFlash.protConfig.userName);
     prefs.putString(nvsProtBrokerPwd,configFlash.protConfig.userPwd);
-    prefs.putUChar(nvsProtBrokerPublishTarget,configFlash.protConfig.publishTarget);
-    prefs.putUChar(nvsProtBrokerPublishAllTemps,configFlash.protConfig.publishAllTemps);
-    prefs.putUChar(nvsProtBrokerPublishPathAsRoot,configFlash.protConfig.publishPathAsRoot);
+    uint8_t a = *(uint8_t *)&configFlash.protConfig.protocolFlags;
+    prefs.putUChar(nvsProtBrokerPublishFlags,a);
+    prefs.putUShort(nvsProtBrokerKeepAliveTime,configFlash.protConfig.keepAliveTime);
+    prefs.putUShort(nvsProtBrokerMinBrokerDelay,configFlash.protConfig.minBrokerDelay);
+    a = *(uint8_t *)&configFlash.protConfig.mqttConfig.flags;
+    prefs.putUChar(nvsProtBrokerMQTTFlags,a);
+    prefs.putULong(nvsProtBrokerMQTTTimeOut,configFlash.protConfig.mqttConfig.timeOut);
+    prefs.putUChar(nvsProtBrokerMQTTToPos,configFlash.protConfig.mqttConfig.toPos);
   }
   prefs.end();
  
@@ -292,11 +370,37 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.putString(nvsTZCode,configFlash.timeZoneConfig.tzCode);
   prefs.end();
 
+  prefs.begin(nvsMsgCfg,false);
+  prefs.clear();
+  uint8_t a = *(uint8_t *)&configFlash.messengerConfig.activeFlags;
+  prefs.putUChar(nvsMsgCfgFlags,a);
+  a = *(uint8_t *)&configFlash.messengerConfig.reason;
+  prefs.putUChar(nvsMsgCfgReason,a);
+  prefs.putShort(nvsMsgCfgMqttTimeout,configFlash.messengerConfig.reason.mqttTimeOutTime);
+  prefs.putString(nvsMsgCfgPOAppToken,configFlash.messengerConfig.pushover.appToken);
+  prefs.putString(nvsMsgCfgPOUserToken,configFlash.messengerConfig.pushover.userToken);
+  prefs.putString(nvsMsgCfgPOTitle,configFlash.messengerConfig.pushover.title);
+
+  prefs.putString(nvsMsgCfgEmailUser,configFlash.messengerConfig.email.user);
+  prefs.putString(nvsMsgCfgEmailPwd,configFlash.messengerConfig.email.pwd);
+  prefs.putString(nvsMsgCfgEMailHost,configFlash.messengerConfig.email.host);
+  prefs.putShort(nvsMsgCfgEmailPort,configFlash.messengerConfig.email.port);
+  prefs.putString(nvsMsgCfgEmailRecipient,configFlash.messengerConfig.email.recipient);
+  prefs.putString(nvsMsgCfgEmailTitle,configFlash.messengerConfig.email.title);
+
+  prefs.end();
+
   if (reboot) Services.restartSystem();
 }
 
+void CVdmConfig::writeMiscValues()
+{
+  prefs.begin(nvsMisc,false);
+  prefs.putLong(nvsMiscLastCalib,miscValues.lastCalib);
+  prefs.end();
+}
 
-void CVdmConfig::writeValvesControlConfig(bool reboot)
+void CVdmConfig::writeValvesControlConfig(bool reboot, bool restartTask)
 {
   prefs.begin(nvsValvesControlCfg,false);
   prefs.clear();
@@ -304,7 +408,23 @@ void CVdmConfig::writeValvesControlConfig(bool reboot)
   prefs.putUChar (nvsValvesControlHeatControl,configFlash.valvesControlConfig.heatControl);
   prefs.putUChar (nvsValvesControlParkPos,configFlash.valvesControlConfig.parkingPosition);
   prefs.end();
-  if (reboot) Services.restartSystem();
+  if (reboot) {
+    Services.restartSystem();
+  } else {
+    if (VdmTask.piTaskInitiated) {
+      if (restartTask) VdmTask.stopPIServices();
+      VdmTask.startPIServices(restartTask);
+    }
+  }
+}
+
+void CVdmConfig::writeSysLogValues()
+{
+  prefs.begin(nvsNetCfg,false);
+  prefs.putUChar(nvsNetSysLogEnable,configFlash.netConfig.syslogLevel);
+  prefs.putULong(nvsNetSysLogIp,configFlash.netConfig.syslogIp);
+  prefs.putUShort(nvsNetSysLogPort,configFlash.netConfig.syslogPort);
+  prefs.end();
 }
 
 uint32_t CVdmConfig::doc2IPAddress(String id)
@@ -333,7 +453,13 @@ void CVdmConfig::postNetCfg (JsonObject doc)
   if (!doc["syslogPort"].isNull()) configFlash.netConfig.syslogPort=doc["syslogPort"];
   if (!doc["tz"].isNull()) strncpy(configFlash.timeZoneConfig.tz,doc["tz"].as<const char*>(),sizeof(configFlash.timeZoneConfig.tz));
   if (!doc["tzCode"].isNull()) strncpy(configFlash.timeZoneConfig.tzCode,doc["tzCode"].as<const char*>(),sizeof(configFlash.timeZoneConfig.tzCode));
+}
 
+void CVdmConfig::postSysLogCfg (JsonObject doc)
+{
+  if (!doc["syslogLevel"].isNull()) configFlash.netConfig.syslogLevel=doc["syslogLevel"];
+  if (!doc["syslogIp"].isNull()) configFlash.netConfig.syslogIp=doc2IPAddress(doc["syslogIp"]);
+  if (!doc["syslogPort"].isNull()) configFlash.netConfig.syslogPort=doc["syslogPort"];
 }
 
 void CVdmConfig::postProtCfg (JsonObject doc)
@@ -342,48 +468,50 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["ip"].isNull()) configFlash.protConfig.brokerIp = doc2IPAddress(doc["ip"]);
   if (!doc["port"].isNull()) configFlash.protConfig.brokerPort = doc["port"];
   if (!doc["interval"].isNull()) configFlash.protConfig.brokerInterval = doc["interval"];
+  if (!doc["publish"].isNull()) configFlash.protConfig.publishInterval = doc["publish"];
   if (!doc["user"].isNull()) strncpy(configFlash.protConfig.userName,doc["user"].as<const char*>(),sizeof(configFlash.netConfig.userName));
   if (!doc["pwd"].isNull()) strncpy(configFlash.protConfig.userPwd,doc["pwd"].as<const char*>(),sizeof(configFlash.netConfig.userPwd));
-  if (!doc["pubTarget"].isNull()) configFlash.protConfig.publishTarget = doc["pubTarget"];
-  if (!doc["pubAllTemps"].isNull()) configFlash.protConfig.publishAllTemps = doc["pubAllTemps"];
-  if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.publishPathAsRoot = doc["pubPathAsRoot"];
+  if (!doc["pubSeparate"].isNull()) configFlash.protConfig.protocolFlags.publishSeparate = doc["pubSeparate"];
+  if (!doc["pubAllTemps"].isNull()) configFlash.protConfig.protocolFlags.publishAllTemps = doc["pubAllTemps"];
+  if (!doc["pubPathAsRoot"].isNull()) configFlash.protConfig.protocolFlags.publishPathAsRoot = doc["pubPathAsRoot"];
+  if (!doc["pubUpTime"].isNull()) configFlash.protConfig.protocolFlags.publishUpTime = doc["pubUpTime"];
+  if (!doc["pubOnChange"].isNull()) configFlash.protConfig.protocolFlags.publishOnChange = doc["pubOnChange"];
+  if (!doc["pubRetained"].isNull()) configFlash.protConfig.protocolFlags.publishRetained = doc["pubRetained"];
+  if (!doc["pubPlainText"].isNull()) configFlash.protConfig.protocolFlags.publishPlainText = doc["pubPlainText"];
+  if (!doc["pubDiag"].isNull()) configFlash.protConfig.protocolFlags.publishDiag = doc["pubDiag"];
+  if (!doc["keepAliveTime"].isNull()) configFlash.protConfig.keepAliveTime = doc["keepAliveTime"];
+  if (!doc["pubMinDelay"].isNull()) configFlash.protConfig.minBrokerDelay = doc["pubMinDelay"];
+  if (!doc["mqttTOTSActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutTSActive = doc["mqttTOTSActive"];
+  if (!doc["mqttTODSActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutDSActive = doc["mqttTODSActive"];
+  if (!doc["mqttTO"].isNull()) configFlash.protConfig.mqttConfig.timeOut = doc["mqttTO"];
+  if (!doc["mqttToPos"].isNull()) configFlash.protConfig.mqttConfig.toPos = doc["mqttToPos"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
 {
-  uint8_t chunkStart=doc["chunkStart"];
-  uint8_t chunkEnd=doc["chunkEnd"];
-  uint8_t idx=0;
-
-  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-    syslog.log(LOG_DEBUG,"VdmConfig: post valve cfg - chunk start: "+String(chunkStart)+" chunk end: "+String(chunkEnd));
-  }
-
+  uint8_t idx=0; 
+  size_t size=doc["valves"].size();
   if (!doc["calib"]["dayOfCalib"].isNull()) configFlash.valvesConfig.dayOfCalib=doc["calib"]["dayOfCalib"];
   if (!doc["calib"]["hourOfCalib"].isNull()) configFlash.valvesConfig.hourOfCalib=doc["calib"]["hourOfCalib"];
- 
-  
-  for (uint8_t i=chunkStart-1; i<chunkEnd; i++) {
-    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-      syslog.log(LOG_DEBUG,"VdmConfig: post valve cfg - idx: "+String(idx)+" i:"+String(i));
-    }
 
-    if (!doc["valves"][idx]["name"].isNull()) strncpy(configFlash.valvesConfig.valveConfig[i].name,doc["valves"][idx]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[i].name));
-    if (!doc["valves"][idx]["active"].isNull()) configFlash.valvesConfig.valveConfig[i].active=doc["valves"][idx]["active"];
-    if (!doc["valves"][idx]["tIdx1"].isNull()) {
-      StmApp.actuators[i].tIdx1=doc["valves"][idx]["tIdx1"];
-      StmApp.setTempIdxActive=true;
-      if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-        syslog.log(LOG_DEBUG,"VdmConfig: post valve cfg - idx1 val: "+String(StmApp.actuators[i].tIdx1));
+  for (uint8_t i=0; i<size; i++) {
+     if (!doc["valves"][i]["no"].isNull()) {
+      idx=doc["valves"][i]["no"];
+      idx--;
+      if ((idx>=0) && (idx<12)) {
+          if (!doc["valves"][i]["name"].isNull()) strncpy(configFlash.valvesConfig.valveConfig[idx].name,doc["valves"][i]["name"].as<const char*>(),sizeof(configFlash.valvesConfig.valveConfig[idx].name));
+          if (!doc["valves"][i]["active"].isNull()) configFlash.valvesConfig.valveConfig[idx].active=doc["valves"][i]["active"];
+          if (!doc["valves"][i]["tIdx1"].isNull()) {
+            StmApp.actuators[idx].tIdx1=doc["valves"][i]["tIdx1"];
+            StmApp.setTempIdxActive=true;
+          }
+          if (!doc["valves"][i]["tIdx2"].isNull()) {
+            StmApp.actuators[idx].tIdx2=doc["valves"][i]["tIdx2"];
+            StmApp.setTempIdxActive=true;
+          }
       }
-    }
-    if (!doc["valves"][idx]["tIdx2"].isNull()) {
-      StmApp.actuators[i].tIdx2=doc["valves"][idx]["tIdx2"];
-      StmApp.setTempIdxActive=true;
-    }
-    idx++;
-  }
-  
+     }
+  }    
   if (!doc["calib"]["cycles"].isNull()) {
     StmApp.learnAfterMovements=doc["calib"]["cycles"];
     StmApp.setLearnAfterMovements();
@@ -400,51 +528,81 @@ void CVdmConfig::postValvesCfg (JsonObject doc)
     StmApp.motorChars.startOnPower=doc["motor"]["startOnPower"];
     StmApp.setMotorCharsActive=true;
   }
-  
+  if (!doc["motor"]["noOfMinCount"].isNull()) {
+    StmApp.motorChars.noOfMinCount=doc["motor"]["noOfMinCount"];
+    StmApp.setMotorCharsActive=true;
+  }
+  if (!doc["motor"]["maxCalReps"].isNull()) {
+    StmApp.motorChars.maxCalReps=doc["motor"]["maxCalReps"];
+    StmApp.setMotorCharsActive=true;
+  }
   if (StmApp.setMotorCharsActive) {
     StmApp.setMotorChars();
     StmApp.setMotorCharsActive=false;
   }
- 
-  if ((StmApp.setTempIdxActive) && (chunkEnd==12)) {
-    StmApp.setTempIdx();
-    Services.restartSTM=true;
-    //StmApp.matchSensors();
-    //StmApp.matchSensorRequest = true;
-    StmApp.setTempIdxActive=false;
+  if (!doc["tempIdx"]["set"].isNull()) {
+    uint8_t setTemp=doc["tempIdx"]["set"]; 
+    if ((StmApp.setTempIdxActive) && (setTemp==1)) {
+      StmApp.setTempIdx();
+      //StmApp.matchSensors();
+      //StmApp.matchSensorRequest = true;
+      StmApp.setTempIdxActive=false;
+    }
   }
 }
 
 void CVdmConfig::postValvesControlCfg (JsonObject doc)
 {
-  
-  uint8_t chunkStart=doc["chunkStart"];
-  uint8_t chunkEnd=doc["chunkEnd"];
   uint8_t idx=0;
-   
-  for (uint8_t i=chunkStart-1; i<chunkEnd; i++) {
-    if (!doc["valves"][idx]["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].active=doc["valves"][idx]["active"];
-    if (!doc["valves"][idx]["link"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].link=doc["valves"][idx]["link"];
-    if (!doc["valves"][idx]["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].valueSource=doc["valves"][idx]["vSource"];
-    if (!doc["valves"][idx]["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].targetSource=doc["valves"][idx]["tSource"];
-    if (!doc["valves"][idx]["xp"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].xp=doc["valves"][idx]["xp"];
-    if (!doc["valves"][idx]["offset"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].offset=doc["valves"][idx]["offset"];
-    if (!doc["valves"][idx]["ti"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ti=doc["valves"][idx]["ti"];
-    if (!doc["valves"][idx]["ts"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ts=doc["valves"][idx]["ts"];  
-    if (!doc["valves"][idx]["ki"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].ki=doc["valves"][idx]["ki"];  
-    if (!doc["valves"][idx]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].scheme=doc["valves"][idx]["scheme"];  
-    if (!doc["valves"][idx]["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].startActiveZone=doc["valves"][idx]["startAZ"];  
-    if (!doc["valves"][idx]["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].endActiveZone=doc["valves"][idx]["endAZ"];  
-    idx++;
-  } 
+  size_t size=doc["valves"].size();
 
+  if (size==0) {
+      for (uint8_t i =0;i<12;i++) {
+        if (!doc["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["active"];
+        if (!doc["allow"].isNull()) configFlash.valvesControlConfig.valveControlConfig[i].controlFlags.allow=doc["allow"]; 
+        if (!doc["window"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.windowInstalled=doc["window"];
+        if (!doc["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].valueSource=doc["vSource"];
+        if (!doc["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["tSource"];  
+        if (!doc["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["scheme"];  
+        if (!doc["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["startAZ"];  
+        if (!doc["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["endAZ"]; 
+      }
+  } else {
+    for (uint8_t i=0; i<size; i++) {
+      if (!doc["valves"][i]["no"].isNull()) {
+        idx=doc["valves"][i]["no"];
+        idx--;
+        if ((idx>=0) && (idx<12)) {
+          if (!doc["valves"][i]["active"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active=doc["valves"][i]["active"];
+          if (!doc["valves"][i]["allow"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.allow=doc["valves"][i]["allow"];
+          if (!doc["valves"][i]["window"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.windowInstalled=doc["valves"][i]["window"];
+          if (!doc["valves"][i]["link"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].link=doc["valves"][i]["link"];
+          if (!doc["valves"][i]["vSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].valueSource=doc["valves"][i]["vSource"];
+          if (!doc["valves"][i]["tSource"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].targetSource=doc["valves"][i]["tSource"];
+          if (!doc["valves"][i]["xp"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].xp=doc["valves"][i]["xp"];
+          if (!doc["valves"][i]["offset"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].offset=doc["valves"][i]["offset"];
+          if (!doc["valves"][i]["ti"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].ti=doc["valves"][i]["ti"];
+          if (!doc["valves"][i]["ts"].isNull()) {
+            uint16_t ts = doc["valves"][i]["ts"];
+            if (configFlash.valvesControlConfig.valveControlConfig[idx].ts!=ts) VdmTask.restartPiTask=true;
+            configFlash.valvesControlConfig.valveControlConfig[idx].ts=ts;
+          }
+          if (!doc["valves"][i]["ki"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].ki=doc["valves"][i]["ki"];  
+          if (!doc["valves"][i]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["valves"][i]["scheme"];  
+          if (!doc["valves"][i]["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["valves"][i]["startAZ"];  
+          if (!doc["valves"][i]["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["valves"][i]["endAZ"];  
+        }
+      }
+    } 
+  }
   if (!doc["common"]["heatControl"].isNull()) {
     configFlash.valvesControlConfig.heatControl=doc["common"]["heatControl"];
+    heatValues.heatControl=configFlash.valvesControlConfig.heatControl;
   } 
   if (!doc["common"]["parkPosition"].isNull()) {
     configFlash.valvesControlConfig.parkingPosition=doc["common"]["parkPosition"];
+    heatValues.parkPosition=configFlash.valvesControlConfig.parkingPosition;
   } 
-  
 }
 
 void CVdmConfig::postTempsCfg (JsonObject doc)
@@ -469,6 +627,31 @@ void CVdmConfig::postSysCfg (JsonObject doc)
  
 }
 
+void CVdmConfig::postMessengerCfg (JsonObject doc)
+{
+  if (!doc["reason"]["valveFailed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveFailed=doc["reason"]["valveFailed"];
+  if (!doc["reason"]["notDetect"].isNull()) configFlash.messengerConfig.reason.reasonFlags.notDetect=doc["reason"]["notDetect"];
+  if (!doc["reason"]["mqttTimeOut"].isNull()) configFlash.messengerConfig.reason.reasonFlags.mqttTimeOut=doc["reason"]["mqttTimeOut"];
+  if (!doc["reason"]["mqttTimeOutTime"].isNull()) configFlash.messengerConfig.reason.mqttTimeOutTime=doc["reason"]["mqttTimeOutTime"];
+  if (!doc["reason"]["reset"].isNull()) configFlash.messengerConfig.reason.reasonFlags.reset=doc["reason"]["reset"];
+  if (!doc["reason"]["ds18Failed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.ds18Failed=doc["reason"]["ds18Failed"];
+  if (!doc["reason"]["tValueFailed"].isNull()) configFlash.messengerConfig.reason.reasonFlags.tValueFailed=doc["reason"]["tValueFailed"];
+   if (!doc["reason"]["valveBlocked"].isNull()) configFlash.messengerConfig.reason.reasonFlags.valveBlocked=doc["reason"]["valveBlocked"];
+
+  if (!doc["PO"]["active"].isNull()) configFlash.messengerConfig.activeFlags.pushOver=doc["PO"]["active"];
+  if (!doc["PO"]["appToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.appToken,doc["PO"]["appToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.appToken));
+  if (!doc["PO"]["userToken"].isNull()) strncpy(configFlash.messengerConfig.pushover.userToken,doc["PO"]["userToken"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.userToken));
+  if (!doc["PO"]["title"].isNull()) strncpy(configFlash.messengerConfig.pushover.title,doc["PO"]["title"].as<const char*>(),sizeof(configFlash.messengerConfig.pushover.title));
+  
+  if (!doc["Email"]["active"].isNull()) configFlash.messengerConfig.activeFlags.email=doc["Email"]["active"];
+  if (!doc["Email"]["user"].isNull()) strncpy(configFlash.messengerConfig.email.user,doc["Email"]["user"].as<const char*>(),sizeof(configFlash.messengerConfig.email.user));
+  if (!doc["Email"]["pwd"].isNull()) strncpy(configFlash.messengerConfig.email.pwd,doc["Email"]["pwd"].as<const char*>(),sizeof(configFlash.messengerConfig.email.pwd));
+  if (!doc["Email"]["host"].isNull()) strncpy(configFlash.messengerConfig.email.host,doc["Email"]["host"].as<const char*>(),sizeof(configFlash.messengerConfig.email.host));
+  if (!doc["Email"]["port"].isNull()) configFlash.messengerConfig.email.port=doc["Email"]["port"];
+  if (!doc["Email"]["recipient"].isNull()) strncpy(configFlash.messengerConfig.email.recipient,doc["Email"]["recipient"].as<const char*>(),sizeof(configFlash.messengerConfig.email.recipient));
+  if (!doc["Email"]["title"].isNull()) strncpy(configFlash.messengerConfig.email.title,doc["Email"]["title"].as<const char*>(),sizeof(configFlash.messengerConfig.email.title));
+}
+
 String CVdmConfig::handleAuth (JsonObject doc)
 {
   bool userCheck=false;
@@ -488,29 +671,24 @@ String CVdmConfig::handleAuth (JsonObject doc)
 }
 
 
-int8_t CVdmConfig::findTempID (char* tempId)
-{
-  uint8_t idx=0;
-  for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
-    if (strncmp (tempId,configFlash.tempsConfig.tempConfig[i].ID,sizeof(configFlash.tempsConfig.tempConfig[i].ID)) == 0) { 
-      return (idx);
-    }
-    idx++;
-  }
-  return (-1);
-}
 
 void CVdmConfig::checkToResetCfg() {
   pinMode(pinSetFactoryCfg, INPUT_PULLUP);
   if (digitalRead(pinSetFactoryCfg)==0) {  
-    UART_DBG.println("Entry reset config");
+    #ifdef EnvDevelop
+      UART_DBG.println("Entry reset config");
+    #endif
     delay(1000);
     if (digitalRead(pinSetFactoryCfg)==0) {
-        UART_DBG.println("Reset config, remove shortcut");
+        #ifdef EnvDevelop
+          UART_DBG.println("Reset config, remove shortcut");
+        #endif
         while (digitalRead(pinSetFactoryCfg)==0) {
           delay(100);
         }
-        UART_DBG.println("Reset config now");
+        #ifdef EnvDevelop
+          UART_DBG.println("Reset config now");
+        #endif
         VdmConfig.restoreConfig(true);
     }
   }

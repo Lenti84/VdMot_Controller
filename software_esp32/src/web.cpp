@@ -45,6 +45,8 @@
 #include "VdmNet.h"
 #include "VdmConfig.h"
 #include "VdmSystem.h"
+#include "PIControl.h"
+#include "ServerServices.h"
 #include "WiFi.h"
 #include "helper.h"
 #include "stm32.h"
@@ -52,6 +54,7 @@
 #include "stm32ota.h"
 #include "mqtt.h"
 #include "compile_time.h"
+#include "esp_system.h"
  
 CWeb Web;
 
@@ -63,6 +66,31 @@ String CWeb::getSysConfig (VDM_SYSTEM_CONFIG sysConfig)
 {
   String result = "{\"CF\":"+String(sysConfig.celsiusFahrenheit)+","+
                   "\"station\":\""+String(sysConfig.stationName)+"\""+
+                  "}";  
+  return result;  
+}
+
+String CWeb::getMsgConfig (VDM_MSG_CONFIG msgConfig)
+{
+  String result = "{\"reason\":{\"valveFailed\":"+String(msgConfig.reason.reasonFlags.valveFailed)+","+
+                  "\"valveBlocked\":"+String(msgConfig.reason.reasonFlags.valveBlocked)+","+
+                  "\"notDetect\":"+String(msgConfig.reason.reasonFlags.notDetect)+","+
+                  "\"reset\":"+String(msgConfig.reason.reasonFlags.reset)+","+
+                  "\"ds18Failed\":"+String(msgConfig.reason.reasonFlags.ds18Failed)+","+
+                  "\"tValueFailed\":"+String(msgConfig.reason.reasonFlags.tValueFailed)+","+
+                  "\"mqttTimeOut\":"+String(msgConfig.reason.reasonFlags.mqttTimeOut)+","+
+                  "\"mqttTimeOutTime\":"+String(msgConfig.reason.mqttTimeOutTime)+"},"+
+                  "\"PO\":{\"active\":"+String(msgConfig.activeFlags.pushOver)+","+
+                  "\"appToken\":\""+String(msgConfig.pushover.appToken)+"\","+
+                  "\"userToken\":\""+String(msgConfig.pushover.userToken)+"\","+
+                  "\"title\":\""+String(msgConfig.pushover.title)+"\"},"+
+                  "\"Email\":{\"active\":"+String(msgConfig.activeFlags.email)+","+
+                  "\"user\":\""+String(msgConfig.email.user)+"\","+
+                  "\"pwd\":\""+String(msgConfig.email.pwd)+"\","+
+                  "\"host\":\""+String(msgConfig.email.host)+"\","+
+                  "\"port\":\""+String(msgConfig.email.port)+"\","+
+                  "\"recipient\":\""+String(msgConfig.email.recipient)+"\","+
+                  "\"title\":\""+String(msgConfig.email.title)+"\"}"+
                   "}";  
   return result;  
 }
@@ -105,21 +133,29 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"ip\":\""+ip2String(protConfig.brokerIp)+"\","+
                     "\"port\":\""+String(protConfig.brokerPort)+"\","+
                     "\"interval\":"+String(protConfig.brokerInterval)+","+
-                    "\"pubTarget\":"+String(protConfig.publishTarget)+","+
-                    "\"pubAllTemps\":"+String(protConfig.publishAllTemps)+","+
-                    "\"pubPathAsRoot\":"+String(protConfig.publishPathAsRoot)+","+
+                    "\"mqttTOTSActive\":"+String(protConfig.mqttConfig.flags.timeoutTSActive)+","+
+                    "\"mqttTODSActive\":"+String(protConfig.mqttConfig.flags.timeoutDSActive)+","+
+                    "\"mqttTO\":"+String(protConfig.mqttConfig.timeOut)+","+
+                    "\"mqttToPos\":"+String(protConfig.mqttConfig.toPos)+","+
+                    "\"publish\":"+String(protConfig.publishInterval)+","+
+                    "\"pubMinDelay\":"+String(protConfig.minBrokerDelay)+","+
+                    "\"pubOnChange\":"+String(protConfig.protocolFlags.publishOnChange)+","+
+                    "\"pubRetained\":"+String(protConfig.protocolFlags.publishRetained)+","+
+                    "\"pubSeparate\":"+String(protConfig.protocolFlags.publishSeparate)+","+
+                    "\"pubPlainText\":"+String(protConfig.protocolFlags.publishPlainText)+","+
+                    "\"pubAllTemps\":"+String(protConfig.protocolFlags.publishAllTemps)+","+
+                    "\"pubPathAsRoot\":"+String(protConfig.protocolFlags.publishPathAsRoot)+","+
+                    "\"pubUpTime\":"+String(protConfig.protocolFlags.publishUpTime)+","+
+                    "\"pubDiag\":"+String(protConfig.protocolFlags.publishDiag)+","+
+                    "\"keepAliveTime\":"+String(protConfig.keepAliveTime)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
 }
 
-String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorConfig)
+String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
 {
   String result = "{\"calib\":{\"dayOfCalib\":"+String(valvesConfig.dayOfCalib) + "," +
-                   "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib)+ "," +
-                    "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
-                   "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
-                   "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
-                   "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}," +
+                   "\"hourOfCalib\":"+String(valvesConfig.hourOfCalib)+ "}," +
                    "\"valves\":[" ;
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
@@ -134,15 +170,30 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig,MOTOR_CHARS motorCo
 }
 
 
+String CWeb::getMotorConfig (MOTOR_CHARS motorConfig)
+{
+  String result =   "{\"calib\":{";
+        result +=   "\"cycles\":"+String(StmApp.learnAfterMovements)+ "}," +
+                    "\"motor\":{\"lowC\":"+String(motorConfig.maxLowCurrent) + "," +
+                    "\"highC\":"+String(motorConfig.maxHighCurrent)+ "," +
+                    "\"noOfMinCount\":"+String(motorConfig.noOfMinCount)+ "," +
+                    "\"maxCalReps\":"+String(motorConfig.maxCalReps)+ "," +
+                    "\"startOnPower\":"+String(motorConfig.startOnPower)+ "}}";
+  return result;  
+}
+
 String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConfig)
 {
   String result = "{\"common\":{\"heatControl\":"+String(valvesControlConfig.heatControl) + "," +
-                    "\"parkPosition\":"+String(valvesControlConfig.parkingPosition)+ "}," +
-                   "\"valves\":[" ;
+                    "\"parkPosition\":"+String(valvesControlConfig.parkingPosition) + 
+                     "}," +
+                    "\"valves\":[" ;
 
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) {
     result += "{\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) + "\"," +
-              "\"active\":"+String(valvesControlConfig.valveControlConfig[x].active) + ","+
+              "\"active\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.active) + ","+
+              "\"allow\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.allow) + ","+
+              "\"window\":"+String(valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) + ","+
               "\"link\":"+String(valvesControlConfig.valveControlConfig[x].link) + ","+
               "\"vSource\":"+String(valvesControlConfig.valveControlConfig[x].valueSource) + ","+
               "\"tSource\":"+String(valvesControlConfig.valveControlConfig[x].targetSource) + ","+
@@ -153,7 +204,7 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
               "\"ki\":"+String(valvesControlConfig.valveControlConfig[x].ki) + ","+
               "\"scheme\":"+String(valvesControlConfig.valveControlConfig[x].scheme) + ","+
               "\"startAZ\":"+String(valvesControlConfig.valveControlConfig[x].startActiveZone) + ","+
-              "\"endAZ\":"+String(valvesControlConfig.valveControlConfig[x].endActiveZone)+ "}";
+              "\"endAZ\":"+String(valvesControlConfig.valveControlConfig[x].endActiveZone) + "}";
 
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
@@ -216,13 +267,17 @@ String CWeb::getSysInfo()
     strftime (buf, sizeof(buf), " build %d.%m.%Y %H:%M", tmp);
     stmBuild = String (buf);
   }
-  
-
+  float usedFlashProz = 100 * (float) ESP.getSketchSize()/ (float)ESP.getFreeSketchSpace();
 
   String result = "{\"wt32version\":\""+String(FIRMWARE_VERSION)+wt32Build+"\"," +
-                  "\"wt32cores\":"+VdmSystem.chip_info.cores+ "," +
-                  "\"wt32coreRev\":"+VdmSystem.chip_info.revision+","+
-                  "\"stm32version\":\""+VdmSystem.stmVersion+stmBuild+"\""+
+                  "\"wt32ChipModel\":\""+VdmSystem.getChipModel()+"\"," +
+                  "\"wt32ChipCores\":"+VdmSystem.chip_info.cores+ "," +
+                  "\"wt32ChipCoreRev\":"+VdmSystem.chip_info.revision+","+
+                  "\"wt32ChipStack\":"+VdmSystem.stackSize+","+
+                  "\"wt32Sketch\":"+ESP.getSketchSize()+","+
+                  "\"wt32FlashUsed\":"+String(usedFlashProz,1)+","+
+                  "\"stm32version\":\""+VdmSystem.stmVersion+stmBuild+"\","+
+                  "\"stm32ChipId\":\"0x"+String(VdmSystem.stmID,16)+" "+String(StmOta.checkChipName(VdmSystem.stmID))+"\""+
                   "}";
   return result;  
 }
@@ -231,70 +286,116 @@ String CWeb::getSysDynInfo()
 {
   struct tm timeinfo;
   char buf[50];
-  String time;
-  String upTime;
-
-  if(!getLocalTime(&timeinfo)) {
-    time = "Failed to obtain time";
-  } else {
-    strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
-    time = String(buf);
-    
-    int64_t upTimeUS = esp_timer_get_time(); // in microseconds
-    int64_t seconds = upTimeUS/1000000;
-    uint32_t days = (uint32_t)seconds/86400;
-    uint32_t hr=(uint32_t)seconds % 86400 /  3600;
-    uint32_t min=(uint32_t)seconds %  3600 / 60;
-    uint32_t sec=(uint32_t)seconds % 60;
-    snprintf (buf,sizeof(buf),"%dd %d:%02d:%02d", days, hr, min, sec);
-    upTime = String(buf);
-  }
-
+  String sLastCalib;
+  time_t lastCalib=VdmConfig.miscValues.lastCalib;
+  localtime_r(&lastCalib, &timeinfo);
+  strftime (buf, sizeof(buf), "%A, %B %d.%Y %H:%M:%S", &timeinfo);
+  sLastCalib = String(buf);
   
-
-
-  String result = "{\"locTime\":\""+time+"\"," +
-                  "\"upTime\":\""+upTime+"\"," +
+  String result = "{\"locTime\":\""+VdmSystem.localTime()+"\"," +
+                  "\"sntpActive\":"+String(VdmNet.sntpActive)+"," +
+                  "\"sntpReachable\":"+String(VdmNet.sntpReachable)+"," +
+                  "\"upTime\":\""+VdmSystem.getUpTime()+"\"," +
                   "\"heap\":\""+ConvBinUnits(ESP.getFreeHeap(),1)+ "\"," +
                   "\"minheap\":\""+ConvBinUnits(ESP.getMinFreeHeap(),1)+ "\"," +
                   "\"wifirssi\":"+WiFi.RSSI()+ "," +
                   "\"wifich\":"+WiFi.channel()+ "," +
-                  "\"stmStatus\":"+String(StmApp.stmStatus);
+                  "\"wifiStatus\":"+WiFi.status()+ "," +
+                  "\"stmStatus\":"+String(StmApp.stmStatus)+ "," +
+                  "\"stmInit\":"+String(StmApp.stmInitState);
                   if (VdmConfig.configFlash.protConfig.dataProtocol>0) {
                     result += ",\"brokerStatus\":"+String(Mqtt.mqttState);
                     result += ",\"brokerConnected\":"+String(Mqtt.mqttConnected);
                   }
+                  result += ",\"lastCalib\":\""+String(sLastCalib)+"\"";
+                  result += ",\"heatControl\":"+String(VdmConfig.heatValues.heatControl);
                   result +="}";
   return result;  
+}
+
+bool CWeb::getControlActive() 
+{
+  bool active=false;
+  for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
+    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) active = true;
+  }
+  return (((VdmConfig.heatValues.heatControl==piControlOnHeating) || (VdmConfig.heatValues.heatControl==piControlOnCooling)) && active);
 }
 
 String CWeb::getValvesStatus() 
 {
   bool start=false;
-  String result = "[";
+  uint8_t valveActive;
+  bool controlActive = getControlActive();
+  String result = "{";
+  result += "\"valves\":[";
+  uint8_t thisState;
+
   for (uint8_t x=0;x<ACTUATOR_COUNT;x++) { 
     #ifdef ValveSimulation
       if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) StmApp.actuators[x].state=VLV_STATE_IDLE;
     #endif
     if ((StmApp.actuators[x].state!=VLV_STATE_OPENCIR) && (StmApp.actuators[x].state!=VLV_STATE_START)) {
+      if (PiControl[x].failed) thisState=STATE_FAILED; else thisState=StmApp.actuators[x].state;
       if (start) result += ",";
       result += "{\"idx\":"+String(x+1) + ","+
                  "\"name\":\""+String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name) +"\"," +
-                 "\"state\":"+String(StmApp.actuators[x].state) + ","+
+                 "\"state\":"+String(thisState) + ","+
                  "\"pos\":"+String(StmApp.actuators[x].actual_position) + ","+
                  "\"meanCur\":" + String(StmApp.actuators[x].meancurrent) + ","+
-                 "\"targetPos\":" + String(StmApp.actuators[x].target_position);
-                 if (StmApp.actuators[x].temp1>-500) {
-                    result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
+                 "\"targetPos\":" + String(StmApp.actuators[x].target_position)+ ","+
+                 "\"link\":"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link) + ","+
+                 "\"moves\":" + String(StmApp.actuators[x].movements)+ ","+
+                 "\"oc\":" + String(StmApp.actuators[x].opening_count)+ ","+
+                 "\"cc\":" + String(StmApp.actuators[x].closing_count)+ ","+
+                 "\"dc\":" + String(StmApp.actuators[x].deadzone_count)+ ","+
+                 "\"cr\":" + String(StmApp.actuators[x].calibRetries);
+
+                 if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
+                  if (StmApp.actuators[x].tIdx1>0) { 
+                    if (StmApp.actuators[x].temp1>-500) {
+                        result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
+                    } else result +=",\"temp1\":\"failed\"";
+                  }
+                  if (StmApp.actuators[x].tIdx2>0) { 
+                    if (StmApp.actuators[x].temp2>-500) {
+                        result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
+                    } else result +=",\"temp2\":\"failed\"";
+                  }
                  }
-                 if (StmApp.actuators[x].temp2>-500) {
-                    result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
+
+                 if (controlActive || Mqtt.valveStates[x].tValueFailed) {
+                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
+                    result +=",\"tTarget\":" + String(((float)PiControl[x].target),1);
+                    result +=",\"tValue\":" + String(((float)PiControl[x].value),1);
+                  } else {
+                    result +=",\"tTarget\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
+                    result +=",\"tValue\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
+                  }
+                 }
+
+                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
+                   result +=",\"window\":"+String(PiControl[x].windowState);
+                 }
+                 
+                 valveActive = 0;
+                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active==1) valveActive |= 1;
+                 if (PiControl[x].controlActive) valveActive |= 2;
+                 if (PiControl[x].failed) valveActive |= 4;
+                 result +=",\"controlActive\":"+String(valveActive);
+              
+                 if (StmApp.actuators[x].calibration) {
+                  result +=",\"calibration\":"+String(StmApp.actuators[x].calibration); 
+                 }
+
+                 if (Mqtt.valveStates[x].tValueFailed) {
+                  result +=",\"tValueFailed\":"+String(Mqtt.valveStates[x].tValueFailed); 
                  }
                  result +="}";      
     start = true;
     }
   }  
-  result += "]";
+  result += "]}";
   return result;
 }
 
@@ -303,13 +404,16 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
   String result = "[";
   int16_t temperature;
   bool start = false;
+  String s;
+
   for (uint8_t i=0;i<StmApp.tempsCount;i++) {
-    if (!findIdInValve(i)) {
+    if ((StmApp.findTempIdxInValve(i)<0) && (VdmConfig.configFlash.tempsConfig.tempConfig[i].active)) {
       if (start) result += ",";
       temperature = StmApp.temps[i].temperature;
+      if (StmApp.temps[i].temperature<=-500) s="\"failed\""; else s=String(((float)temperature)/10,1);
       result += "{\"id\":\"" + String(StmApp.temps[i].id) + "\","+
                 "\"name\":\"" + String(tempsConfig.tempConfig[i].name) + "\","+
-                "\"temp\":" + String(((float)temperature)/10,1)+"}";
+                "\"temp\":" +s+"}";
       start = true;
     }
   }  

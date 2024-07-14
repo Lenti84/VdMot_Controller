@@ -42,6 +42,7 @@ struct valve myvalves[ACTUATOR_COUNT];
 unsigned int learning_time = LEARN_AFTER_TIME_DEFAULT;
 unsigned int learning_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
 
+
 unsigned int reset_request = 0;
 
 int16_t app_setup (void) { 
@@ -51,11 +52,14 @@ int16_t app_setup (void) {
       myvalvemots[x].target_position = 50;
       myvalvemots[x].actual_position = 50;
       myvalvemots[x].status = VLV_STATE_UNKNOWN;
+      myvalvemots[x].calibration = false;
+      myvalvemots[x].calibState=calibIdle;
       myvalves[x].sensorindex1 = VALVE_SENSOR_UNKNOWN;        // marks that no slot is selected
       myvalves[x].sensorindex2 = VALVE_SENSOR_UNKNOWN;        // marks that no slot is selected
       myvalves[x].learn_movements = LEARN_AFTER_MOVEMENTS_DEFAULT;
+      myvalves[x].movements = 0;
       // distribute learn timing equaly over valve slots
-      myvalves[x].learn_time = (unsigned int) (((long)LEARN_AFTER_TIME_DEFAULT * ((long)x+1)) / (long)ACTUATOR_COUNT);
+      myvalves[x].learn_time = (unsigned int) (((long)LEARN_AFTER_TIME_DEFAULT * ((long)x+1)) / (long)ACTUATOR_COUNT);  
   }
 
   // match sensor address from eeprom with found sensors and set index/slot to valve struct
@@ -63,10 +67,17 @@ int16_t app_setup (void) {
 
   if ((eep_content.numberOfMovements>=50) && (eep_content.numberOfMovements<65535))
     learning_movements=eep_content.numberOfMovements;
+    app_set_learnmovements(learning_movements);
   #ifdef appDebug
     COMM_DBG.print("learning_movements: "); 
     COMM_DBG.println(learning_movements, DEC);
   #endif
+
+  noOfMinCounts = eep_content.noOfMinCounts;
+  if (noOfMinCounts > 60000) noOfMinCounts = 3000;
+  
+  maxCalibRetries = eep_content.maxCalibRetries;
+  if (maxCalibRetries > 2) maxCalibRetries = 2; 
   return 0;
 }
 
@@ -99,34 +110,36 @@ int16_t app_loop (void) {
 
           // learn all present valves if any target change happened before
           // this keeps controller calm right after startup, otherwise controller would be busy for up to 12 valve learning times (10 min ?!)
-          else if(firstchange > 0 && myvalvemots[lastvalve].status == VLV_STATE_PRESENT) {
+          else if(firstchange > 0 && myvalvemots[lastvalve].status == VLV_STATE_PRESENT)  {
             #ifdef appDebug
-              COMM_DBG.print("App: learning started for valve "); 
+              COMM_DBG.print("App 1: learning started for valve "); 
               COMM_DBG.println(lastvalve, 10);
             #endif
+            myvalvemots[lastvalve].calibState = calibInProgress;
             appsetaction(CMD_A_LEARN,lastvalve,0);        
           }
 
           // handle first found difference then break
-          if(myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
+          else if (myvalvemots[lastvalve].actual_position != myvalvemots[lastvalve].target_position)
           {
-              firstchange = 1;
-
               #ifdef appDebug
                 COMM_DBG.print("App: target pos changed for valve "); 
                 COMM_DBG.println(lastvalve, 10);
               #endif
 
+              firstchange = 1;
+                    
               // check if valve was learned before              
               if(myvalvemots[lastvalve].status == VLV_STATE_PRESENT)             
               {
                 #ifdef appDebug
-                  COMM_DBG.print("App: learning started for valve "); 
+                  COMM_DBG.print("App 2: learning started for valve "); 
                   COMM_DBG.println(lastvalve, 10);
                 #endif
+                myvalvemots[lastvalve].calibState = calibInProgress;
                 appsetaction(CMD_A_LEARN,lastvalve,0);                  
               }
-              else if(myvalvemots[lastvalve].status != VLV_STATE_BLOCKS)
+              else if ((myvalvemots[lastvalve].status != VLV_STATE_FAILED) && (myvalvemots[lastvalve].status != VLV_STATE_BLOCKS))
               {
                 // should valve be opened
                 if(myvalvemots[lastvalve].target_position > myvalvemots[lastvalve].actual_position) {                  
@@ -188,16 +201,30 @@ byte app_10s_loop () {
 
   // learning movements
   if (learning_movements > 0) { 
-    for (x=0; x< ACTUATOR_COUNT; x++) {  
-      if(myvalves[x].learn_movements == 0) {
-        myvalves[x].learn_movements = learning_movements;
-        myvalvemots[x].status = VLV_STATE_PRESENT;     // mark state as unknown, net set target req will do a learning cycle
-        #ifdef appDebug
-          COMM_DBG.print("App: Valve "); 
-          COMM_DBG.print(x, 10); 
-          COMM_DBG.println(" will be learned soon");
-        #endif
-      }   
+    for (x=0; x< ACTUATOR_COUNT; x++) {
+      // timeout for calibration 
+      if (myvalvemots[x].connected) {
+        if (myvalvemots[x].calibTime>0) myvalvemots[x].calibTime--;
+        if (myvalvemots[x].calibTime==0)  {
+          myvalvemots[x].calibration=false;
+          myvalvemots[x].calibState=calibIdle;
+        }
+
+        if((myvalves[x].learn_movements == 0) && (myvalvemots[x].calibState == calibIdle)) {
+          myvalvemots[x].calibration=true;
+          myvalvemots[x].calibTime=10;
+          myvalvemots[x].calibState = calibStarted;
+          //myvalvemots[x].actual_position=0;
+          myvalves[x].movements = 0;
+          myvalves[x].learn_movements = learning_movements;
+          myvalvemots[x].status = VLV_STATE_PRESENT;     // mark state as present, net set target req will do a learning cycle
+          #ifdef appDebug
+            COMM_DBG.print("App: Valve "); 
+            COMM_DBG.print(x, 10); 
+            COMM_DBG.println(" will be learned soon");
+          #endif
+        }   
+      }
     } 
   }
 
@@ -215,6 +242,7 @@ int16_t app_set_learnmovements(uint16_t movements) {
   // update all valve memories 
   for (unsigned int x = 0;x<ACTUATOR_COUNT;x++) {          
     myvalves[x].learn_movements = learning_movements;
+    myvalves[x].movements = 0;
   }
 
   return 0;
@@ -246,20 +274,44 @@ int16_t app_set_learntime(uint32_t time) {
 int16_t app_set_valvelearning(uint16_t valve) {
 
   if(valve < ACTUATOR_COUNT) {
-    myvalvemots[valve].actual_position = 0;     // fake some position deviation
-    myvalvemots[valve].status = VLV_STATE_UNKNOWN;
+   // myvalvemots[valve].actual_position = 0;     // fake some position deviation
+    myvalvemots[valve].status = VLV_STATE_PRESENT; //VLV_STATE_UNKNOWN;
+    myvalvemots[valve].calibration = true;
+    myvalvemots[valve].calibState=calibStarted;
+    myvalvemots[valve].calibTime=10;
+    myvalves[valve].movements = 0;
+    myvalves[valve].learn_movements = learning_movements;
     return 0;
   }
   else if (valve == 255) {
     // update all valves
     for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
-      myvalvemots[xx].actual_position = 0;      // fake some position deviation
-      myvalvemots[xx].status = VLV_STATE_UNKNOWN;
+      if (myvalvemots[xx].connected) {
+        //myvalvemots[xx].actual_position = 0;      // fake some position deviation
+        myvalvemots[xx].status = VLV_STATE_PRESENT; //VLV_STATE_UNKNOWN;
+        myvalvemots[xx].calibration = true;
+        myvalvemots[xx].calibState=calibStarted;
+        myvalvemots[xx].calibTime=10;
+        myvalves[xx].movements = 0;
+        myvalves[xx].learn_movements = learning_movements;
+      }
     }
     return 0;
   }
 
   return -1;
+}
+
+
+// scan valves 
+// a learning cycle for valve will be executed
+void app_scan_valves() 
+{
+    // scan all valves
+    for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+      myvalvemots[xx].actual_position = 0;      // fake some position deviation
+      myvalvemots[xx].status = VLV_STATE_UNKNOWN;
+    }
 }
 
 
@@ -288,7 +340,12 @@ int16_t app_set_valveopen(int16_t valve) {
 
 // match sensor address from eeprom with found sensors and set index/slot to valve struct
 int16_t app_match_sensors() {
-  
+  for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
+       myvalves[i].sensorindex1 = VALVE_SENSOR_UNKNOWN;
+       myvalves[i].sensorindex2 = VALVE_SENSOR_UNKNOWN;
+  }
+
+
   uint8_t   numberOfDevices = 0;
   DeviceAddress currAddress;
   uint8_t   found1 = 0, found2 = 0;
@@ -301,23 +358,14 @@ int16_t app_match_sensors() {
   for (unsigned int owsensorindex=0; owsensorindex<numberOfDevices; owsensorindex++)
   {
       sensors.getAddress(currAddress, owsensorindex);
-      //tempsensors[i].address = currAddress;
-
-      //COMM_DBG.print("owsensorindex ");
-      //COMM_DBG.println(owsensorindex, DEC);
       #ifdef appDebug
         printAddress(currAddress);
-        //COMM_DBG.println("");
       #endif
 
       // first sensor of valve
       // step through all possible valves
       for (unsigned int valveindex1 = 0;valveindex1<ACTUATOR_COUNT;valveindex1++) {
         valveindexlast = valveindex1;
-
-        //COMM_DBG.print("valveindex ");
-        //COMM_DBG.println(valveindex, DEC);
-
         found1 = 0;
         if (eep_content.owsensors1[valveindex1].crc == currAddress[7]) 
         {
@@ -328,34 +376,21 @@ int16_t app_match_sensors() {
                 }
             }           
         }
-        if (found1 == 7) 
-        {          
-          valveindex1 = ACTUATOR_COUNT; // end for loop
-          break;
-        }
+       
+        if (found1 == 7)
+        {
+            #ifdef appDebug
+              COMM_DBG.print(" found as 1st sensor at valve: ");
+              COMM_DBG.println(String(valveindexlast)+":"+String(owsensorindex));
+            #endif
+            myvalves[valveindexlast].sensorindex1 = owsensorindex;
+        } 
       }
-      if (found1 == 7)
-      {
-          #ifdef appDebug
-            COMM_DBG.print(" found as 1st sensor at valve: ");
-            // COMM_DBG.print(owsensorindex, DEC);
-            COMM_DBG.println(valveindexlast, DEC);
-          #endif
-          myvalves[valveindexlast].sensorindex1 = owsensorindex;
-      } else {
-        myvalves[valveindexlast].sensorindex1 = VALVE_SENSOR_UNKNOWN;
-      }
-      // else 
-      // {
-      //     COMM_DBG.println(" not found");
-      //     //COMM_DBG.println(found, DEC);
-      // }
-
+     
       // second sensor of valve
       // step through all possible valves
       for (unsigned int valveindex = 0;valveindex<ACTUATOR_COUNT;valveindex++) {
         valveindexlast = valveindex;
-         
         found2 = 0;
         if (eep_content.owsensors2[valveindex].crc == currAddress[7]) 
         {
@@ -366,54 +401,33 @@ int16_t app_match_sensors() {
                 }
             }           
         }
-        if (found2 == 7) 
-        {          
-          valveindex = ACTUATOR_COUNT; // end for loop
-          break;
+       
+        if (found2 == 7)
+        {     
+            #ifdef appDebug     
+              COMM_DBG.print(" found as 2nd sensor at valve: ");
+              COMM_DBG.println(valveindexlast, DEC);
+            #endif
+            myvalves[valveindexlast].sensorindex2 = owsensorindex;
         }
       }
-      if (found2 == 7)
-      {     
-          #ifdef appDebug     
-            COMM_DBG.print(" found as 2nd sensor at valve: ");
-            // COMM_DBG.print(owsensorindex, DEC);
-            COMM_DBG.println(valveindexlast, DEC);
-          #endif
-          myvalves[valveindexlast].sensorindex2 = owsensorindex;
-      }  else {
-        myvalves[valveindexlast].sensorindex2 = VALVE_SENSOR_UNKNOWN;
-      }
-      // else 
-      // {
-      //     COMM_DBG.println(" not found");
-      //     //COMM_DBG.println(found, DEC);
-      // }
-
+    
       if(found1==0 && found2==0) {
         #ifdef appDebug
           COMM_DBG.println(" not found");
         #endif
       }
-
-      
-      // else 
-      // {
-      //     COMM_DBG.print("not found ");
-      //     COMM_DBG.print(owsensorindex, DEC);
-      //     COMM_DBG.println(valveindexlast, DEC);
-      //     myvalvemots[valveindexlast].sensorindex1 = VALVE_SENSOR_UNKNOWN;
-      // }
   }
-
   return 0;
-
 }
 
 
 // set soft reset request
 void reset_STM32 () {
   reset_request = 1;
-  COMM_DBG.println("prepare for soft reset");
+  #ifdef appDebug
+    COMM_DBG.println("prepare for soft reset");
+  #endif
 }
 
 
@@ -421,9 +435,12 @@ void reset_STM32 () {
 // waits until eeprom is written completely
 void reset_check () {
   if(reset_request && eeprom_free()) {
-    COMM_DBG.println("soft reset now");
-    #define AIRCR_VECTKEY_MASK    (0x05FA0000)    
-      SCB->AIRCR = AIRCR_VECTKEY_MASK | 0x04;
+    #ifdef appDebug
+      COMM_DBG.println("soft reset now");
+    #endif
+    HAL_NVIC_SystemReset();
+   // #define AIRCR_VECTKEY_MASK    (0x05FA0000)    
+   //   SCB->AIRCR = AIRCR_VECTKEY_MASK | 0x04;
     while(1);   
   }
 }

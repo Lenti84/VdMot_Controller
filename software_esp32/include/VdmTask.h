@@ -57,13 +57,15 @@ public:
   CVdmTask();
   void init();
   void deleteTask(taskid_t taskId);
+  void disOrEnableTask (taskid_t taskId,bool enabled);
   bool taskExists (taskid_t taskId);
   void yieldTask (uint16_t ms);
   void startMqtt(uint32_t interval);
   void startApp();
   void startStm32Ota(uint8_t command,String thisFileName);
   void startServices();
-  void startPIServices();
+  void startPIServices(bool startTask=true);
+  void stopPIServices();
   void startClearFS();
   void startGetFS();
   
@@ -77,13 +79,18 @@ public:
   taskid_t taskIdResetSystem;
   taskid_t restartStmApp;
   taskid_t taskIdRunOnce;
-  taskid_t taskIdRunOnceDelayed;
+  taskid_t taskIdRunOnceDelayed10;
+  taskid_t taskIdRunOnceDelayed60;
   taskid_t taskIdwaitForFinishQueue;
   taskid_t taskIdPiControl[ACTUATOR_COUNT];
   taskid_t taskIdRunOnceClearFS;
   taskid_t taskIdRunOnceGetFS;
   
   TsetFactoryCfgState setFactoryCfgState;
+  bool restartPiTask;
+  bool piTaskInitiated;
+
+  bool sendMessenger;
 };
 
 extern CVdmTask VdmTask;

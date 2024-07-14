@@ -1,9 +1,9 @@
-
 <!DOCTYPE html>
 
 <html>
 <head>
 <link rel="icon" href="data:,">
+<link rel="icon" href="../favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -104,6 +104,11 @@
 	  padding: 5px;
 	  text-align: center;
 	}
+	.tabpframe {
+	  border-top: white 1px solid;
+	  padding: 5px;
+	  text-align: center;
+	}
 	
 	.form-input{
 		width: 100px;
@@ -111,7 +116,13 @@
 	.form-input1{
 		width: 300px;
 	}
-	
+	.form-input2{
+		width: 250px;
+	}
+	form-input3{
+		width: 50px;
+		margin-left: 5px;
+	}
 	.rtabframe {
 		border: white 2px solid;
 		padding: 5px;
@@ -133,12 +144,34 @@
 		text-align: center;
 		grid-column : span 3;
 	}
+
+	.rtabframe4 {
+		border: white 2px solid;
+		padding: 5px;
+		border-radius: 5px;
+		text-align: center;
+		grid-column : span 4;
+	}
 	
+	.alignTabCellState{
+	 float: center;
+	 padding-top: 10px;
+	}
+
+	.alignTabCellImgState{
+	 float: left;
+	 padding: 5px 2px;
+	}
+
+	table.tabTable {
+		width : 100%
+	}
+
 	table.tabTable td {
 		padding-left: 5px;
 		height:21px;
 	}
-	
+
 	table.tabTable1 {
 		width : 100%
 	}
@@ -166,6 +199,10 @@
 		text-align: center;
 		padding-left: 5px;
 	}
+
+	.collapse {
+		visibility: collapse;
+	}
 	
    .buttonclass:hover {
 		padding: 0.6em;
@@ -189,6 +226,35 @@
 		color: #c0c0c0;
 	}
 
+	.buttonclass1:hover {
+		padding: 0.6em;
+		font-weight: bold;
+		background-color: #fff;
+		color: green;
+	}
+
+	.buttonclass1 {
+		font-weight: bold;
+		background-color: #79B935;
+		color: #fff;
+		margin: 2px;
+		padding: 0.6em;
+		border-radius: 5px;
+		float: right;
+
+	}
+	.buttonclass1:disabled {
+		font-weight: bold;
+		background-color: #79B900;
+		color: #c0c0c0;
+	}
+	
+	.dialogClass{
+		width: 30em;
+		overflow-y: auto;
+		text-align: left;	
+		border: lightgray 5px solid;
+	}
 	.checkboxgroup{
 		width: 11em;
 		height : 12em;
@@ -201,6 +267,36 @@
 	}
 	.checkboxgroup label{
 		width: 10em;
+		float: left;
+	}
+
+	.checkboxgroup1{
+		width: 16em;
+		height : 12em;
+		overflow-y: auto;
+		text-align: left;
+	}
+	.checkboxgroup1 p{
+		width: 16em;
+		text-align: left;
+	}
+	.checkboxgroup1 label{
+		width: 16em;
+		float: left;
+	}
+
+	.checkboxgroup2{
+		width: 15em;
+		height : 12em;
+		overflow-y: auto;
+		text-align: left;
+	}
+	.checkboxgroup2 p{
+		width: 15em;
+		text-align: left;
+	}
+	.checkboxgroup2 label{
+		width: 15em;
 		float: left;
 	}
 
@@ -246,14 +342,14 @@
    .container {  
 		display: grid;  
 		grid-gap: 2px;  
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+		grid-template-columns: repeat(auto-fit, minmax(285px, 1fr)); 
 		grid-template-rows:  masonry;
 	}
 	
 	.container1 {  
 		display: grid;  
 		grid-gap: 2px;  
-		grid-template-columns: repeat(auto-fit, 300px);
+		grid-template-columns: repeat(auto-fit, 350px);
 		grid-template-rows:  masonry;
 	}
 	
@@ -267,10 +363,62 @@
 	.container3 {  
 		display: grid;  
 		grid-gap: 2px;  
-		grid-template-columns: repeat(auto-fit, 200px);
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		grid-template-rows:  masonry;
 	}
 		
+	div[disabled]
+	{
+		pointer-events: none;     
+		opacity: 0.4;
+	}
+
+	/* slider checkbox */ 
+	[type="checkbox"] {
+	--s:18px; /* adjust this to control the size*/
+	position: relative; 
+  	top: .3em;
+	height:var(--s);
+	aspect-ratio:2/1;
+	padding:calc(var(--s)/5);
+	border-radius:var(--s);
+	background:
+		radial-gradient(farthest-side,#fafafa 85%,#0005,#0000) left/var(--s) 100% no-repeat,
+		/*linear-gradient(90deg,#20b68f 50%,#939393 0) right/200% 100% content-box;*/
+		linear-gradient(90deg,#79B935 50%,#939393 0) right/200% 100% content-box;
+	transition:0.5s;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	cursor:pointer;
+	}
+
+	[type="checkbox"]:checked {
+	background-position:right,left;
+	}
+
+	[type="text"],[type="number"],[type="password"] {
+	--s:15px; /* adjust this to control the size*/
+	/*height:var(--s);
+	aspect-ratio:2/1;
+	padding:calc(var(--s)/5);*/
+	border-radius:8px; 
+	background:
+		white;
+	-webkit-appearance:none;
+	-moz-appearance:none;
+	appearance:none;
+	cursor:pointer;
+	}
+
+	select,[type="button"] {
+		border-radius:8px;
+	}
+
+	body {
+	background:gray;
+	}
+
 	#Home {background-color: gray;}
 	#Status {background-color: gray;}
 	#Network {background-color: gray;}
@@ -279,14 +427,49 @@
 	#Update {background-color: gray;}
 	#About {background-color: gray;}
 
+	.spinner {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		height:100px;
+		width:100px;
+		margin:0px auto;
+		-webkit-animation: rotation .6s infinite linear;
+		-moz-animation: rotation .6s infinite linear;
+		-o-animation: rotation .6s infinite linear;
+		animation: rotation .6s infinite linear;
+		border-left:10px solid rgba(0,174,239,.15);
+		border-right:10px solid rgba(0,174,239,.15);
+		border-bottom:10px solid rgba(0,174,239,.15);
+		border-top:10px solid rgba(0,174,239,.8);
+		border-radius:200%;
+	}
+
+	@-webkit-keyframes rotation {
+		from {-webkit-transform: rotate(0deg);}
+		to {-webkit-transform: rotate(359deg);}
+	}
+	@-moz-keyframes rotation {
+		from {-moz-transform: rotate(0deg);}
+		to {-moz-transform: rotate(359deg);}
+	}
+	@-o-keyframes rotation {
+		from {-o-transform: rotate(0deg);}
+		to {-o-transform: rotate(359deg);}
+	}
+	@keyframes rotation {
+		from {transform: rotate(0deg);}
+		to {transform: rotate(359deg);}
+	}
+
+
 </style>
 
 </head>
 <body>
-
 	<div class="topNav" id="mytopNav">
 	  <a href="#home" class="tabLink" id="defaultOpen" name="Home" onclick="openPage('Home', this, 'red')">Home</a>
-	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green')">Status</a>
+	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green');">Status<img id="statusImg" src="" style="margin-left:5px;height:16px;width:16px"></a>
 	  <a href="#network" class="tabLink" id="networkOpen" name="Network" style ="display:none" onclick="openPage('Network', this, 'blue')">Network</a>
 	  <a href="#config" class="tabLink" id="configOpen" name="Config" style ="display:none" onclick="openPage('Config', this, 'gray')">Config</a>
 	  <a href="#control" class="tabLink" id="controlOpen" name="Control" style ="display:none" onclick="openPage('Control', this, 'gray')">Control</a>
@@ -294,6 +477,8 @@
 	  <a href="#about" class="tabLink" id="aboutOpen" name="About" onclick="openPage('About', this, 'darkgray')">About</a>
 	  <a href="javascript:void(0);" class="icon" onclick="resptopNav()">&#9776;</a>
 	</div>
+
+	<div id="spinner"></div>
 
 	<div id="Home" class="tabContent">
 	<div class="container1">
@@ -323,16 +508,36 @@
 		<h3>WT32 Controller</h3>
 		<table id="homeInfo" class="tabTable">
 			<tr>
-				<th>Version</th>
+				<th width=100>SW Version</th>
 				<td id="sysWt32-Version"></td>
 			</tr>
 			<tr>
-				<th>Heap</th>
+				<th>Model</th>
+				<td id="wt32-ChipModel"></td>
+			</tr>
+			<tr>
+				<th>Cores</th>
+				<td id="wt32-ChipCores"></td>
+			</tr>
+			<tr>
+				<th>Version</th>
+				<td id="wt32-ChipVersion"></td>
+			</tr>
+			<tr>
+				<th>Flash size used</th>
+				<td id="wt32-Sketch"></td>
+				<td width=50 id="wt32-FlashUsed" ></td>
+			</tr>
+			<tr>
+				<th>Stack size</th>
+				<td id="wt32-ChipStack"></td>
+			</tr>
+			<tr>
+				<th>Heap/Min</th>
 				<td id="heap"></td>
-				<th>min</th>
-				<td id="min-heap"></td>
+				<td width=70 id="min-heap"></td>
 			</tr>	
-			<tr id="tr-rssi" class="hide">
+			<tr id="tr-rssi">
 				<th>RSSI</th>
 				<td id="rssi"></td>
 			</tr>
@@ -345,6 +550,10 @@
 				<th>Version</th>
 				<td id="sysSTM32-Version"></td>
 			</tr>
+			<tr>
+				<th>Chip Id</th>
+				<td id="sysSTM32-ChipId"></td>
+			</tr>
 		</table>
 		</div>
 	</div>
@@ -352,12 +561,30 @@
 	
 	<div id="Status" class="tabContent">
 	<div class="container3">
-		<div class="rtabframe3">  
+		<div id="divValvesTable" class="rtabframe3">  
 		<h3>Valves</h3>	
 		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
-		
+		<div class="rtabframe" style="overflow-y:auto" id="addStatusTabFrame">  
+			<h3>Miscellaneous</h3>
+			<table id="miscStatus" class="tabTable1">
+				<tr>
+					<th>Heat Control</th>
+					<td id="miscStatusHC"></td>
+				</tr>
+				<tr>
+					<th>Last Calibration</th>
+					<td id="miscStatusLC"></td>
+				</tr>
+				<tr>
+					<th>Show status detailed</th>
+					<td>
+					<input type="checkbox" id="status-detailed" name="status-detailed" title="Show detailed status"/>
+					</td>
+				</tr>
+			</table>
+		</div>
 		<div class="rtabframe" style="overflow-y:auto" id="tempStatusTabFrame">  
 		<h3>Temperature</h3>
 		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
@@ -404,12 +631,17 @@
 				<th>MQTT</th>
 				<td id="net-broker-status"></td>
 			</tr>
+			<tr>
+				<th>SNTP</th>
+				<td id="net-sntp-status"></td>
+			</tr>
 			
 		</table>
 		</div>
 	</div>
 	
 	<div id="Config" class="tabContent">
+	<div id="spinner-Config"></div>
 	<div class="container">
 		<div class="rtabframe">
 		<h3>Network</h3>
@@ -441,47 +673,50 @@
 			<tr>
 				<th>DHCP</th>
 				<td>
-				<select id="netcfg-dhcp" style="width: 50px;">
+				<select id="netcfg-dhcp" style="width: 60px;">
                     <option>OFF</option>
                     <option>ON</option>
 				</select>
 				</td>
-            </tr>                    
-			<tr>
-				<th>IP</th>
-				<td>
-				<input type="text" class="form-input" id="netcfg-ip" name="netcfg-ip" placeholder="xxx.xxx.xxx.xxx"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Subnet Mask</th>
-				<td>
-				<input type="text" class="form-input" id="netcfg-mask" name="netcfg-mask" placeholder="xxx.xxx.xxx.xxx"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Gateway</th>
-				<td>
-				<input type="text" class="form-input" id="netcfg-gw" name="netcfg-gw" placeholder="xxx.xxx.xxx.xxx"/>
-				</td>
-			</tr>
-			<tr>
-				<th>DNS</th>
-				<td>
-				<input type="text" class="form-input" id="netcfg-dns" name="netcfg-dns" placeholder="xxx.xxx.xxx.xxx"/>
-				</td>
-			</tr>
-			<tr></tr>
-			<tr> 
-				<th>Eth/Wifi</th>
-				<td>
-				<select id="netcfg-EthWifi" style="width: 50px;">
-					<option>Auto</option>
-                    <option>Eth</option>
-                    <option>Wifi</option>
-				</select>
-				</td>
             </tr>  
+			<table id="netcfg-Tdhcp" style="display:none;" class="tabTable1">                 
+				<tr>
+					<th>IP</th>
+					<td>
+					<input type="text" class="form-input" id="netcfg-ip" name="netcfg-ip" placeholder="xxx.xxx.xxx.xxx"/>
+					</td>
+				</tr>
+				<tr>
+					<th>Subnet Mask</th>
+					<td>
+					<input type="text" class="form-input" id="netcfg-mask" name="netcfg-mask" placeholder="xxx.xxx.xxx.xxx"/>
+					</td>
+				</tr>
+				<tr>
+					<th>Gateway</th>
+					<td>
+					<input type="text" class="form-input" id="netcfg-gw" name="netcfg-gw" placeholder="xxx.xxx.xxx.xxx"/>
+					</td>
+				</tr>
+				<tr>
+					<th>DNS</th>
+					<td>
+					<input type="text" class="form-input" id="netcfg-dns" name="netcfg-dns" placeholder="xxx.xxx.xxx.xxx"/>
+					</td>
+				</tr>
+			</table> 
+			<table class="tabTable1"> 
+				<tr> 
+					<th>Eth/Wifi</th>
+					<td>
+					<select id="netcfg-EthWifi" style="width: 60px;">
+						<option>Auto</option>
+						<option>Eth</option>
+						<option>Wifi</option>
+					</select>
+					</td>
+				</tr>  
+			</table>
 		</table>
 		
 		<table id="netcfg-wifi" style="display:none;" class="tabTable1">
@@ -556,12 +791,18 @@
 				<input type="text" class="form-input" id="netcfg-syslog-port" name="netcfg-syslog-port" placeholder="xxxx"/>
 				</td>
 			</tr>
-
+		</table>
+		<table class="tabTable">
+			<tr>
+			<td>
+			<input type="button" class="buttonclass" id="setSysLog" value="Set" title="Set syslog server values" />
+			</td>
+			</tr>
 		</table>
 		</div>
 		</div>
 
-		<div class="rtabframe" style="height:360px;">
+		<div class="rtabframe" >
 		<h3>Protocol</h3>
 
 		<table id="protConfig" class="tabTable1">		
@@ -576,7 +817,7 @@
             </tr> 
 		</table>
 		<table id="protcfg-Broker" style="display:none;" class="tabTable1">
-				<tr>
+			<tr>
 				<th>Broker IP</th>
 				<td>
 				<input type="text" class="form-input" id="protcfg-Ip" name="protcfg-Ip" placeholder="xxx.xxx.xxx.xxx"/>
@@ -586,12 +827,6 @@
 				<th>Broker Port</th>
 				<td>
 				<input type="text" class="form-input" id="protcfg-Port" name="protcfg-Port" placeholder="xxxxx"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Interval (ms)</th>
-				<td>
-				<input type="number" class="form-input" min="100" id="protcfg-Interval" name="protcfg-Interval"/>
 				</td>
 			</tr>
 			<tr>
@@ -613,28 +848,76 @@
 				</td>
 			</tr>
 		</table>
-		
-		<div class="tabiframe"> 
-		<table id="protcfg-Broker1" style="display:none;" class="tabTable">
+		<div id="div-protcfg-Broker3" class="tabpframe"> 	
+		<table id="protcfg-Broker3" style="display:none;" class="tabTable1">
 			<tr>
-			<fieldset id="protcfg-Broker2" class="checkboxgroup" style="height:5em;display:none;">
-				<legend>Publish</legend>
-				<label><input type="checkbox" id="protcfg-pubTarget" name="theGroupP">Target </label>
-				<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
-				<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
-			</fieldset>
+				<th>Interval (ms)</th>
+				<td>
+				<input type="number" class="form-input" min="100" id="protcfg-Interval" name="protcfg-Interval" title="Polling interval in ms (default 1000). This polls the mqtt connection for events coming from broker"/>
+				</td>
 			</tr>
-	
+			<tr>
+				<th>Publish Interval (s)</th>
+				<td>
+				<input type="number" class="form-input" min="2" id="protcfg-Publish" name="protcfg-Publish" title="If Publish on change is not checked, it defines the publish interval of all values in seconds (default 10), otherwise it defines the time out to publish the values even the value was not changed."/>
+				</td>
+			</tr>
+			<tr>
+				<th>Publish on change</th>
+				<td>
+				<input type="checkbox" id="protcfg-pubOnChange" name="protcfg-pubOnChange" title="Publish values if changed or time out (defined in Publish interval, individually for each valve and temperature sensor)"/>
+				</td>
+			</tr>
+			<tr id="tr-minPubTime">
+				<th>Min time for next publish (s)</th>
+				<td>
+				<input type="number" class="form-input" min="2" id="protcfg-pubMinDelay" name="protcfg-pubMinDelay" title="Minimum time (in seconds) the system wait for the next publishing values, individually for each valve and temperature sensor"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Keep alive time (s)</th>
+				<td>
+				<input type="number" class="form-input" min="100" id="protcfg-keepAliveTime" name="protcfg-keepAliveTime" title="After this time the connection will be closed if there is no traffic"/>
+				</td>
+			</tr>
+		</table>
+		</div>
+		<div class="tabpframe"> 
+		<table id="protcfg-Broker1" style="display:none;" class="tabTable1">
+			<tr>
+				<fieldset id="protcfg-Broker2" class="checkboxgroup2" style="height:14em;display:none;">
+					<legend>Publish</legend>
+					<label><input type="checkbox" id="protcfg-pubRetained" name="theGroupP" title="Publish values retained">Retained </label>
+					<label><input type="checkbox" id="protcfg-pubPlainText" name="theGroupP" title="Publish values as plaintext instead 0/1">Plaintext </label>
+					<label><input type="checkbox" id="protcfg-pubSeparate" name="theGroupP" title="Handle topics strict separate for write and read. Topics sent from server has to be added a /set">Strict separate topics </label>
+					<label><input type="checkbox" id="protcfg-pubAllTemps" name="theGroupP">All temps </label>
+					<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
+					<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
+					<label><input type="checkbox" id="protcfg-pubDiag" name="theGroupP">Diag </label>
+				</fieldset>
+			</tr>
+
+			<tr>
+				<fieldset id="protcfg-Broker21" class="checkboxgroup2" style="height:7em;display:none;">
+					<legend>Failed</legend>
+					<label><input type="checkbox" id="protcfg-timeOutDSActive" name="theGroupP21" title="Time out for DS18 sensor (fixed 5 min)">DS18 </label>
+					<label><input type="checkbox" id="protcfg-timeOutTSActive" name="theGroupP21" title="If there is no tValue received via mqtt after this time the corresponding valve goes to the defined position.
+Caution : If this option is activated it is absolutely mandatory to ensure that the tValue is received within the time frame. 
+Publish on change on server side is not recommended with this option">tValue after<input type="number" class="form-input3" maxlength="4" style="width:3em;" min="10" id="protcfg-timeOutValue" name="protcfg-timeOutValue" />min</label>
+					<label><input type="number" class="form-input" min="0" max="100" maxlength="3" style="width:40px" id="protcfg-timeOutPosition" name="protcfg-timeOutPosition" title="Valve position after time out."/>Valve position </label>
+				</fieldset>
+			</tr>
+
 		</table>
 		</div>
 		</div>
 
-		<div class="rtabframe" style="height:460px;">
+		<div class="rtabframe">
 		<h3>Valves</h3>
-		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center;">
 		
 		</table>
-		<table class="tabTable"
+		<table class="tabTable">
 			<tr>
 			<td>
 			<input type="button" class="buttonclass" id="valvesDetect" value="Scan" title="Detect valves" />
@@ -643,44 +926,48 @@
 		</table>
 		</div>
 		
-		<div class="rtabframe" id ="motorTabFrame" style="height:430px">
+		<div class="rtabframe" id ="motorTabFrame">
 			<h3>Motor</h3>
 		
 			<table id="cfgValvesTable1" class="tabTable">
 			<tr>
-			<fieldset class="checkboxgroup" style="height:13em;">
+			<fieldset class="checkboxgroup2" style="height:17em;" id="cfgValvesTableFieldSet1">
 				<legend>Next Calibration</legend>
 				<label><input type="number" min="50" maxlength="4" style="width:60px" id="vCfg-movCalib" name="vCfg-movCalib" title="Number of movements to next calibration"> Movements </label>
-				<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour of next calibration"> h</label>
-				<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
-				<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
-				<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
-				<label><input type="checkbox" id="vCfg-d3" name="theGroup">Wednesday </label>
-				<label><input type="checkbox" id="vCfg-d4" name="theGroup">Thursday </label>
-				<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
-				<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
+				<div id="calibDate"> 
+					<label><input type="number" max="24" min="0" maxlength="2" style="width:60px" id="vCfg-hCalib" name="vCfg-hCalib" title="Hour time of next calibration"> Hour time</label>
+					<label><input type="checkbox" id="vCfg-d0" name="theGroup">Sunday </label>
+					<label><input type="checkbox" id="vCfg-d1" name="theGroup">Monday </label>
+					<label><input type="checkbox" id="vCfg-d2" name="theGroup">Tuesday </label>
+					<label><input type="checkbox" id="vCfg-d3" name="theGroup">Wednesday </label>
+					<label><input type="checkbox" id="vCfg-d4" name="theGroup">Thursday </label>
+					<label><input type="checkbox" id="vCfg-d5" name="theGroup">Friday </label>
+					<label><input type="checkbox" id="vCfg-d6" name="theGroup">Saturday </label>
+				</div>
 			</fieldset>
-			<fieldset class="checkboxgroup" style="height:5em;">
+			<fieldset class="checkboxgroup2" style="height:8em;" id="cfgValvesTableFieldSet2">
 				<legend>Characteristic</legend>	
-				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Low  </label>
-				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> High </label>
-				<label></label><input type="number" min=0 max=100 maxlength=3 step=1 style="width:60px" id="vCfg-StartOnPower" name="vCfg-StartOnPower" title="Start valves % at power on"> Start % </label>
+				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-lowC" name="vCfg-lowC" title="Max. current factor from mean"> Open  </label>
+				<label><input type="number" min=0.5 max=5.0 maxlength=2 step=.1 style="width:60px" id="vCfg-highC" name="vCfg-highC" title="Max. current factor from mean"> Close </label>
+				<label><input type="number" min=0 max=100 maxlength=3 step=1 style="width:60px" id="vCfg-StartOnPower" name="vCfg-StartOnPower" title="Start valves % at power on"> Start % </label>
+				<label><input type="number" min=0 max=60000 maxlength=5 step=1 style="width:60px" id="vCfg-noOfMinCount" name="vCfg-noOfMinCount" title="Number of minimum count detetced during calibration"> Min. count </label>
+				<label><input type="number" min=0 max=2 maxlength=5 step=1 style="width:60px" id="vCfg-maxCalReps" name="vCfg-maxCalReps" title="Max. number of consecutive calibration repetitions if minimum count detected"> Max. calib. repetitions </label>
+	
 			</fieldset>
 			</tr>
+			<fieldset class="checkboxgroup2" style="height:4em;" id="cfgValvesTableFieldSet2">
+				<legend>Assembly/Calibration</legend>	
+				<label> 
+					<select id="valvesAsmCalib-select">
+					</select>	
+					<input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set valves to assembly position">
+					<input type="button" class="buttonclass" id="valvesStartCalib" value="Calib" title="Start manual calibration of valves" />
+				</label>	
+			</fieldset>
 			</table>
-			<table id="cfgValvesTable2" class="tabTable">
-			<tr>
-				<td>
-                <input type="button" class="buttonclass" id="valvesStartCalib" value="Start calibration" title="Start manual calibration of all valves" />
-                </td>
-				<td>
-                <input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set all valves to assembly position" />
-                </td>
-			</tr>
-			</table>
-		</div>
-		
-			<div class="rtabframe2" style="height:495px">
+	
+		</div>	
+			<div class="rtabframe2">
 			<h3>Temperature sensor</h3>
 			<div style="height:390px;overflow-y:scroll">
 			<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
@@ -703,8 +990,110 @@
 				</table>
 			</div>
 		</div>
+
+		<dialog id="pushOverParameterDialog" class="dialogClass">
+			<h3>PushOver</h3>
+			<table id="cfgPushOverParam" class="tabTable">
+			<tr>
+				<button id="test-pushOver" class="buttonclass1">test</button>
+			</tr>
+			<tr>
+				<button id="close-pushOverParameterDialog" class="buttonclass1">close</button>
+			</tr>
+			<tr>
+				<th>API Token</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverAPIToken" name="cfgPushOverAPIToken"/>
+				</td>
+			</tr>
+			<tr>
+				<th>User Token</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverUserToken" name="cfgPushOverUserToken"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Title</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverTitle" name="cfgPushOverTitle"/>
+				</td>
+			</tr>
+			
+			</table>
+		</dialog>
+
+		<dialog id="emailParameterDialog" class="dialogClass">
+			<h3>Email</h3>
+			<table id="cfgEmailParam" class="tabTable">
+			<tr>
+				<button id="test-email" class="buttonclass1">test</button>
+			</tr>
+			<tr>
+				<button id="close-emailParameterDialog" class="buttonclass1">close</button>
+			</tr>
+			<tr>
+				<th>User</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgEmailUser" name="cfgEmailUser"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Password</th>
+				<td>
+				<input type="password" class="form-input2" maxlength="30" id="cfgEmailPwd" name="cfgEmailPwd"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Host</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgEmailHost" name="cfgEmailHost"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Port</th>
+				<td>
+				<input type="number" class="form-input2" id="cfgEmailPort" name="cfgEmailPort"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Recipient</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgEmailRecipient" name="cfgEmailRecipient"/>
+				</td>
+			</tr>
+			<tr>
+				<th>Title</th>
+				<td>
+				<input type="text" class="form-input2" maxlength="30" id="cfgEmailTitle" name="cfgEmailTitle"/>
+				</td>
+			</tr>
+			</table>
+		</dialog>
 		
-		<div class="rtabframe" id ="fileTabFrame" style="height:250px">
+		<div class="rtabframe" id ="messengerTabFrame" style="height:400px">
+			<h3>Messenger</h3>
+			<table id="cfgValvesTable1" class="tabTable">
+				<tr>
+				<fieldset class="checkboxgroup1" style="height:5em;" id="cfgMessengerFieldSet1">
+					<legend>Active</legend>
+					<label><input type="checkbox" id="MsgPOCfg-Active" name="theGroup">Pushover <input type="button" class="buttonclass1" id="msgCfg-PushOverParam" style="height:2em;" value="..." title="Push over parameter" /></label>
+					<label><input type="checkbox" id="MsgEmailCfg-Active" name="theGroup">Email <input type="button" class="buttonclass1" id="msgCfg-emailParam" style="height:2em;" value="..." title="Email parameter" /></label>
+				</fieldset>
+				<fieldset class="checkboxgroup1" style="height:14em;" id="cfgValvesTableFieldSet2">
+					<legend>Send reasons</legend>	
+					<label><input type="checkbox" id="MsgCfg-ReasonValveFailed" name="theGroup" title="If a time out occured. Maybe the motor is dropped">Valve failed </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonValveBlocked" name="theGroup" title="If the valve is blocked (number of detected count less than motor config)">Valve blocked </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonValveDetect" name="theGroup">Active valve not detected </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonReset" name="theGroup">Reset detected </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonMQTT" name="theGroup">MQTT failed,after<input type="number" class="form-input3" maxlength="3" style="width:3em;" min="1" max="999" id="protcfg-timeOutMqtt" name="protcfg-timeOutMqtt" title="Timeout (min) to check mqtt connection to send messenge"/>min</label>
+					<label><input type="checkbox" id="MsgCfg-ReasontValueFailed" name="theGroup" title="If tValue was not updated within mqtt timeout">tValue failed </label>
+					<label><input type="checkbox" id="MsgCfg-ReasonDS18Failed" name="theGroup">DS18 failed </label>
+				</fieldset>
+				</tr>
+			</table>
+		</div>
+
+		<div class="rtabframe" id ="fileTabFrame" style="height:290px">
 		<h3>Files</h3>
 		<table id="filesConfig" class="tabTable">
 			<tr>
@@ -730,7 +1119,7 @@
 		</table>
 		</div>
 		
-		<div class="rtabframe" style="height:250px">
+		<div class="rtabframe" style="height:290px">
 		<h3>System</h3>
 		<table id="sysConfig" class="tabTable">
 			<tr>
@@ -772,10 +1161,11 @@
 				</td>
 				<td>
 					<label>Heat Control</label>
-					<select id="VCtrlConfigHeatControl" title="Heat valves control manual/on/off.">
+					<select id="VCtrlConfigHeatControl" title="Heat valves control manual/on Heating/on Cooling/off=Park position.">
 					<option>Manual</option>
-					<option>On</option>
-					<option>Off</option>
+					<option>On/Heating</option>
+					<option>On/Cooling</option>
+					<option>Off/Park position</option>
 					</select>
 				
 				</td>
@@ -836,7 +1226,7 @@
 		along with this program.  If not, see http://www.gnu.org/licenses/.
 		</p>
 		<p>
-		Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
+		Copyright (C) 2021-2024 Lenti84  https://github.com/Lenti84/VdMot_Controller
 		</p>	
 		<p>
 		Contributor : SurfGargano
@@ -1356,14 +1746,24 @@
 		var TIdxHasChanged=false;
 		var motorCharsHasChanged=false;
 		var movCalibHasChanged=false;
+		var emailPwdChanged=false;
 		var showAllTabs=window.location.href.startsWith('file');
 		var getStatusInterval;
 		var dataTempSensorsID=null;
 		const NoOfMaxSensors = 34;
-		var stmStatus = 0;
+		var stmInit = 0;
 		const cfgVCKiCol= 12;
 		var getFSIntervalID = null;
 		var loopGetFSCnt=0;
+		var valveTempsExists = false;
+		var valveMqttExists = false;
+		var heatControl = null;
+		var anyValveControlEnabled=false;
+		var stmLoaded=false;
+		var activeSetValvesDisplay = "none";
+		var reconnectMQTT=false;
+		var windowImageObjects = [null,null,null,null,null,null,null,null,null,null,null,null];
+	    const tabImageSrc = ["","warning_yellow.png","warning_red.png"];
 
 		// Get the modal
 		var modal = id("pwdModal");
@@ -1382,7 +1782,7 @@
 		
 		function showThisTab(pageName)
 		{
-			let showTab = (pageName=="Home") || (pageName=="About") || showAllTabs;
+			let showTab = (pageName=="Home") || (pageName=="About") || (pageName=="Status") || showAllTabs;
 			return showTab
 		}
 		
@@ -1401,23 +1801,24 @@
 		}
 		
 		function openPage(pageName,elmnt,color) {
-		  let i, tabContent, tabLinks;
-		  tabContent = document.getElementsByClassName("tabContent");
-		  for (i = 0; i < tabContent.length; i++) {
-			tabContent[i].style.display = "none";
-		  }
-		  tabLinks = document.getElementsByClassName("tabLink");
-		  for (i = 0; i < tabLinks.length; i++) {
-			tabLinks[i].style.backgroundColor = "";
-		  }
-		  if (showThisTab(pageName)===true) {
-			  id(pageName).style.display = "block";
-			  elmnt.style.backgroundColor = color;
-		  }
+			let i, tabContent, tabLinks;	
+			localStorage.pageId=elmnt.id;
+			let thisUrl = new URL(elmnt.href);
+			localStorage.pageUrl=thisUrl.hash;
+			tabContent = document.getElementsByClassName("tabContent");
+			for (i = 0; i < tabContent.length; i++) {
+				tabContent[i].style.display = "none";
+			}
+			tabLinks = document.getElementsByClassName("tabLink");
+			for (i = 0; i < tabLinks.length; i++) {
+				tabLinks[i].style.backgroundColor = "";
+			}
+			if (showThisTab(pageName)===true) {
+				id(pageName).style.display = "block";
+				elmnt.style.backgroundColor = color;
+			}
 		}
 				
-		// Get the element with id="defaultOpen" and click on it
-		id("defaultOpen").click();
 				
 		function _isContains(json, keyname) {
 			return Object.keys(json).some(key => {
@@ -1427,41 +1828,86 @@
 		}
 		
 		function show_hide_column(tableId,col_no, do_show) {
-		   let tbl = id(tableId);
-		   let col = tbl.col[col_no];
-		   if (col) {
-			 col.visible=do_show;
-		   }
+		   	let tbl = id(tableId);
+		   	for (i=0;i<tbl.rows.length;i++) {
+		   		let thiscell = tbl.rows[i].cells[col_no];
+				if (do_show===true)
+					thiscell.classList.remove('hide');
+				else
+					thiscell.classList.add('hide');
+		  	 }
 		}
 		
+
+		function disable_enable_ValvesCfg (doDisable) {
+			id("valvesDetect").disabled=doDisable;
+			id("cfgValvesTableFieldSet1").disabled=doDisable;
+			id("cfgValvesTableFieldSet2").disabled=doDisable;
+			id("valvesStartCalib").disabled=doDisable;
+			id("valvesAssembly").disabled=doDisable;
+		}
+
+		window.onhashchange = function() { 
+			 //code  
+			 if(window.location.hash) {
+			  //var hash = window.location.hash.substring(1); //Puts hash in variable, and removes the # character
+			  //console.log ('hash changed ='+window.location.hash+': '+hash);
+			  //console.log ('hash ='+localStorage.pageUrl+': '+window.location.hash);
+			  if (localStorage.pageUrl!=null) {
+				if (localStorage.pageUrl!=window.location.hash) {
+					if (window.location.hash=="#home") id("defaultOpen").click();
+					else {
+						if (window.location.hash.indexOf('#') !== -1) {
+							let thisOpenId = window.location.hash.substring(1)+'Open';
+							id(thisOpenId).click();
+							//console.log ('OpenId  '+ thisOpenId);
+						}
+					}
+				  //console.log ('hash now changed ='+localStorage.pageUrl+': '+window.location.hash);
+				 }
+				} else id("defaultOpen").click();
+		  
+			}
+		}
+
 		window.onload = async function() {
 			await OnStart();
 		}
-
+		
 		async function OnStart() {
+			stmLoaded=false;
+			disable_enable_ValvesCfg(true);
 			fillTZList();
 			await getSystemConfig();
 			makeTempsTable(0);
 			makeCfgValvesTable();
 			makeValvesControlTable();
 			makeCfgTempTable();
+			await getValvesStatus();
 			await getSystemInfo();
 			await getSystemDynInfo();
 			await getNetInfo();
 			await getNetConfig();
 			await getProtConfig();
+			await getMsgConfig();
 			await getTempsConfig();
-			await getValvesStatus();
+			await getValvesConfig();
 			await getValvesControlConfig();
+			
 			
 			await getFSDir();
 			getStatusInterval = window.setInterval(await getStatus, 2000);
 			generateOnClick();
 			showAllTabsNow();
+			if (localStorage.pageId!=null) {
+			if (id(localStorage.pageId)!=null) 
+				id(localStorage.pageId).click();
+		  	else id("defaultOpen").click();
+			} else id("defaultOpen").click();
 		}		
 		
 		async function loadStmData() {
-			console.log("load stm data");
+			await getMotorConfig();
 			await getTempSensorsID();
 			await getTempsStatus();
 			await getSystemInfo();
@@ -1480,11 +1926,20 @@
 				case 3 : {	
 							showAllTabs= true;
 							showAllTabsNow();
+							activeSetValvesDisplay = "block";
+							id('activeSetValves').style.display="block";
 							break;
 						 }
 			}
 		}
 				
+		function setAllInputsDisabled (value) {
+			var inputs = document.querySelectorAll(['input','select']);
+			inputs.forEach(el => {
+			   el.disabled=value;
+			});
+		}
+
 		function ValidateIPaddress(inputText) {
 			var ipformat = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
 			if (inputText.value.match(ipformat)) {
@@ -1497,18 +1952,64 @@
 			}
 		}
 		
+		function checkIfTempExists(valvesJson) {
+			for (let row=0; row<valvesJson.length; row++) { 
+				if ('temp1' in valvesJson[row]) return true;
+				if ('temp2' in valvesJson[row]) return true;
+			}	
+			return false;
+		}
+
+		function checkIfMqttExists(valvesJson) {
+			for (let row=0; row<valvesJson.length; row++) { 
+				if ('tTarget' in valvesJson[row]) return true;
+				if ('tValue' in valvesJson[row]) return true;
+			}	
+			return false;
+		}
+
+
 		function makeValvesTable(valvesJson) {
-			const ValvesTable = id('valvesTable');
-			ValvesTable.innerHTML="";
+			const valvesTable = id('valvesTable');
+			valvesTable.innerHTML="";
+			let columnsize = 11;
+			valveTempsExists=checkIfTempExists(valvesJson);
+			if (valveTempsExists===true) {
+				columnsize+=2;
+			}
+			valveMqttExists = checkIfMqttExists(valvesJson);
+			if (valveMqttExists===true) {
+				columnsize+=2;
+			}
 			for (let row=0; row<valvesJson.length+1; row++) { 
 				const thisRow = valvesTable.insertRow(0);
-				for (let i = 0; i < 9; i++) {
+				for (let i = 0; i < columnsize; i++) {
 					cell = thisRow.insertCell();
+					if ((i==2) || (i==3)) {
+						cell.style.width = '20px';
+					}
+					if (i==4) {
+						cell.style.width = '130px';
+					}
 				}
 			}
 			for (row=1;row<valvesJson.length+1;row++) {
-				let thiscell = ValvesTable.rows[row].cells[5];
-				let el = document.createElement('input');
+				let thiscell = valvesTable.rows[row].cells[4];
+				let el = document.createElement('img');
+				el.setAttribute('name', 'windowImg' + row);
+				el.setAttribute('id', 'windowImg' + row);
+				el.setAttribute('style','height:30px;');
+				el.className = "alignTabCellImgState";
+				thiscell.appendChild(el);
+				
+				el = document.createElement('div');
+				el.className = "alignTabCellState";
+				el.appendChild(document.createTextNode(''));
+				windowImageObjects[row-1] = el;
+				thiscell.appendChild(el);
+
+				thiscell = valvesTable.rows[row].cells[5];
+				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'setValveP' + row);
 				el.setAttribute('id', 'setValveP' + row);
@@ -1518,8 +2019,9 @@
 				el.setAttribute('max' , '100');
 				el.setAttribute('style','height:15px');
 				el.setAttribute('readonly','true');
+				
 				thiscell.appendChild(el);
-				thiscell = ValvesTable.rows[row].cells[6];
+				thiscell = valvesTable.rows[row].cells[6];
 				el = document.createElement('input');
 				el.setAttribute('type', 'button');
 				el.setAttribute('name', 'setValveButton-' + valvesJson[row-1].idx);
@@ -1529,23 +2031,44 @@
 				el.setAttribute('onclick','setValve(this);');
 				thiscell.appendChild(el);
 				valvesTable.rows[row].cells[0].innerHTML = row;
+				thiscell.classList.add('hide');
 			}
+			let thiscell = valvesTable.rows[0].cells[6];
+			thiscell.classList.add('hide');
 			valvesTable.rows[0].cells[0].textContent = 'No';
 			valvesTable.rows[0].cells[1].textContent = 'Name';
 			valvesTable.rows[0].cells[2].textContent = '%';
 			valvesTable.rows[0].cells[3].textContent = 'mA';
 			valvesTable.rows[0].cells[4].textContent = 'State';
 			valvesTable.rows[0].cells[5].innerHTML = 'Target %';
-			valvesTable.rows[0].cells[7].innerHTML = 'Temp1';
-			valvesTable.rows[0].cells[8].innerHTML = 'Temp2';
-			
-			thiscell = ValvesTable.rows[0].cells[5];
+			valvesTable.rows[0].cells[7].innerHTML = 'Moves';
+			valvesTable.rows[0].cells[8].innerHTML = 'Open Count';
+			valvesTable.rows[0].cells[9].innerHTML = 'Close Count';
+			valvesTable.rows[0].cells[10].innerHTML = 'Dead Count';
+			let colIdx=11;
+			if (valveTempsExists===true) {
+				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp1';
+				valvesTable.rows[0].cells[colIdx++].innerHTML = 'Temp2';
+			}
+			if (valveMqttExists===true) {
+				valvesTable.rows[0].cells[colIdx++].innerHTML = 'tTarget';
+				valvesTable.rows[0].cells[colIdx].innerHTML = 'tValue';
+			}
+			thiscell = valvesTable.rows[0].cells[5];
 			el = document.createElement('input');
 			el.setAttribute('type', 'checkbox');
 			el.setAttribute('name', 'activeSetValves');
 			el.setAttribute('id', 'activeSetValves');
 			el.setAttribute('onclick','activateSetValves();');
+			el.style.display=activeSetValvesDisplay; 
 			thiscell.appendChild(el);
+			
+			if (localStorage.statusDetailed!=null) {
+				id("status-detailed").checked=(localStorage.statusDetailed==="true");
+			} else {
+				id("status-detailed").checked=false;	
+			}
+			showStatusDetailed(id("status-detailed").checked);
 		}
 		
 		function makeTempsTable(NoOfSensors) {
@@ -1558,7 +2081,8 @@
 				
 				for (let i = 0; i < 3; i++) {
 					cell = thisRow.insertCell();
-					cell.innerHTML = '--';	
+					cell.innerHTML = '--';
+					if (i==2) cell.setAttribute('style','width:60px;');	
 				}
 			}
 			for (let row=1;row<NoOfSensors+1;row++) tempsTable.rows[row].cells[0].innerHTML = row;
@@ -1691,7 +2215,7 @@
 			const valvesControlTable = id('cfgValvesControlTable');	  
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesControlTable.insertRow(0);
-				for (let i = 0; i < 13; i++) {
+				for (let i = 0; i < 15; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -1704,13 +2228,27 @@
 				el.setAttribute('name', 'cfgVCActive' + row);
 				el.setAttribute('id', 'cfgVCActive' + row);
 				thiscell.appendChild(el);
-				
+
 				thiscell = valvesControlTable.rows[row].cells[3];
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVCAllow' + row);
+				el.setAttribute('id', 'cfgVCAllow' + row);
+				el.setAttribute('style','width:90px;');
+				el.setAttribute('title','Select control allowed');
+				let option = new Option('Heat/Cool', 0);
+				el.options[0] = option;
+				option = new Option('Heat', 1);
+				el.options[1] = option;
+				option = new Option('Cool', 2);
+				el.options[2] = option;
+				thiscell.appendChild(el);
+				
+				thiscell = valvesControlTable.rows[row].cells[4];
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCLink-' + row);
 				el.setAttribute('id', 'cfgVCLink-' + row);
 				el.setAttribute('style','width:60px;');
-				let option = new Option('none', 0);
+				option = new Option('none', 0);
 				el.options[0] = option;
 				let idx=1;
 				for (i=1; i<13;i++) {
@@ -1720,14 +2258,16 @@
 						idx++;
 					}
 				}
-				el.setAttribute('onchange','setCfgVCLink(this);');				
+				el.setAttribute('onchange','setCfgVCLink(this);');		
+				el.setAttribute('title','Select link for this valve');		
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[4];
+				thiscell = valvesControlTable.rows[row].cells[5];
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCValue' + row);
 				el.setAttribute('id', 'cfgVCValue' + row);
 				el.setAttribute('style','width:60px;');
+				el.setAttribute('title','Select value source');
 				option = new Option('mqtt', 0);
 				el.options[0] = option;
 				option = new Option('TIdx1', 1);
@@ -1738,53 +2278,58 @@
 				el.options[3] = option;
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[5];
+				thiscell = valvesControlTable.rows[row].cells[6];
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCTarget' + row);
 				el.setAttribute('id', 'cfgVCTarget' + row);
 				el.setAttribute('style','width:60px;');
+				el.setAttribute('title','Select target source');
 				option = new Option('mqtt', 0);
 				el.options[0] = option;
 				option = new Option('json', 1);
 				el.options[1] = option;
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[6];
+				thiscell = valvesControlTable.rows[row].cells[7];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCXp' + row);
 				el.setAttribute('id', 'cfgVCXp' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
+				el.setAttribute('title','Enter band (xp). Kp=100/xp');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[7];
+				thiscell = valvesControlTable.rows[row].cells[8];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCOffs' + row);
 				el.setAttribute('id', 'cfgVCOffs' + row);
 				el.setAttribute('style','width:50px;');
+				el.setAttribute('title','Enter offset');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[8];
+				thiscell = valvesControlTable.rows[row].cells[9];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCTi' + row);
 				el.setAttribute('id', 'cfgVCTi' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
+				el.setAttribute('title','Enter integral time in seconds');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[9];
+				thiscell = valvesControlTable.rows[row].cells[10];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCTs' + row);
 				el.setAttribute('id', 'cfgVCTs' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','1');
+				el.setAttribute('title','Enter sampling time in seconds');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[10];
+				thiscell = valvesControlTable.rows[row].cells[11];
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgVCScheme-' + row);
 				el.setAttribute('id', 'cfgVCScheme-' + row);
@@ -1794,9 +2339,10 @@
 				option = new Option('static ki', 1);
 				el.options[1] = option;
 				el.setAttribute('onclick','setCfgVCScheme(this);');
+				el.setAttribute('title','Enter scheme for control calculation');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[11];
+				thiscell = valvesControlTable.rows[row].cells[12];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('step', 'any');
@@ -1804,9 +2350,10 @@
 				el.setAttribute('id', 'cfgVCKi' + row);
 				el.setAttribute('style','width:70px;');
 				el.setAttribute('min','0');
+				el.setAttribute('title','Value ki for constant integral control calculation');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[12];
+				thiscell = valvesControlTable.rows[row].cells[13];
 				el = document.createElement('input');
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCSZ' + row);
@@ -1814,6 +2361,7 @@
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','0');
 				el.setAttribute('max','99');
+				el.setAttribute('title','Active zone (closed) of the valve (0-99%)');
 				thiscell.appendChild(el);
 				
 				el = document.createElement('input');
@@ -1823,46 +2371,76 @@
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('min','1');
 				el.setAttribute('max','100');
+				el.setAttribute('title','Active zone (opened) of the valve (1-100%)');
+				thiscell.appendChild(el);
+
+				thiscell = valvesControlTable.rows[row].cells[14];
+				el = document.createElement('input');
+				el.setAttribute('type', 'checkbox');
+				el.setAttribute('name', 'cfgVCWindow' + row);
+				el.setAttribute('id', 'cfgVCWindow' + row);
+				el.setAttribute('onchange','setCfgVCWindow(this);');
 				thiscell.appendChild(el);
 			}
-			valvesControlTable.rows[0].cells[0].textContent = 'No';
-			valvesControlTable.rows[0].cells[1].textContent = 'Name';
-			valvesControlTable.rows[0].cells[2].textContent = 'Active';
-			valvesControlTable.rows[0].cells[3].textContent = 'Link';
-			valvesControlTable.rows[0].cells[3].title = 'Select link for this valve';
-			valvesControlTable.rows[0].cells[4].textContent = 'Value';
-			valvesControlTable.rows[0].cells[4].title = 'Select value source for this valve';
-			valvesControlTable.rows[0].cells[5].textContent = 'Target';
-			valvesControlTable.rows[0].cells[5].title = 'Select target source for this valve';
-			valvesControlTable.rows[0].cells[6].textContent = 'Xp';
-			valvesControlTable.rows[0].cells[6].title = 'Enter band (xp). Kp=100/xp';
-			valvesControlTable.rows[0].cells[7].textContent = 'Offset(%)';
-			valvesControlTable.rows[0].cells[7].title = 'Enter offset';
-			valvesControlTable.rows[0].cells[8].textContent = 'Ti(s)';
-			valvesControlTable.rows[0].cells[8].title = 'Enter integral time in seconds';
-			valvesControlTable.rows[0].cells[9].textContent = 'Ts(s)';
-			valvesControlTable.rows[0].cells[9].title = 'Enter sampling time in seconds';
-			valvesControlTable.rows[0].cells[10].textContent = 'Scheme';
-			valvesControlTable.rows[0].cells[10].title = 'Enter scheme for control calculation';
-			valvesControlTable.rows[0].cells[11].textContent = 'ki';
-			valvesControlTable.rows[0].cells[11].title = 'Value ki for constant integral control calculation';
-			valvesControlTable.rows[0].cells[12].textContent = 'Active zone';
-			valvesControlTable.rows[0].cells[12].title = 'Active zone of the valve (0-100 %)';
+			let col=0;
+			valvesControlTable.rows[0].cells[col++].textContent = 'No';
+			valvesControlTable.rows[0].cells[col++].textContent = 'Name';
+			valvesControlTable.rows[0].cells[col++].textContent = 'Active';
+			valvesControlTable.rows[0].cells[col].textContent = 'Allow';
+			valvesControlTable.rows[0].cells[col++].title = 'Select control allowed';
+			valvesControlTable.rows[0].cells[col].textContent = 'Link';
+			valvesControlTable.rows[0].cells[col++].title = 'Select link for this valve';
+			valvesControlTable.rows[0].cells[col].textContent = 'Value';
+			valvesControlTable.rows[0].cells[col++].title = 'Select value source for this valve';
+			valvesControlTable.rows[0].cells[col].textContent = 'Target';
+			valvesControlTable.rows[0].cells[col++].title = 'Select target source for this valve';
+			valvesControlTable.rows[0].cells[col].textContent = 'Xp';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter band (xp). Kp=100/xp';
+			valvesControlTable.rows[0].cells[col].textContent = 'Offset(%)';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter offset';
+			valvesControlTable.rows[0].cells[col].textContent = 'Ti(s)';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter integral time in seconds';
+			valvesControlTable.rows[0].cells[col].textContent = 'Ts(s)';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter sampling time in seconds';
+			valvesControlTable.rows[0].cells[col].textContent = 'Scheme';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter scheme for control calculation';
+			valvesControlTable.rows[0].cells[col].textContent = 'ki';
+			valvesControlTable.rows[0].cells[col++].title = 'Value ki for constant integral control calculation';
+			valvesControlTable.rows[0].cells[col].textContent = 'Active zone';
+			valvesControlTable.rows[0].cells[col++].title = 'Active zone of the valve (0-100 %)';
+			valvesControlTable.rows[0].cells[col].textContent = 'Window';
+			valvesControlTable.rows[0].cells[col++].title = 'Activate window handling';
 		}
 		
-		function showBrokerIP(){
+		function showBrokerIP() {
 			let x = id("protcfg-Broker");
+			let div1=id("div-protcfg-Broker3");
 			let select = id("protcfg-dataProt").selectedIndex;
 			if (select === 0) {
 				x.style.display = "none";
+				div1.classList.remove("tabpframe");
 			} else {
 				x.style.display = "block";
+				div1.classList.add("tabpframe");
 			}
 			id("protcfg-Broker1").style.display=x.style.display;
 			id("protcfg-Broker2").style.display=x.style.display;
+			id("protcfg-Broker21").style.display=x.style.display;
+			id("protcfg-Broker3").style.display=x.style.display;
+			
+
+		}
+
+		function showMinPublish() {
+			let e = id("tr-minPubTime");
+			if (id("protcfg-pubOnChange").checked) {
+				e.style.display = "";
+			} else {
+				e.style.display = "none";
+			}	
 		}
 		
-		function showWifi(){
+		function showWifi() {
 			let x = id("netcfg-wifi");
 			let e = id("tr-rssi");
 			let select = id("netcfg-EthWifi").selectedIndex;
@@ -1871,10 +2449,18 @@
 				e.style.display = "none";
 			} else {
 				x.style.display = "block";
-				e.className = 'tabTable';
+				e.style.display = "";
 			}
 		}
-		
+
+		function showDHCP(select) {
+			let x = id("netcfg-Tdhcp");
+			if (select === 1) {
+				x.style.display = "none";
+			} else {
+				x.style.display = "block";
+			}
+		}
 		function showSyslogIP(){
 			let x = id("netcfg-syslog-table");
 			let select = id("netcfg-syslog-select").selectedIndex;
@@ -1902,9 +2488,24 @@
 			return (tzCode);
 		}	
 
+		function showStatusDetailed(enabled) {
+			let vt=id('divValvesTable');
+			if (enabled) vt.setAttribute ("style", "grid-column : span 4;");
+			else
+			vt.setAttribute ("style", "grid-column : span 3;");
+			show_hide_column('valvesTable',3, enabled);
+			show_hide_column('valvesTable',7, enabled);
+			show_hide_column('valvesTable',8, enabled);
+			show_hide_column('valvesTable',9, enabled);
+			show_hide_column('valvesTable',10, enabled);
+		}
+
 		function generateOnClick() {
 			id("netcfg-EthWifi").onclick = function(){
 				showWifi();
+			}
+			id("netcfg-dhcp").onclick = function(){
+				showDHCP(id("netcfg-dhcp").selectedIndex);
 			}
 			id("netcfg-syslog-select").onclick = function(){
 				showSyslogIP();
@@ -1920,6 +2521,15 @@
 			};
 			id("valvesDetect").onclick = function(){
 				valvesDetect();
+			};
+			id("setSysLog").onclick = function(){
+				setSysLog();
+			};
+			id("setSysLog").onclick = async function(){
+				if (confirm('Are you sure you want to set syslog server ?')) {
+					await postSysLogCfg();
+					await postCmd('{"action":"sysLogSave"}');
+				}
 			};
 			id("factoryRestore").onclick = function(){
 				factoryRestore();
@@ -1977,7 +2587,16 @@
 			id ("vCfg-StartOnPower").onchange = function (){
 				motorCharsHasChanged=true;
 			}
+			id ("vCfg-noOfMinCount").onchange = function (){
+				motorCharsHasChanged=true;
+			}
+			id ("vCfg-maxCalReps").onchange = function (){
+				motorCharsHasChanged=true;
+			}
 			id ("vCfg-movCalib").onchange = function (){
+				movCalibHasChanged=true;
+			}
+			id ("vCfg-hCalib").onchange = function (){
 				movCalibHasChanged=true;
 			}
 			for (i=0;i<7;i++) {
@@ -1987,10 +2606,20 @@
 				}
 			}
 			id ("VCtrlConfigHeatControl").onchange = function (){
-				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
+				id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
 			}
 			
+			id ("protcfg-pubOnChange").onclick = function() {
+				showMinPublish();
+			}
 			
+			id("status-detailed").onchange = function() {
+				let statusDetailed = id('status-detailed');
+				let enabled = statusDetailed.checked;
+				showStatusDetailed(enabled);
+				localStorage.statusDetailed = enabled;
+			}
+
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
 			  modal.style.display = "none";
@@ -2007,20 +2636,76 @@
 			id("saveVCtrlConfig").onclick = async function(){
 				if (confirm('Are you sure you want to save control settings ?')) {
 					await postValvesControlCfg();
-					postCmd('{"action":"vCtrlSave"}');
-					reloadDoc("http:/#home",4000,true);
+					await postCmd('{"action":"vCtrlSave"}');
+					if (reconnectMQTT===true) {
+						await postCmd('{"action":"mqttReconnect"}');
+						reconnectMQTT=false;
+					}
 				}
 			};
+			id("msgCfg-PushOverParam").addEventListener("click", () => {
+    			id("pushOverParameterDialog").showModal();
+			});
+			id("close-pushOverParameterDialog").addEventListener("click", () => {
+    			id("pushOverParameterDialog").close();
+			});
+			id("test-pushOver").addEventListener("click", () => {
+    			testPushOver();
+			});
+			id("msgCfg-emailParam").addEventListener("click", () => {
+    			id("emailParameterDialog").showModal();
+			});
+			id("close-emailParameterDialog").addEventListener("click", () => {
+    			id("emailParameterDialog").close();
+			});
+			id("cfgEmailPwd").addEventListener("change", () => {
+    			emailPwdChanged=true;
+			});
+			
+			id("test-email").addEventListener("click", () => {
+    			testEmail();
+			});
+
+			id("protcfg-timeOutTSActive").addEventListener("change", () => {
+				if (id("protcfg-timeOutTSActive").checked) {
+					alert ("Caution : If this option is activated it is absolutely mandatory to ensure that the tValue is received within the time frame. Publish on change on server side is not recommended with this option");
+				}
+			});
 		}
 		
+		async function testPushOver(){
+			let testPO={};
+			testPO.appToken = id("cfgPushOverAPIToken").value;
+			testPO.userToken = id("cfgPushOverUserToken").value;
+			testPO.title = id("cfgPushOverTitle").value;
+			await postJson("testPO",JSON.stringify(testPO));
+		}
+
+		async function testEmail(){
+			let testEmail = {};
+			testEmail.active = id("MsgEmailCfg-Active").checked ? 1 : 0;
+			testEmail.user = id("cfgEmailUser").value;
+			//if (emailPwdChanged===true) 
+			testEmail.pwd = id("cfgEmailPwd").value;
+			testEmail.host = id("cfgEmailHost").value;
+			testEmail.port = id("cfgEmailPort").value;
+			testEmail.recipient = id("cfgEmailRecipient").value;
+			testEmail.title = id("cfgEmailTitle").value;
+			await postJson("testEmail",JSON.stringify(testEmail));
+		}
+
 		function SetTIdxHasChanged() {
 			TIdxHasChanged=true;
 		}
 		
 		function activateSetValves(){
 			let checked=id("activeSetValves").checked ;
+			if ((heatControl!=null) && (heatControl!=0) && (anyValveControlEnabled) && (checked)){
+				alert ("#Control/Heat control is not set to manual. Valve may doesn't work properly");
+			} 
 			const valvesTable = id('valvesTable');
 			const valvesCfgTable = id('cfgValvesTable');
+			show_hide_column('valvesTable',6, checked);
 			for (i=1; i<valvesTable.rows.length;i++){
 				let idx = valvesTable.rows[i].cells[0].textContent;
 				let active=id('cfgVActive'+idx).checked; 
@@ -2033,14 +2718,14 @@
 		}
 		
 		function valvesStartCalib(){
-			if (confirm('Are you sure you want to start calibration of all valves ?')) {
-				postCmd('{"action":"vCalib"}');
+			if (confirm('Are you sure you want to start calibration of valve ?')) {
+				postCmd('{"action":"vCalib","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
 		function valvesAssembly(){
-			if (confirm('Are you sure you want to set all valves to assembly position ?')) {
-				postCmd('{"action":"vAssembly"}');
+			if (confirm('Are you sure you want to set valve to assembly position ?')) {
+				postCmd('{"action":"vAssembly","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
@@ -2049,7 +2734,7 @@
 				postCmd('{"action":"valvesDetect"}');
 			}
 		}
-		
+				
 		async function fileDelete() {
 			let fSelect = id("fileSelect");
 			if (fSelect.value) {
@@ -2100,12 +2785,15 @@
 		function reloadDoc (path,timeOut,clear=false,reLoad=true) {
 			if ((clear===true) && getStatusInterval) clearInterval(getStatusInterval);
 			document.body.style.cursor = 'wait';
+			id("spinner").classList.add("spinner");
+			
 			setTimeout(function() {
 					location.assign(path);
 					if (reLoad===true){
 						location.reload(true);					
 					}
 					document.body.style.cursor = 'default';
+					id("spinner").classList.remove("spinner");
 				},timeOut);
 		}
 		
@@ -2134,12 +2822,14 @@
 			if (confirm('Are you sure you want to save configuration ?')) {
 				if (!(await postNetCfg())) return;
 				if (!(await postProtCfg())) return;
+				await postMessengerCfg();
 				await postSystemConfig();
 				await postValvesCfg();
 				await postValvesControlCfg();
-				await postTempsCfg(1,11);
-				await postTempsCfg(12,23);
-				await postTempsCfg(24,34);
+				//await postTempsCfg(1,11);
+				//await postTempsCfg(12,23);
+				//await postTempsCfg(24,34);
+				postTempsCfg(1,34);
 				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
@@ -2198,10 +2888,22 @@
 				protCfg.ip = id("protcfg-Ip").value;
 				protCfg.port = id("protcfg-Port").value;
 				protCfg.interval = id("protcfg-Interval").value;
+				protCfg.publish = id("protcfg-Publish").value;
+				protCfg.pubMinDelay = id("protcfg-pubMinDelay").value;
 				protCfg.user = id("protcfg-User").value;
-				protCfg.pubTarget = id("protcfg-pubTarget").checked ? 1 : 0;
+				protCfg.pubSeparate = id("protcfg-pubSeparate").checked ? 1 : 0;
 				protCfg.pubAllTemps = id("protcfg-pubAllTemps").checked ? 1 : 0;
 				protCfg.pubPathAsRoot = id("protcfg-pubPathAsRoot").checked ? 1 : 0;
+				protCfg.pubUpTime = id("protcfg-pubUpTime").checked ? 1 : 0;
+				protCfg.pubDiag = id("protcfg-pubDiag").checked ? 1 : 0;
+				protCfg.pubOnChange = id("protcfg-pubOnChange").checked ? 1 : 0;
+				protCfg.pubRetained = id("protcfg-pubRetained").checked ? 1 : 0;
+				protCfg.pubPlainText = id("protcfg-pubPlainText").checked ? 1 : 0;
+				protCfg.keepAliveTime = id("protcfg-keepAliveTime").value;
+				protCfg.mqttTOTSActive= id("protcfg-timeOutTSActive").checked ? 1 : 0;
+				protCfg.mqttTODSActive= id("protcfg-timeOutDSActive").checked ? 1 : 0;
+				protCfg.mqttTO= id("protcfg-timeOutValue").value;
+				protCfg.mqttToPos= id("protcfg-timeOutPosition").value;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -2214,17 +2916,51 @@
 			await postJson("protconfig",JSON.stringify(protCfg));
 			return (true);
 		}
-		
-		async function postValvesCfg() {
-			await postChunkValvesCfg(1,6,true);
-			await postChunkValvesCfg(7,12);
+
+		async function postMessengerCfg() {
+			let msgCfg = {};
+			let reason = {};
+			reason.valveFailed = id("MsgCfg-ReasonValveFailed").checked ? 1 : 0;
+			reason.valveBlocked = id("MsgCfg-ReasonValveBlocked").checked ? 1 : 0;
+			reason.notDetect = id("MsgCfg-ReasonValveDetect").checked ? 1 : 0;
+			reason.reset = id("MsgCfg-ReasonReset").checked ? 1 : 0;
+			reason.ds18Failed = id("MsgCfg-ReasonDS18Failed").checked ? 1 : 0;
+			reason.tValueFailed = id("MsgCfg-ReasontValueFailed").checked ? 1 : 0;
+			reason.mqttTimeOut = id("MsgCfg-ReasonMQTT").checked ? 1 : 0;
+			reason.mqttTimeOutTime = id("protcfg-timeOutMqtt").value;
+			let PO = {};
+			PO.active = id("MsgPOCfg-Active").checked ? 1 : 0;
+			PO.appToken = id("cfgPushOverAPIToken").value;
+			PO.userToken = id("cfgPushOverUserToken").value;
+			PO.title = id("cfgPushOverTitle").value;
+			let Email = {};
+			Email.active = id("MsgEmailCfg-Active").checked ? 1 : 0;
+			Email.user = id("cfgEmailUser").value;
+			Email.pwd = id("cfgEmailPwd").value;
+			Email.host = id("cfgEmailHost").value;
+			Email.port = id("cfgEmailPort").value;
+			Email.recipient = id("cfgEmailRecipient").value;
+			Email.title = id("cfgEmailTitle").value;
+			msgCfg.reason = reason;
+			msgCfg.PO = PO;
+			msgCfg.Email = Email;
+			await postJson("msgconfig",JSON.stringify(msgCfg));
+			return (true);
 		}
 		
-		async function postChunkValvesCfg(chunkStart,chunkEnd,postMotor=false) {
+		async function postValvesCfg() {
+		//	await postChunkValvesCfg(1,4,true);
+		//	await postChunkValvesCfg(5,8);
+		//	await postChunkValvesCfg(9,12,false,true);
+		await postChunkValvesCfg(1,12,true,true);
+		}
+		
+		async function postChunkValvesCfg(chunkStart,chunkEnd,postMotor=false,postSetTempTdx=false) {
 			const cfgValvesTable = id('cfgValvesTable');
 			let valvesItemsCfg = [];
 			for (let row = chunkStart; row<chunkEnd+1; row++) {
 				let valveValues={};
+				valveValues.no = row;
 				valveValues.name = id('cfgVName'+row).value; 
 				valveValues.active = id('cfgVActive'+row).checked  ? 1 : 0;
 				if (TIdxHasChanged) {
@@ -2244,8 +2980,6 @@
 				dCalib|=x<<i;
 			}
 			valvesCfg.valves=valvesItemsCfg;
-			valvesCfg.chunkStart=chunkStart;
-			valvesCfg.chunkEnd=chunkEnd;
 			if (postMotor===true) {
 				valvesCalib.dayOfCalib=dCalib;
 				if (movCalibHasChanged===true){
@@ -2261,16 +2995,25 @@
 					motor.lowC=Math.round(id("vCfg-lowC").value*10);
 					motor.highC=Math.round(id("vCfg-highC").value*10);
 					motor.startOnPower=id("vCfg-StartOnPower").value;
+					motor.noOfMinCount=id("vCfg-noOfMinCount").value;
+					motor.maxCalReps= id("vCfg-maxCalReps").value;
 					valvesCfg.motor=motor;
 				}
+			}
+			if (postSetTempTdx===true) {
+				let tempIdx={};
+				tempIdx.set=1;
+				valvesCfg.tempIdx=tempIdx;
 			}
 			await postJson("valvesconfig",JSON.stringify(valvesCfg));
 		}
 		
 		async function postValvesControlCfg() {
-			await postChunkValvesControlCfg(1,4);
-			await postChunkValvesControlCfg(5,8);
-			await postChunkValvesControlCfg(9,12);
+			//await postChunkValvesControlCfg(1,3);
+			//await postChunkValvesControlCfg(4,6);
+			//await postChunkValvesControlCfg(7,9);
+			//await postChunkValvesControlCfg(10,12);
+			await postChunkValvesControlCfg(1,12);
 		}
 		
 		async function postChunkValvesControlCfg(chunkStart,chunkEnd) {
@@ -2278,7 +3021,10 @@
 			let valvesItemsCfg = [];
 			for (let row = chunkStart; row<chunkEnd+1; row++) {
 				let valveValues={};
+				valveValues.no = row;
 				valveValues.active = id('cfgVCActive'+row).checked  ? 1 : 0;
+				valveValues.allow = id('cfgVCAllow'+row).value;
+				valveValues.window = id('cfgVCWindow'+row).checked  ? 1 : 0;
 				valveValues.link = id('cfgVCLink-'+row).value;
 				valveValues.vSource = id('cfgVCValue'+row).value;
 				valveValues.tSource = id('cfgVCTarget'+row).value;
@@ -2295,11 +3041,10 @@
 			let valvesControlCfg={};
 			let commonValues={};
 			commonValues.heatControl=id('VCtrlConfigHeatControl').selectedIndex;
+			heatControl = commonValues.heatControl;
 			commonValues.parkPosition=id('VCtrlConfigParkPosition').value;
 			valvesControlCfg.common=commonValues;
 			valvesControlCfg.valves=valvesItemsCfg;
-			valvesControlCfg.chunkStart=chunkStart;
-			valvesControlCfg.chunkEnd=chunkEnd;
 			await postJson("valvesctrlconfig",JSON.stringify(valvesControlCfg));
 		}
 				
@@ -2324,6 +3069,14 @@
 			await postJson("tempsconfig",JSON.stringify(tempsCfg));
 		}
 		
+		async function 	postSysLogCfg() {	
+			let sysLogCfg = {};
+			sysLogCfg.syslogLevel=id("netcfg-syslog-select").selectedIndex;
+			sysLogCfg.syslogIp=id("netcfg-syslog-ip").value;
+			sysLogCfg.syslogPort=id("netcfg-syslog-port").value;
+			await postJson("sysLogCfg",JSON.stringify(sysLogCfg));
+		}
+
 		async function postCmd (cmd) {
 			await postJson("cmd",cmd);
 		}
@@ -2350,7 +3103,6 @@
 				display = 'none';
 			}  
 			id('cfgVCKi'+linkNo).style.display=display;
-			//show_hide_column('cfgValvesControlTable',cfgVCKiCol, (display == 'block'));
 		}		
 		
 		function setCfgVCLink(thisLink){
@@ -2370,9 +3122,14 @@
 			id('cfgVCKi'+linkNo).style.display=display;
 			id('cfgVCSZ'+linkNo).style.display=display;
 			id('cfgVCEZ'+linkNo).style.display=display;
+			id('cfgVCWindow'+linkNo).style.display=display;
 			if (display=='block') setCfgVCScheme(id('cfgVCScheme-'+linkNo));
 		}
 				
+		function setCfgVCWindow(thisLink){
+			reconnectMQTT=true;
+		}
+
 		function checkVCScheme()
 		{
 			let kiStatics=false;
@@ -2397,66 +3154,182 @@
 				cfgValvesControlTable.rows[row].cells[0].style.backgroundColor = "";
 			}
 			valvesJson.forEach(function(item, index){
-				cfgValvesTable.rows[item.idx].cells[0].style.backgroundColor = "green";
-				cfgValvesControlTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+				let thisState = item.state & 0x7f;
+				if ((thisState!=5) && (thisState!=6)) {
+					cfgValvesTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+					cfgValvesControlTable.rows[item.idx].cells[0].style.backgroundColor = "green";
+				}
 			});
 		}
 		
 		function fillValvesTable (valvesJson) {
-			const ValvesTable = id('valvesTable');
-			if (ValvesTable.rows.length != valvesJson.length+1) {
+			const valvesTable = id('valvesTable');
+			if ((valvesTable.rows.length != valvesJson.length+1) || (checkIfTempExists(valvesJson)!=valveTempsExists) || (checkIfMqttExists(valvesJson)!=valveMqttExists)) {
 				makeValvesTable(valvesJson);
 			}
-			const States = ["---","idle","opens","closes","blocked","unknown","no valve","full open","connected"];
+			const States = ["---","idle","opens","closes","failed","unknown","no valve","full open","connected","blocked"];
+			let thisImg=null;
+			let statusWarning = 0;
 			valvesJson.forEach(function(item, index){
-				ValvesTable.rows[index+1].cells[0].textContent = item.idx;	
-				ValvesTable.rows[index+1].cells[1].textContent = item.name;	
-				ValvesTable.rows[index+1].cells[2].textContent = item.pos;	
-				ValvesTable.rows[index+1].cells[3].textContent = item.meanCur;
-				ValvesTable.rows[index+1].cells[4].textContent = States[item.state];
-				if (item.temp1)
-					ValvesTable.rows[index+1].cells[7].textContent = item.temp1;
-				else ValvesTable.rows[index+1].cells[7].textContent = "";
-				if (item.temp2)
-					ValvesTable.rows[index+1].cells[8].textContent = item.temp2;
-				else ValvesTable.rows[index+1].cells[8].textContent = "";
+				valvesTable.rows[index+1].cells[0].textContent = item.idx;	
+				switch (item.controlActive) {
+					case 0:
+					case 2:
+					case 4: 
+					case 6:
+					{
+						valvesTable.rows[index+1].cells[0].style.backgroundColor="gray";
+						valvesTable.rows[index+1].cells[0].style.color="white";
+						break;
+					}
+					case 1:
+					case 5: 
+					{
+						valvesTable.rows[index+1].cells[0].style.backgroundColor="yellow";
+						valvesTable.rows[index+1].cells[0].style.color="blue";
+						break;
+					}
+					case 3: {
+						valvesTable.rows[index+1].cells[0].style.backgroundColor="green";
+						valvesTable.rows[index+1].cells[0].style.color="white";
+						break;
+					}
+					case 7: {
+						valvesTable.rows[index+1].cells[0].style.backgroundColor="red";
+						valvesTable.rows[index+1].cells[0].style.color="white";
+						break;
+					}
+				}
+
+				valvesTable.rows[index+1].cells[1].textContent = item.name;	
+				valvesTable.rows[index+1].cells[2].textContent = item.pos;
+				thisImg=id("windowImg"+(index+1));	
+				if ('window' in item) {
+					if (item.window===1) {	
+						thisImg.src="window_open.png";	
+					} else thisImg.src="window_close.png";	
+				} else thisImg.src="window_gray.png";
+				if (item.link>0) thisImg.src="blank.png";
+				valvesTable.rows[index+1].cells[3].textContent = item.meanCur;
+				if ('calibration' in item) {
+					windowImageObjects[index].childNodes[0].nodeValue="calibration";
+				} else 
+					windowImageObjects[index].childNodes[0].nodeValue = States[item.state];
+				
+				switch (item.state) {
+					case 4 :
+					case 9 : {
+						valvesTable.rows[index+1].cells[4].style.backgroundColor="red";
+						valvesTable.rows[index+1].cells[4].style.color="white";
+						statusWarning=2;
+						break;
+					}
+					default : {
+						if (item.cr>0) {
+							valvesTable.rows[index+1].cells[4].style.backgroundColor="yellow";
+							valvesTable.rows[index+1].cells[4].style.color="blue";
+							statusWarning=1;
+						} else {
+							valvesTable.rows[index+1].cells[4].style.backgroundColor="gray";
+							valvesTable.rows[index+1].cells[4].style.color="white";
+						}
+						break;
+					}
+				}
+				
+				valvesTable.rows[index+1].cells[7].textContent = item.moves;
+				valvesTable.rows[index+1].cells[8].textContent = item.oc;
+				valvesTable.rows[index+1].cells[9].textContent = item.cc;
+				valvesTable.rows[index+1].cells[10].textContent = item.dc;
+				let colIdx=11;
+				if (valveTempsExists===true) {
+					if (item.temp1) {
+						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp1;
+						if (item.temp1==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						colIdx++;
+					}
+					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
+
+					if (item.temp2) {
+						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp2;
+						if (item.temp2==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						colIdx++;
+					}
+					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
+				}
+				if (valveMqttExists===true) {
+					if ('tTarget' in item)
+						valvesTable.rows[index+1].cells[colIdx++].textContent = item.tTarget;
+					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
+					if ('tValue' in item) {
+						valvesTable.rows[index+1].cells[colIdx].textContent = item.tValue;
+						if ('tValueFailed' in item) valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; 
+						else  valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+					}
+					else valvesTable.rows[index+1].cells[colIdx].textContent = "";
+				}
+
 				if (!(id('activeSetValves').checked)) {
 					id('setValveP'+(index+1)).value=item.targetPos;
 				}
 			});
-			checkValvesConnected (valvesJson);
+			if (statusWarning == 0) id("statusImg").style.visibility="hidden"; else id("statusImg").style.visibility="visible";
+			id("statusImg").src=tabImageSrc[statusWarning];
 		}
 		
 		function fillCfgValvesTable (cfgValvesJson) {
-			const ValvesTable = id('valvesTable');
 			const cfgValvesTable = id('cfgValvesTable');
-			for (let row = 1; row<13; row++) {
-				id('cfgVName'+row).value = cfgValvesJson.valves[row-1].name;
-				id('cfgVActive'+row).checked = cfgValvesJson.valves[row-1].active;
-				id('cfgVTIdx1-'+row).value = cfgValvesJson.valves[row-1].tIdx1;
-				id('cfgVTIdx2-'+row).value = cfgValvesJson.valves[row-1].tIdx2;
-			}
-			
 			id('vCfg-hCalib').value = cfgValvesJson.calib.hourOfCalib;
 			let dCalib=0;	
 			for (let i=0; i<7; i++) {
 				dCalib=cfgValvesJson.calib.dayOfCalib & (1<<i);
 				if (dCalib==0) id('vCfg-d'+i).checked=false; else id('vCfg-d'+i).checked=true; 
 			}
-			id('vCfg-movCalib').value=cfgValvesJson.calib.cycles;
-			id("vCfg-lowC").value=cfgValvesJson.motor.lowC/10;
-			id("vCfg-highC").value=cfgValvesJson.motor.highC/10;
-			id("vCfg-StartOnPower").value=cfgValvesJson.motor.startOnPower;
+			for (let row = 1; row<13; row++) {
+				id('cfgVName'+row).value = cfgValvesJson.valves[row-1].name;
+				id('cfgVActive'+row).checked = cfgValvesJson.valves[row-1].active;
+				id('cfgVTIdx1-'+row).value = cfgValvesJson.valves[row-1].tIdx1;
+				id('cfgVTIdx2-'+row).value = cfgValvesJson.valves[row-1].tIdx2;
+				
+			}
+			fillAssemblyListBox (cfgValvesJson);
+		}
+
+		function fillAssemblyListBox (cfgValvesJson) {
+			let AsmSelectBox= id("valvesAsmCalib-select");
+			AsmSelectBox.options.length=0;
+			let newOption = new Option("All",255);
+			AsmSelectBox.add(newOption,undefined);
+
+			for (let row = 1; row<13; row++) {
+				if (cfgValvesJson.valves[row-1].active) {
+					let newOption = new Option(cfgValvesJson.valves[row-1].name,row);
+					AsmSelectBox.add(newOption,undefined);
+				}
+			}
+		}
+
+		function fillCfgMotorTable(cfgMotorJson) {
+			id('vCfg-movCalib').value=cfgMotorJson.calib.cycles;
+			id("vCfg-lowC").value=cfgMotorJson.motor.lowC/10;
+			id("vCfg-highC").value=cfgMotorJson.motor.highC/10;
+			id("vCfg-StartOnPower").value=cfgMotorJson.motor.startOnPower;
+			id("vCfg-noOfMinCount").value=cfgMotorJson.motor.noOfMinCount;
+			id("vCfg-maxCalReps").value=cfgMotorJson.motor.maxCalReps;
 		}
 		
 		function fillCfgValvesControlTable (cfgValvesControlJson) {
+			anyValveControlEnabled=false;
 			const cfgValvesControlTable = id('cfgValvesControlTable');
 			id ('VCtrlConfigHeatControl').selectedIndex=cfgValvesControlJson.common.heatControl;
+			heatControl = cfgValvesControlJson.common.heatControl;
 			id ('VCtrlConfigParkPosition').value=cfgValvesControlJson.common.parkPosition;
-			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=2;
+			id("VCtrlConfigParkPosition").disabled=id("VCtrlConfigHeatControl").selectedIndex!=3;
 			for (let row = 1; row<13; row++) {
 				cfgValvesControlTable.rows[row].cells[1].textContent = cfgValvesControlJson.valves[row-1].name;
 				id('cfgVCActive'+row).checked = cfgValvesControlJson.valves[row-1].active;
+				id('cfgVCAllow'+row).value = cfgValvesControlJson.valves[row-1].allow;
+				id('cfgVCWindow'+row).checked = cfgValvesControlJson.valves[row-1].window;
 				id('cfgVCLink-'+row).value = cfgValvesControlJson.valves[row-1].link;
 				id('cfgVCValue'+row).value = cfgValvesControlJson.valves[row-1].vSource;
 				id('cfgVCTarget'+row).value = cfgValvesControlJson.valves[row-1].tSource;
@@ -2469,8 +3342,8 @@
 				id('cfgVCSZ'+row).value= cfgValvesControlJson.valves[row-1].startAZ;
 				id('cfgVCEZ'+row).value= cfgValvesControlJson.valves[row-1].endAZ;
 				setCfgVCLink(id('cfgVCLink-'+row));
+				if (cfgValvesControlJson.valves[row-1].active==1) anyValveControlEnabled=true;
 			}
-			//show_hide_column('cfgValvesControlTable',cfgVCKiCol, checkVCScheme());
 		}
 		
 		function fillTempsTable (tempsJson) {
@@ -2485,6 +3358,7 @@
 				}
 				tempsJson.forEach(function (item, index) {            
 					tempsTable.rows[index+1].cells[1].textContent = item.name;
+					if (item.temp==="failed") tempsTable.rows[index+1].cells[2].style.backgroundColor="red"; else tempsTable.rows[index+1].cells[2].style.backgroundColor="gray";
 					tempsTable.rows[index+1].cells[2].textContent = item.temp;
 				});
 			}
@@ -2513,13 +3387,18 @@
 			return (retVal);
 		}
 		
-		function checkCfgTempsID (){
+		function checkCfgTempsID () {
+			var result=true;
 			for (let row = 1; row<NoOfMaxSensors+1; row++) {
 				let TID = id('cfgTID'+row);
 				if (TID.value!="") {
-					if (!findTID(TID.value)) TID.style.backgroundColor = "red"; else TID.style.backgroundColor = "";
+					if (!findTID(TID.value)) {
+						TID.style.backgroundColor = "red";
+						result=false;
+					 } else TID.style.backgroundColor = "";
 				}
 			}
+			return result;
 		}
 		
 		function findID (SensorID) {
@@ -2570,7 +3449,14 @@
 			const dataSystemInfo=await getJson("sysinfo");
 			if (dataSystemInfo) {
 				id("sysWt32-Version").textContent = dataSystemInfo["wt32version"];
+				id("wt32-ChipModel").textContent = dataSystemInfo["wt32ChipModel"];
+				id("wt32-ChipCores").textContent = dataSystemInfo["wt32ChipCores"];
+				id("wt32-ChipVersion").textContent = dataSystemInfo["wt32ChipCoreRev"];
+				id("wt32-Sketch").textContent = dataSystemInfo["wt32Sketch"]+" bytes";
+			 	id("wt32-FlashUsed").textContent = dataSystemInfo["wt32FlashUsed"]+" %";
+				id("wt32-ChipStack").textContent = dataSystemInfo["wt32ChipStack"]+" bytes";
 				id("sysSTM32-Version").textContent = dataSystemInfo["stm32version"];
+				id("sysSTM32-ChipId").textContent = dataSystemInfo["stm32ChipId"];
 			}
 		}
 		
@@ -2578,6 +3464,15 @@
 			const dataSystemDynInfo=await getJson("sysdyninfo");
 			if (dataSystemDynInfo) {
 				id("locTime").textContent = dataSystemDynInfo["locTime"];
+				
+				if (dataSystemDynInfo["sntpActive"]==0) {
+					id("calibDate").style = "display:none;";
+					id ("cfgValvesTableFieldSet1").style = "height:3em;";
+				}
+				else {
+					id("calibDate").style = "display:block;";
+					id ("cfgValvesTableFieldSet1").style = "height:17em;";
+				}
 				id("upTime").textContent = dataSystemDynInfo["upTime"];
 				id("heap").textContent = dataSystemDynInfo["heap"];
 				id("min-heap").textContent = dataSystemDynInfo["minheap"];
@@ -2586,14 +3481,29 @@
 					id("net-broker").style.display="block";
 					id("net-broker-status").textContent=dataSystemDynInfo["brokerConnected"] ? "Connected" : "Not connected"; 
 				}
-				var newStmStatus=dataSystemDynInfo["stmStatus"];
-				if (newStmStatus!=stmStatus) {
-					stmStatus=newStmStatus;
-					if (stmStatus===2) {
+				
+				id("net-sntp-status").textContent=dataSystemDynInfo["sntpActive"] ? dataSystemDynInfo["sntpReachable"] ? "Connected" : "Not connected" : "Not defined"; 	
+
+				id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[dataSystemDynInfo["heatControl"]].value;
+				id("miscStatusLC").textContent=dataSystemDynInfo["lastCalib"];
+				let newStmInit=dataSystemDynInfo["stmInit"];
+				disable_enable_ValvesCfg((newStmInit!=2) || (!stmLoaded));
+				if (newStmInit!=stmInit) {
+					stmInit=newStmInit;
+					if (stmInit===2) {
 						setTimeout(async function() {
-							await loadStmData();	
+							await loadStmData();
+							stmLoaded=true;
 						},5000);
 					}
+				}
+				if (!stmLoaded) {
+					id("spinner-Config").classList.add("spinner");
+				} else {
+					id("spinner-Config").classList.remove("spinner");
+				}
+				if (!checkCfgTempsID()) {
+					await getTempSensorsID();
 				}
 			}
 		}
@@ -2639,8 +3549,11 @@
 				id("netcfg-syslog-ip").value=dataNetConfig.syslogIp;
 				id("netcfg-syslog-port").value=dataNetConfig.syslogPort;
 				showWifi();
+				showDHCP(dataNetConfig["dhcp"]);
 				showSyslogIP();
-				if (id("netcfg-UserName").value==="") {
+				if (dataNetConfig["userName"]==="") {
+					activeSetValvesDisplay = "block";
+					id('activeSetValves').style.display="block";
 					showAllTabs=true;
 					showAllTabsNow();
 				} else id("login-button").style.display = "block";
@@ -2654,11 +3567,52 @@
 				id("protcfg-Ip").value = dataProtConfig["ip"];
 				id("protcfg-Port").value = dataProtConfig["port"];
 				id("protcfg-Interval").value = dataProtConfig["interval"];
+				id("protcfg-Publish").value = dataProtConfig["publish"];
+				id("protcfg-pubMinDelay").value = dataProtConfig["pubMinDelay"];
 				id("protcfg-User").value = dataProtConfig["user"];
-				id("protcfg-pubTarget").checked = dataProtConfig["pubTarget"];
+				id("protcfg-pubSeparate").checked = dataProtConfig["pubSeparate"];
 				id("protcfg-pubAllTemps").checked = dataProtConfig["pubAllTemps"];
 				id("protcfg-pubPathAsRoot").checked = dataProtConfig["pubPathAsRoot"];
+				id("protcfg-pubUpTime").checked = dataProtConfig["pubUpTime"];
+				id("protcfg-pubDiag").checked = dataProtConfig["pubDiag"];
+				id("protcfg-pubOnChange").checked = dataProtConfig["pubOnChange"];
+				id ("protcfg-pubPlainText").checked = dataProtConfig["pubPlainText"];
+				id ("protcfg-pubRetained").checked = dataProtConfig["pubRetained"];
+				id("protcfg-keepAliveTime").value = dataProtConfig["keepAliveTime"];
+				id("protcfg-timeOutTSActive").checked=dataProtConfig["mqttTOTSActive"];
+				id("protcfg-timeOutDSActive").checked=dataProtConfig["mqttTODSActive"];
+				id("protcfg-timeOutValue").value=dataProtConfig["mqttTO"];
+				id("protcfg-timeOutPosition").value=dataProtConfig["mqttToPos"];
+
 				showBrokerIP();
+				showMinPublish();
+			}
+		}
+		async function getMsgConfig() {
+			const dataMsgConfig=await getJson("msgconfig");
+			if (dataMsgConfig) {
+				id ("MsgCfg-ReasonValveFailed").checked = dataMsgConfig.reason.valveFailed;
+				id ("MsgCfg-ReasonValveBlocked").checked = dataMsgConfig.reason.valveBlocked;
+				id ("MsgCfg-ReasonValveDetect").checked = dataMsgConfig.reason.notDetect;
+				id ("MsgCfg-ReasonReset").checked = dataMsgConfig.reason.reset;
+				id("MsgCfg-ReasontValueFailed").checked = dataMsgConfig.reason.tValueFailed;
+				id("MsgCfg-ReasonDS18Failed").checked = dataMsgConfig.reason.ds18Failed;
+				id ("MsgCfg-ReasonMQTT").checked = dataMsgConfig.reason.mqttTimeOut;
+				id ("protcfg-timeOutMqtt").value = dataMsgConfig.reason.mqttTimeOutTime;
+				id("MsgPOCfg-Active").checked = dataMsgConfig.PO.active;
+				id("cfgPushOverAPIToken").value = dataMsgConfig.PO.appToken;
+				id("cfgPushOverUserToken").value = dataMsgConfig.PO.userToken;
+				id("cfgPushOverTitle").value = dataMsgConfig.PO.title;
+				
+				id("MsgEmailCfg-Active").checked = dataMsgConfig.Email.active;
+				id("cfgEmailUser").value = dataMsgConfig.Email.user;
+				id("cfgEmailPwd").value = dataMsgConfig.Email.pwd;
+				id("cfgEmailHost").value = dataMsgConfig.Email.host;
+				id("cfgEmailPort").value = dataMsgConfig.Email.port;
+				id("cfgEmailRecipient").value = dataMsgConfig.Email.recipient;
+				id("cfgEmailTitle").value = dataMsgConfig.Email.title;
+
+				return (true);
 			}
 		}
 		
@@ -2667,6 +3621,11 @@
 			if (dataValvesConfig) fillCfgValvesTable(dataValvesConfig);
 		}
 		
+		async function getMotorConfig() {
+			const dataMotorConfig=await getJson("motorconfig");
+			if (dataMotorConfig) fillCfgMotorTable(dataMotorConfig);
+		}
+
 		async function getValvesControlConfig() {
 			const dataValvesControlConfig=await getJson("valvesctrlconfig");
 			if (dataValvesControlConfig) fillCfgValvesControlTable(dataValvesControlConfig);
@@ -2674,7 +3633,10 @@
 		
 		async function getValvesStatus() {
 			const dataValvesStatus=await getJson("valves");
-			if (dataValvesStatus) fillValvesTable(dataValvesStatus);
+			if (dataValvesStatus) {
+				fillValvesTable(dataValvesStatus.valves);
+				checkValvesConnected (dataValvesStatus.valves);
+			}
 		}
 		
 		async function getTempsConfig() {

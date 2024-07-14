@@ -53,24 +53,27 @@ extern int16_t communication_loop (void);
 
 #define APP_PRE_SETONEWIRESEARCH    "stons"		  // doc
 #define APP_PRE_GETVERSION			    "gvers"     // doc
+#define APP_PRE_GETHWINFO 			    "ghwin"     // doc
 #define APP_PRE_GETTARGETPOS       	"gtgtp"	    // doc 
 #define APP_PRE_SETLEARNTIME        "stlnt"		  // doc
 #define APP_PRE_SETLEARNMOVEM       "stlnm"     // doc
 #define APP_PRE_GETLEARNMOVEM       "gtlnm"     // new
-#define APP_PRE_SETVLLEARN          "staln"		  // doc	
+#define APP_PRE_SETVLLEARN          "staln"		  // doc		
 #define APP_PRE_SETMOTCHARS         "smotc"		  // doc	
 #define APP_PRE_GETMOTCHARS         "gmotc"		  // doc
 
-#define APP_PRE_SETVLVSENSOR        "stvls"     // new
-#define APP_PRE_SETDETECTVLV        "stdet"     // new
+#define APP_PRE_SETVLVSENSOR        "stvls"     
+#define APP_PRE_SETDETECTVLV        "stdet"     
 
-#define APP_PRE_MATCHSENS           "masns"     // new
-#define APP_PRE_SOFTRESET           "reset"     // new
+#define APP_PRE_MATCHSENS           "masns"     
+#define APP_PRE_SOFTRESET           "reset"     
+#define APP_PRE_EEPSTATE            "eepst"     // new eeprom state : 1 = ready, 0 = write pending
 
 #define APP_PRE_GETACTUALPOS       	"gactp"     // not implemented
 #define APP_PRE_GETMEANCURR        	"gmenc"     // not implemented
 
-
+#define NO_OF_ARGS                   5
+#define ARG_SIZE                     30
 
 #endif //_COMMUNICATION_H
 

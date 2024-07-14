@@ -58,8 +58,6 @@
 #include "stm32ota.h"
 #include <ESPmDNS.h>
 #include <WiFiUdp.h>
-#include <SPIFFS.h>
-#include <FS.h>
 
 #include "VdmTask.h"
 #include "VdmSystem.h"
@@ -68,7 +66,15 @@
 
 #include <AsyncJson.h>
 #include <ArduinoJson.h>
+#include "esp32-hal-time.c"
 
+#include <FS.h>
+#ifdef USE_LittleFS
+  #define SPIFFS LittleFS
+  #include <LITTLEFS.h> 
+#else
+  #include <SPIFFS.h>
+#endif 
 
 // A UDP instance to let us send and receive packets over UDP
 WiFiUDP udpClient;
@@ -80,8 +86,6 @@ CVdmNet VdmNet;
 
 // server handles --------------------------------------------------
 
-
-
 CVdmNet::CVdmNet()
 {
 }
@@ -92,12 +96,17 @@ void CVdmNet::init()
   wifiState = wifiIdle;
   ethState = ethIdle;
   dataBrokerIsStarted = false;
+  sntpActive = false;
+  sntpReachable=false;
   if (!SPIFFS.begin(true)) {
-    UART_DBG.println("An Error has occurred while mounting SPIFFS");
+    #ifdef EnvDevelop
+      UART_DBG.println("An Error has occurred while mounting SPIFFS");
+    #endif
     return;
   }
-  UART_DBG.println("SPIFFS booted");
-  //VdmSystem.clearFS();
+  #ifdef EnvDevelop
+    UART_DBG.println("SPIFFS booted");
+  #endif
 }
 
 void CVdmNet::setup() 
@@ -240,15 +249,22 @@ void CVdmNet::setupWifi()
   }
 }
 
+bool CVdmNet::checkSntpReachable()
+{
+  return sntp_getreachability(0)==1;
+}
+
 void CVdmNet::setupNtp() 
 {
   // Init and get the time
   
-  //configTime(VdmConfig.configFlash.netConfig.timeOffset, 
-  //           VdmConfig.configFlash.netConfig.daylightOffset, 
-  //           VdmConfig.configFlash.netConfig.timeServer);
-  configTzTime(VdmConfig.configFlash.timeZoneConfig.tzCode ,VdmConfig.configFlash.netConfig.timeServer);
-  getLocalTime(&startTimeinfo);
+  VdmNet.sntpActive=strlen(VdmConfig.configFlash.netConfig.timeServer)>0; 
+  if (VdmNet.sntpActive)
+  {
+    UART_DBG.println("Get time from server "+String(VdmConfig.configFlash.netConfig.timeServer));
+    configTzTime(VdmConfig.configFlash.timeZoneConfig.tzCode ,VdmConfig.configFlash.netConfig.timeServer);
+    VdmSystem.getLocalTime(&startTimeinfo);
+  }
 }
 
 void CVdmNet::startBroker()
@@ -280,20 +296,48 @@ void CVdmNet::checkNet()
         UART_DBG.println("MDNS responder started");
       }
     #endif
-    // prepare syslog configuration here (can be anywhere before first call of 
-    // log/logf method)
-    if (VdmConfig.configFlash.netConfig.syslogLevel>0) {
-      syslog.server(IPAddress(VdmConfig.configFlash.netConfig.syslogIp), VdmConfig.configFlash.netConfig.syslogPort);
-      syslog.deviceHostname(DEVICE_HOSTNAME);
-      syslog.appName(APP_NAME);
-      syslog.defaultPriority(LOG_KERN);
-    }
-
-    VdmTask.startApp();
+   
+    startSysLog();
+    //delay (3000);
+    //VdmTask.startApp();
+    //delay (2000);
     VdmTask.startServices();
+   
   } else {
     // check if net is connected
     setup();
   }
 }
 
+void CVdmNet::startSysLog()
+{
+  // prepare syslog configuration here (can be anywhere before first call of 
+  // log/logf method)
+  if (VdmConfig.configFlash.netConfig.syslogLevel>0) {
+      if (!syslogStarted) {
+      #ifdef netDebug
+        UART_DBG.println("start syslog server : level = "+ String(VdmConfig.configFlash.netConfig.syslogLevel));
+      #endif
+      syslog.server(IPAddress(VdmConfig.configFlash.netConfig.syslogIp), VdmConfig.configFlash.netConfig.syslogPort);
+      syslog.deviceHostname(DEVICE_HOSTNAME);
+      syslog.appName(APP_NAME);
+      syslog.defaultPriority(LOG_KERN);
+      syslogStarted=true;
+    }
+  }
+}
+
+void CVdmNet::checkWifi()
+{
+  uint8_t WifiStatus = WiFi.status();
+  #ifdef netDebug
+    UART_DBG.println("Wifi status "+ String(WifiStatus));
+  #endif
+  if (wifiState==wifiConnected) {
+      if (WifiStatus!= WL_CONNECTED) {
+      WiFi.disconnect();
+      WiFi.reconnect();
+      UART_DBG.println("Wifi reconnect");
+    }
+  }
+}  

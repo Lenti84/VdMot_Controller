@@ -55,6 +55,42 @@
 	  position: relative;
 	  display: block;
 	}
+
+
+	.spinner {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		height:100px;
+		width:100px;
+		margin:0px auto;
+		-webkit-animation: rotation .6s infinite linear;
+		-moz-animation: rotation .6s infinite linear;
+		-o-animation: rotation .6s infinite linear;
+		animation: rotation .6s infinite linear;
+		border-left:10px solid rgba(0,174,239,.15);
+		border-right:10px solid rgba(0,174,239,.15);
+		border-bottom:10px solid rgba(0,174,239,.15);
+		border-top:10px solid rgba(0,174,239,.8);
+		border-radius:200%;
+	}
+
+	@-webkit-keyframes rotation {
+		from {-webkit-transform: rotate(0deg);}
+		to {-webkit-transform: rotate(359deg);}
+	}
+	@-moz-keyframes rotation {
+		from {-moz-transform: rotate(0deg);}
+		to {-moz-transform: rotate(359deg);}
+	}
+	@-o-keyframes rotation {
+		from {-o-transform: rotate(0deg);}
+		to {-o-transform: rotate(359deg);}
+	}
+	@keyframes rotation {
+		from {transform: rotate(0deg);}
+		to {transform: rotate(359deg);}
+	}
 }
 
 </style>
@@ -77,6 +113,7 @@
 </head>
 
 <body>
+	<div id="spinner"></div>
 	<table class="centerp">
 	<tr>
 	<td>
@@ -155,7 +192,12 @@
 <script>	
 
 
-const updStatus = ["Not started","Started","In progress","Finished","Error"];
+const updStatus = ["Not started","Started","In progress","Erasing","Flashing","Verifying","Finished","Restart","Error"];
+const updFinished = 6;
+const updRestart = 7;
+const updError = 8;
+
+
 var getUpdateStatusInterval = null;
 var getFSIntervalID = null;
 //var loopGetFSCnt=0;
@@ -235,6 +277,7 @@ var getFSIntervalID = null;
 		async uploadNow() {
 			const input = id('STMFiles');
 			await uploadFile(input.files[0]);
+			await this.getFSDir();
 		}
 	,
 		async updateNow() {
@@ -255,15 +298,28 @@ var getFSIntervalID = null;
 				id("chipId").textContent = stmUpdStatus.chipId;
 				id("chipName").textContent = stmUpdStatus.chipName;
 
-				if (stmUpdStatus.status==4) {
+				if (stmUpdStatus.status==updError) {
 					id("progressValue").textContent="Error";
 					if (getUpdateStatusInterval!=null) {
 						window.clearInterval(getUpdateStatusInterval);
+						getUpdateStatusInterval=null;
 					}
 				}
-				if (stmUpdStatus.status==3) {
-					if (getUpdateStatusInterval!=null) window.clearInterval(getUpdateStatusInterval);
+				if (stmUpdStatus.status==updFinished) {
+					if (getUpdateStatusInterval!=null) {
+						window.clearInterval(getUpdateStatusInterval);
+						getUpdateStatusInterval=null;
+					}
 					id("progressValue").textContent = "Update finished"
+					const button = id("back"); 
+					button.style.display = "block";
+				}
+				if (stmUpdStatus.status==updRestart) {
+					if (getUpdateStatusInterval!=null) {
+						window.clearInterval(getUpdateStatusInterval);
+						getUpdateStatusInterval=null;
+					}
+					id("progressValue").textContent = "Restart"
 					const button = id("back"); 
 					button.style.display = "block";
 				}
@@ -272,7 +328,9 @@ var getFSIntervalID = null;
 	,
 		back() {
 			document.body.style.cursor = 'wait';
+			id("spinner").classList.add("spinner");
 			setTimeout(function() {
+				id("spinner").classList.remove("spinner");
 				location.assign('http:/#home');
 				document.body.style.cursor = 'default';
 			},4000);	

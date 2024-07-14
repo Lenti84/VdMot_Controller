@@ -65,12 +65,12 @@
 #define CTRL_MUX    PB1
 
 // L293 enable pins
-#define CTRL_ENA0   PA5
-#define CTRL_ENA1   PA6
-#define CTRL_ENA2   PA7
-#define CTRL_ENA3   PB0
-#define CTRL_ENA4   PA15
-#define CTRL_ENA5   PB3
+#define CTRL_ENA0   PA5         // TIM2_CH1
+#define CTRL_ENA1   PA6         // TIM3_CH1
+#define CTRL_ENA2   PA7         // TIM3_CH2
+#define CTRL_ENA3   PB0         // TIM3_CH3
+#define CTRL_ENA4   PA15        // TIM2_CH1
+#define CTRL_ENA5   PB3         // TIM2_CH2
 
 // L293 direction pin
 #define CTRL_DIRECTION PA8
@@ -191,6 +191,8 @@ struct eeprom_layout {
 	struct ds1820_eeprom_layout owsensors2[ACTUATOR_COUNT];	// a lot of ds1820 sensors - second sensor of valve
 	struct ds1820_eeprom_layout owsensors[ADDITIONAL_SENSOR_COUNT];	// some other ds1820 sensors
   uint8_t startOnPower;
+  uint16_t noOfMinCounts;
+  uint8_t maxCalibRetries;
 };
 
 

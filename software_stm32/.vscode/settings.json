@@ -2,5 +2,6 @@
     "files.associations": {
         "*.tcc": "c"
     },
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "cmake.sourceDirectory": "${workspaceFolder}/.pio/libdeps/STM32F411_development_C1/ArduinoJson"
 }

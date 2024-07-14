@@ -38,10 +38,14 @@
 #include "communication.h"
 #include "temperature.h"
 #include "eeprom.h"
-#include "mycan.h"
-#include "rs485.h"
 #include "otasupport.h"
-
+#include "STM32TimerInterrupt.h"      
+#ifdef useCan
+  #include "mycan.h"
+#endif
+#ifdef useRS485
+  #include "rs485.h"
+#endif
 
 //using Matthias Hertel driver https://github.com/mathertel/LiquidCrystal_PCF8574
 //LiquidCrystal_PCF8574 lcd(0x27);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -51,6 +55,8 @@
 // .platformio\packages\framework-arduinoststm32\cores\arduino/HardwareSerial.h:44:4:
 // --> increased tx buffer size from default 64 to 1024
 
+// Init STM32 timer TIM2
+STM32Timer ITimer1(TIM2);
 
 void setup_system();
 void loop_system();
@@ -132,11 +138,28 @@ void setup_system() {
   app_setup();
   valve_setup();
 
-  // can
-  //mycan_setup();          // can hardware testcode setup
+  #ifdef useCan
+    // can
+    //mycan_setup();          // can hardware testcode setup
+  #endif
+  
+  #ifdef useRS485
+    // rs485
+    //rs485_setup();          // rs485 hardware testcode setup
+  #endif
 
-  // rs485
-  //rs485_setup();          // rs485 hardware testcode setup
+  // hardware timer for motor loop
+  if (ITimer1.attachInterruptInterval(10 * 1000, valve_loop))
+  {
+    #ifdef motDebug 
+        COMM_DBG.print(F("Starting ITimer1 OK, millis() = ")); COMM_DBG.println(millis());
+    #endif
+  }
+  else {
+    #ifdef motDebug
+      COMM_DBG.println(F("Can't set ITimer1. Select another freq. or timer"));
+    #endif
+  }
 }
 
 
@@ -148,6 +171,7 @@ void loop_system() {
   static uint32_t loop_1000ms = 0;
 
   static uint8_t buttontest = 0;
+  static uint8_t ledTimer = 0;
 
   int16_t recvcmd;
   
@@ -163,7 +187,7 @@ void loop_system() {
     }
     else time10s++;
 
-    digitalWrite(LED, !digitalRead(LED));   // toggle LED    
+    //digitalWrite(LED, !digitalRead(LED));   // toggle LED    
     eepromloop();
 
   }
@@ -172,7 +196,14 @@ void loop_system() {
   // 100 ms loop
   if ((millis()-loop_100ms) > (uint32_t) 100 ) {  
     loop_100ms = millis();  
-
+    ledTimer++;
+    if (ledTimer==30) {
+      digitalWrite(LED,LOW);  
+    }
+    if (ledTimer==31) {
+      digitalWrite(LED,HIGH);
+      ledTimer=0;  
+    }
     recvcmd = Terminal_Serve();
     
     // button test
@@ -182,9 +213,7 @@ void loop_system() {
       COMM_DBG.println("Button pressed");
     }
     else buttontest = 0;
-    //if (!digitalRead(BUTTON)) buttontest = 0;
-
-    
+      
   }
 
 
@@ -192,26 +221,8 @@ void loop_system() {
   if ((millis()-loop_10ms) > (uint32_t) 10 ) {  
     loop_10ms = millis();  
     
-    app_loop();
-
-    valve_loop();   
-    
+    app_loop();  
     communication_loop();
-
     temperature_loop();
-
-    //eepromloop();
-
-    //mycan_loop();         // can hardware testcode
-
-    //rs485_loop();         // rs485 hardware testcode
-
-    // while(Serial.available()>0) {
-    //   int testchar;
-    //   testchar = Serial.read();
-    //   //Serial.write(testchar);    // echo for test
-    //   COMM_DBG.write(testchar);
-    // }
-
   }
 }

@@ -50,7 +50,7 @@
 #define TIMER0_INTERVAL_MS        1
 
 #define TIMEOUT_NORMALCURRENT    120*100      // 120 seconds timeout with 10 ms cycle time
-#define TIMEOUT_OVERCURRENT      5            // cycles of "byte motorcycle (byte valvenr, byte cmd)"
+#define TIMEOUT_OVERCURRENT      1            // cycles of "byte motorcycle (byte valvenr, byte cmd)"
 #define TIMEOUT_UNDERCURRENT     50           // cycles of "byte motorcycle (byte valvenr, byte cmd)"
 #define TIMEOUT_UNDERCURRENTTEST 20           // cycles of "byte motorcycle (byte valvenr, byte cmd)"
 #define THRESHOLD_UNDERCURRENT   20           // threshold for detecting undercurrent in 1/10 mA
@@ -95,10 +95,13 @@ STM32Timer ITimer0(TIM1);
 
 //int counter;
 //unsigned long time;
-int current_mA = 0;                     // current valve motor in 1/10 mA
+volatile int current_mA = 0;                     // current valve motor in 1/10 mA for normal mode
+volatile int current_mA_old = 0;                 // filter memory
 
-int analog_current = 0;                 // current valve motor in 1/10 mA read by analog pin
-int analog_current_old = 0;             // filter
+volatile int analog_current = 0;                 // current valve motor in 1/10 mA for test mode
+volatile int analog_current_old = 0;             // filter memory
+
+
 
 // unsigned int idlecurrent = 2048;        // idle current adc value (digits)
 // unsigned int idlecurrent_old = 2048;    // filter
@@ -110,6 +113,7 @@ volatile int          isr_valvenr = 0;      // ISR var for valve nr
 volatile byte         isr_timer_go = 0;     // ISR var for timer pwm start
 volatile byte         isr_timer_fin = 0;    // ISR var for timer pwm finished
 
+volatile byte         isr_overcurrentevent = 0;
 
 valvemotor myvalvemots[ACTUATOR_COUNT];
 
@@ -119,9 +123,16 @@ int valvenr = 0;
 byte poschangecmd = 0;
 unsigned int m_meancurrent = 0;           // mean current in mA
 
-uint8_t currentbound_low_fac = 20;     // lower current limit factor for detection of end stop
-uint8_t currentbound_high_fac = 20;    // upper current limit factor for detection of end stop
+uint8_t currentbound_low_fac = 17;        // lower current limit factor for detection of end stop
+uint8_t currentbound_high_fac = 17;       // upper current limit factor for detection of end stop
+
+int currentbound_low;                     // lower current limit for detection of end stop
+int currentbound_high;                    // upper current limit for detection of end stop
+
 uint8_t startOnPower = 50;
+uint16_t noOfMinCounts = NO_OF_MIN_COUNTS;
+uint8_t maxCalibRetries = 0;
+uint8_t calibRetries = 0;
 
 //volatile uint32_t revcounter;
 
@@ -149,11 +160,11 @@ byte valve_setup () {
   //attachInterrupt(digitalPinToInterrupt(REVINPIN),isr_counter,RISING);
 
 
- if ((eep_content.currentbound_low_fac>=10) && (eep_content.currentbound_low_fac<=50))
+ if ((eep_content.currentbound_low_fac>=10) && (eep_content.currentbound_low_fac<=40))
     currentbound_low_fac = eep_content.currentbound_low_fac;
-  if ((eep_content.currentbound_high_fac>=10) && (eep_content.currentbound_high_fac<=50))
+  if ((eep_content.currentbound_high_fac>=10) && (eep_content.currentbound_high_fac<=40))
     currentbound_high_fac = eep_content.currentbound_high_fac;
-  if (eep_content.startOnPower<=100) startOnPower=eep_content.startOnPower; else startOnPower=50;
+  if (eep_content.startOnPower<=100) startOnPower=eep_content.startOnPower; else startOnPower=30;
   #ifdef motDebug
     COMM_DBG.print("Current end stop factor low: ");
     COMM_DBG.println((float) (currentbound_low_fac)/10,DEC);
@@ -167,6 +178,7 @@ byte valve_setup () {
     myvalvemots[x].target_position = startOnPower;
     myvalvemots[x].meancurrent = 20;       // 20 mA
     myvalvemots[x].scaler = 89;
+    myvalvemots[x].calibRetries = 0;
   }
 
   valvestate = A_INIT;
@@ -190,7 +202,7 @@ byte valve_setup () {
 }
 
 
-byte valve_loop () {
+void valve_loop () {
   
   byte temp = 0;
   //byte stateresult;
@@ -292,6 +304,8 @@ byte valve_loop () {
                     PSU_ON(); 
                     psuofftimer = 0;
                     waittimer = 50; 
+                    calibRetries = 0;
+                    myvalvemots[valveindex].calibRetries=0;
                   }
                   else if (command == CMD_A_TEST) { 
                     #ifdef motDebug                   
@@ -316,8 +330,13 @@ byte valve_loop () {
                   }           
 
                   // decrement learning counter
-                  if(valvestate == A_OPEN1 || valvestate == A_CLOSE1) {
-                    if(myvalves[valveindex].learn_movements) myvalves[valveindex].learn_movements--;
+                  if (!myvalvemots[valveindex].calibration) {
+                    if(valvestate == A_OPEN1 || valvestate == A_CLOSE1) {
+                      if(myvalves[valveindex].learn_movements) {
+                        myvalves[valveindex].learn_movements--;
+                      }
+                      myvalves[valveindex].movements++;
+                    }
                   }
 
                   // pause temperature measurement to avoid ADC interference
@@ -408,7 +427,7 @@ byte valve_loop () {
                       COMM_DBG.println("A: opening valve failed, timeout");
                     #endif
                     valvestate = A_IDLE;
-                    myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                    myvalvemots[valveindex].status = VLV_STATE_FAILED;
                     myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                   }                                     
                   break;
@@ -475,7 +494,7 @@ byte valve_loop () {
                       COMM_DBG.println("A: closing valve failed, timeout");
                     #endif
                     valvestate = A_IDLE;
-                    myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                    myvalvemots[valveindex].status = VLV_STATE_FAILED;
                     myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                   }                   
                   break;                  
@@ -491,7 +510,6 @@ byte valve_loop () {
                   waittimer = 20;
                   m_meancurrent = myvalvemots[valveindex].meancurrent;
                   isr_target = 65535;       // max value to disable stopping
-                
                   break;
 
     case A_LEARN2:  // goto start position
@@ -525,7 +543,7 @@ byte valve_loop () {
                         COMM_DBG.println("A: closing valve failed, timeout");
                       #endif
                       valvestate = A_IDLE;
-                      myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      myvalvemots[valveindex].status = VLV_STATE_FAILED;
                       myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                     }           
                   }               
@@ -570,7 +588,7 @@ byte valve_loop () {
                         COMM_DBG.println("A: opening valve failed, timeout");
                       #endif
                       valvestate = A_IDLE;
-                      myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      myvalvemots[valveindex].status = VLV_STATE_FAILED;
                       myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                     }                
                   }              
@@ -585,7 +603,6 @@ byte valve_loop () {
                         COMM_DBG.println("A: closed valve for learning");                  
                       #endif
                       closing_count = isr_counter;  
-
                       if(m_meancurrent > 0) {
                         #ifdef motDebug
                           COMM_DBG.print("A: learned mean current = "); 
@@ -607,9 +624,30 @@ byte valve_loop () {
                       myvalvemots[valveindex].opening_count = opening_count;
                       myvalvemots[valveindex].deadzone_count = deadzone_count;
                       myvalvemots[valveindex].scaler = scaler;
-                      myvalvemots[valveindex].actual_position = 0;    // because valve was closed completely                    
-                      myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                      myvalvemots[valveindex].actual_position = 0;    // because valve was closed completely  
+                      COMM_DBG.print("A: counts = "); COMM_DBG.println(myvalvemots[valveindex].closing_count); 
+                      COMM_DBG.println(myvalvemots[valveindex].opening_count);  
+                      COMM_DBG.println(noOfMinCounts);                  
+                      if ((closing_count<noOfMinCounts) || (opening_count<noOfMinCounts)) 
+                      { 
+                        calibRetries++;
+                        myvalvemots[valveindex].calibRetries++;
+                        if (calibRetries>maxCalibRetries)
+                          myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                        else {
+                          valvestate = A_LEARN1;
+                          PSU_ON(); 
+                          psuofftimer = 0;
+                          waittimer = 50; 
+                          COMM_DBG.print("A: calibration retry  = "); COMM_DBG.println(calibRetries); 
+                          break;
+                        }
 
+                      }
+                      else  myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                      COMM_DBG.println(myvalvemots[valveindex].status); 
+                      myvalvemots[valveindex].calibration = false;
+                      myvalvemots[valveindex].calibState=calibIdle;
                       valveindex = 255;                                                                                  
                       valvestate = A_IDLE;
                     }    
@@ -619,7 +657,7 @@ byte valve_loop () {
                       #endif
                       myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
                       myvalvemots[valveindex].target_position = myvalvemots[valveindex].actual_position;
-                      
+                                          
                       valveindex = 255;
                       valvestate = A_IDLE;
                       isr_counter=0;
@@ -629,7 +667,7 @@ byte valve_loop () {
                         COMM_DBG.println("A: closing valve failed, timeout");
                       #endif
                       valvestate = A_IDLE;
-                      myvalvemots[valveindex].status = VLV_STATE_BLOCKS;
+                      myvalvemots[valveindex].status = VLV_STATE_FAILED;
                       myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
                     }        
                   }           
@@ -666,9 +704,10 @@ byte valve_loop () {
     default:      valvestate = A_IDLE;
                   break;  
   }
+  if (valveindex<12) myvalvemots[valveindex].connected= (myvalvemots[valveindex].status != VLV_STATE_OPENCIR);
   result = 0;
 
-  return result;
+  //return result;
 }
 
 
@@ -697,8 +736,8 @@ byte motorcycle (int mvalvenr, byte cmd) {
   static int overcurrcnt = 0;
   static int normalcurrcnt = 0;
 
-  static int currentbound_low;              // lower current limit for detection of end stop
-  static int currentbound_high;             // upper current limit for detection of end stop
+  // static int currentbound_low;              // lower current limit for detection of end stop
+  // static int currentbound_high;             // upper current limit for detection of end stop
 
 
   static unsigned int meancurrent_cnt = 0;      // counts meancurrent values
@@ -821,7 +860,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     break;
 
       case M_TURNING:
-                    isr_turning = 1;
+                    //isr_turning = 1;
                     result = M_RES_TURNING;
     
                     if (cmd == CMD_M_STOP) {
@@ -832,20 +871,21 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     if(debouncecnt<255) debouncecnt++;
                     if(testcnt<255) testcnt++;
 
-                    if (debouncecnt > 10) {
+                    if (debouncecnt > 3) {
+                    //  if(1) {
 
-                      // calc current in 1/10 mA
-                      analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
-                      // COMM_DBG.print(analog_current,DEC);
-                      // COMM_DBG.print(" ");
-                      // COMM_DBG.print(idlecurrent,DEC);
-                      // COMM_DBG.println(" analog_current");
+                      // // calc current in 1/10 mA
+                      // analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
+                      // // COMM_DBG.print(analog_current,DEC);
+                      // // COMM_DBG.print(" ");
+                      // // COMM_DBG.print(idlecurrent,DEC);
+                      // // COMM_DBG.println(" analog_current");
 
-                      // filter
-                      analog_current = (int) (((int32_t) analog_current_old * 800 + (int32_t) analog_current * 200) / 1000);
-                      analog_current_old = analog_current;
+                      // // filter
+                      // analog_current = (int) (((int32_t) analog_current_old * 800 + (int32_t) analog_current * 200) / 1000);
+                      // analog_current_old = analog_current;
 
-                      current_mA = analog_current;
+                      // current_mA = analog_current;
 
                       // if (testcnt > 40) {
                       //   testcnt = 0;
@@ -856,31 +896,60 @@ byte motorcycle (int mvalvenr, byte cmd) {
                       //   COMM_DBG.println(" digits");
                       // }
 
-                      // under current detection
-                      if(current_mA < THRESHOLD_UNDERCURRENT && current_mA > -THRESHOLD_UNDERCURRENT) 
-                      {
-                        undercurrcnt++;
-                        if (undercurrcnt > TIMEOUT_UNDERCURRENT)
-                        {
-                          undercurrcnt = 0;
-                          motorstate = M_UNDERCURR;
-                        }                        
-                      }
+                      // // under current detection
+                      // if(current_mA < THRESHOLD_UNDERCURRENT && current_mA > -THRESHOLD_UNDERCURRENT) 
+                      // {
+                      //   undercurrcnt++;
+                      //   if (undercurrcnt > TIMEOUT_UNDERCURRENT)
+                      //   {
+                      //     undercurrcnt = 0;
+                      //     motorstate = M_UNDERCURR;
+                      //   }                        
+                      // }
 
+                      // // overcurrent detection
+                      // if(current_mA > currentbound_high || current_mA < currentbound_low ||  
+                      //    current_mA > 1000 || current_mA < -1000)         // safety mechanism, limit at +- 100 mA
+                      // {
+                      //   overcurrcnt++;
+                      //   if (overcurrcnt > TIMEOUT_OVERCURRENT)
+                      //   {
+                      //     //motorstate = M_STOP;                          
+                      //     detachInterrupt(digitalPinToInterrupt(REVINPIN)); 
+                      //     overcurrcnt = 0;
+                      //     motorstate = M_IDLE;
+                      //     result = M_RES_ENDSTOP;
+                      //     ena_motor(0, 0);
+                      //     isr_turning = 0;
+                      //     //MUX_OFF();
+
+                      //     if (meancurrent_cnt > 0) m_meancurrent = abs(meancurrent_mem) / meancurrent_cnt / 10;
+                      //     else m_meancurrent = 0;
+                      //     #ifdef motDebug
+                      //       COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA/10,10); COMM_DBG.println(" mA");
+                      //       //#warning fixme
+                      //       //COMM_DBG.print("M: Current: "); COMM_DBG.print(current_mA,10); COMM_DBG.println(" 1/10 mA");
+                      //       COMM_DBG.print("M: Cnt:     "); COMM_DBG.println(isr_counter, DEC);                                 
+                      //       COMM_DBG.println("M: Autostop, reached end stop");
+                      //     #endif
+                      //   }
+                      // }
+
+                      
                       // overcurrent detection
-                      if(current_mA > currentbound_high || current_mA < currentbound_low ||  
-                         current_mA > 1000 || current_mA < -1000)         // safety mechanism, limit at +- 100 mA
-                      {
-                        overcurrcnt++;
-                        if (overcurrcnt > TIMEOUT_OVERCURRENT)
-                        {
+                      if(isr_overcurrentevent)         
+                      {                        
+                        // overcurrcnt++;
+                        // if (overcurrcnt > TIMEOUT_OVERCURRENT)
+                        // {
                           //motorstate = M_STOP;                          
                           detachInterrupt(digitalPinToInterrupt(REVINPIN)); 
-                          overcurrcnt = 0;
+                          // overcurrcnt = 0;
                           motorstate = M_IDLE;
                           result = M_RES_ENDSTOP;
                           ena_motor(0, 0);
                           isr_turning = 0;
+                          isr_overcurrentevent = 0;
                           //MUX_OFF();
 
                           if (meancurrent_cnt > 0) m_meancurrent = abs(meancurrent_mem) / meancurrent_cnt / 10;
@@ -892,7 +961,18 @@ byte motorcycle (int mvalvenr, byte cmd) {
                             COMM_DBG.print("M: Cnt:     "); COMM_DBG.println(isr_counter, DEC);                                 
                             COMM_DBG.println("M: Autostop, reached end stop");
                           #endif
-                        }
+                        // }
+                      }
+
+                       // under current detection
+                      else if(current_mA < THRESHOLD_UNDERCURRENT && current_mA > -THRESHOLD_UNDERCURRENT) 
+                      {
+                        undercurrcnt++;
+                        if (undercurrcnt > TIMEOUT_UNDERCURRENT)
+                        {
+                          undercurrcnt = 0;
+                          motorstate = M_UNDERCURR;
+                        }                        
                       }
 
                       // normal turning
@@ -901,7 +981,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                         normalcurrcnt++;
                         if(normalcurrcnt > TIMEOUT_NORMALCURRENT) {
                           #ifdef motDebug          
-                            COMM_DBG.println("test: normal turning timeout");            
+                            COMM_DBG.println("M: normal turning timeout");            
                           #endif
                           
                           detachInterrupt(digitalPinToInterrupt(REVINPIN)); 
@@ -1009,13 +1089,13 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     #endif
                     result = M_RES_TEST;
     
-                    // calc current in 1/10 mA
-                    analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
+                    // // calc current in 1/10 mA
+                    // analog_current = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
 
-                    analog_current = (int) (((int32_t) analog_current_old * 800 + (int32_t) analog_current * 200) / 1000);
-                    analog_current_old = analog_current;
+                    // analog_current = (int) (((int32_t) analog_current_old * 800 + (int32_t) analog_current * 200) / 1000);
+                    // analog_current_old = analog_current;
 
-                    current_mA = analog_current;
+                    // current_mA = analog_current;
                     #ifdef motDebug
                       COMM_DBG.print(" - current: ");
                       COMM_DBG.println (analog_current,DEC);
@@ -1025,7 +1105,7 @@ byte motorcycle (int mvalvenr, byte cmd) {
                     if(debouncecnt>7) {
 
                       // under current detection
-                      if(current_mA < THRESHOLD_UNDERCURRENT && current_mA > -THRESHOLD_UNDERCURRENT) 
+                      if(analog_current < THRESHOLD_UNDERCURRENT && analog_current > -THRESHOLD_UNDERCURRENT) 
                       {
                         undercurrcnt++;
                         if (undercurrcnt > TIMEOUT_UNDERCURRENTTEST)
@@ -1041,21 +1121,24 @@ byte motorcycle (int mvalvenr, byte cmd) {
                       }
 
                       // overcurrent detection
-                      else if(current_mA > currentbound_high || current_mA < currentbound_low ||  
-                        current_mA > 1000 || current_mA < -1000)         // safety mechanism, limit at +- 100 mA
+                                        // overcurrent detection
+                      else if(isr_overcurrentevent)                              
+                      //else if(current_mA > currentbound_high || current_mA < currentbound_low ||  
+                      //  current_mA > 1000 || current_mA < -1000)         // safety mechanism, limit at +- 100 mA
                       {
-                        overcurrcnt++;
-                        if (overcurrcnt > TIMEOUT_OVERCURRENT)
-                        {
+                        isr_overcurrentevent = 0;
+                        // overcurrcnt++;
+                        // if (overcurrcnt > TIMEOUT_OVERCURRENT)
+                        // {
                           #ifdef motDebug
                             COMM_DBG.println("test: overcurrent!");
                           #endif
-                          overcurrcnt = 0;
+                          //overcurrcnt = 0;
                           motorstate = M_IDLE;
                           result = M_RES_ENDSTOP;
                           ena_motor(0, 0);
                         
-                        }
+                        // }
                       }
 
                       // normal turning
@@ -1153,33 +1236,54 @@ int16_t appsetaction(char cmd, unsigned int valveindex, byte posdelta) {
 }
 
 
-void TimerHandler0()
+void TimerHandler0()        // called every 1 ms
 {
-  static unsigned int rampcnt = 0;      // makes duty cycle of pwm
-  static unsigned int cnt = 0;          // makes periode time of pwm
+  int analog_value;                     // current valve motor in 1/10 mA read by analog pin
 
+  static int debouncecnt = 0;           // to ignore motor inrush current
+  static int overcnt = 0;
+
+  // current measurement
+  analog_value = (int) ((( (int32_t) analogRead(ANINCURRENT) - (int32_t) analogRead(ANINREFHALF)) * ANINCURRENTGAIN) / 100);
+
+  // filter test mode
+  analog_current = (int) (((int32_t) analog_current_old * 9800 + (int32_t) analog_value * 200) / 10000);
+  analog_current_old = analog_current;
+
+  if(isr_turning) {
+    //current_mA = analog_current;          // only update when turning, otherwise slower handling will read odd values
+    if (debouncecnt < 255) debouncecnt++;
+
+    // filter normal mode
+    if(debouncecnt > 250) {
+      current_mA = (int) (((int32_t) current_mA_old * 9800 + (int32_t) analog_value * 200) / 10000);
+      current_mA_old = current_mA;
+    }
+
+    if (current_mA > 600 || current_mA < -600) if(overcnt<255) overcnt++;
+
+    // overcurrent detection
+    if(current_mA > 1000 || current_mA < -1000 ||     // safety mechanismn
+      overcnt > 10 ||
+      (debouncecnt > 250 && (current_mA > currentbound_high || current_mA < currentbound_low)))
+    {
+      // stop motor immediately
+      detachInterrupt(digitalPinToInterrupt(REVINPIN));                           
+      ena_motor(0, 0);
+      isr_turning = 0;
+      isr_overcurrentevent = 1;
+    }
+  }
+  else {
+    overcnt = 0;
+    debouncecnt = 0;
+    current_mA = 0;
+    current_mA_old = 0;
+  } 
+
+  // ENA valve
   if(isr_timer_go && !isr_timer_fin) {
-    
-    if(cnt<=rampcnt) {        
-      //ENA0_ON();
-      ena_motor(isr_valvenr, 1);
-    }
-    else {
-      //ENA0_OFF();
-      ena_motor(isr_valvenr, 0);
-    }
-
-    // do counters
-    if(cnt<16) cnt++;
-    else {
-      cnt = 0;  
-      
-      if(rampcnt<16) rampcnt++;
-      else {    // finish & reset
-        isr_timer_fin = 1;
-        cnt = 0;
-        rampcnt = 0;
-      }
-    }
+    isr_timer_fin = 1;
+    ena_motor(isr_valvenr, 1);
   }
 }
