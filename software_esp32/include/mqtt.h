@@ -43,19 +43,23 @@
 #include "globals.h"
 #include "VdmConfig.h"
 
-#define MAINTOPIC_LEN 100
+#define MAINTOPIC_LEN 120
 
 // MQTT settings
 #define DEFAULT_MAINTOPIC    "VdMotFBH/"           //  /VdMotFBH/valve/1/actual
 #define DEFAULT_COMMONTOPIC  "common/"
 #define DEFAULT_VALVESTOPIC  "valves/"
 #define DEFAULT_TEMPSTOPIC   "temps/"
+#define DEFAULT_VOLTSTOPIC   "sensors/" 
 
 
 #define publishNothing  0
 #define publishCommon   1
 #define publishValves   2
 #define publishTemps    4
+#define publishVolts    8
+
+#define publishAll      publishCommon+publishValves+publishTemps+publishVolts     
 
 #define MAX_MQTT_RETRIES 100
 #define STATE_FAILED 9
@@ -85,6 +89,13 @@ typedef struct {
   uint32_t ts;
   bool publishNow;
 } LASTTEMPVALUES; 
+
+typedef struct {
+  float vad;          // temperature of assigned sensor
+  char id[25];
+  uint32_t ts;
+  bool publishNow;
+} LASTVOLTVALUES; 
 
 typedef struct {
   uint8_t heatControl;          
@@ -119,6 +130,7 @@ class CMqtt
     void publish_common (); 
     void publish_valves ();
     void publish_temps ();
+    void publish_volts();
     uint8_t checkForPublish (); 
     void checktValueTimeOut (); 
     bool checkTopicName(char* topic,char* ref,bool set=true);
@@ -131,6 +143,7 @@ class CMqtt
     char mqtt_commonTopic[MAINTOPIC_LEN] = {0};
     char mqtt_valvesTopic[MAINTOPIC_LEN]= {0};
     char mqtt_tempsTopic[MAINTOPIC_LEN]= {0};
+    char mqtt_voltsTopic[MAINTOPIC_LEN]= {0};
     char mqtt_callbackTopic[MAINTOPIC_LEN]= {0};
     char stationName[sizeof(VdmConfig.configFlash.systemConfig.stationName)+5]= {0};
     uint32_t tsPublish;
@@ -140,6 +153,7 @@ class CMqtt
     LASTCOMMONVALUES lastCommonValues;
     LASTVALVEVALUES lastValveValues[ACTUATOR_COUNT];
     LASTTEMPVALUES lastTempValues[TEMP_SENSORS_COUNT];
+    LASTVOLTVALUES lastVoltValues[VOLT_SENSORS_COUNT];
     boolean topicsReceived;
 };
 

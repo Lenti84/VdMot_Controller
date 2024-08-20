@@ -60,6 +60,7 @@
 
 static const char* commCmds [] = 
                {APP_PRE_SETTARGETPOS,APP_PRE_GETONEWIRECNT,APP_PRE_GETONEWIREDATA,
+                APP_PRE_GETOWVOLTCNT,APP_PRE_GETOWVOLTDATA,
                 APP_PRE_SETONEWIRESEARCH,APP_PRE_SETALLVLVOPEN,APP_PRE_GETVLVDATA,
                 APP_PRE_SETVLLEARN,APP_PRE_GETVERSION,APP_PRE_GETHWINFO,APP_PRE_GETTARGETPOS,
                 APP_PRE_SETMOTCHARS,APP_PRE_GETMOTCHARS,APP_PRE_SETVLVSENSOR,
@@ -75,6 +76,7 @@ CStmApp::CStmApp()
     settarget_check =false;
     tempIndex=0;
     checkTempsCount = 0;
+    checkVoltsCount = 0;
     cmd_buffer = "";
     found = false;
     bufptr = buffer;
@@ -82,6 +84,7 @@ CStmApp::CStmApp()
     argcnt = 0;
     tempsPrivCount=0;
     tempsCount=0;
+    voltsCount=0;
     setTempIdxActive=false;
     waitForFinishQueue=false;
     setMotorCharsActive=false;
@@ -208,6 +211,7 @@ void CStmApp::getParametersFromSTM()
     app_cmd(APP_PRE_GETLEARNMOVEM);
     app_cmd(APP_PRE_GETONEWIRECNT,String(255));
     app_cmd(APP_PRE_GETONEWIRESETT,String(255));
+    app_cmd(APP_PRE_GETOWVOLTCNT,String(255));
     app_cmd(APP_PRE_GETVLSTATUS);
     fastGetOneWire=true;
 }
@@ -354,6 +358,18 @@ int8_t CStmApp::findTempID(char* ID)
     for (uint8_t i=0;i<TEMP_SENSORS_COUNT;i++) {
         if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID)>0) {
             if (strncmp(ID,VdmConfig.configFlash.tempsConfig.tempConfig[i].ID,sizeof(VdmConfig.configFlash.tempsConfig.tempConfig[i].ID))==0) {
+            return (i);
+            }
+        }
+    }
+    return -1;
+}
+
+int8_t CStmApp::findVoltID(char* ID) 
+{
+    for (uint8_t i=0;i<VOLT_SENSORS_COUNT;i++) {
+        if (strlen(VdmConfig.configFlash.voltsConfig.voltConfig[i].ID)>0) {
+            if (strncmp(ID,VdmConfig.configFlash.voltsConfig.voltConfig[i].ID,sizeof(VdmConfig.configFlash.voltsConfig.voltConfig[i].ID))==0) {
             return (i);
             }
         }
@@ -614,7 +630,7 @@ void  CStmApp::app_check_data()
             appState=APP_IDLE;
         }
 
-        // get onewire data answer
+        // get temp onewire data answer
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         
         else if(memcmp(APP_PRE_GETONEWIRECNT,cmd,5) == 0) {
@@ -622,12 +638,12 @@ void  CStmApp::app_check_data()
                 tempsPrivCount= atoi(argptr[0]); 
                 if (tempsPrivCount!=tempsCount) app_cmd(APP_PRE_GETONEWIRECNT,String(255));
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"STMApp:one wire count "+String(tempsPrivCount));
+                    syslog.log(LOG_DEBUG,"STMApp:one wire temp count "+String(tempsPrivCount));
                 }       
             }
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"STMApp:one wire data "+String(argptr[1]));
+                    syslog.log(LOG_DEBUG,"STMApp:one wire temp data "+String(argptr[1]));
                 } 
                 tempsPrivCount= atoi(argptr[0]);
                 if (tempsPrivCount>0) {
@@ -652,7 +668,7 @@ void  CStmApp::app_check_data()
 		else if(memcmp(APP_PRE_GETONEWIREDATA,cmd,5) == 0) {
             if(argcnt == 2) {
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                    syslog.log(LOG_DEBUG,"STMApp:one wire data "+String(argptr[0])+":"+String(argptr[1]));
+                    syslog.log(LOG_DEBUG,"STMApp:one wire temp data "+String(argptr[0])+":"+String(argptr[1]));
                 } 
                 strncpy(tempsId[tempIndex].id,argptr[0],sizeof(tempsId[tempIndex].id));
 
@@ -671,6 +687,86 @@ void  CStmApp::app_check_data()
                     if (VdmTask.piTaskInitiated) oneWireAllRead=true;
                 }
                 #ifdef AppDebug
+                    UART_DBG.println("read temp onwire "+String(tempIndex)+":"+String(fastGetOneWire));
+                #endif
+            }
+            // handle incomplete messages to not block 1-wire request cycle
+            else if(argcnt == 1) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"STMApp:one wire temp data - only 1 arg");
+                }
+                tempIndex++;
+                if (tempIndex>=tempsCount) {  // all temp sensors read
+                    tempIndex=0;
+                    fastGetOneWire=false;
+                    if (VdmTask.piTaskInitiated) oneWireAllRead=true;
+                }
+            }
+            appState=APP_IDLE;
+        }
+
+        // get volt onewire data answer
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        
+        else if(memcmp(APP_PRE_GETOWVOLTCNT,cmd,5) == 0) {
+            if(argcnt == 1) {
+                voltsPrivCount= atoi(argptr[0]); 
+                if (voltsPrivCount!=voltsCount) app_cmd(APP_PRE_GETOWVOLTCNT,String(255));
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"STMApp:one wire volt count "+String(voltsPrivCount));
+                }       
+            }
+            if(argcnt == 2) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"STMApp:one wire volt data "+String(argptr[1]));
+                } 
+                voltsPrivCount= atoi(argptr[0]);
+                if (voltsPrivCount>0) {
+                    char* cmdptr;
+                    char* ps=argptr[1];
+                    for (uint8_t idx=0; idx<voltsPrivCount;idx++) {
+                        if ((cmdptr=strchr(ps,','))!=NULL) *cmdptr='\0';
+                        strncpy(voltsId[idx].id,ps,sizeof(voltsId[idx].id));
+                        ps=cmdptr+1;
+                        idx++;
+                    }
+                }
+                voltsCount=voltsPrivCount;
+            }
+            if (voltsPrivCount==0) {
+                fastGetOneWire=false;
+               // oneWireAllRead=true;
+            }
+            appState=APP_IDLE;
+        }
+
+		else if(memcmp(APP_PRE_GETOWVOLTDATA,cmd,5) == 0) {
+            if(argcnt == 2) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                    syslog.log(LOG_DEBUG,"STMApp:one wire volt data "+String(argptr[0])+":"+String(argptr[1]));
+                } 
+                strncpy(voltsId[voltIndex].id,argptr[0],sizeof(voltsId[voltIndex].id));
+                memset(volts[voltIndex].id,0x0,sizeof(volts[voltIndex].id)); 
+                strncpy(volts[voltIndex].id,argptr[0],sizeof(volts[voltIndex].id));
+               
+                int8_t idx=findVoltID(argptr[0]);
+                if (idx>=0) {
+                    memset(volts[idx].id,0x0,sizeof(volts[idx].id)); 
+                    strncpy(volts[idx].id,argptr[0],sizeof(volts[idx].id));
+                    volts[idx].vad=atoi(argptr[1]);
+                    volts[idx].failed=(volts[idx].vad>=1022);
+                    float c = (float) volts[idx].vad;
+                    volts[idx].value=(c/100+VdmConfig.configFlash.voltsConfig.voltConfig[idx].offset) * VdmConfig.configFlash.voltsConfig.voltConfig[idx].factor;
+                } 
+                voltIndex++;
+
+                
+                if (voltIndex>=voltsCount) {  // all volt sensors read
+                    voltIndex=0;
+                    fastGetOneWire=false;
+                    if (VdmTask.piTaskInitiated) oneWireAllRead=true;
+                }
+                #ifdef AppDebug
                     UART_DBG.println("read onwire "+String(tempIndex)+":"+String(fastGetOneWire));
                 #endif
             }
@@ -679,9 +775,9 @@ void  CStmApp::app_check_data()
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                     syslog.log(LOG_DEBUG,"STMApp:one wire data - only 1 arg");
                 }
-                tempIndex++;
-                if (tempIndex>=tempsCount) {  // all temp sensors read
-                    tempIndex=0;
+                voltIndex++;
+                if (voltIndex>=tempsCount) {  // all temp sensors read
+                    voltIndex=0;
                     fastGetOneWire=false;
                     if (VdmTask.piTaskInitiated) oneWireAllRead=true;
                 }
@@ -979,7 +1075,7 @@ void  CStmApp::app_comm_machine()
                 if (tempsPrivCount>0) {
                     commstate = COMM_GETONEWIRE;
                 } else {
-                    commstate =  COMM_HANDLEQUEUE;   
+                    commstate =  COMM_GETOWVOLTCOUNT;   
                 }
                 if (checkTempsCount==0) {
                     app_comm_send(APP_PRE_GETONEWIRECNT);
@@ -987,23 +1083,54 @@ void  CStmApp::app_comm_machine()
                     appState=APP_PENDING;
 
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                        syslog.log(LOG_DEBUG,"get one wire count");
+                        syslog.log(LOG_DEBUG,"get one wire temp count");
                     } 
                 }    
                 checkTempsCount--;
                 break;
 
         case COMM_GETONEWIRE:
-            if (!fastGetOneWire) commstate = COMM_HANDLEQUEUE;
+            if (!fastGetOneWire) commstate = COMM_GETOWVOLTCOUNT;
                 if (tempsPrivCount>0) {
                     app_comm_send(APP_PRE_GETONEWIREDATA,&tempIndex);
                     appState=APP_PENDING;
 
                     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
-                        syslog.log(LOG_DEBUG,"get one wire data: " + String(sendbuffer));
+                        syslog.log(LOG_DEBUG,"get one wire temp data: " + String(sendbuffer));
                     } 
                 }
                 break;
+
+         case COMM_GETOWVOLTCOUNT:
+                if (voltsPrivCount>0) {
+                    commstate = COMM_GETOWVOLT;
+                } else {
+                    commstate =  COMM_HANDLEQUEUE;   
+                }
+                if (checkVoltsCount==0) {
+                    app_comm_send(APP_PRE_GETOWVOLTCNT);
+                    checkVoltsCount=20;
+                    appState=APP_PENDING;
+
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                        syslog.log(LOG_DEBUG,"get one wire volt count");
+                    } 
+                }    
+                checkVoltsCount--;
+                break;
+
+        case COMM_GETOWVOLT:
+            if (!fastGetOneWire) commstate = COMM_HANDLEQUEUE;
+                if (voltsPrivCount>0) {
+                    app_comm_send(APP_PRE_GETOWVOLTDATA,&voltIndex);
+                    appState=APP_PENDING;
+
+                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
+                        syslog.log(LOG_DEBUG,"get one wire volt data: " + String(sendbuffer));
+                    } 
+                }
+                break;
+
 
         case COMM_HANDLEQUEUE:
                 if ((cmd_buffer=="") && (Queue.available()>0) && (stmStatus>=STM_READY)) {

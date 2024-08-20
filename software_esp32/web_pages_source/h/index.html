@@ -590,6 +590,11 @@
 		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
+		<div class="rtabframe" style="overflow-y:auto" id="voltStatusTabFrame">  
+			<h3>Sensors</h3>
+			<table id="voltsTable" class="tabTable" border="3" frame="box" style="text-align:center">
+			</table>
+		</div>
 	</div>
 	</div>
 	
@@ -967,7 +972,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			</table>
 	
 		</div>	
-			<div class="rtabframe2">
+		<div class="rtabframe2">
 			<h3>Temperature sensor</h3>
 			<div style="height:390px;overflow-y:scroll">
 			<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
@@ -978,7 +983,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				<table id="cfgTSensorTable1" class="tabTable">
 				<tr>
 					<td>
-					<input type="button" class="buttonclass" id="tempSensorScan" value="Scan" title="Scan temperature sensors" />
+					<input type="button" class="buttonclass" id="tempSensorScan" value="Scan" title="Scan onewire sensors" />
 					</td>
 					<td>
 					<select id="sysCfg-CF">
@@ -988,6 +993,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 					</td>
 				</tr>
 				</table>
+			</div>
+		</div>
+
+		<div class="rtabframe2">
+			<h3>Voltage sensor</h3>
+			<div style="height:390px">
+				<table id="cfgVSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
+			</table>
 			</div>
 		</div>
 
@@ -1750,7 +1763,12 @@ Publish on change on server side is not recommended with this option">tValue aft
 		var showAllTabs=window.location.href.startsWith('file');
 		var getStatusInterval;
 		var dataTempSensorsID=null;
-		const NoOfMaxSensors = 34;
+		const NoOfMaxTSensors = 34;
+		var dataVoltSensorsID=null;
+		const NoOfMaxVSensors = 8;
+		var valveWarnLevel = 0;
+		var tempWarning = false;
+		var sensorWarning = false;
 		var stmInit = 0;
 		const cfgVCKiCol= 12;
 		var getFSIntervalID = null;
@@ -1880,9 +1898,11 @@ Publish on change on server side is not recommended with this option">tValue aft
 			fillTZList();
 			await getSystemConfig();
 			makeTempsTable(0);
+			makeVoltsTable(0);
 			makeCfgValvesTable();
 			makeValvesControlTable();
 			makeCfgTempTable();
+			makeCfgVoltTable();
 			await getValvesStatus();
 			await getSystemInfo();
 			await getSystemDynInfo();
@@ -1891,6 +1911,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			await getProtConfig();
 			await getMsgConfig();
 			await getTempsConfig();
+			await getVoltsConfig();
 			await getValvesConfig();
 			await getValvesControlConfig();
 			
@@ -1909,7 +1930,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 		async function loadStmData() {
 			await getMotorConfig();
 			await getTempSensorsID();
+			await getVoltSensorsID();
 			await getTempsStatus();
+			await getVoltsStatus();
 			await getSystemInfo();
 			await getValvesConfig();
 		}
@@ -2149,13 +2172,13 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		function makeCfgTempTable() {
 			const cfgTempTable = id('cfgTSensorTable');	  
-			for (let row=0; row<NoOfMaxSensors+1; row++) { 
+			for (let row=0; row<NoOfMaxTSensors+1; row++) { 
 				const thisRow = cfgTempTable.insertRow(0);
 				for (let i = 0; i < 5; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
-			for (let row=1;row<NoOfMaxSensors+1;row++) {
+			for (let row=1;row<NoOfMaxTSensors+1;row++) {
 				cfgTempTable.rows[row].cells[0].innerHTML = row;
 				let thiscell = cfgTempTable.rows[row].cells[1];
 				let el = document.createElement('input');
@@ -2173,12 +2196,13 @@ Publish on change on server side is not recommended with this option">tValue aft
 				thiscell.appendChild(el);
 				thiscell = cfgTempTable.rows[row].cells[3];
 				el = document.createElement('input');
-				el.setAttribute('type', 'text');
+				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgTOffset' + row);
 				el.setAttribute('id', 'cfgTOffset' + row);
 				el.setAttribute('size', '5');
 				el.setAttribute('maxlength' , '5');
-				el.setAttribute('style','width:40px;');
+				el.setAttribute('step' , '0.1');
+				el.setAttribute('style','width:45px;');
 				thiscell.appendChild(el);
 				thiscell = cfgTempTable.rows[row].cells[4];
 				el = document.createElement('input');
@@ -2186,7 +2210,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('name', 'cfgTID' + row);
 				el.setAttribute('id', 'cfgTID' + row);
 				el.setAttribute('style','width:150px;');
-				el.setAttribute('onchange', 'fillSensorIDSelect()');
+				el.setAttribute('onchange', 'fillTSensorIDSelect()');
 				thiscell.appendChild(el);
 				el = document.createElement('input');
 				el.setAttribute('type', 'button');
@@ -2194,13 +2218,13 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('id', 'cfgTBtn' + row);
 				el.setAttribute('style','width:20px;');
 				el.setAttribute('value','x');
-				el.setAttribute('onclick', 'deleteID(this.id)');
+				el.setAttribute('onclick', 'deleteTID(this.id)');
 				thiscell.appendChild(el);
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgTSel' + row);
 				el.setAttribute('id', 'cfgTSel' + row);
 				el.setAttribute('style','width:20px;');
-				el.setAttribute('onchange', 'copyIDFromSelect(this.id)');
+				el.setAttribute('onchange', 'copyTIDFromSelect(this.id)');
 				thiscell.appendChild(el);
 			}
 			
@@ -2209,6 +2233,93 @@ Publish on change on server side is not recommended with this option">tValue aft
 			cfgTempTable.rows[0].cells[2].textContent = 'Active';
 			cfgTempTable.rows[0].cells[3].textContent = 'Offset';
 			cfgTempTable.rows[0].cells[4].textContent = 'ID';
+		}
+
+		function makeCfgVoltTable() {
+			const cfgVoltTable = id('cfgVSensorTable');	  
+			for (let row=0; row<NoOfMaxVSensors+1; row++) { 
+				const thisRow = cfgVoltTable.insertRow(0);
+				for (let i = 0; i < 7; i++) {
+					cell = thisRow.insertCell();
+				}
+			}
+
+			for (let row=1;row<NoOfMaxVSensors+1;row++) {
+				cfgVoltTable.rows[row].cells[0].innerHTML = row;
+				let thiscell = cfgVoltTable.rows[row].cells[1];
+				let el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgVoltName' + row);
+				el.setAttribute('id', 'cfgVoltName' + row);
+				el.setAttribute('style','width:80px;');
+				el.setAttribute('maxlength' , '10');
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[2];
+				el = document.createElement('input');
+				el.setAttribute('type', 'checkbox');
+				el.setAttribute('name', 'cfgVoltActive' + row);
+				el.setAttribute('id', 'cfgVoltActive' + row);
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[3];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVoltOffset' + row);
+				el.setAttribute('id', 'cfgVoltOffset' + row);
+				el.setAttribute('size', '12');
+				el.setAttribute('maxlength' , '8');
+				el.setAttribute('step' , '0.001');
+				el.setAttribute('style','width:60px;');
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[4];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVoltFactor' + row);
+				el.setAttribute('id', 'cfgVoltFactor' + row);
+				el.setAttribute('size', '12');
+				el.setAttribute('maxlength' , '8');
+				el.setAttribute('step' , '0.001');
+				el.setAttribute('style','width:60px;');
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[5];
+				el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgVoltUnit' + row);
+				el.setAttribute('id', 'cfgVoltUnit' + row);
+				el.setAttribute('size', '8');
+				el.setAttribute('maxlength' , '8');
+				el.setAttribute('style','width:55px;');
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[6];
+				el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgVoltID' + row);
+				el.setAttribute('id', 'cfgVoltID' + row);
+				el.setAttribute('style','width:150px;');
+				el.setAttribute('onchange', 'fillVSensorIDSelect()');
+				thiscell.appendChild(el);
+				el = document.createElement('input');
+				el.setAttribute('type', 'button');
+				el.setAttribute('name', 'cfgVoltBtn' + row);
+				el.setAttribute('id', 'cfgVoltBtn' + row);
+				el.setAttribute('style','width:20px;');
+				el.setAttribute('value','x');
+				el.setAttribute('onclick', 'deleteVID(this.id)');
+				thiscell.appendChild(el);
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVoltSel' + row);
+				el.setAttribute('id', 'cfgVoltSel' + row);
+				el.setAttribute('style','width:20px;');
+				el.setAttribute('onchange', 'copyVIDFromSelect(this.id)');
+				thiscell.appendChild(el);
+			}
+			
+			cfgVoltTable.rows[0].cells[0].textContent = 'No';
+			cfgVoltTable.rows[0].cells[1].textContent = 'Name';
+			cfgVoltTable.rows[0].cells[2].textContent = 'Active';
+			cfgVoltTable.rows[0].cells[3].textContent = 'Offset';
+			cfgVoltTable.rows[0].cells[4].textContent = 'Factor';
+			cfgVoltTable.rows[0].cells[5].textContent = 'Unit';
+			cfgVoltTable.rows[0].cells[6].textContent = 'ID';
 		}
 		
 		function makeValvesControlTable () {
@@ -2829,7 +2940,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 				//await postTempsCfg(1,11);
 				//await postTempsCfg(12,23);
 				//await postTempsCfg(24,34);
-				postTempsCfg(1,34);
+				await postTempsCfg(1,34);
+				await postVoltsCfg();
 				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
@@ -3069,6 +3181,30 @@ Publish on change on server side is not recommended with this option">tValue aft
 			await postJson("tempsconfig",JSON.stringify(tempsCfg));
 		}
 		
+		async function postVoltsCfg() {
+			const cfgVoltsTable = id('cfgVSensorTable');
+			let voltsItemsCfg = [];
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {
+				let voltValues={};
+				voltValues.name = id('cfgVoltName'+row).value; 
+				voltValues.id = id('cfgVoltID'+row).value; 
+				voltValues.active = id('cfgVoltActive'+row).checked  ? 1 : 0;
+				let f = id('cfgVoltOffset'+row).value.replace(/ /g, "");
+				f  = f.replace(/,/g, '.');
+				f = parseFloat(f).toFixed(3);
+				voltValues.offset = parseFloat(f);
+				f = id('cfgVoltFactor'+row).value.replace(/ /g, "");
+				f  = f.replace(/,/g, '.');
+				f = parseFloat(f).toFixed(3)
+				voltValues.factor = parseFloat(f);
+				voltValues.unit = id('cfgVoltUnit'+row).value; 
+				voltsItemsCfg.push(voltValues);
+			}
+			let voltsCfg={};
+			voltsCfg.volts=voltsItemsCfg;
+			await postJson("voltsconfig",JSON.stringify(voltsCfg));
+		}
+
 		async function 	postSysLogCfg() {	
 			let sysLogCfg = {};
 			sysLogCfg.syslogLevel=id("netcfg-syslog-select").selectedIndex;
@@ -3144,6 +3280,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			await getSystemDynInfo();
 			await getValvesStatus();
 			await getTempsStatus();
+			await getVoltsStatus();
 		}
 		
 		function checkValvesConnected (valvesJson){
@@ -3169,7 +3306,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 			const States = ["---","idle","opens","closes","failed","unknown","no valve","full open","connected","blocked"];
 			let thisImg=null;
-			let statusWarning = 0;
+			valveWarnLevel = 0;
 			valvesJson.forEach(function(item, index){
 				valvesTable.rows[index+1].cells[0].textContent = item.idx;	
 				switch (item.controlActive) {
@@ -3221,14 +3358,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 					case 9 : {
 						valvesTable.rows[index+1].cells[4].style.backgroundColor="red";
 						valvesTable.rows[index+1].cells[4].style.color="white";
-						statusWarning=2;
+						valveWarnLevel=2;
 						break;
 					}
 					default : {
 						if (item.cr>0) {
 							valvesTable.rows[index+1].cells[4].style.backgroundColor="yellow";
 							valvesTable.rows[index+1].cells[4].style.color="blue";
-							statusWarning=1;
+							valveWarnLevel=1;
 						} else {
 							valvesTable.rows[index+1].cells[4].style.backgroundColor="gray";
 							valvesTable.rows[index+1].cells[4].style.color="white";
@@ -3273,8 +3410,16 @@ Publish on change on server side is not recommended with this option">tValue aft
 					id('setValveP'+(index+1)).value=item.targetPos;
 				}
 			});
+			showWarningIcon();
+		}
+
+		function showWarningIcon()
+		{
+			let statusWarning = 0;
+			if (valveWarnLevel>0) statusWarning=valveWarnLevel;
+			if (tempWarning || sensorWarning) statusWarning = 2;
 			if (statusWarning == 0) id("statusImg").style.visibility="hidden"; else id("statusImg").style.visibility="visible";
-			id("statusImg").src=tabImageSrc[statusWarning];
+			id("statusImg").src=tabImageSrc[statusWarning];	
 		}
 		
 		function fillCfgValvesTable (cfgValvesJson) {
@@ -3348,7 +3493,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		function fillTempsTable (tempsJson) {
 			const tempsTable = id('tempsTable');
-			const tempStatusTabFrame = id("tempStatusTabFrame")
+			const tempStatusTabFrame = id("tempStatusTabFrame");
+			tempWarning =false;
 			if (tempsJson.length==0) {
 				tempStatusTabFrame.style.display="none";
 			} else {
@@ -3358,15 +3504,21 @@ Publish on change on server side is not recommended with this option">tValue aft
 				}
 				tempsJson.forEach(function (item, index) {            
 					tempsTable.rows[index+1].cells[1].textContent = item.name;
-					if (item.temp==="failed") tempsTable.rows[index+1].cells[2].style.backgroundColor="red"; else tempsTable.rows[index+1].cells[2].style.backgroundColor="gray";
+					if (item.temp==="failed") {
+						tempsTable.rows[index+1].cells[2].style.backgroundColor="red"; 
+						tempWarning =true;
+					} else {
+						tempsTable.rows[index+1].cells[2].style.backgroundColor="gray";
+					}
 					tempsTable.rows[index+1].cells[2].textContent = item.temp;
 				});
 			}
+			showWarningIcon();
 		}
 		
 		function fillCfgTempsTable (cfgTempsJson) {
 			const cfgTempsTable = id('cfgTSensorTable');
-			for (let row = 1; row<NoOfMaxSensors+1; row++) {				
+			for (let row = 1; row<NoOfMaxTSensors+1; row++) {				
 				id('cfgTName'+row).value = cfgTempsJson[row-1].name;
 				id('cfgTActive'+row).checked = cfgTempsJson[row-1].active;
 				id('cfgTOffset'+row).value = cfgTempsJson[row-1].offset;
@@ -3374,7 +3526,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 		}
 		
-		function findTID(TId){
+		function findTSIDinData(TId){
 			let retVal=false;
 			if (dataTempSensorsID) {
 				dataTempSensorsID.forEach(function(item) {
@@ -3389,10 +3541,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		function checkCfgTempsID () {
 			var result=true;
-			for (let row = 1; row<NoOfMaxSensors+1; row++) {
+			for (let row = 1; row<NoOfMaxTSensors+1; row++) {
 				let TID = id('cfgTID'+row);
 				if (TID.value!="") {
-					if (!findTID(TID.value)) {
+					if (!findTSIDinData(TID.value)) {
 						TID.style.backgroundColor = "red";
 						result=false;
 					 } else TID.style.backgroundColor = "";
@@ -3401,32 +3553,32 @@ Publish on change on server side is not recommended with this option">tValue aft
 			return result;
 		}
 		
-		function findID (SensorID) {
-			for (let row = 1; row<NoOfMaxSensors+1; row++) {	
+		function findTSIDinTable (SensorID) {
+			for (let row = 1; row<NoOfMaxTSensors+1; row++) {	
 				let selectElement=id('cfgTID'+row);
 				if (selectElement.value===SensorID) return (true);
 			}
 			return (false);
 		}
 		
-		function deleteID (thisButton) {
+		function deleteTID (thisButton) {
 			const button=id(thisButton);
 			let thisRow=button.id.slice(7);
 			const thisInput=id('cfgTID' + thisRow);
 			thisInput.value="";	
-			fillSensorIDSelect();
+			fillTSensorIDSelect();
 		}
 		
-		function copyIDFromSelect (thisSelect) {
+		function copyTIDFromSelect (thisSelect) {
 			const select=id(thisSelect);
 			let thisRow=select.id.slice(7);
 			const thisInput=id('cfgTID' + thisRow);
 			thisInput.value=select.value;
-			fillSensorIDSelect();
+			fillTSensorIDSelect();
 		}
 		
-		function fillSensorIDSelect() {
-			for (let row = 1; row<NoOfMaxSensors+1; row++) {	
+		function fillTSensorIDSelect() {
+			for (let row = 1; row<NoOfMaxTSensors+1; row++) {	
 				let selectElement=id('cfgTSel'+row);
 				while (selectElement.options.length > 0) {                
 					selectElement.remove(0);
@@ -3435,7 +3587,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				selectElement.options[0] = option;
 				let i=1;
 				dataTempSensorsID.forEach(function (item, index) { 
-					if (!findID(item.id)) {
+					if (!findTSIDinTable(item.id)) {
 						option = new Option(item.id, item.id);
 						selectElement.options[i] = option;
 						i++;
@@ -3445,6 +3597,139 @@ Publish on change on server side is not recommended with this option">tValue aft
 			checkCfgTempsID();
 		}
 		
+		function fillVoltsTable (voltsJson) {
+			const voltsTable = id('voltsTable');
+			const voltStatusTabFrame = id("voltStatusTabFrame");
+			sensorWarning = false;
+			if (voltsJson.length==0) {
+				voltStatusTabFrame.style.display="none";
+			} else {
+				voltStatusTabFrame.style.display="block";
+				if (voltsJson.length!=voltsTable.rows.length-1) {
+					makeVoltsTable(voltsJson.length);
+				}
+				voltsJson.forEach(function (item, index) {            
+					voltsTable.rows[index+1].cells[1].textContent = item.name;
+					voltsTable.rows[index+1].cells[2].textContent = item.value;
+					voltsTable.rows[index+1].cells[3].textContent = item.unit;
+					if (item.value==="failed")  {
+						voltsTable.rows[index+1].style.backgroundColor = "red";	
+						sensorWarning = true;
+					} else {
+						voltsTable.rows[index+1].style.backgroundColor = "";
+					}
+				});
+			}
+			showWarningIcon();
+		}
+
+		function makeVoltsTable(NoOfSensors) {
+			const voltsTable = id('voltsTable');			
+			while (voltsTable.rows.length>0) { 
+					voltsTable.deleteRow(0);
+			}
+			for (row=0; row<NoOfSensors+1; row++) { 
+				const thisRow = voltsTable.insertRow(0);
+				
+				for (let i = 0; i < 4; i++) {
+					cell = thisRow.insertCell();
+					cell.innerHTML = '--';
+					if (i==2) cell.setAttribute('style','width:60px;');	
+				}
+			}
+			for (let row=1;row<NoOfSensors+1;row++) voltsTable.rows[row].cells[0].innerHTML = row;
+			voltsTable.rows[0].cells[0].textContent = 'No';
+			voltsTable.rows[0].cells[1].textContent = 'Name';
+			voltsTable.rows[0].cells[2].textContent = 'Value';
+			voltsTable.rows[0].cells[3].textContent = 'Unit';
+			if (NoOfSensors>12) voltsTable.style.height="430px";
+		}
+
+		function fillCfgVoltsTable (cfgVoltsJson) {
+			const cfgVoltsTable = id('cfgVSensorTable');
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {				
+				id('cfgVoltName'+row).value = cfgVoltsJson[row-1].name;
+				id('cfgVoltActive'+row).checked = cfgVoltsJson[row-1].active;
+				id('cfgVoltOffset'+row).value = cfgVoltsJson[row-1].offset;
+				id('cfgVoltFactor'+row).value = cfgVoltsJson[row-1].factor;
+				id('cfgVoltUnit'+row).value = cfgVoltsJson[row-1].unit;
+				id('cfgVoltID'+row).value = cfgVoltsJson[row-1].id;
+			}
+		}
+
+		
+		function checkCfgVoltsID () {
+			var result=true;
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {
+				let VID = id('cfgVoltID'+row);
+				if (VID.value!="") {
+					if (!findVSIDinData(VID.value)) {
+						VID.style.backgroundColor = "red";
+						result=false;
+					 } else VID.style.backgroundColor = "";
+				}
+			}
+			return result;
+		}
+
+		function findVSIDinData(VId){
+			let retVal=false;
+			if (dataVoltSensorsID) {
+				dataVoltSensorsID.forEach(function(item) {
+					if (VId===item.id) {
+						retVal=true;
+						return;
+					}
+				});
+			}
+			return (retVal);
+		}
+
+			
+		function findVSIDinTable (SensorID) {
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {	
+				let selectElement=id('cfgVoltID'+row);
+				if (selectElement.value===SensorID) return (true);
+			}
+			return (false);
+		}
+		
+		function deleteVID (thisButton) {
+			const button=id(thisButton);
+			let thisRow=button.id.slice(10);
+			const thisInput=id('cfgVoltID' + thisRow);
+			thisInput.value="";	
+			fillVSensorIDSelect();
+		}
+		
+		function copyVIDFromSelect (thisSelect) {
+			const select=id(thisSelect);
+			let thisRow=select.id.slice(10);
+			const thisInput=id('cfgVoltID' + thisRow);
+			thisInput.value=select.value;
+			fillVSensorIDSelect();
+		}
+		
+		function fillVSensorIDSelect() {
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {	
+				let selectElement=id('cfgVoltSel'+row);
+				while (selectElement.options.length > 0) {                
+					selectElement.remove(0);
+				}   
+				let option = new Option(' -Select-', 0);
+				selectElement.options[0] = option;
+				let i=1;
+				dataVoltSensorsID.forEach(function (item, index) { 
+					if (!findVSIDinTable(item.id)) {
+						option = new Option(item.id, item.id);
+						selectElement.options[i] = option;
+						i++;
+					}
+				});
+			}
+			checkCfgVoltsID();
+		}
+
 		async function getSystemInfo() {
 			const dataSystemInfo=await getJson("sysinfo");
 			if (dataSystemInfo) {
@@ -3649,13 +3934,32 @@ Publish on change on server side is not recommended with this option">tValue aft
 			const thisDataTempSensorsID=await getJson("tempsensorsid");
 			if (thisDataTempSensorsID) {
 				dataTempSensorsID = thisDataTempSensorsID;
-				fillSensorIDSelect(); 
+				fillTSensorIDSelect(); 
 			}
 		}
 		
 		async function getTempsStatus() {
 			const dataTempsStatus=await getJson("temps");
 			if (dataTempsStatus) fillTempsTable(dataTempsStatus);
+		}
+
+		async function getVoltsConfig() {
+			const dataVoltsConfig=await getJson("voltsconfig");
+			if (dataVoltsConfig) fillCfgVoltsTable(dataVoltsConfig);
+			checkCfgVoltsID();
+		}
+
+		async function getVoltSensorsID() {
+			const thisDataVoltSensorsID=await getJson("voltsensorsid");
+			if (thisDataVoltSensorsID) {
+				dataVoltSensorsID = thisDataVoltSensorsID;
+				fillVSensorIDSelect(); 
+			}
+		}
+
+		async function getVoltsStatus() {
+			const dataVoltsStatus=await getJson("volts");
+			if (dataVoltsStatus) fillVoltsTable(dataVoltsStatus);
 		}
 			
 		async function updateWT32() {

@@ -149,10 +149,10 @@
 
 // defines 
 
-#define ACTUATOR_COUNT      		12    	// how many valves are supported
-#define ADDITIONAL_SENSOR_COUNT		10 		// some additional sensors for x
+#define ACTUATOR_COUNT      		12    // how many valves are supported
+#define ADDITIONAL_SENSOR_COUNT	10 		// some additional sensors for x
 #define MAXONEWIRECNT		(ACTUATOR_COUNT*2)+ADDITIONAL_SENSOR_COUNT				// max count of usable 1-wire sensors
-
+#define MAXDS2438CNT  8
 #define SYSTEM_NAME         "VdMot Controller"
 
 #define EEPROM_MARK_ADD		0		// address 4 byte mark: 0x1F2F3F4F

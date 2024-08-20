@@ -28,14 +28,14 @@
   Copyright (C) 2021 Lenti84  https://github.com/Lenti84/VdMot_Controller
 *END************************************************************************/
 
-#ifndef _TEMPERATURE_H
-	#define _TEMPERATURE_H
+#pragma once
 
 #include <Arduino.h>
 #include <DallasTemperature.h>
 
 
 extern void temperature_setup();
+extern void setDeviceAddress();
 extern void temperature_loop();
 extern void get_sensordata (unsigned int index, char *buffer, int buflen);
 extern void temp_command(int command);
@@ -51,15 +51,21 @@ void printAddress(DeviceAddress deviceAddress);
 #define TEMP_CMD_UNLOCK       0x03
 
 typedef struct {
-  int 			temperature;
+  int temperature;
   DeviceAddress address;  
 } tempsensor;
 
 extern tempsensor tempsensors[];
-extern uint8_t numberOfDevices;
 
 extern DallasTemperature sensors;
 
+typedef struct {
+  int vad;
+  DeviceAddress address; 
+} voltsensor;
 
-#endif //_TEMPERATURE_H
+extern voltsensor voltsensors[];
 
+extern uint8_t noOfDevices;
+extern uint8_t noOfDS18Devices;
+extern uint8_t noOfDS2438Devices;

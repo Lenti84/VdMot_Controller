@@ -306,6 +306,11 @@ void handleTemps(AsyncWebServerRequest *request)
   request->send(200,aj,Web.getTempsStatus(VdmConfig.configFlash.tempsConfig));
 }
 
+void handleVolts(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,Web.getVoltsStatus(VdmConfig.configFlash.voltsConfig));
+}
+
 void handleNetInfo(AsyncWebServerRequest *request) 
 { 
   request->send(200,aj,Web.getNetInfo(VdmNet.networkInfo));
@@ -344,6 +349,16 @@ void handleTempsConfig(AsyncWebServerRequest *request)
 void handleTempSensorsID(AsyncWebServerRequest *request)
 {
   request->send(200,aj,Web.getTempSensorsID ());
+}
+
+void handleVoltsConfig(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,Web.getVoltsConfig (VdmConfig.configFlash.voltsConfig));
+}
+
+void handleVoltSensorsID(AsyncWebServerRequest *request)
+{
+  request->send(200,aj,Web.getVoltSensorsID ());
 }
 
 void handleSysInfo(AsyncWebServerRequest *request) 
@@ -474,6 +489,7 @@ void  CServerServices::initServer()
   server.onNotFound(handleNotFound);
   server.on("/valves",HTTP_GET,[](AsyncWebServerRequest * request) {handleValves(request);});
   server.on("/temps",HTTP_GET,[](AsyncWebServerRequest * request) {handleTemps(request);});
+  server.on("/volts",HTTP_GET,[](AsyncWebServerRequest * request) {handleVolts(request);});
   server.on("/netinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleNetInfo(request);});
   server.on("/netconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleNetConfig(request);});
   server.on("/protconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleProtConfig(request);});
@@ -481,12 +497,14 @@ void  CServerServices::initServer()
   server.on("/motorconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleMotorConfig(request);});
   server.on("/valvesctrlconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleValvesControlConfig(request);});
   server.on("/tempsconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleTempsConfig(request);});
+  server.on("/voltsconfig",HTTP_GET,[](AsyncWebServerRequest * request) {handleVoltsConfig(request);});
   server.on("/sysinfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysInfo(request);});
   server.on("/sysdyninfo",HTTP_GET,[](AsyncWebServerRequest * request) {handleSysDynInfo(request);});
   server.on("/fsdir",HTTP_GET,[](AsyncWebServerRequest * request) {handleGetFSDir(request);});
   server.on("/stmupdate", HTTP_GET, [](AsyncWebServerRequest * request) {handleWebPageStmUpdate(request);});
   server.on("/stmupdstatus", HTTP_GET, [](AsyncWebServerRequest * request) {handleStmUpdStatus(request);});
   server.on("/tempsensorsid", HTTP_GET, [](AsyncWebServerRequest * request) {handleTempSensorsID(request);});
+  server.on("/voltsensorsid", HTTP_GET, [](AsyncWebServerRequest * request) {handleVoltSensorsID(request);});
   server.on("/sysconfig", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetSysConfig(request);});
   server.on("/msgconfig", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetMsgConfig(request);});
   server.on("/stm?", HTTP_GET, [](AsyncWebServerRequest * request) {handleGetStm(request);});
@@ -568,6 +586,15 @@ AsyncCallbackJsonWebHandler* valvesControlCfgHandler = new AsyncCallbackJsonWebH
     } else request->send(400, tp, "Not an object");
   });
   server.addHandler(tempsCfgHandler);
+
+  AsyncCallbackJsonWebHandler* voltsCfgHandler = new AsyncCallbackJsonWebHandler("/voltsconfig", [](AsyncWebServerRequest *request, JsonVariant &json) {
+    if (json.is<JsonObject>()) {
+      JsonObject&& jsonObj = json.as<JsonObject>();
+      VdmConfig.postVoltsCfg (jsonObj);
+      request->send(200, aj, resOk);
+    } else request->send(400, tp, "Not an object");
+  });
+  server.addHandler(voltsCfgHandler);
 
   AsyncCallbackJsonWebHandler* tempsAuthHandler = new AsyncCallbackJsonWebHandler("/auth", [](AsyncWebServerRequest *request, JsonVariant &json) {
     if (json.is<JsonObject>()) {

@@ -147,6 +147,16 @@ void CVdmConfig::clearConfig()
     memset (configFlash.tempsConfig.tempConfig[i].ID,0,sizeof(configFlash.tempsConfig.tempConfig[i].ID));
   }
   configFlash.systemConfig.celsiusFahrenheit=0;
+
+  for (uint8_t i=0; i<VOLT_SENSORS_COUNT; i++) {
+    configFlash.voltsConfig.voltConfig[i].active = false;
+    configFlash.voltsConfig.voltConfig[i].offset = 0;
+    configFlash.voltsConfig.voltConfig[i].factor = 1.0;
+    memset (configFlash.voltsConfig.voltConfig[i].unit,0,sizeof(configFlash.voltsConfig.voltConfig[i].unit));
+    memset (configFlash.voltsConfig.voltConfig[i].name,0,sizeof(configFlash.voltsConfig.voltConfig[i].name));
+    memset (configFlash.voltsConfig.voltConfig[i].ID,0,sizeof(configFlash.voltsConfig.voltConfig[i].ID));
+  }
+
   memset (configFlash.systemConfig.stationName,0,sizeof(configFlash.systemConfig.stationName));
   strncpy(configFlash.systemConfig.stationName,DEVICE_HOSTNAME,sizeof(configFlash.systemConfig.stationName));
 
@@ -261,6 +271,12 @@ void CVdmConfig::readConfig()
     prefs.end();
   }
 
+   if (prefs.begin(nvsVoltsCfg,false)) {
+    if (prefs.isKey(nvsVolts))
+      prefs.getBytes(nvsVolts,(void *) configFlash.voltsConfig.voltConfig, sizeof(configFlash.voltsConfig.voltConfig));
+    prefs.end();
+  }
+
   if (prefs.begin(nvsTZCfg,false)) {
     if (prefs.isKey(nvsTZ))
       prefs.getString(nvsTZ,(char*) configFlash.timeZoneConfig.tz,sizeof(configFlash.timeZoneConfig.tz));
@@ -362,6 +378,11 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.begin(nvsTempsCfg,false);
   prefs.clear();
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
+  prefs.end();
+
+  prefs.begin(nvsVoltsCfg,false);
+  prefs.clear();
+  prefs.putBytes(nvsVolts, (void *) configFlash.voltsConfig.voltConfig, sizeof(configFlash.voltsConfig.voltConfig));
   prefs.end();
   
   prefs.begin(nvsTZCfg,false);
@@ -619,6 +640,20 @@ void CVdmConfig::postTempsCfg (JsonObject doc)
     idx++;
   }
 }
+
+void CVdmConfig::postVoltsCfg (JsonObject doc)
+{
+  size_t size=doc["volts"].size(); 
+  for (uint8_t i=0; i<size; i++) {
+    if (!doc["volts"][i]["name"].isNull()) strncpy(configFlash.voltsConfig.voltConfig[i].name,doc["volts"][i]["name"].as<const char*>(),sizeof(configFlash.voltsConfig.voltConfig[i].name));
+    if (!doc["volts"][i]["id"].isNull()) strncpy(configFlash.voltsConfig.voltConfig[i].ID,doc["volts"][i]["id"].as<const char*>(),sizeof(configFlash.voltsConfig.voltConfig[i].ID));
+    if (!doc["volts"][i]["active"].isNull()) configFlash.voltsConfig.voltConfig[i].active=doc["volts"][i]["active"];
+    if (!doc["volts"][i]["offset"].isNull()) configFlash.voltsConfig.voltConfig[i].offset=(doc["volts"][i]["offset"].as<float>()) ;
+    if (!doc["volts"][i]["factor"].isNull()) configFlash.voltsConfig.voltConfig[i].factor=(doc["volts"][i]["factor"].as<float>()) ;
+    if (!doc["volts"][i]["unit"].isNull()) strncpy(configFlash.voltsConfig.voltConfig[i].unit,doc["volts"][i]["unit"].as<const char*>(),sizeof(configFlash.voltsConfig.voltConfig[i].unit));
+  }
+}
+
 
 void CVdmConfig::postSysCfg (JsonObject doc)
 {

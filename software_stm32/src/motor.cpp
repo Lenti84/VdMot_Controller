@@ -36,7 +36,7 @@
 #include "terminal.h"
 #include "app.h"
 #include "eeprom.h"
-#include "temperature.h"
+#include "owDevices.h"
 
 
 

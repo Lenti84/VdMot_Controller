@@ -246,6 +246,34 @@ bool CWeb::findIdInValve (uint8_t idx) {
   return (false);
 }  
 
+String CWeb::getVoltsConfig (VDM_VOLTS_CONFIG voltsConfig)
+{
+  String result = "[";
+  for (uint8_t x=0;x<VOLT_SENSORS_COUNT;x++) {
+    result += "{\"name\":\""+String(voltsConfig.voltConfig[x].name) + "\"," +
+              "\"active\":"+String(voltsConfig.voltConfig[x].active) + "," +
+              "\"id\":\""+String(voltsConfig.voltConfig[x].ID) + "\"," +
+              "\"offset\":\""+String(((float)voltsConfig.voltConfig[x].offset),3) + "\"," +
+              "\"factor\":\""+String(((float)voltsConfig.voltConfig[x].factor),3) + "\"," +
+              "\"unit\":\""+String(voltsConfig.voltConfig[x].unit) + "\"}";
+    if (x<VOLT_SENSORS_COUNT-1) result += ",";
+  }  
+  result += "]"; 
+  return result;  
+}
+
+String CWeb::getVoltSensorsID()
+{
+  String result = "[";
+  String id="";
+  for (uint8_t x=0;x<StmApp.voltsCount;x++) {
+    result += "{\"id\":\""+String(StmApp.voltsId[x].id) + "\"}";
+    if (x<StmApp.voltsCount-1) result += ",";
+  }  
+  result += "]"; 
+  return result;  
+}
+
 String CWeb::getSysInfo()
 {
   String wt32Build="";
@@ -420,6 +448,29 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
   result += "]";
   return result;
 }
+
+String CWeb::getVoltsStatus(VDM_VOLTS_CONFIG voltsConfig) 
+{
+  String result = "[";
+  bool start = false;
+  
+  for (uint8_t i=0;i<StmApp.voltsCount;i++) {
+     if (voltsConfig.voltConfig[i].active) {
+      if (start) result += ",";
+      result += "{\"id\":\"" + String(StmApp.volts[i].id) + "\","+
+                 "\"name\":\"" + String(voltsConfig.voltConfig[i].name) + "\","+
+                 "\"unit\":\"" + String(voltsConfig.voltConfig[i].unit) + "\",";
+      if (StmApp.volts[i].failed) 
+        result+="\"value\":\"failed\"}";
+      else
+        result+="\"value\":" + String(StmApp.volts[i].value,3)+"}";
+      start = true;
+     }
+  }  
+  result += "]";
+  return result;
+}
+
 
 String CWeb::getFSDir() 
 {

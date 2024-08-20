@@ -182,6 +182,19 @@ typedef struct {
   VDM_TEMP_CONFIG tempConfig[TEMP_SENSORS_COUNT];
 } VDM_TEMPS_CONFIG;
 
+typedef struct {
+  char name[11];
+  bool active;
+  float offset;
+  float factor;
+  char unit[9];
+  char ID[25];
+} VDM_VOLT_CONFIG;
+
+typedef struct {
+  VDM_VOLT_CONFIG voltConfig[VOLT_SENSORS_COUNT];
+} VDM_VOLTS_CONFIG;
+
 typedef struct  {
   uint8_t pushOver : 1 ;
   uint8_t email : 1 ;
@@ -232,6 +245,7 @@ typedef struct
   VDM_PROTOCOL_CONFIG protConfig;
   VDM_VALVES_CONFIG valvesConfig;
   VDM_TEMPS_CONFIG tempsConfig;
+  VDM_VOLTS_CONFIG voltsConfig;
   VDM_SYSTEM_CONFIG systemConfig;
   VDM_VALVES_CONTROL_CONFIG valvesControlConfig;
   VDM_SYSTEM_TIME_ZONE_CONFIG timeZoneConfig;
@@ -296,6 +310,9 @@ typedef struct {
 #define nvsTempsCfg                 "tempsCfg"
 #define nvsTemps                    "temps"
 
+#define nvsVoltsCfg                 "voltsCfg"
+#define nvsVolts                    "volts"
+
 #define nvsDayOfCalib               "dayOfCalib"
 #define nvsHourOfCalib              "hourOfCalib"
 #define nvsMovCalib                 "movCalib"
@@ -345,6 +362,7 @@ public:
   void postValvesCfg (JsonObject doc);
   void postValvesControlCfg (JsonObject doc);
   void postTempsCfg (JsonObject doc);
+  void postVoltsCfg (JsonObject doc);
   void postSysCfg (JsonObject doc);
   void postMessengerCfg (JsonObject doc);
   String handleAuth (JsonObject doc);

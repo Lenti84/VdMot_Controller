@@ -96,7 +96,9 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
     strncpy(mqtt_valvesTopic, mqtt_mainTopic,sizeof(mqtt_commonTopic));
     strncat(mqtt_valvesTopic, DEFAULT_VALVESTOPIC,sizeof(mqtt_valvesTopic)- strlen (mqtt_valvesTopic) - 1);
     strncpy(mqtt_tempsTopic, mqtt_mainTopic,sizeof(mqtt_commonTopic));
-    strncat(mqtt_tempsTopic, DEFAULT_TEMPSTOPIC,sizeof(mqtt_tempsTopic)- strlen (mqtt_tempsTopic) - 1);
+    strncat(mqtt_tempsTopic, DEFAULT_TEMPSTOPIC,sizeof(mqtt_voltsTopic)- strlen (mqtt_voltsTopic) - 1);
+    strncpy(mqtt_voltsTopic, mqtt_mainTopic,sizeof(mqtt_commonTopic));
+    strncat(mqtt_voltsTopic, DEFAULT_VOLTSTOPIC,sizeof(mqtt_voltsTopic)- strlen (mqtt_voltsTopic) - 1);
 
     if (strlen(VdmConfig.configFlash.systemConfig.stationName)>0) {
         strncpy(stationName, VdmConfig.configFlash.systemConfig.stationName,sizeof(stationName));
@@ -119,12 +121,12 @@ uint8_t CMqtt::checkForPublish()
 
     forcePublish = true;
     if (firstPublish) {
-        return publishCommon+publishValves+publishTemps;    
+        return publishAll; 
     }
     if (!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) {
         if ((millis()-tsPublish)>(1000*VdmConfig.configFlash.protConfig.publishInterval)) {
             tsPublish = millis();
-            return publishCommon+publishValves+publishTemps;    
+            return publishAll;   
         }
     } else {
         if ((millis()-tsForcePublish)>(1000*VdmConfig.configFlash.protConfig.publishInterval)) {
@@ -132,7 +134,7 @@ uint8_t CMqtt::checkForPublish()
                  UART_DBG.println("force publish");
             #endif
             tsForcePublish = millis();
-            return publishCommon+publishValves+publishTemps;    
+            return publishAll;     
         }
         forcePublish = false;
         if ((millis()-tsPublish)>(1000*VdmConfig.configFlash.protConfig.minBrokerDelay)) {
@@ -177,6 +179,19 @@ uint8_t CMqtt::checkForPublish()
                     } 
                 }
             }
+        }
+        // volts
+        for (i=0;i<VOLT_SENSORS_COUNT;i++) {
+            lastVoltValues[i].publishNow=false;
+         //   if (VdmConfig.configFlash.tempsConfig.tempConfig[i].active) {
+                if ((millis()-lastVoltValues[i].ts)>(1000*VdmConfig.configFlash.protConfig.minBrokerDelay)) {
+                    if ((lastVoltValues[i].vad!=StmApp.volts[i].vad) ||
+                        ((millis()-lastVoltValues[i].ts)>(1000*VdmConfig.configFlash.protConfig.publishInterval))) {
+                            result|=publishVolts;
+                            lastVoltValues[i].publishNow=true;
+                    } 
+                }
+           // }
         }
     }
     return result;
@@ -808,6 +823,50 @@ void CMqtt::publish_temps()
     }
 } 
 
+void CMqtt::publish_volts()
+{
+    char topicstr[MAINTOPIC_LEN+50];
+    char nrstr[21];
+    int8_t voltIdx;
+    uint8_t len;
+    String s;
+    
+    if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
+        for (uint8_t x = 0;x<StmApp.voltsCount;x++) {
+            if (lastVoltValues[x].publishNow || forcePublish) {
+                voltIdx=StmApp.findVoltID(StmApp.volts[x].id);
+                if (voltIdx>=0) {
+                    memset(topicstr,0x0,sizeof(topicstr));
+                    memset(nrstr,0x0,sizeof(nrstr));
+                    itoa((x+1), nrstr, 10);
+                    if (strlen(VdmConfig.configFlash.voltsConfig.voltConfig[voltIdx].name)>0)
+                        strncpy(nrstr,VdmConfig.configFlash.voltsConfig.voltConfig[voltIdx].name,sizeof(nrstr));
+                    // prepare prefix
+                    strncat(topicstr, mqtt_voltsTopic,sizeof(topicstr) - strlen (topicstr) - 1);
+                    strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
+                    len = strlen(topicstr);
+                    // id
+                    strncat(topicstr, "/id",sizeof(topicstr) - strlen (topicstr) - 1);     
+                    publishValue(topicstr, StmApp.volts[voltIdx].id);
+                    // actual value
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
+                    s = String(StmApp.volts[voltIdx].value,3);     
+                    publishValue(topicstr, (char*) &s);
+                    // unit
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/unit",sizeof(topicstr) - strlen (topicstr) - 1); 
+                    publishValue(topicstr, VdmConfig.configFlash.voltsConfig.voltConfig[voltIdx].unit);
+                }
+            }
+            lastVoltValues[x].vad=StmApp.volts[x].vad;
+            lastVoltValues[x].publishNow=false;
+            lastVoltValues[x].ts=millis();
+        }
+    }
+} 
+
+
 void CMqtt::publish_common () 
 {
     char topicstr[MAINTOPIC_LEN+50];
@@ -880,6 +939,7 @@ void CMqtt::publish_all (uint8_t publishFlags)
    if (CHECK_BIT(publishFlags,0)==1) publish_common (); 
    if (CHECK_BIT(publishFlags,1)==1) publish_valves ();
    if (CHECK_BIT(publishFlags,2)==1) publish_temps ();
+   if (CHECK_BIT(publishFlags,3)==1) publish_volts ();
 }
 
 void CMqtt::checktValueTimeOut () 
