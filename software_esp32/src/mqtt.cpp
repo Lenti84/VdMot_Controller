@@ -851,6 +851,8 @@ void CMqtt::publish_volts()
                     // actual value
                     topicstr[len] = '\0';
                     strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
+                    if (StmApp.volts[voltIdx].failed) s="failed"; 
+                    else
                     s = String(StmApp.volts[voltIdx].value,3);     
                     publishValue(topicstr, (char*) &s);
                     // unit

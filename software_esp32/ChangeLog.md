@@ -11,6 +11,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.4.0]
+### Changed
+- System :      add DS2438 for voltage sensors
 
 ## [1.3.7]
 ### Changed

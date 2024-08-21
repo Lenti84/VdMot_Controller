@@ -754,7 +754,7 @@ void  CStmApp::app_check_data()
                     memset(volts[idx].id,0x0,sizeof(volts[idx].id)); 
                     strncpy(volts[idx].id,argptr[0],sizeof(volts[idx].id));
                     volts[idx].vad=atoi(argptr[1]);
-                    volts[idx].failed=(volts[idx].vad>=1022);
+                    volts[idx].failed=(volts[idx].vad<=-1000);
                     float c = (float) volts[idx].vad;
                     volts[idx].value=(c/100+VdmConfig.configFlash.voltsConfig.voltConfig[idx].offset) * VdmConfig.configFlash.voltsConfig.voltConfig[idx].factor;
                 } 
