@@ -77,3 +77,15 @@ bool isFloat(const std::string& str)
     strtof(str.c_str(), &ptr);
     return (*ptr) == '\0';
 }
+
+
+void replace (char* buffer,uint16_t size,char find, char with)
+{
+  for(int i = 0; i<size;i++)
+	{
+		if(buffer[i] == find)
+		{
+			buffer[i] = with;
+		}
+	}
+}

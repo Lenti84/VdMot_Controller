@@ -47,11 +47,13 @@
 
 #define pinSetFactoryCfg  2
 
-enum protType  {protTypeNone=0,protTypeMqtt=1};
+enum protType  {protTypeNone=0,protTypeMqtt=1,protTypeMqttHA=2};
 
 #define allowHeatingCooling 0
 #define allowHeating 1
 #define allowCooling 2
+
+enum numFormat {numFormatIntl=0,numFormatGer=1};
 
 typedef struct {
   uint8_t eth_wifi;
@@ -97,6 +99,7 @@ typedef struct  {
 typedef struct  {
   uint8_t timeoutTSActive : 1 ;
   uint8_t timeoutDSActive : 1 ;
+  uint8_t numFormat : 1 ;
 } VDM_PROTOCOL_MQTT_CONFIG_FLAGS;
 
 
@@ -108,7 +111,7 @@ typedef struct  {
 
 
 typedef struct {
-  uint8_t  dataProtocol; // 0 = no protocol , 1 = mqtt
+  uint8_t  dataProtocol; // 0 = no protocol , 1 = mqtt, 2 = mqtt HA
   uint32_t brokerIp;
   uint16_t brokerPort;
   uint32_t brokerInterval;
@@ -192,7 +195,13 @@ typedef struct {
 } VDM_VOLT_CONFIG;
 
 typedef struct {
+  uint8_t avType;
+  uint16_t noOfAv;
+} VDM_VOLT_AV_CONFIG;
+
+typedef struct {
   VDM_VOLT_CONFIG voltConfig[VOLT_SENSORS_COUNT];
+  VDM_VOLT_AV_CONFIG voltAVConfig[VOLT_SENSORS_COUNT];
 } VDM_VOLTS_CONFIG;
 
 typedef struct  {

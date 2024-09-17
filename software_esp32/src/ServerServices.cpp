@@ -178,6 +178,13 @@ void sysLogSave (JsonObject doc)
   VdmNet.startSysLog();
 }
 
+void discoveryHA (JsonObject doc)
+{  
+  if (Mqtt.hadState==HAD_IDLE) {
+    Mqtt.hadState=HAD_STARTED;
+  }
+}
+
 void CServerServices::postSetValve (JsonObject doc)
 {
   uint8_t index;
@@ -402,10 +409,10 @@ bool handleCmd(JsonObject doc)
 { 
   typedef void (*fp)(JsonObject doc);
   fp  fpList[] = {&restart,&writeConfig,&resetConfig,&restoreConfig,&fileDelete,&setGetFS,
-                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl,&mqttReconnect,&sysLogSave} ;
+                  &setClearFS,&scanTSensors,&valvesCalibration,&valvesAssembly,&valvesDetect,&writeValvesControl,&mqttReconnect,&sysLogSave,&discoveryHA} ;
 
   char const *names[]=  {"reboot", "saveCfg","resetCfg","restoreCfg","fDelete","getFS",
-                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave","mqttReconnect","sysLogSave",NULL};
+                        "clearFS","scanTempSensors","vCalib","vAssembly","valvesDetect","vCtrlSave","mqttReconnect","sysLogSave","discoveryHA",NULL};
   char const **p;
   bool found = false;
 

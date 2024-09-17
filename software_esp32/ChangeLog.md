@@ -11,6 +11,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.4.1]
+### Changed
+- Mqtt :        blanks in valve name und temp name allowed
+### Added
+- Mqtt :        discovery for home assistant
+
 ## [1.4.0]
 ### Changed
 - System :      add DS2438 for voltage sensors

@@ -64,6 +64,8 @@
 #define MAX_MQTT_RETRIES 100
 #define STATE_FAILED 9
 
+enum HAD_STATE { HAD_IDLE, HAD_STARTED, HAD_INPROGRSS,HAD_FINISHED };
+
 typedef struct {
   bool controlActive;
   uint8_t  position;
@@ -111,6 +113,20 @@ typedef struct {
   bool messengerSent;        
 } VALVESTATE; 
 
+typedef struct {
+  String topicClass;
+  String topic;
+  String name; 
+  String unique_id;
+  String state_topic;
+  String command_topic;
+  String icon;
+  String options;
+  String device_class;
+  String state_class;
+  String unit_of_measurement;
+  String configuration_url;    
+} HA_Item; 
 
 class CMqtt
 {
@@ -121,10 +137,13 @@ class CMqtt
     void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort);
     void mqtt_loop();
     void callback(char* topic, byte* payload, unsigned int length);
+    void sendDiscoveryHA(HA_Item thisHAItem); 
+    void executeDiscoveryHA();
     int mqttState;
     bool mqttConnected;
     bool mqttReceived;
     VALVESTATE valveStates[ACTUATOR_COUNT];
+    HAD_STATE hadState;
   private:
     void publish_all (uint8_t publishFlags);
     void publish_common (); 
@@ -155,6 +174,8 @@ class CMqtt
     LASTTEMPVALUES lastTempValues[TEMP_SENSORS_COUNT];
     LASTVOLTVALUES lastVoltValues[VOLT_SENSORS_COUNT];
     boolean topicsReceived;
+    String haDiscoveryTopic;
+    
 };
 
 extern CMqtt Mqtt;

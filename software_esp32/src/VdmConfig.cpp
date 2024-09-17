@@ -156,6 +156,7 @@ void CVdmConfig::clearConfig()
     memset (configFlash.voltsConfig.voltConfig[i].name,0,sizeof(configFlash.voltsConfig.voltConfig[i].name));
     memset (configFlash.voltsConfig.voltConfig[i].ID,0,sizeof(configFlash.voltsConfig.voltConfig[i].ID));
   }
+  memset (configFlash.voltsConfig.voltAVConfig,0,sizeof(configFlash.voltsConfig.voltAVConfig));
 
   memset (configFlash.systemConfig.stationName,0,sizeof(configFlash.systemConfig.stationName));
   strncpy(configFlash.systemConfig.stationName,DEVICE_HOSTNAME,sizeof(configFlash.systemConfig.stationName));
@@ -214,12 +215,7 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
     if (prefs.isKey(nvsNetTimeServer))
       prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
-    /*
-    if (strlen(configFlash.netConfig.timeServer) == 0) {
-      memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
-      strncpy(configFlash.netConfig.timeServer,"pool.ntp.org",sizeof(configFlash.netConfig.timeServer));
-    }
-    */
+   
     configFlash.netConfig.syslogLevel=prefs.getUChar(nvsNetSysLogEnable);
     configFlash.netConfig.syslogIp=prefs.getULong(nvsNetSysLogIp);
     configFlash.netConfig.syslogPort=prefs.getUShort(nvsNetSysLogPort);
@@ -273,7 +269,7 @@ void CVdmConfig::readConfig()
 
    if (prefs.begin(nvsVoltsCfg,false)) {
     if (prefs.isKey(nvsVolts))
-      prefs.getBytes(nvsVolts,(void *) configFlash.voltsConfig.voltConfig, sizeof(configFlash.voltsConfig.voltConfig));
+      prefs.getBytes(nvsVolts,(void *) &configFlash.voltsConfig, sizeof(configFlash.voltsConfig));
     prefs.end();
   }
 
@@ -350,7 +346,7 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.begin(nvsProtCfg,false);
   prefs.clear();
   prefs.putUChar(nvsProtDataProt,configFlash.protConfig.dataProtocol);
-  if (configFlash.protConfig.dataProtocol==protTypeMqtt) {
+  if (configFlash.protConfig.dataProtocol>=protTypeMqtt) {
     prefs.putULong(nvsProtBrokerIp,configFlash.protConfig.brokerIp);
     prefs.putUShort(nvsProtBrokerPort,configFlash.protConfig.brokerPort);
     prefs.putULong(nvsProtBrokerInterval,configFlash.protConfig.brokerInterval);
@@ -382,7 +378,7 @@ void CVdmConfig::writeConfig(bool reboot)
 
   prefs.begin(nvsVoltsCfg,false);
   prefs.clear();
-  prefs.putBytes(nvsVolts, (void *) configFlash.voltsConfig.voltConfig, sizeof(configFlash.voltsConfig.voltConfig));
+  prefs.putBytes(nvsVolts, (void *) &configFlash.voltsConfig, sizeof(configFlash.voltsConfig));
   prefs.end();
   
   prefs.begin(nvsTZCfg,false);
@@ -506,6 +502,7 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["mqttTODSActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutDSActive = doc["mqttTODSActive"];
   if (!doc["mqttTO"].isNull()) configFlash.protConfig.mqttConfig.timeOut = doc["mqttTO"];
   if (!doc["mqttToPos"].isNull()) configFlash.protConfig.mqttConfig.toPos = doc["mqttToPos"];
+  if (!doc["numFormat"].isNull()) configFlash.protConfig.mqttConfig.flags.numFormat = doc["numFormat"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)

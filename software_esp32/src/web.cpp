@@ -147,6 +147,7 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"pubPathAsRoot\":"+String(protConfig.protocolFlags.publishPathAsRoot)+","+
                     "\"pubUpTime\":"+String(protConfig.protocolFlags.publishUpTime)+","+
                     "\"pubDiag\":"+String(protConfig.protocolFlags.publishDiag)+","+
+                    "\"numFormat\":"+String(protConfig.mqttConfig.flags.numFormat)+","+
                     "\"keepAliveTime\":"+String(protConfig.keepAliveTime)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  

@@ -80,7 +80,8 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
     mqttReceived=false;
     mqtt_client.setServer(brokerIP, brokerPort);
     mqtt_client.setCallback(mcallback);
-
+   
+    hadState=HAD_IDLE;
     memset (mqtt_mainTopic,0,sizeof(mqtt_mainTopic));
     if (VdmConfig.configFlash.protConfig.protocolFlags.publishPathAsRoot) strncpy(mqtt_mainTopic,"/",sizeof(mqtt_mainTopic));
 
@@ -207,11 +208,29 @@ void CMqtt::mqtt_loop()
         mqtt_client.loop();
         if (VdmConfig.configFlash.protConfig.publishInterval<2) VdmConfig.configFlash.protConfig.publishInterval=2;
         uint8_t check=checkForPublish();
-       
-        if (check!=0) { 
-            firstPublish=false;
-            publish_all(check);
+
+        switch (hadState) {
+            case HAD_IDLE : {
+                if (check!=0) { 
+                    firstPublish=false;
+                    publish_all(check);
+                }   
+                break; 
+            }
+            case HAD_STARTED : {
+                hadState = HAD_INPROGRSS;
+                executeDiscoveryHA();
+                break;
+            }
+            case HAD_INPROGRSS : {
+                break;
+            }
+            case HAD_FINISHED : {
+                hadState = HAD_IDLE;
+                break;
+            }
         }
+       
         messengerSend=false;
         connectTimeout=millis();
     } else {
@@ -251,14 +270,10 @@ void CMqtt::subscribe (char* topicstr, char* thisTopic, uint8_t size, bool publi
     strncat(topicstr, thisTopic,size - strlen (topicstr) - 1);
     uint8_t len = strlen(topicstr);
     if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
-       /* if (publishValue) {
-            strncat(topicstr, "/value",size - strlen (topicstr) - 1);
-            mqtt_client.subscribe(topicstr); 
-            topicstr[len]=0;
-        }*/
         strncat(topicstr, "/set",size - strlen (topicstr) - 1);   
     } 
     mqtt_client.subscribe(topicstr);  
+    //UART_DBG.println("subscribe "+String(topicstr));
 }
 
 void CMqtt::reconnect() 
@@ -307,15 +322,11 @@ void CMqtt::reconnect()
     memset(topicstr,0x0,sizeof(topicstr));
     strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
     len = strlen(topicstr);
-    subscribe (topicstr, (char*) "heatControl",sizeof(topicstr),true);
-    //strncat(topicstr, "heatControl",sizeof(topicstr) - strlen (topicstr) - 1);
-    //mqtt_client.subscribe(topicstr);    
+    subscribe (topicstr, (char*) "heatControl",sizeof(topicstr),true);   
     
     topicstr[len] = '\0';
     subscribe (topicstr, (char*) "parkPosition",sizeof(topicstr),true);
-    //strncat(topicstr, "parkPosition",sizeof(topicstr) - strlen (topicstr) - 1);
-    //mqtt_client.subscribe(topicstr);    
-
+  
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         lastValveValues[x].ts=millis();
         lastValveValues[x].publishNow=false;
@@ -324,8 +335,10 @@ void CMqtt::reconnect()
             memset(topicstr,0x0,sizeof(topicstr));
             memset(nrstr,0x0,sizeof(nrstr));
             itoa((x+1), nrstr, 10);
-            if (strlen(VdmConfig.configFlash.valvesConfig.valveConfig[x].name)>0)
+            if (strlen(VdmConfig.configFlash.valvesConfig.valveConfig[x].name)>0) {
                 strncpy(nrstr,VdmConfig.configFlash.valvesConfig.valveConfig[x].name,sizeof(nrstr));
+                replace (nrstr,strlen(nrstr),' ','_');
+            }
             // prepare prefix
             strncat(topicstr, mqtt_valvesTopic,sizeof(topicstr) - strlen (topicstr) - 1);
             strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);      
@@ -333,46 +346,37 @@ void CMqtt::reconnect()
 
             // target value
             subscribe (topicstr, (char*) "/target",sizeof(topicstr),true);
-            //strncat(topicstr, "/target",sizeof(topicstr) - strlen (topicstr) - 1);
-            //mqtt_client.subscribe(topicstr);
-
+          
             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) {
                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].valueSource==0) {
                         // temp value
                         topicstr[len] = '\0';
-                        subscribe (topicstr, (char*) "/tValue",sizeof(topicstr));
-                        //strncat(topicstr, "/tValue",sizeof(topicstr) - strlen (topicstr) - 1);
-                        //mqtt_client.subscribe(topicstr);    
+                        subscribe (topicstr, (char*) "/tValue",sizeof(topicstr));  
                     } 
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].targetSource==0) {
                         // temp target
                         topicstr[len] = '\0';
                         subscribe (topicstr, (char*) "/tTarget",sizeof(topicstr));
-                        //strncat(topicstr, "/tTarget",sizeof(topicstr) - strlen (topicstr) - 1);
-                        //mqtt_client.subscribe(topicstr);    
                     } 
+                    // temp dyn offset
+                    topicstr[len] = '\0';
+                    subscribe (topicstr, (char*) "/control/dynOffs",sizeof(topicstr));
                 }
                 // window state
                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
                         topicstr[len] = '\0';
                         subscribe (topicstr, (char*) "/window/state",sizeof(topicstr));
-                        //strncat(topicstr, "/window/state",sizeof(topicstr) - strlen (topicstr) - 1);
-                        //mqtt_client.subscribe(topicstr);  
                         // window target (%)
                         topicstr[len] = '\0';
                         subscribe (topicstr, (char*) "/window/target",sizeof(topicstr));
-                        //strncat(topicstr, "/window/target",sizeof(topicstr) - strlen (topicstr) - 1);
-                        //mqtt_client.subscribe(topicstr);  
                     }
                 }
                  // control active
                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link==0) {
                     topicstr[len] = '\0';
-                    subscribe (topicstr, (char*) "/control/mode",sizeof(topicstr));
-                    //strncat(topicstr, "/control/mode",sizeof(topicstr) - strlen (topicstr) - 1);
-                    //mqtt_client.subscribe(topicstr);                 
+                    subscribe (topicstr, (char*) "/control/mode",sizeof(topicstr));              
                 }
             }
         }
@@ -458,19 +462,19 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
     uint8_t val8;
     bool topicFound = false;
     char value[32] = {0};
+    char rbName[11] = {0};
 
     // local zero terminated copy of payload
     memcpy(value, payload, std::min<size_t>(sizeof(value) - 1, length));
     if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
                syslog.log(LOG_DEBUG, "MQTT: callback "+String(topic)+" : "+String(value));
     }
-
+    // UART_DBG.println("callback "+String (topic) +":"+String(value));
+  
     if (length>0) {
-        //if (!VdmConfig.configFlash.protConfig.protocolFlags.publishPathAsRoot) {
-            if (topic[0]=='/') {
-                topic++;        // adjust topic 
-            }
-        //}
+        if (topic[0]=='/') {
+            topic++;        // adjust topic 
+        }
         if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
             syslog.log(LOG_DEBUG, "MQTT: check callback common "+String(topic)+" : "+String(mqtt_commonTopic));
         }
@@ -482,7 +486,6 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
             pt= (char*) topic;
             pRef=mqtt_commonTopic;
             if (pRef[0]=='/') pRef++;
-           // pt+= strlen(mqtt_commonTopic);
             pt+=strlen(pRef);
             topicFound = checkTopicName(pt,(char*)"/heatControl");
             if (topicFound) {
@@ -529,7 +532,9 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                 idx=0;
                 found = false;
                 for (i=0;i<ACTUATOR_COUNT;i++) {
-                    if (strncmp(VdmConfig.configFlash.valvesConfig.valveConfig[i].name,item,sizeof(VdmConfig.configFlash.valvesConfig.valveConfig[i].name))==0) {
+                    strncpy(rbName,VdmConfig.configFlash.valvesConfig.valveConfig[i].name,sizeof(VdmConfig.configFlash.valvesConfig.valveConfig[i].name));
+                    replace (rbName,strlen(rbName),' ','_');
+                    if (strncmp(rbName,item,sizeof(rbName))==0) {
                         found = true;
                         break;
                     }
@@ -567,7 +572,7 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
                                     mqttReceived=true;
                                 }
                             }
-                        } else if (checkTopicName(pt,(char*) "/dynOffs")) {
+                        } else if (checkTopicName(pt,(char*) "/control/dynOffs")) {
                             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].controlFlags.active) {
                                 if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[idx].targetSource==0)
                                     PiControl[idx].dynOffset=atoi(value);
@@ -639,6 +644,7 @@ void CMqtt::publish_valves () {
     int8_t tempIdx;
     uint8_t len;
     String s;
+   
     const char valveStatesStr[10][11] =  {"","idle","opens","closes","failed","unknown","no valve","full open","connected","blocked"};
 
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
@@ -649,8 +655,10 @@ void CMqtt::publish_valves () {
                 memset(topicstr,0x0,sizeof(topicstr));
                 memset(nrstr,0x0,sizeof(nrstr));
                 itoa((x+1), nrstr, 10);
-                if (strlen(VdmConfig.configFlash.valvesConfig.valveConfig[x].name)>0)
+                if (strlen(VdmConfig.configFlash.valvesConfig.valveConfig[x].name)>0) {
                     strncpy(nrstr,VdmConfig.configFlash.valvesConfig.valveConfig[x].name,sizeof(nrstr));
+                    replace (nrstr,strlen(nrstr),' ','_');
+                }
                 // prepare prefix
                 strncat(topicstr, mqtt_valvesTopic,sizeof(topicstr) - strlen (topicstr) - 1);
                 strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
@@ -749,6 +757,7 @@ void CMqtt::publish_valves () {
                             strncat(topicstr, "/temp1",sizeof(topicstr) - strlen (topicstr) - 1);
                             if (StmApp.actuators[x].temp1>-500) {
                                 s = String(((float)StmApp.actuators[x].temp1)/10,1); 
+                                if (VdmConfig.configFlash.protConfig.mqttConfig.flags.numFormat==numFormatGer) s.replace('.',',');
                             } else s="failed";
                             publishValue(topicstr, (char*) &s);
                             lastValveValues[x].temp1=StmApp.actuators[x].temp1;
@@ -761,6 +770,7 @@ void CMqtt::publish_valves () {
                             strncat(topicstr, "/temp2",sizeof(topicstr) - strlen (topicstr) - 1);
                             if (StmApp.actuators[x].temp2>-500) {
                                 s = String(((float)StmApp.actuators[x].temp2)/10,1); 
+                                if (VdmConfig.configFlash.protConfig.mqttConfig.flags.numFormat==numFormatGer) s.replace('.',',');
                             } else s="failed";
                             publishValue(topicstr, (char*) &s);
                             lastValveValues[x].temp2=StmApp.actuators[x].temp2;
@@ -793,8 +803,10 @@ void CMqtt::publish_temps()
                             memset(topicstr,0x0,sizeof(topicstr));
                             memset(nrstr,0x0,sizeof(nrstr));
                             itoa((x+1), nrstr, 10);
-                            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0)
+                            if (strlen(VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name)>0) {
                                 strncpy(nrstr,VdmConfig.configFlash.tempsConfig.tempConfig[tempIdx].name,sizeof(nrstr));
+                                replace (nrstr,strlen(nrstr),' ','_');
+                            }
                             // prepare prefix
                             strncat(topicstr, mqtt_tempsTopic,sizeof(topicstr) - strlen (topicstr) - 1);
                             strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
@@ -809,7 +821,8 @@ void CMqtt::publish_temps()
                             if (StmApp.temps[x].temperature<=-500) {
                                 s = "failed";  
                             } else {
-                                s = String(((float)StmApp.temps[x].temperature)/10,1);     
+                                s = String(((float)StmApp.temps[x].temperature)/10,1); 
+                                if (VdmConfig.configFlash.protConfig.mqttConfig.flags.numFormat==numFormatGer) s.replace('.',','); 
                             }
                             publishValue(topicstr, (char*) &s);
                         }
@@ -839,8 +852,10 @@ void CMqtt::publish_volts()
                     memset(topicstr,0x0,sizeof(topicstr));
                     memset(nrstr,0x0,sizeof(nrstr));
                     itoa((x+1), nrstr, 10);
-                    if (strlen(VdmConfig.configFlash.voltsConfig.voltConfig[voltIdx].name)>0)
+                    if (strlen(VdmConfig.configFlash.voltsConfig.voltConfig[voltIdx].name)>0) {
                         strncpy(nrstr,VdmConfig.configFlash.voltsConfig.voltConfig[voltIdx].name,sizeof(nrstr));
+                        replace (nrstr,strlen(nrstr),' ','_');
+                    }
                     // prepare prefix
                     strncat(topicstr, mqtt_voltsTopic,sizeof(topicstr) - strlen (topicstr) - 1);
                     strncat(topicstr, nrstr,sizeof(topicstr) - strlen (topicstr) - 1);
@@ -853,7 +868,8 @@ void CMqtt::publish_volts()
                     strncat(topicstr, "/value",sizeof(topicstr) - strlen (topicstr) - 1);
                     if (StmApp.volts[voltIdx].failed) s="failed"; 
                     else
-                    s = String(StmApp.volts[voltIdx].value,3);     
+                    s = String(StmApp.volts[voltIdx].value,3); 
+                    if (VdmConfig.configFlash.protConfig.mqttConfig.flags.numFormat==numFormatGer) s.replace('.',',');    
                     publishValue(topicstr, (char*) &s);
                     // unit
                     topicstr[len] = '\0';
@@ -985,4 +1001,334 @@ void CMqtt::checktValueTimeOut ()
             if (messengerToSend) Messenger.sendMessage (title.c_str(),s.c_str());
         }
     }
+}
+
+void CMqtt::sendDiscoveryHA(HA_Item thisHAItem) 
+{
+    HA_Item haItem=thisHAItem;
+    String root="";
+    if (VdmConfig.configFlash.protConfig.protocolFlags.publishPathAsRoot) root="/";
+    haItem.unique_id = String(VdmConfig.configFlash.systemConfig.stationName)+"."+haItem.unique_id;
+    
+    if (haItem.state_topic.length()==0) haItem.state_topic = "null" ;
+    else haItem.state_topic = "\""+String(root)+String(VdmConfig.configFlash.systemConfig.stationName)+"/"+haItem.state_topic+"/value"+"\"";
+    
+    if (haItem.command_topic.length()==0) haItem.command_topic = "null" ;
+    else haItem.command_topic = "\""+String(root)+String(VdmConfig.configFlash.systemConfig.stationName)+"/"+haItem.command_topic+"/set"+"\"";
+    if (haItem.icon.length()>0) haItem.icon = "\"icon\": \""+haItem.icon+"\",\n"; 
+    if (haItem.unit_of_measurement.length()>0) haItem.unit_of_measurement = "\"unit_of_measurement\" : \""+haItem.unit_of_measurement+"\",\n";
+    
+    if (haItem.device_class.length()==0) haItem.device_class = "null" ;
+    else haItem.device_class = "\""+haItem.device_class+"\"";
+    if (haItem.state_class.length()==0) haItem.state_class = "null" ;
+    else haItem.state_class = "\""+haItem.state_class+"\"";
+
+    haItem.unique_id.replace(" ","_");
+
+    if (haItem.options.length()>0) haItem.options = haItem.options+",\n"; 
+
+    String json =  "{\"name\": \""+haItem.name+"\",\n" 
+                    "\"unique_id\": \""+haItem.unique_id+"\",\n"
+                    "\"state_topic\": "+haItem.state_topic+",\n"
+                    "\"command_topic\": "+haItem.command_topic+",\n"
+                    +haItem.icon+
+                    "\"device_class\": "+haItem.device_class+",\n"
+                    "\"state_class\": "+haItem.state_class+",\n"
+                    +haItem.unit_of_measurement+
+                    haItem.options+
+                    "\"device\": {\n"
+                        "\"identifiers\": \""+String(VdmConfig.configFlash.systemConfig.stationName)+"\",\n"
+                        "\"name\": \""+String(VdmConfig.configFlash.systemConfig.stationName)+"\",\n"
+                        "\"sw_version\": \""+String(FIRMWARE_VERSION)+"\",\n"
+                        "\"hw_version\": \"2.0\",\n"
+                        "\"model\": \"full\",\n"
+                        "\"manufacturer\": \"Lenti84/Surfgargano\",\n"
+                        "\"configuration_url\": \"http://"+VdmNet.networkInfo.ip.toString()+"/#config\"\n"
+                        "}\n"
+                    "}\n";
+
+
+    haDiscoveryTopic = "homeassistant/"+haItem.topicClass+"/"+String(VdmConfig.configFlash.systemConfig.stationName)+"/"+String (haItem.topic)+"/config";  
+    //UART_DBG.println("discovery topic : "+String(haDiscoveryTopic));
+    //UART_DBG.println("discovery item: "+String(json.length())+"="+String(json));
+     
+    uint16_t bl = 20+haDiscoveryTopic.length()+json.length();
+    uint16_t bs = mqtt_client.getBufferSize();
+    if (bs<bl) mqtt_client.setBufferSize(bl);
+
+    bool result=mqtt_client.publish((char*) haDiscoveryTopic.c_str(),(uint8_t *) json.c_str(),json.length(),true);
+    //UART_DBG.println("discovery result: "+String(result)+" bufferSize "+String(mqtt_client.getBufferSize()));
+    delay(100);
+}
+
+void CMqtt::executeDiscoveryHA() 
+{
+    // StationName/
+    /* common/
+        heatControl/
+            value
+            set
+        message/
+            value
+        parkPosition/
+            value
+            set
+        state/
+            value
+        uptime/              [config]
+            value
+    */
+
+    /* valves/
+        valveName/           [config]
+            calibration/
+                repetitions/
+                     value
+            control/
+                mode/
+                    set
+            diag/            [config]
+                openCount/
+                    value
+                closeCount/
+                    value
+                deadZoneCount/
+                    value
+                meanCurrent/
+                    value
+                moves/
+                    value
+            window/          [config]
+                state/
+                    set
+                target/
+                    set
+            dynOffs/
+                set
+            state/
+                value
+            tTarget/         [config]
+                set
+            tValue/          [config]
+                set
+            target/
+                value
+                set
+            temp1/           [config]
+                value
+            temp2/           [config]
+                value
+    */
+
+    /* temps/
+        sensorName/          [config]
+            id/
+                value
+            value/
+                value
+    */
+
+    /* sensors/
+        sensorName/          [config]
+            id/
+                value
+            unit/
+                value
+            value/
+                value
+    */
+   
+/* Example
+        Topic :
+        homeassistant/sensor/VdMot/Schlafzimmer_Heizung/config
+        JSON:    
+        {"name": "Schlafzimmer Heizung",
+        "unique_id": "VdMot.Schlafzimmer_Heizung",
+        "state_topic": "VdMot/temps/wohn/value/value",
+        "icon": "mdi:temperature-celsius",
+        "device_class": "temperature",
+        "state_class": "measurement",
+        "unit_of_measurement" : "°C",
+        "device": {
+            "identifiers": "VdMot",
+            "name": "VdMot",
+            "sw_version": "1.4.0dev",
+            "hw_version": "2.0",
+            "model": "",
+            "manufacturer": "Lenti84/Surfgargano",
+            "configuration_url": "http://ip/#config"
+            }
+        }
+
+*/
+
+     
+    /*
+        String topicClass;
+        String topic;
+        String name; 
+        String unique_id;
+        String state_topic;
+        String command_topic;
+        String icon;
+        String options;
+        String device_class;
+        String state_class;
+        String unit_of_measurement;
+    */
+    HA_Item haCommonItems[] =  {{"select","heatControl","heatControl","common.heatControl","common/heatControl","common/heatControl","mdi:heat-pump-outline","\"options\": [\"manual\",\"heat\",\"cool\",\"off\"]","","",""},
+                                {"text","message","message","common.message","common/message","common/message","mdi:message","","volume","measurement",""},
+                                {"number","parkPosition","parkPosition","common.parkPosition","common/parkPosition","common/parkPosition","mdi:parking","","volume","measurement",""},
+                                {"text","state","state","common.state","common/state","common/state","mdi:state-machine","","volume","measurement",""},
+                                {"text","uptime","uptime","common.uptime","common/uptime","common/uptime","mdi:timelapse","","volume","measurement",""},
+                                {""}
+                                };
+    
+    HA_Item haValvesItems[] =  {{"text","valves_state","state","valves.state","state","state","mdi:state-machine","","volume","measurement",""},
+                                {"number","valves_tTarget","tTarget","valves.tTarget","tTarget","tTarget","mdi:thermometer","","temperature","measurement","°C"},
+                                {"number","valves_tValue","tValue","valves.tValue","tValue","tValue","mdi:thermometer","","temperature","measurement","°C"},
+                                {"number","valves_target","target","valves.target","target","target","mdi:gauge","","volume","measurement","%"},
+                                {"sensor","valves_temp1","temp1","valves.temp1","temp1","","mdi:thermometer","","temperature","measurement","°C"},
+                                {"sensor","valves_temp2","temp2","valves.temp2","temp2","","mdi:thermometer","","temperature","measurement","°C"},
+                                {"select","valves_control_mode","control.mode","valves.control.mode","control/mode","control/mode","mdi:switch","\"options\": [\"auto\",\"off\"]","","",""},
+                                {"number","valves_control_dynOffs","valves.control.dynOffs","valves.control.dynOffs","control/dynOffs","control/dynOffs","mdi:gauge","","volume","measurement",""},
+                                {"select","valves_window_state","window.state","valves.window.state","window/state","window/state","mdi:switch","\"options\": [\"close\",\"open\"]","","",""},
+                                {"number","valves_window_target","window.target","valves.window.target","window/target","window/target","mdi:gauge","","volume","measurement",""},
+                                {""}
+                                };
+  
+    HA_Item haTempsItems[] =   {{"sensor","temps","temps","temps","temps","","mdi:thermometer","","temperature","measurement","°C"},
+                                {""}
+                               };
+
+    HA_Item haVoltsItems[] =   {{"sensor","volts","volts","volts","sensors","","","","voltage","measurement",""},
+                                {""}
+                               };
+
+    uint8_t i;
+    HA_Item haItem;
+    String rbName;
+
+    /* common/
+        heatControl/
+            value
+            set
+        message/
+            value
+        parkPosition/
+            value
+            set
+        state/
+            value
+        uptime/              [config]
+            value
+    */
+    i=0;
+    do {
+        haItem=haCommonItems[i];
+        if (haItem.topic=="uptime") {
+            if (VdmConfig.configFlash.protConfig.protocolFlags.publishUpTime) sendDiscoveryHA(haItem);
+        } else if (haItem.topic=="heatControl"){
+            if (!VdmConfig.configFlash.protConfig.protocolFlags.publishPlainText) {
+                haItem.options="\"options\": [\"0\",\"1\",\"2\",\"3\"]";  
+            }
+            sendDiscoveryHA(haItem);  
+        } 
+        else sendDiscoveryHA(haItem);
+        i++;
+    }
+    while (haCommonItems[i].topicClass!="");
+  
+
+
+    // valves
+    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
+        if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
+            i=0;
+            do {
+                haItem=haValvesItems[i];
+                rbName = String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name);
+                rbName.replace(" ","_");
+                haItem.topic=haItem.topic+"_"+rbName;
+                haItem.name=String("valves.")+VdmConfig.configFlash.valvesConfig.valveConfig[x].name+"."+haItem.name;
+                haItem.unique_id=haItem.name;
+                if (haItem.state_topic.length()>0)
+                    haItem.state_topic="valves/"+rbName+"/"+haItem.state_topic;
+                if (haItem.command_topic.length()>0)
+                    haItem.command_topic="valves/"+rbName+"/"+haItem.command_topic;
+                if (haValvesItems[i].topic=="valves_temp1") {
+                    if (StmApp.actuators[x].tIdx1>0) sendDiscoveryHA(haItem);
+                } else if (haValvesItems[i].topic=="valves_temp2") { 
+                    if (StmApp.actuators[x].tIdx2>0) sendDiscoveryHA(haItem);
+                } 
+                else if (haValvesItems[i].topic=="valves_window_state") { 
+                    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active && VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
+                        if (!VdmConfig.configFlash.protConfig.protocolFlags.publishPlainText) {
+                            haItem.topicClass="switch";
+                            haItem.options="\"payload_on\": \"1\",\"payload_off\": \"0\",\"state_on\": \"1\",\"state_off\": \"0\"";    
+                        }
+                        sendDiscoveryHA(haItem);
+                    }
+                } 
+                else if (haValvesItems[i].topic=="valves_window_target") { 
+                    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active && VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) sendDiscoveryHA(haItem);
+                } 
+                else if (haValvesItems[i].topic=="valves_control_mode") { 
+                    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) {
+                        if (!VdmConfig.configFlash.protConfig.protocolFlags.publishPlainText) {
+                            haItem.topicClass="switch";
+                            haItem.options="\"payload_on\": \"1\",\"payload_off\": \"0\",\"state_on\": \"1\",\"state_off\": \"0\"";    
+                        }
+                        sendDiscoveryHA(haItem);
+                    }
+                } 
+                else if (haValvesItems[i].topic=="valves_control_dynOffs") { 
+                    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) sendDiscoveryHA(haItem);
+                } 
+                else sendDiscoveryHA(haItem);
+                i++;
+            }
+            while (haValvesItems[i].topicClass!="");
+        }
+    }
+    
+    //temp sensors
+    for (uint8_t x = 0;x<TEMP_SENSORS_COUNT;x++) {
+        if (VdmConfig.configFlash.tempsConfig.tempConfig[x].active) {
+            i=0;
+            do {
+                haItem=haTempsItems[i];
+                rbName = String(VdmConfig.configFlash.tempsConfig.tempConfig[x].name);
+                rbName.replace(" ","_");
+                haItem.topic=haItem.topic+"_"+rbName;
+                haItem.name=haItem.name+"."+VdmConfig.configFlash.tempsConfig.tempConfig[x].name;
+                haItem.unique_id=VdmConfig.configFlash.tempsConfig.tempConfig[x].ID;
+                haItem.state_topic=haItem.state_topic+"/"+rbName+String("/value");
+                sendDiscoveryHA(haItem);
+                i++;
+            }
+            while (haTempsItems[i].topicClass!="");    
+        }
+    }
+    // volt sensors
+    for (uint8_t x = 0;x<VOLT_SENSORS_COUNT;x++) {
+        if (VdmConfig.configFlash.voltsConfig.voltConfig[x].active) {
+            i=0;
+            do {
+                haItem=haVoltsItems[i];
+                rbName = String(VdmConfig.configFlash.voltsConfig.voltConfig[x].name);
+                rbName.replace(" ","_");
+                haItem.topic=haItem.topic+"_"+rbName;
+                haItem.name=haItem.name+"."+VdmConfig.configFlash.voltsConfig.voltConfig[x].name;
+                haItem.unique_id=VdmConfig.configFlash.voltsConfig.voltConfig[x].ID;
+                haItem.state_topic=haItem.state_topic+"/"+rbName+String("/value");
+                haItem.unit_of_measurement = VdmConfig.configFlash.voltsConfig.voltConfig[x].unit;
+                sendDiscoveryHA(haItem);
+                i++;
+            }
+            while (haVoltsItems[i].topicClass!="");   
+        }
+    }
+
+    hadState = HAD_FINISHED;
 }

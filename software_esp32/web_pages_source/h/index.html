@@ -462,6 +462,54 @@
 		to {transform: rotate(359deg);}
 	}
 
+details {
+  /*width: 80%;*/
+  margin: 0 auto ;
+  background: #807f7f;
+  margin-bottom: .5rem;
+  box-shadow: 0 .1rem 1rem -.5rem rgba(0,0,0,.4);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+summary {
+  padding: 0.4rem;
+  display: block;
+  background: #575656;
+  padding-left: 2.0rem;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+summary:before {
+  content: '';
+  border-width: .4rem;
+  border-style: solid;
+  border-color: transparent transparent transparent #fff;
+  position: absolute;
+  top: 0.6rem;
+  left: 0.8rem;
+  transform: rotate(0);
+  transform-origin: .2rem 50%;
+  transition: .25s transform ease;
+}
+
+/* THE MAGIC 🧙‍♀️ */
+details[open] > summary:before {
+  transform: rotate(90deg);
+}
+
+
+details summary::-webkit-details-marker {
+  display:none;
+}
+
+details > ul {
+  padding-bottom: 1rem;
+  margin-bottom: 0;
+}
+
 
 </style>
 
@@ -817,6 +865,7 @@
 				<select id="protcfg-dataProt">
                     <option>none</option>
                     <option>MQTT</option>
+					<option>MQTT HA</option>
 				</select>
 				</td>
             </tr> 
@@ -888,10 +937,11 @@
 		</table>
 		</div>
 		<div class="tabpframe"> 
-		<table id="protcfg-Broker1" style="display:none;" class="tabTable1">
+		<table id="protcfg-Broker1" style="display:none;" class="tabTable1">			  
 			<tr>
-				<fieldset id="protcfg-Broker2" class="checkboxgroup2" style="height:14em;display:none;">
-					<legend>Publish</legend>
+				<details id="protcfg-BrokerDPublish">
+				<summary>Publish</summary>
+				<fieldset id="protcfg-Broker2" class="checkboxgroup2" style="height:14em;">
 					<label><input type="checkbox" id="protcfg-pubRetained" name="theGroupP" title="Publish values retained">Retained </label>
 					<label><input type="checkbox" id="protcfg-pubPlainText" name="theGroupP" title="Publish values as plaintext instead 0/1">Plaintext </label>
 					<label><input type="checkbox" id="protcfg-pubSeparate" name="theGroupP" title="Handle topics strict separate for write and read. Topics sent from server has to be added a /set">Strict separate topics </label>
@@ -899,20 +949,31 @@
 					<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
 					<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
 					<label><input type="checkbox" id="protcfg-pubDiag" name="theGroupP">Diag </label>
+					<label><select id="protcfg-numFormat" name="theGroupP" style="width:100px" title="Handle decimal point as international (.) or like german (,)">
+						<option>International</option>
+						<option>German</option>
+					</select>Numeric format</label>
 				</fieldset>
+				</details>
 			</tr>
-
 			<tr>
-				<fieldset id="protcfg-Broker21" class="checkboxgroup2" style="height:7em;display:none;">
-					<legend>Failed</legend>
+				<details id="protcfg-BrokerDFailed">
+				<summary>Failure Handling</summary>
+				<fieldset id="protcfg-Broker21" class="checkboxgroup2" style="height:5em;">
 					<label><input type="checkbox" id="protcfg-timeOutDSActive" name="theGroupP21" title="Time out for DS18 sensor (fixed 5 min)">DS18 </label>
 					<label><input type="checkbox" id="protcfg-timeOutTSActive" name="theGroupP21" title="If there is no tValue received via mqtt after this time the corresponding valve goes to the defined position.
 Caution : If this option is activated it is absolutely mandatory to ensure that the tValue is received within the time frame. 
 Publish on change on server side is not recommended with this option">tValue after<input type="number" class="form-input3" maxlength="4" style="width:3em;" min="10" id="protcfg-timeOutValue" name="protcfg-timeOutValue" />min</label>
 					<label><input type="number" class="form-input" min="0" max="100" maxlength="3" style="width:40px" id="protcfg-timeOutPosition" name="protcfg-timeOutPosition" title="Valve position after time out."/>Valve position </label>
 				</fieldset>
+				</details>
 			</tr>
-
+			<tr>
+				<details id="protcfg-BrokerDHA">
+				<summary>Home Assistant</summary>
+					<input type="button" class="buttonclass" id="protcfg-discoverHA" name="theGroupP22" value="Discovery" title="Discovery Home Assistant">
+				</details>
+			</tr>
 		</table>
 		</div>
 		</div>
@@ -1863,6 +1924,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id("cfgValvesTableFieldSet2").disabled=doDisable;
 			id("valvesStartCalib").disabled=doDisable;
 			id("valvesAssembly").disabled=doDisable;
+			id("protcfg-discoverHA").disabled=doDisable;
 		}
 
 		window.onhashchange = function() { 
@@ -2525,18 +2587,32 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		function showBrokerIP() {
 			let x = id("protcfg-Broker");
+			let xha=id("protcfg-BrokerDHA");
 			let div1=id("div-protcfg-Broker3");
 			let select = id("protcfg-dataProt").selectedIndex;
-			if (select === 0) {
-				x.style.display = "none";
-				div1.classList.remove("tabpframe");
-			} else {
-				x.style.display = "block";
-				div1.classList.add("tabpframe");
+			switch (select) {
+				case 0: {
+					x.style.display = "none";
+					div1.classList.remove("tabpframe");
+					xha.style.display = "none";
+					break;
+				}
+				case 1: {
+					x.style.display = "block";
+					div1.classList.add("tabpframe");
+					xha.style.display = "none";
+					break;
+				}
+				case 2: {
+					x.style.display = "block";
+					div1.classList.add("tabpframe");
+					xha.style.display = "block";
+					break;
+				}
 			}
 			id("protcfg-Broker1").style.display=x.style.display;
-			id("protcfg-Broker2").style.display=x.style.display;
-			id("protcfg-Broker21").style.display=x.style.display;
+			id("protcfg-BrokerDPublish").style.display=x.style.display;
+			id("protcfg-BrokerDFailed").style.display=x.style.display;
 			id("protcfg-Broker3").style.display=x.style.display;
 			
 
@@ -2782,8 +2858,18 @@ Publish on change on server side is not recommended with this option">tValue aft
 					alert ("Caution : If this option is activated it is absolutely mandatory to ensure that the tValue is received within the time frame. Publish on change on server side is not recommended with this option");
 				}
 			});
+
+			id("protcfg-discoverHA").addEventListener("click", () => {
+    			discoveryHA();
+			});
 		}
 		
+		function discoveryHA(){
+			if (confirm('Are you sure you want to discovery Home Assistant ?')) {
+				postCmd('{"action":"discoveryHA"}');	
+			}	
+		}
+
 		async function testPushOver(){
 			let testPO={};
 			testPO.appToken = id("cfgPushOverAPIToken").value;
@@ -2996,7 +3082,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		async function postProtCfg() {
 			let protCfg = {};
 			protCfg.prot = id("protcfg-dataProt").selectedIndex;
-			if (id("protcfg-dataProt").selectedIndex==1) {
+			if (id("protcfg-dataProt").selectedIndex!=0) {
 				protCfg.ip = id("protcfg-Ip").value;
 				protCfg.port = id("protcfg-Port").value;
 				protCfg.interval = id("protcfg-Interval").value;
@@ -3016,6 +3102,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				protCfg.mqttTODSActive= id("protcfg-timeOutDSActive").checked ? 1 : 0;
 				protCfg.mqttTO= id("protcfg-timeOutValue").value;
 				protCfg.mqttToPos= id("protcfg-timeOutPosition").value;
+				protCfg.numFormat= id("protcfg-numFormat").selectedIndex;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -3868,7 +3955,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id("protcfg-timeOutDSActive").checked=dataProtConfig["mqttTODSActive"];
 				id("protcfg-timeOutValue").value=dataProtConfig["mqttTO"];
 				id("protcfg-timeOutPosition").value=dataProtConfig["mqttToPos"];
-
+				id("protcfg-numFormat").selectedIndex=dataProtConfig["numFormat"];
 				showBrokerIP();
 				showMinPublish();
 			}

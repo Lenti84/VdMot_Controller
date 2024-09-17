@@ -61,8 +61,9 @@
 #include <Syslog.h>
 #include <AsyncWebServer_WT32_ETH01.h>
 
-#define noneProtocol 0
-#define mqttProtocol 1
+#define noneProtocol    0
+#define mqttProtocol    1
+#define mqttProtocolHA  2
 
 #define interfaceAuto 0
 #define interfaceEth  1
