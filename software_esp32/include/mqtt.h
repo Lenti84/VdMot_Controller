@@ -51,7 +51,7 @@
 #define DEFAULT_VALVESTOPIC  "valves/"
 #define DEFAULT_TEMPSTOPIC   "temps/"
 #define DEFAULT_VOLTSTOPIC   "sensors/" 
-
+#define HA_FILE_NAME         "/HATopics.cfg"
 
 #define publishNothing  0
 #define publishCommon   1
@@ -65,6 +65,7 @@
 #define STATE_FAILED 9
 
 enum HAD_STATE { HAD_IDLE, HAD_STARTED, HAD_INPROGRSS,HAD_FINISHED };
+enum ACTION_HA { HA_DISCOVERY_ONLY, HA_DELETE_ONLY, HA_DELETE_AND_DISCOVERY};
 
 typedef struct {
   bool controlActive;
@@ -137,13 +138,16 @@ class CMqtt
     void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort);
     void mqtt_loop();
     void callback(char* topic, byte* payload, unsigned int length);
+    void deleteDiscoveryHA();
     void sendDiscoveryHA(HA_Item thisHAItem); 
     void executeDiscoveryHA();
+    void executeDiscoveryHANow();
     int mqttState;
     bool mqttConnected;
     bool mqttReceived;
     VALVESTATE valveStates[ACTUATOR_COUNT];
     HAD_STATE hadState;
+    ACTION_HA actionHA;
   private:
     void publish_all (uint8_t publishFlags);
     void publish_common (); 

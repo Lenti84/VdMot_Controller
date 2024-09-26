@@ -402,6 +402,7 @@ void  CStmApp::app_check_data()
     int availcnt;
     uint8_t noToken;
     uint8_t val8;
+    String sv;
 
     #ifdef STMSimulation
         #warning STMSimulation active
@@ -790,9 +791,21 @@ void  CStmApp::app_check_data()
                 VdmSystem.stmVersion=argptr[0]; 
                 VdmSystem.stmBuild=0;
             }
+
             if(argcnt > 1) {
                  VdmSystem.stmBuild=atoi(argptr[1]);
             }
+            #ifdef minSTMRequired
+                int8_t pos;
+                pos=VdmSystem.stmVersion.indexOf('_');
+                if (pos>=0) {
+                sv=VdmSystem.stmVersion;
+                sv.remove(pos); 
+                }
+                VdmSystem.stmNRevision=versionExplode(sv);
+                VdmSystem.stmMinRequired=versionExplode(minSTMRequired);
+                VdmSystem.stmVersionFalse=VdmSystem.stmNRevision<VdmSystem.stmMinRequired;
+            #endif
             if (memcmp(cmd,(const void*) &cmd_buffer,5) ==0) cmd_buffer="";
             appState=APP_IDLE;
         }

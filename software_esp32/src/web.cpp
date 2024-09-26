@@ -306,6 +306,8 @@ String CWeb::getSysInfo()
                   "\"wt32Sketch\":"+ESP.getSketchSize()+","+
                   "\"wt32FlashUsed\":"+String(usedFlashProz,1)+","+
                   "\"stm32version\":\""+VdmSystem.stmVersion+stmBuild+"\","+
+                  "\"stm32VFalse\":\""+VdmSystem.stmVersionFalse+"\","+
+                  "\"stm32MinReq\":\""+minSTMRequired+"\","+
                   "\"stm32ChipId\":\"0x"+String(VdmSystem.stmID,16)+" "+String(StmOta.checkChipName(VdmSystem.stmID))+"\""+
                   "}";
   return result;  

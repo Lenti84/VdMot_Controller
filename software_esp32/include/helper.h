@@ -45,11 +45,9 @@
 #include "VdmConfig.h" 
 #include "esp_system.h"
 
-
 String ip2String (IPAddress ipv4addr);
 String ConvBinUnits(size_t bytes, byte resolution);
 bool isNumber(const String& str);
 bool isFloat(const std::string& str);
 void replace (char* buffer,uint16_t size,char find, char with);
-
- 
+uint32_t versionExplode (String sv);

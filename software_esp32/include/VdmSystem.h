@@ -45,9 +45,14 @@
 #include "VdmConfig.h" 
 #include "esp_system.h"
 #include "helper.h"
+#include <FS.h>
+#include <CRC32.h>
+#include <LittleFS.h>
 
 #define systemMsgSTMReset   "stm not working. reset stm"
 #define systemMsgReset      "reset system"
+#define FS_READ_MODE        'r'
+#define FS_WRITE_MODE       'w'
 
 #define systemStateOK       0
 #define systemStateInfo     1 
@@ -61,7 +66,6 @@ typedef struct
   String ftype;
   String fsize;
 } fileinfo;
-
 
 class CVdmSystem
 {
@@ -80,11 +84,19 @@ public:
   bool getLocalTime(struct tm * info);
   String getLastResetReason();
   void sendResetReason();
+  void openFile (String fName,char mode);
+  void writelnToFile (String line);
+  String readlnFromFile ();
+  int fileAvailable ();
+  void closeFile ();
 
   esp_chip_info_t chip_info;
   fileinfo Filenames[maxFiles]; // Enough for most purposes!
   uint8_t numfiles;
   String stmVersion;
+  uint32_t stmNRevision;
+  uint32_t stmMinRequired;
+  bool stmVersionFalse;
   uint32_t stmID;
   time_t stmBuild;
   uint8_t systemState;
@@ -93,7 +105,8 @@ public:
   uint32_t stackSize;
 private:
   bool spiffsStarted;
-  
+  File dir;
+  File fsfile;
 };
 
 extern CVdmSystem VdmSystem;

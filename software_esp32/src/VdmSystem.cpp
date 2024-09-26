@@ -44,6 +44,9 @@
 #include "esp_spi_flash.h" 
 #include "helper.h"
 #include <esp_task_wdt.h>
+#include <FS.h>
+#include <CRC32.h>
+#include <LittleFS.h>
 
 #include <FS.h>
 #ifdef USE_LittleFS
@@ -78,6 +81,9 @@ CVdmSystem::CVdmSystem()
   systemMessage="";
   systemState = systemStateOK;
   getFSInProgress = false;
+  stmNRevision=0;
+  stmMinRequired=0;
+  stmVersionFalse=false;
 }
 
 void CVdmSystem::getSystemInfo()
@@ -181,8 +187,7 @@ void CVdmSystem::getFSDirectory()
       Filenames[numfiles].ftype    = (file.isDirectory() ? "Dir" : "File");
       Filenames[numfiles].fsize    = ConvBinUnits(file.size(), 1);
       #ifdef EnvDevelop
-        UART_DBG.print("get file : ");
-        UART_DBG.println(file.name());
+        UART_DBG.println("get file : "+String(file.name())+", type "+Filenames[numfiles].ftype+", size "+Filenames[numfiles].fsize);
       #endif
       file = root.openNextFile();
       numfiles++;
@@ -229,4 +234,35 @@ String CVdmSystem::getLastResetReason()
   uint8_t rr=esp_reset_reason();
   if (rr>10) rr=0;
   return (ResetReason[rr]);
+}
+
+void CVdmSystem::openFile (String fName,char mode)
+{
+  if (!spiffsStarted) SPIFFS.begin(true);
+  spiffsStarted=true;
+  //if ((mode==FS_WRITE_MODE) && SPIFFS.exists(fName)) SPIFFS.remove(fName); 
+  fsfile = SPIFFS.open(fName,(const char*) &mode,(mode==FS_WRITE_MODE));
+  fsfile.seek(0);
+}
+
+void CVdmSystem::writelnToFile (String line)
+{
+  String thisLine=line;
+  if (!thisLine.endsWith("\n")) thisLine=thisLine+"\n";
+  fsfile.write((const uint8_t*) thisLine.c_str(), thisLine.length());
+}
+
+String CVdmSystem::readlnFromFile ()
+{
+  return fsfile.readStringUntil('\n');
+}
+
+int CVdmSystem::fileAvailable ()
+{
+  return fsfile.available();
+}
+
+void CVdmSystem::closeFile ()
+{
+  fsfile.close();
 }

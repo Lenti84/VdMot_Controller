@@ -249,6 +249,29 @@
 		color: #c0c0c0;
 	}
 	
+	.buttonDialogClass:hover {
+		padding: 0.6em;
+		font-weight: bold;
+		background-color: #74e0db;
+		color: green;
+	}
+
+	.buttonDialogClass {
+		font-weight: bold;
+		background-color: #355fb9;
+		color: #fff;
+		margin: 2px;
+		padding: 0.6em;
+		border-radius: 5px;
+		float: right;
+
+	}
+	.buttonDialogClass:disabled {
+		font-weight: bold;
+		background-color: gray;
+		color: #c0c0c0;
+	}
+
 	.dialogClass{
 		width: 30em;
 		overflow-y: auto;
@@ -371,6 +394,23 @@
 	{
 		pointer-events: none;     
 		opacity: 0.4;
+	}
+
+
+	dialog {
+	    border: 0.125rem solid var(--border-color);
+	    border-radius: 20px;
+	    box-shadow:
+	        0 11px 15px -7px #0003,
+	        0 24px 38px 3px #00000024,
+	        0 9px 46px 8px #0000001f;
+	    font-size: 1rem;
+	   
+	}
+	
+	dialog::backdrop {
+	    background: rgba(36, 32, 20, 0.5);
+	    backdrop-filter: blur(0.25rem);
 	}
 
 	/* slider checkbox */ 
@@ -515,8 +555,105 @@ details > ul {
 
 </head>
 <body>
+
+	<dialog id="pushOverParameterDialog" class="dialogClass">
+		<h3>PushOver</h3>
+		<table id="cfgPushOverParam" class="tabTable">
+		<tr>
+			<th>API Token</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgPushOverAPIToken" name="cfgPushOverAPIToken"/>
+			</td>
+		</tr>
+		<tr>
+			<th>User Token</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgPushOverUserToken" name="cfgPushOverUserToken"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Title</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgPushOverTitle" name="cfgPushOverTitle"/>
+			</td>
+		</tr>
+		</table>
+
+		<footer>
+			<button id="test-pushOver" class="buttonDialogClass">test</button>
+			<button id="close-pushOverParameterDialog" class="buttonDialogClass">close</button>
+		</footer>
+		
+	</dialog>
+
+	<dialog id="emailParameterDialog" class="dialogClass">
+		<h3>Email</h3>
+		<table id="cfgEmailParam" class="tabTable">
+		<tr>
+			<th>User</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgEmailUser" name="cfgEmailUser"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Password</th>
+			<td>
+			<input type="password" class="form-input2" maxlength="30" id="cfgEmailPwd" name="cfgEmailPwd"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Host</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgEmailHost" name="cfgEmailHost"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Port</th>
+			<td>
+			<input type="number" class="form-input2" id="cfgEmailPort" name="cfgEmailPort"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Recipient</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgEmailRecipient" name="cfgEmailRecipient"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Title</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgEmailTitle" name="cfgEmailTitle"/>
+			</td>
+		</tr>
+		</table>
+		<footer>
+			<button id="test-email" class="buttonDialogClass">test</button>
+			<button id="close-emailParameterDialog" class="buttonDialogClass">close</button>
+		</footer>
+	</dialog>
+	
+	<dialog id="haDialog" class="dialogClass">
+		<h3>Are you sure you want to discover Home Assistant ?</h3>
+		<table class="tabTable">
+			<tr>
+				<td>
+					<label><select id="HA_Action">
+						<option>Discovery only</option>
+						<option>Delete last discovery only</option>
+						<option>Delete last dicovery and new discovery</option>
+					</select>Action</label>
+				</td>
+			</tr>
+		</table>
+		<footer>
+			<button id="ha-Ok" class="buttonDialogClass" value="confirm">Ok</button>
+			<button id="ha-Cancel" class="buttonDialogClass" value="cancel">Cancel</button>
+		</footer>
+	</dialog>
+
+
 	<div class="topNav" id="mytopNav">
-	  <a href="#home" class="tabLink" id="defaultOpen" name="Home" onclick="openPage('Home', this, 'red')">Home</a>
+	  <a href="#home" class="tabLink" id="defaultOpen" name="Home" onclick="openPage('Home', this, 'red')">Home<img id="homeImg" src="" style="margin-left:5px;height:16px;width:16px"></a>
 	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green');">Status<img id="statusImg" src="" style="margin-left:5px;height:16px;width:16px"></a>
 	  <a href="#network" class="tabLink" id="networkOpen" name="Network" style ="display:none" onclick="openPage('Network', this, 'blue')">Network</a>
 	  <a href="#config" class="tabLink" id="configOpen" name="Config" style ="display:none" onclick="openPage('Config', this, 'gray')">Config</a>
@@ -554,7 +691,7 @@ details > ul {
 		</div>
 		<div class="rtabframe">
 		<h3>WT32 Controller</h3>
-		<table id="homeInfo" class="tabTable">
+		<table id="homeInfoWT32" class="tabTable">
 			<tr>
 				<th width=100>SW Version</th>
 				<td id="sysWt32-Version"></td>
@@ -593,7 +730,7 @@ details > ul {
 		</div>
 		<div class="rtabframe">
 		<h3>STM32 Controller</h3>
-		<table id="homeInfo" class="tabTable">
+		<table id="homeInfoSTM32" class="tabTable">
 			<tr>
 				<th>Version</th>
 				<td id="sysSTM32-Version"></td>
@@ -602,6 +739,11 @@ details > ul {
 				<th>Chip Id</th>
 				<td id="sysSTM32-ChipId"></td>
 			</tr>
+			<tr id="sysSTM32-Info" style="display:hidden">
+				<th>Info</th>
+				<td id="sysSTM32-InfoText"></td>
+			</tr>
+			
 		</table>
 		</div>
 	</div>
@@ -1021,11 +1163,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 	
 			</fieldset>
 			</tr>
-			<fieldset class="checkboxgroup2" style="height:4em;" id="cfgValvesTableFieldSet2">
+			<fieldset class="checkboxgroup2" style="height:5em;" id="cfgValvesTableFieldSet2">
 				<legend>Assembly/Calibration</legend>	
-				<label> 
-					<select id="valvesAsmCalib-select">
-					</select>	
+				<label><select id="valvesAsmCalib-select"></select></label>
+				<label>
 					<input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set valves to assembly position">
 					<input type="button" class="buttonclass" id="valvesStartCalib" value="Calib" title="Start manual calibration of valves" />
 				</label>	
@@ -1035,10 +1176,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 		</div>	
 		<div class="rtabframe2">
 			<h3>Temperature sensor</h3>
-			<div style="height:390px;overflow-y:scroll">
-			<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
-			
-			</table>
+			<div style="height:30em;overflow-y:scroll">
+				<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center"></table>
 			</div>
 			<div class="tabiframe">	
 				<table id="cfgTSensorTable1" class="tabTable">
@@ -1059,92 +1198,12 @@ Publish on change on server side is not recommended with this option">tValue aft
 
 		<div class="rtabframe2">
 			<h3>Voltage sensor</h3>
-			<div style="height:390px">
-				<table id="cfgVSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
-			</table>
+			<div style="height:22.3em;overflow-y:scroll">
+				<table id="cfgVSensorTable" class="tabTable" border="3" frame="box" style="text-align:center"></table>
 			</div>
 		</div>
 
-		<dialog id="pushOverParameterDialog" class="dialogClass">
-			<h3>PushOver</h3>
-			<table id="cfgPushOverParam" class="tabTable">
-			<tr>
-				<button id="test-pushOver" class="buttonclass1">test</button>
-			</tr>
-			<tr>
-				<button id="close-pushOverParameterDialog" class="buttonclass1">close</button>
-			</tr>
-			<tr>
-				<th>API Token</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverAPIToken" name="cfgPushOverAPIToken"/>
-				</td>
-			</tr>
-			<tr>
-				<th>User Token</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverUserToken" name="cfgPushOverUserToken"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Title</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverTitle" name="cfgPushOverTitle"/>
-				</td>
-			</tr>
-			
-			</table>
-		</dialog>
-
-		<dialog id="emailParameterDialog" class="dialogClass">
-			<h3>Email</h3>
-			<table id="cfgEmailParam" class="tabTable">
-			<tr>
-				<button id="test-email" class="buttonclass1">test</button>
-			</tr>
-			<tr>
-				<button id="close-emailParameterDialog" class="buttonclass1">close</button>
-			</tr>
-			<tr>
-				<th>User</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgEmailUser" name="cfgEmailUser"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Password</th>
-				<td>
-				<input type="password" class="form-input2" maxlength="30" id="cfgEmailPwd" name="cfgEmailPwd"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Host</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgEmailHost" name="cfgEmailHost"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Port</th>
-				<td>
-				<input type="number" class="form-input2" id="cfgEmailPort" name="cfgEmailPort"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Recipient</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgEmailRecipient" name="cfgEmailRecipient"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Title</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgEmailTitle" name="cfgEmailTitle"/>
-				</td>
-			</tr>
-			</table>
-		</dialog>
-		
-		<div class="rtabframe" id ="messengerTabFrame" style="height:400px">
+		<div class="rtabframe" id ="messengerTabFrame" style="height:26em">
 			<h3>Messenger</h3>
 			<table id="cfgValvesTable1" class="tabTable">
 				<tr>
@@ -1167,7 +1226,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			</table>
 		</div>
 
-		<div class="rtabframe" id ="fileTabFrame" style="height:290px">
+		<div class="rtabframe" id ="fileTabFrame" style="height:20em">
 		<h3>Files</h3>
 		<table id="filesConfig" class="tabTable">
 			<tr>
@@ -1193,7 +1252,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		</table>
 		</div>
 		
-		<div class="rtabframe" style="height:290px">
+		<div class="rtabframe" style="height:20em">
 		<h3>System</h3>
 		<table id="sysConfig" class="tabTable">
 			<tr>
@@ -1843,6 +1902,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		var reconnectMQTT=false;
 		var windowImageObjects = [null,null,null,null,null,null,null,null,null,null,null,null];
 	    const tabImageSrc = ["","warning_yellow.png","warning_red.png"];
+		const haDialog = id("haDialog");
 
 		// Get the modal
 		var modal = id("pwdModal");
@@ -2687,7 +2747,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			show_hide_column('valvesTable',10, enabled);
 		}
 
-		function generateOnClick() {
+		async function generateOnClick() {
 			id("netcfg-EthWifi").onclick = function(){
 				showWifi();
 			}
@@ -2860,16 +2920,18 @@ Publish on change on server side is not recommended with this option">tValue aft
 			});
 
 			id("protcfg-discoverHA").addEventListener("click", () => {
-    			discoveryHA();
+    			haDialog.showModal();
+			});
+			
+			id("ha-Ok").addEventListener('click', () => haDialog.close("confirmed"));
+			id("ha-Cancel").addEventListener('click', () => haDialog.close("cancel"));   
+			haDialog.addEventListener("close", async () => {
+				if (haDialog.returnValue==="confirmed") {
+					await postCmd('{"action":"discoveryHA","actionHA":'+id("HA_Action").selectedIndex+'}');
+				}
 			});
 		}
 		
-		function discoveryHA(){
-			if (confirm('Are you sure you want to discovery Home Assistant ?')) {
-				postCmd('{"action":"discoveryHA"}');	
-			}	
-		}
-
 		async function testPushOver(){
 			let testPO={};
 			testPO.appToken = id("cfgPushOverAPIToken").value;
@@ -2914,21 +2976,21 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 		}
 		
-		function valvesStartCalib(){
+		async function valvesStartCalib(){
 			if (confirm('Are you sure you want to start calibration of valve ?')) {
-				postCmd('{"action":"vCalib","valve":'+id("valvesAsmCalib-select").value+'}');
+				await postCmd('{"action":"vCalib","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
-		function valvesAssembly(){
+		async function valvesAssembly(){
 			if (confirm('Are you sure you want to set valve to assembly position ?')) {
-				postCmd('{"action":"vAssembly","valve":'+id("valvesAsmCalib-select").value+'}');
+				await postCmd('{"action":"vAssembly","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
-		function valvesDetect(){
+		async function valvesDetect(){
 			if (confirm('Are you sure you want to detect valves ?')) {
-				postCmd('{"action":"valvesDetect"}');
+				await postCmd('{"action":"valvesDetect"}');
 			}
 		}
 				
@@ -2944,7 +3006,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		async function formatFS() {
 			if (confirm('Are you sure you want to format the file system ?')) {
-					postCmd('{"action":"clearFS"}');
+					await postCmd('{"action":"clearFS"}');
 					reloadDoc("http:/#home",15000,true);
 			}
 		}
@@ -2966,9 +3028,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 		}
 		
-		function scanTSensors(){
+		async function scanTSensors(){
 			if (confirm('Are you sure you want to scan temperature sensors ?')) {
-				postCmd('{"action":"scanTempSensors"}');
+				await postCmd('{"action":"scanTempSensors"}');
 				setTimeout(function() {
 					getTempSensorsID();	
 				},5000);
@@ -2994,23 +3056,23 @@ Publish on change on server side is not recommended with this option">tValue aft
 				},timeOut);
 		}
 		
-		function factoryRestore(){
+		async function factoryRestore(){
 			if (confirm('Are you sure you want to restore configuration to factory settings ?')) {
-				postCmd('{"action":"restoreCfg"}');
+				await postCmd('{"action":"restoreCfg"}');
 				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
-		function resetConfig(){
+		async function resetConfig(){
 			if (confirm('Are you sure you want to reset configuration to factory settings except network ?')) {
-				postCmd('{"action":"resetCfg"}');
+				await postCmd('{"action":"resetCfg"}');
 				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
-		function reboot(){
+		async function reboot(){
 			if (confirm('Are you sure you want to reboot ?')) {
-				postCmd('{"action":"reboot"}');
+				await postCmd('{"action":"reboot"}');
 				reloadDoc("http:/#home",4000,true);
 			}
 		}
@@ -3370,6 +3432,21 @@ Publish on change on server side is not recommended with this option">tValue aft
 			await getVoltsStatus();
 		}
 		
+		function showHomeWarningIcon(homeWarning,minStmVersion)
+		{
+			if (homeWarning == 0) {
+				id("homeImg").style.visibility="hidden";
+				id("homeImg").src=tabImageSrc[0];
+				id("sysSTM32-Info").style.visibility="hidden";
+			} else {
+				id("homeImg").style.visibility="visible";
+				id("homeImg").src=tabImageSrc[2];
+				id("sysSTM32-Info").style.visibility="visible";
+				id("sysSTM32-Info").style.background="red";
+				id("sysSTM32-InfoText").textContent="Stm32 version incompatible, min. version should be "+minStmVersion+". Please update STM32";
+			}
+		}
+
 		function checkValvesConnected (valvesJson){
 			const cfgValvesTable = id('cfgValvesTable');
 			const cfgValvesControlTable = id('cfgValvesControlTable');
@@ -3829,6 +3906,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id("wt32-ChipStack").textContent = dataSystemInfo["wt32ChipStack"]+" bytes";
 				id("sysSTM32-Version").textContent = dataSystemInfo["stm32version"];
 				id("sysSTM32-ChipId").textContent = dataSystemInfo["stm32ChipId"];
+				showHomeWarningIcon(dataSystemInfo["stm32VFalse"],dataSystemInfo["stm32MinReq"]);
 			}
 		}
 		

@@ -11,6 +11,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.4.2]
+### Changed
+- Mqtt         discovery: if valve name und temp name is empty then the idx-number is set as name
+                          delete topic (user can avtivate not) in HA prior sending new discovery 
+### Added
+- STM :        check for compatibility to WTH32 version
+
 ## [1.4.1]
 ### Changed
 - Mqtt :        blanks in valve name und temp name allowed

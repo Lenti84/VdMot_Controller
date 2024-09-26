@@ -181,6 +181,9 @@ void sysLogSave (JsonObject doc)
 void discoveryHA (JsonObject doc)
 {  
   if (Mqtt.hadState==HAD_IDLE) {
+    if (!doc["actionHA"].isNull()) 
+      Mqtt.actionHA = doc["actionHA"];
+    else Mqtt.actionHA = HA_DISCOVERY_ONLY;
     Mqtt.hadState=HAD_STARTED;
   }
 }

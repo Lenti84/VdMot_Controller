@@ -39,6 +39,7 @@
 
 
 #include "helper.h"
+#include "VdmSystem.h"
 
 String ip2String (IPAddress ipv4addr)
 {
@@ -88,4 +89,26 @@ void replace (char* buffer,uint16_t size,char find, char with)
 			buffer[i] = with;
 		}
 	}
+}
+
+uint32_t versionExplode (String sv)
+{
+  uint8_t arr[3]={0};
+  int8_t pos;
+  String s;
+  uint32_t result=0;
+  
+  for (uint8_t i=0;i<3;i++) {
+    pos=sv.indexOf('.');
+    if (pos>=0) memcpy(&s,sv.c_str(),pos); else s=sv;
+    arr[2-i]=s.toInt();
+    sv.remove(0,pos+1);
+   // UART_DBG.println("versionExplode pos "+String(pos)+":"+s+","+sv);
+  }
+ 
+  for (uint8_t i=0;i<3;i++) {
+    result|=(uint32_t)arr[i]<<(8*i);
+  }
+  // UART_DBG.println("versionExplode "+sv+": result="+String(result,16));
+  return result;
 }

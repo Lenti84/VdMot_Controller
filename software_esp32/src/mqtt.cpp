@@ -1003,6 +1003,19 @@ void CMqtt::checktValueTimeOut ()
     }
 }
 
+void CMqtt::deleteDiscoveryHA() 
+{
+    String line;
+   // UART_DBG.println("discovery delete");
+    VdmSystem.openFile(HA_FILE_NAME,FS_READ_MODE);
+    while(VdmSystem.fileAvailable()) { 
+        line = VdmSystem.readlnFromFile();
+        mqtt_client.publish((char*) line.c_str(),(const uint8_t*) "",0,true);
+    //    UART_DBG.println("discovery delete: "+String(line));
+    }
+    VdmSystem.closeFile();
+}
+
 void CMqtt::sendDiscoveryHA(HA_Item thisHAItem) 
 {
     HA_Item haItem=thisHAItem;
@@ -1049,19 +1062,47 @@ void CMqtt::sendDiscoveryHA(HA_Item thisHAItem)
 
 
     haDiscoveryTopic = "homeassistant/"+haItem.topicClass+"/"+String(VdmConfig.configFlash.systemConfig.stationName)+"/"+String (haItem.topic)+"/config";  
-    //UART_DBG.println("discovery topic : "+String(haDiscoveryTopic));
-    //UART_DBG.println("discovery item: "+String(json.length())+"="+String(json));
-     
+   
     uint16_t bl = 20+haDiscoveryTopic.length()+json.length();
     uint16_t bs = mqtt_client.getBufferSize();
     if (bs<bl) mqtt_client.setBufferSize(bl);
-
+    
+    //if (deleteHA==1) json ="";
     bool result=mqtt_client.publish((char*) haDiscoveryTopic.c_str(),(uint8_t *) json.c_str(),json.length(),true);
+    VdmSystem.writelnToFile(String(haDiscoveryTopic)+"\n");
+
+    //UART_DBG.println("discovery delete: "+String(deleteHA));
+    //UART_DBG.println("discovery topic : "+String(haDiscoveryTopic));
+    //UART_DBG.println("discovery item: "+String(json.length())+"="+String(json));
     //UART_DBG.println("discovery result: "+String(result)+" bufferSize "+String(mqtt_client.getBufferSize()));
     delay(100);
 }
 
 void CMqtt::executeDiscoveryHA() 
+{
+    //UART_DBG.println("discovery delete: "+String(deleteHA));
+    switch (actionHA) {
+        case HA_DISCOVERY_ONLY:
+        {
+            executeDiscoveryHANow();
+            break;
+        }
+        case HA_DELETE_ONLY:
+        {
+            deleteDiscoveryHA();
+            break;
+        }
+        case HA_DELETE_AND_DISCOVERY:
+        {   
+            deleteDiscoveryHA();
+            executeDiscoveryHANow();
+            break;
+        }
+    }
+    Mqtt.hadState=HAD_IDLE;
+}
+
+void CMqtt::executeDiscoveryHANow() 
 {
     // StationName/
     /* common/
@@ -1194,6 +1235,13 @@ void CMqtt::executeDiscoveryHA()
                                 {"number","valves_control_dynOffs","valves.control.dynOffs","valves.control.dynOffs","control/dynOffs","control/dynOffs","mdi:gauge","","volume","measurement",""},
                                 {"select","valves_window_state","window.state","valves.window.state","window/state","window/state","mdi:switch","\"options\": [\"close\",\"open\"]","","",""},
                                 {"number","valves_window_target","window.target","valves.window.target","window/target","window/target","mdi:gauge","","volume","measurement",""},
+                                {"text","valves_calibration_date","calibration.date","valves.calibration.date","calibration/date","","mdi:timelapse","","volume","measurement",""},
+                                {"number","valves_calibration_repetitions","calibration.repetitions","valves.calibration.repetitions","","calibration/repetitions","mdi:valve","","volume","measurement",""},
+                                {"number","valves_diag_openCount","diag.openCount","valves.diag.openCount","diag/openCount","","mdi:valve","","volume","measurement",""},
+                                {"number","valves_diag_closeCount","diag.closeCount","valves.diag.closeCount","diag/closeCount","","mdi:valve","","volume","measurement",""},
+                                {"number","valves_diag_deadZoneCount","diag.deadZoneCount","valves.diag.deadZoneCount","diag/deadZoneCount","","mdi:valve","","volume","measurement",""},
+                                {"number","valves_diag_moves","diag.moves","valves.diag.moves","diag/moves","diag/moves","mdi:valve","","volume","measurement",""},
+                                {"number","valves_diag_meanCurrrent","diag.meanCurrrent","valves.diag.meanCurrrent","diag/meanCurrrent","","mdi:valve","","volume","measurement",""},
                                 {""}
                                 };
   
@@ -1223,6 +1271,9 @@ void CMqtt::executeDiscoveryHA()
         uptime/              [config]
             value
     */
+
+    VdmSystem.openFile(HA_FILE_NAME,FS_WRITE_MODE);
+
     i=0;
     do {
         haItem=haCommonItems[i];
@@ -1248,9 +1299,10 @@ void CMqtt::executeDiscoveryHA()
             do {
                 haItem=haValvesItems[i];
                 rbName = String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name);
+                if (rbName.length() == 0) rbName = String(x+1); 
                 rbName.replace(" ","_");
                 haItem.topic=haItem.topic+"_"+rbName;
-                haItem.name=String("valves.")+VdmConfig.configFlash.valvesConfig.valveConfig[x].name+"."+haItem.name;
+                haItem.name=String("valves.")+rbName+"."+haItem.name;
                 haItem.unique_id=haItem.name;
                 if (haItem.state_topic.length()>0)
                     haItem.state_topic="valves/"+rbName+"/"+haItem.state_topic;
@@ -1285,6 +1337,9 @@ void CMqtt::executeDiscoveryHA()
                 else if (haValvesItems[i].topic=="valves_control_dynOffs") { 
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) sendDiscoveryHA(haItem);
                 } 
+                else if (haValvesItems[i].topic.indexOf("valves_diag")>=0) { 
+                    if (VdmConfig.configFlash.protConfig.protocolFlags.publishDiag) sendDiscoveryHA(haItem);
+                } 
                 else sendDiscoveryHA(haItem);
                 i++;
             }
@@ -1299,12 +1354,13 @@ void CMqtt::executeDiscoveryHA()
             do {
                 haItem=haTempsItems[i];
                 rbName = String(VdmConfig.configFlash.tempsConfig.tempConfig[x].name);
+                if (rbName.length() == 0) rbName = String(x+1); 
                 rbName.replace(" ","_");
                 haItem.topic=haItem.topic+"_"+rbName;
-                haItem.name=haItem.name+"."+VdmConfig.configFlash.tempsConfig.tempConfig[x].name;
+                haItem.name=haItem.name+"."+rbName;
                 haItem.unique_id=VdmConfig.configFlash.tempsConfig.tempConfig[x].ID;
                 haItem.state_topic=haItem.state_topic+"/"+rbName+String("/value");
-                sendDiscoveryHA(haItem);
+                if (haItem.unique_id.length()>0) sendDiscoveryHA(haItem);
                 i++;
             }
             while (haTempsItems[i].topicClass!="");    
@@ -1317,18 +1373,19 @@ void CMqtt::executeDiscoveryHA()
             do {
                 haItem=haVoltsItems[i];
                 rbName = String(VdmConfig.configFlash.voltsConfig.voltConfig[x].name);
+                if (rbName.length() == 0) rbName = String(x+1); 
                 rbName.replace(" ","_");
                 haItem.topic=haItem.topic+"_"+rbName;
                 haItem.name=haItem.name+"."+VdmConfig.configFlash.voltsConfig.voltConfig[x].name;
                 haItem.unique_id=VdmConfig.configFlash.voltsConfig.voltConfig[x].ID;
                 haItem.state_topic=haItem.state_topic+"/"+rbName+String("/value");
                 haItem.unit_of_measurement = VdmConfig.configFlash.voltsConfig.voltConfig[x].unit;
-                sendDiscoveryHA(haItem);
+                if (haItem.unique_id.length()>0) sendDiscoveryHA(haItem);
                 i++;
             }
             while (haVoltsItems[i].topicClass!="");   
         }
     }
-
+    VdmSystem.closeFile();
     hadState = HAD_FINISHED;
 }
