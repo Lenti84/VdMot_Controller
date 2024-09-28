@@ -50,7 +50,7 @@
 #include <LittleFS.h>
 
 #define systemMsgSTMReset   "stm not working. reset stm"
-#define systemMsgReset      "reset system"
+#define systemMsgReset      "reset system by "
 #define FS_READ_MODE        'r'
 #define FS_WRITE_MODE       'w'
 

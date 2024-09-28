@@ -156,7 +156,8 @@ String CVdmSystem::getUpTime() {
 
 
 void CVdmSystem::sendResetReason() {
-  String ResetMsg = systemMsgReset+':'+getLastResetReason();
+  String ResetMsg = String(systemMsgReset)+String(":")+getLastResetReason();
+  // UART_DBG.println("SystemMsgReason: "+ResetMsg);
   VdmSystem.setSystemState(systemStateInfo,ResetMsg);
   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
       syslog.log(LOG_DEBUG, ResetMsg);
@@ -223,10 +224,9 @@ void CVdmSystem::fileDelete (String fileName)
 void CVdmSystem::setSystemState(uint8_t thisSystemState,String thisSystemMsg)
 {
   systemState=thisSystemState; 
-  systemMessage= String(thisSystemMsg);
+  systemMessage= thisSystemMsg;
   
-  UART_DBG.print("SystemMsg: ");
-  UART_DBG.println(systemMessage);
+  UART_DBG.println("SystemMsg: "+systemMessage);
 }
 
 String CVdmSystem::getLastResetReason()
@@ -240,7 +240,7 @@ void CVdmSystem::openFile (String fName,char mode)
 {
   if (!spiffsStarted) SPIFFS.begin(true);
   spiffsStarted=true;
-  //if ((mode==FS_WRITE_MODE) && SPIFFS.exists(fName)) SPIFFS.remove(fName); 
+  if ((mode==FS_WRITE_MODE) && SPIFFS.exists(fName)) SPIFFS.remove(fName); 
   fsfile = SPIFFS.open(fName,(const char*) &mode,(mode==FS_WRITE_MODE));
   fsfile.seek(0);
 }

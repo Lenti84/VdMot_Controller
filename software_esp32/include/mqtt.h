@@ -51,7 +51,7 @@
 #define DEFAULT_VALVESTOPIC  "valves/"
 #define DEFAULT_TEMPSTOPIC   "temps/"
 #define DEFAULT_VOLTSTOPIC   "sensors/" 
-#define HA_FILE_NAME         "/HATopics.cfg"
+#define HA_FILE_NAME         "/HADiscovery.cfg"
 
 #define publishNothing  0
 #define publishCommon   1

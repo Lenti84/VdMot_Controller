@@ -1006,12 +1006,14 @@ void CMqtt::checktValueTimeOut ()
 void CMqtt::deleteDiscoveryHA() 
 {
     String line;
-   // UART_DBG.println("discovery delete");
     VdmSystem.openFile(HA_FILE_NAME,FS_READ_MODE);
     while(VdmSystem.fileAvailable()) { 
         line = VdmSystem.readlnFromFile();
         mqtt_client.publish((char*) line.c_str(),(const uint8_t*) "",0,true);
-    //    UART_DBG.println("discovery delete: "+String(line));
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+            syslog.log(LOG_DEBUG, "MQTT: discovery delete: "+line);
+        }  
+       // UART_DBG.println("discovery delete: "+String(line));
     }
     VdmSystem.closeFile();
 }
@@ -1067,11 +1069,14 @@ void CMqtt::sendDiscoveryHA(HA_Item thisHAItem)
     uint16_t bs = mqtt_client.getBufferSize();
     if (bs<bl) mqtt_client.setBufferSize(bl);
     
-    //if (deleteHA==1) json ="";
     bool result=mqtt_client.publish((char*) haDiscoveryTopic.c_str(),(uint8_t *) json.c_str(),json.length(),true);
     VdmSystem.writelnToFile(String(haDiscoveryTopic)+"\n");
+   
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+        syslog.log(LOG_DEBUG, "MQTT: discovery topic: "+haDiscoveryTopic);
+        syslog.log(LOG_DEBUG, "MQTT: discovery item: "+json);
+    }  
 
-    //UART_DBG.println("discovery delete: "+String(deleteHA));
     //UART_DBG.println("discovery topic : "+String(haDiscoveryTopic));
     //UART_DBG.println("discovery item: "+String(json.length())+"="+String(json));
     //UART_DBG.println("discovery result: "+String(result)+" bufferSize "+String(mqtt_client.getBufferSize()));
@@ -1080,7 +1085,6 @@ void CMqtt::sendDiscoveryHA(HA_Item thisHAItem)
 
 void CMqtt::executeDiscoveryHA() 
 {
-    //UART_DBG.println("discovery delete: "+String(deleteHA));
     switch (actionHA) {
         case HA_DISCOVERY_ONLY:
         {
@@ -1217,41 +1221,45 @@ void CMqtt::executeDiscoveryHANow()
         String state_class;
         String unit_of_measurement;
     */
-    HA_Item haCommonItems[] =  {{"select","heatControl","heatControl","common.heatControl","common/heatControl","common/heatControl","mdi:heat-pump-outline","\"options\": [\"manual\",\"heat\",\"cool\",\"off\"]","","",""},
-                                {"text","message","message","common.message","common/message","common/message","mdi:message","","volume","measurement",""},
-                                {"number","parkPosition","parkPosition","common.parkPosition","common/parkPosition","common/parkPosition","mdi:parking","","volume","measurement",""},
-                                {"text","state","state","common.state","common/state","common/state","mdi:state-machine","","volume","measurement",""},
-                                {"text","uptime","uptime","common.uptime","common/uptime","common/uptime","mdi:timelapse","","volume","measurement",""},
-                                {""}
-                                };
+static const HA_Item haCommonItems[] = {
+        {"select","heatControl","heatControl","common.heatControl","common/heatControl","common/heatControl","mdi:heat-pump-outline","\"options\": [\"manual\",\"heat\",\"cool\",\"off\"]","","",""},
+        {"text","message","message","common.message","common/message","common/message","mdi:message","","volume","measurement",""},
+        {"number","parkPosition","parkPosition","common.parkPosition","common/parkPosition","common/parkPosition","mdi:parking","","volume","measurement",""},
+        {"text","state","state","common.state","common/state","common/state","mdi:state-machine","","volume","measurement",""},
+        {"text","uptime","uptime","common.uptime","common/uptime","common/uptime","mdi:timelapse","","volume","measurement",""},
+        {""}
+    };
     
-    HA_Item haValvesItems[] =  {{"text","valves_state","state","valves.state","state","state","mdi:state-machine","","volume","measurement",""},
-                                {"number","valves_tTarget","tTarget","valves.tTarget","tTarget","tTarget","mdi:thermometer","","temperature","measurement","°C"},
-                                {"number","valves_tValue","tValue","valves.tValue","tValue","tValue","mdi:thermometer","","temperature","measurement","°C"},
-                                {"number","valves_target","target","valves.target","target","target","mdi:gauge","","volume","measurement","%"},
-                                {"sensor","valves_temp1","temp1","valves.temp1","temp1","","mdi:thermometer","","temperature","measurement","°C"},
-                                {"sensor","valves_temp2","temp2","valves.temp2","temp2","","mdi:thermometer","","temperature","measurement","°C"},
-                                {"select","valves_control_mode","control.mode","valves.control.mode","control/mode","control/mode","mdi:switch","\"options\": [\"auto\",\"off\"]","","",""},
-                                {"number","valves_control_dynOffs","valves.control.dynOffs","valves.control.dynOffs","control/dynOffs","control/dynOffs","mdi:gauge","","volume","measurement",""},
-                                {"select","valves_window_state","window.state","valves.window.state","window/state","window/state","mdi:switch","\"options\": [\"close\",\"open\"]","","",""},
-                                {"number","valves_window_target","window.target","valves.window.target","window/target","window/target","mdi:gauge","","volume","measurement",""},
-                                {"text","valves_calibration_date","calibration.date","valves.calibration.date","calibration/date","","mdi:timelapse","","volume","measurement",""},
-                                {"number","valves_calibration_repetitions","calibration.repetitions","valves.calibration.repetitions","","calibration/repetitions","mdi:valve","","volume","measurement",""},
-                                {"number","valves_diag_openCount","diag.openCount","valves.diag.openCount","diag/openCount","","mdi:valve","","volume","measurement",""},
-                                {"number","valves_diag_closeCount","diag.closeCount","valves.diag.closeCount","diag/closeCount","","mdi:valve","","volume","measurement",""},
-                                {"number","valves_diag_deadZoneCount","diag.deadZoneCount","valves.diag.deadZoneCount","diag/deadZoneCount","","mdi:valve","","volume","measurement",""},
-                                {"number","valves_diag_moves","diag.moves","valves.diag.moves","diag/moves","diag/moves","mdi:valve","","volume","measurement",""},
-                                {"number","valves_diag_meanCurrrent","diag.meanCurrrent","valves.diag.meanCurrrent","diag/meanCurrrent","","mdi:valve","","volume","measurement",""},
-                                {""}
-                                };
+static const HA_Item haValvesItems[] =  {
+        {"text","valves_state","state","valves.state","state","state","mdi:state-machine","","volume","measurement",""},
+        {"number","valves_tTarget","tTarget","valves.tTarget","tTarget","tTarget","mdi:thermometer","","temperature","measurement","°C"},
+        {"number","valves_tValue","tValue","valves.tValue","tValue","tValue","mdi:thermometer","","temperature","measurement","°C"},
+        {"number","valves_target","target","valves.target","target","target","mdi:gauge","","volume","measurement","%"},
+        {"sensor","valves_temp1","temp1","valves.temp1","temp1","","mdi:thermometer","","temperature","measurement","°C"},
+        {"sensor","valves_temp2","temp2","valves.temp2","temp2","","mdi:thermometer","","temperature","measurement","°C"},
+        {"select","valves_control_mode","control.mode","valves.control.mode","control/mode","control/mode","mdi:switch","\"options\": [\"auto\",\"off\"]","","",""},
+        {"number","valves_control_dynOffs","valves.control.dynOffs","valves.control.dynOffs","control/dynOffs","control/dynOffs","mdi:gauge","","volume","measurement",""},
+        {"select","valves_window_state","window.state","valves.window.state","window/state","window/state","mdi:switch","\"options\": [\"close\",\"open\"]","","",""},
+        {"number","valves_window_target","window.target","valves.window.target","window/target","window/target","mdi:gauge","","volume","measurement",""},
+        {"text","valves_calibration_date","calibration.date","valves.calibration.date","calibration/date","calibration/date","mdi:timelapse","","volume","measurement",""},
+        {"text","valves_calibration_repetitions","calibration.repetitions","valves.calibration.repetitions","calibration/repetitions","calibration/repetitions","mdi:valve","","volume","measurement",""},
+        {"text","valves_diag_openCount","diag.openCount","valves.diag.openCount","diag/openCount","diag/openCount","mdi:valve","","volume","measurement",""},
+        {"text","valves_diag_closeCount","diag.closeCount","valves.diag.closeCount","diag/closeCount","diag/closeCount","mdi:valve","","volume","measurement",""},
+        {"text","valves_diag_deadZoneCount","diag.deadZoneCount","valves.diag.deadZoneCount","diag/deadZoneCount","diag/deadZoneCount","mdi:valve","","volume","measurement",""},
+        {"text","valves_diag_moves","diag.moves","valves.diag.moves","diag/moves","diag/moves","mdi:valve","","volume","measurement",""},
+        {"text","valves_diag_meanCurrrent","diag.meanCurrrent","valves.diag.meanCurrrent","diag/meanCurrrent","diag/meanCurrrent","mdi:valve","","volume","measurement",""},
+        {""}
+    };
   
-    HA_Item haTempsItems[] =   {{"sensor","temps","temps","temps","temps","","mdi:thermometer","","temperature","measurement","°C"},
-                                {""}
-                               };
+static const HA_Item haTempsItems[] = {
+        {"sensor","temps","temps","temps","temps","","mdi:thermometer","","temperature","measurement","°C"},
+        {""}
+    };
 
-    HA_Item haVoltsItems[] =   {{"sensor","volts","volts","volts","sensors","","","","voltage","measurement",""},
-                                {""}
-                               };
+static const HA_Item haVoltsItems[] = {
+        {"sensor","volts","volts","volts","sensors","","","","voltage","measurement",""},
+        {""}
+    };
 
     uint8_t i;
     HA_Item haItem;
@@ -1337,9 +1345,10 @@ void CMqtt::executeDiscoveryHANow()
                 else if (haValvesItems[i].topic=="valves_control_dynOffs") { 
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.active) sendDiscoveryHA(haItem);
                 } 
+                
                 else if (haValvesItems[i].topic.indexOf("valves_diag")>=0) { 
                     if (VdmConfig.configFlash.protConfig.protocolFlags.publishDiag) sendDiscoveryHA(haItem);
-                } 
+                }
                 else sendDiscoveryHA(haItem);
                 i++;
             }
