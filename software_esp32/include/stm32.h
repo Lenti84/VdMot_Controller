@@ -55,6 +55,9 @@
 #define     otaDelayErase           50
 #define     otaDelayCmd             50
 
+#define     otaBaudrateNormal       115200
+#define     otaBaudrateBoot0        otaBaudrateNormal/4
+
 typedef struct {
   File fsfile;
   uint32_t size;
@@ -78,7 +81,7 @@ class CStm32
 public:
   CStm32();
   void STM32ota_setup();
-  void STM32ota_begin();
+  void STM32ota_begin(int BaudRate);
   void STM32ota_start(uint8_t command, String thisFileName);
   void STM32ota_loop();
   void FlashMode();

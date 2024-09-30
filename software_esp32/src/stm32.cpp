@@ -147,8 +147,20 @@ void CStm32::STM32ota_loop()
 
                 break;
 
-        case STM32OTA_PREPARE: 
-                STM32ota_begin();
+        case STM32OTA_PREPARE:
+                if (!skipsigning) { 
+                  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_DEBUG, "STM32 ota: prepare normal");
+                  }  
+                  STM32ota_begin(otaBaudrateNormal);
+                } else { 
+                  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_DEBUG, "STM32 ota: prepare boot0");
+                  }  
+                  STM32ota_begin(otaBaudrateBoot0);
+                }
+            
+
                 ResetSTM32(true);           
                 VdmTask.yieldTask(1500); // stm32 is a little slow
                 UART_STM32.flush();     // flush garbage in rx buffer
@@ -234,9 +246,6 @@ void CStm32::STM32ota_loop()
                   }
                 #endif
                 if (timeout >= 3) {
-                                    
-                 // id = StmOta.stm32GetId();
-
                   if (StmOta.stm32GetId()) {
                     stm32ota_state = STM32OTA_ERASE_START;
                     stmUpdPercent = 15;
@@ -572,17 +581,17 @@ void CStm32::STM32ota_start(uint8_t command, String thisFileName)
 
 
 // has to be called prior to stm32 flash transactions
-void CStm32::STM32ota_begin() 
+void CStm32::STM32ota_begin(int BaudRate) 
 {
   #ifdef EnvDevelop
     UART_DBG.println("STM32 ota: begin");
   #endif
   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-    syslog.log(LOG_DEBUG, "STM32 ota: begin");
+    syslog.log(LOG_DEBUG, "STM32 ota: begin Baudrate = "+String(BaudRate));
   }  
   // flash interface
   // ATTENTION: on WT32-ETH01 use for UART_STM32 pins: RX2 IO35 and TX2 IO17
-  UART_STM32.begin(115200, SERIAL_8E1, STM32_RX, STM32_TX, false, 20000UL);
+  UART_STM32.begin(BaudRate, SERIAL_8E1, STM32_RX, STM32_TX, false, 20000UL);
   clearUART_STM32Buffer();
   #ifdef EnvDevelop
     UART_DBG.println("STM32 ota: init state machine");

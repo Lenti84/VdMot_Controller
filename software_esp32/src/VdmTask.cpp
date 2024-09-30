@@ -114,7 +114,9 @@ void CVdmTask::startApp()
 void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
 {
     taskManager.setTaskEnabled (taskIdApp,false);
+    taskManager.setTaskEnabled (taskIdMqtt,false);
     delay (1000);           // wait to finish task;
+
     Stm32.STM32ota_setup();
     Stm32.STM32ota_start(command,thisFileName);
     if (taskIdStm32Ota==TASKMGR_INVALIDID) {
