@@ -45,6 +45,7 @@ Following configuration of the flash download tool is needed:
 
 Needed files can be found here:<br>
 https://github.com/Lenti84/VdMot_Controller/blob/master/software_esp32/boot_app0.bin<br>
+https://github.com/Lenti84/VdMot_Controller/releases/download/v1.0.8/partitions.bin<br>
 https://github.com/Lenti84/VdMot_Controller/blob/master/software_esp32/bootloader_dio_40m.bin<br>
 https://github.com/Lenti84/VdMot_Controller/tree/master/releases/
     
