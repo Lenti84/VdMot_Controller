@@ -11,9 +11,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.4.3]
+### Added
+- STM :        Boot0 ota : reduce Baudrate by div 2 if init failed. Retry 2 times
+- Mqtt :       discovery: climate and valve added
+
 ## [1.4.2]
 ### Changed
-- Mqtt         discovery: if valve name und temp name is empty then the idx-number is set as name
+- Mqtt :       discovery: if valve name und temp name is empty then the idx-number is set as name
                           delete last topics (user can avtivate) in HA prior sending new discovery 
 ### Added
 - STM :        check for compatibility to WTH32 version

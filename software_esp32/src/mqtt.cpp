@@ -698,7 +698,22 @@ void CMqtt::publish_valves () {
                     }
                     lastValveValues[x].state=valveStates[x].thisState;
                 }
-
+                if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
+                    // tTarget
+                    if ((lastValveValues[x].tTarget!=PiControl[x].target) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/tTarget",sizeof(topicstr) - strlen (topicstr) - 1);
+                        publishValue(topicstr, (char*) (String(PiControl[x].target,1)).c_str());
+                        lastValveValues[x].tTarget=PiControl[x].target;
+                    }
+                    // tTarget
+                    if ((lastValveValues[x].tValue!=PiControl[x].value) || forcePublish || lastValveValues[x].publishTimeOut) {
+                        topicstr[len] = '\0';
+                        strncat(topicstr, "/tValue",sizeof(topicstr) - strlen (topicstr) - 1);
+                        publishValue(topicstr, (char*) (String(PiControl[x].value,1)).c_str());
+                        lastValveValues[x].tValue=PiControl[x].value;
+                    }
+                }
                 // calibration repetitions
                 if ((lastValveValues[x].calibRetries!=StmApp.actuators[x].calibRetries) || forcePublish || lastValveValues[x].publishTimeOut) {
                     topicstr[len] = '\0';
@@ -1208,19 +1223,21 @@ void CMqtt::executeDiscoveryHANow()
 */
 
      
-    /*
-        String topicClass;
-        String topic;
-        String name; 
-        String unique_id;
-        String state_topic;
-        String command_topic;
-        String icon;
-        String options;
-        String device_class;
-        String state_class;
-        String unit_of_measurement;
-    */
+/*
+    String topicClass;
+    String topic;
+    String name; 
+    String unique_id;
+    String state_topic;
+    String command_topic;
+    String icon;
+    String options;
+    String device_class;
+    String state_class;
+    String unit_of_measurement;
+    String configuration_url;    
+*/
+
 static const HA_Item haCommonItems[] = {
         {"select","heatControl","heatControl","common.heatControl","common/heatControl","common/heatControl","mdi:heat-pump-outline","\"options\": [\"manual\",\"heat\",\"cool\",\"off\"]","","",""},
         {"text","message","message","common.message","common/message","common/message","mdi:message","","volume","measurement",""},
@@ -1229,15 +1246,20 @@ static const HA_Item haCommonItems[] = {
         {"text","uptime","uptime","common.uptime","common/uptime","common/uptime","mdi:timelapse","","volume","measurement",""},
         {""}
     };
-    
+
+static const HA_Item haClimateItems[] =  {
+        {"climate","climate","climate","valves.climate","tValue","tTarget","mdi:thermostat","","","",""},
+        {""}
+    };
+
 static const HA_Item haValvesItems[] =  {
         {"text","valves_state","state","valves.state","state","state","mdi:state-machine","","volume","measurement",""},
-        {"number","valves_tTarget","tTarget","valves.tTarget","tTarget","tTarget","mdi:thermometer","","temperature","measurement","°C"},
-        {"number","valves_tValue","tValue","valves.tValue","tValue","tValue","mdi:thermometer","","temperature","measurement","°C"},
-        {"number","valves_target","target","valves.target","target","target","mdi:gauge","","volume","measurement","%"},
+    //    {"number","valves_tTarget","tTarget","valves.tTarget","tTarget","tTarget","mdi:thermometer","","temperature","measurement","°C"},
+    //    {"number","valves_tValue","tValue","valves.tValue","tValue","tValue","mdi:thermometer","","temperature","measurement","°C"},
+        {"valve","valves_target","target","valves.target","target","target","mdi:valve","\"reports_position\": true","water","measurement","%"},
         {"sensor","valves_temp1","temp1","valves.temp1","temp1","","mdi:thermometer","","temperature","measurement","°C"},
         {"sensor","valves_temp2","temp2","valves.temp2","temp2","","mdi:thermometer","","temperature","measurement","°C"},
-        {"select","valves_control_mode","control.mode","valves.control.mode","control/mode","control/mode","mdi:switch","\"options\": [\"auto\",\"off\"]","","",""},
+    //    {"select","valves_control_mode","control.mode","valves.control.mode","control/mode","control/mode","mdi:switch","\"options\": [\"auto\",\"off\"]","","",""},
         {"number","valves_control_dynOffs","valves.control.dynOffs","valves.control.dynOffs","control/dynOffs","control/dynOffs","mdi:gauge","","volume","measurement",""},
         {"select","valves_window_state","window.state","valves.window.state","window/state","window/state","mdi:switch","\"options\": [\"close\",\"open\"]","","",""},
         {"number","valves_window_target","window.target","valves.window.target","window/target","window/target","mdi:gauge","","volume","measurement",""},
@@ -1282,6 +1304,7 @@ static const HA_Item haVoltsItems[] = {
 
     VdmSystem.openFile(HA_FILE_NAME,FS_WRITE_MODE);
 
+    // common
     i=0;
     do {
         haItem=haCommonItems[i];
@@ -1298,7 +1321,58 @@ static const HA_Item haVoltsItems[] = {
     }
     while (haCommonItems[i].topicClass!="");
   
+   // climate
+    String tcTopic;
+    String ctTopic;
+    String modeTopic;
+    String root="";
+    if (VdmConfig.configFlash.protConfig.protocolFlags.publishPathAsRoot) root="/";
 
+    for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
+        if (VdmConfig.configFlash.valvesConfig.valveConfig[x].active) {
+            i=0;
+            
+            haItem=haClimateItems[i];
+            rbName = String(VdmConfig.configFlash.valvesConfig.valveConfig[x].name);
+            if (rbName.length() == 0) rbName = String(x+1); 
+            rbName.replace(" ","_");
+            haItem.topic=haItem.topic+"_"+rbName;
+            haItem.name=String("climate.")+rbName+"."+haItem.name;
+            haItem.unique_id=haItem.name;
+            
+            switch (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].valueSource){
+                case 1 : {
+                    haItem.state_topic = "temp1";
+                    break;
+                }
+                case 2 : {
+                    haItem.state_topic = "temp2";
+                    break;
+                }
+            }
+            tcTopic = "\""+String(root)+String(VdmConfig.configFlash.systemConfig.stationName)+
+                      "/valves/"+rbName+"/"+haItem.command_topic+"/set";
+
+            
+            ctTopic = "\""+String(root)+String(VdmConfig.configFlash.systemConfig.stationName)+
+                      "/valves/"+rbName+"/"+haItem.state_topic+"/value";
+
+
+            modeTopic = "\""+String(root)+String(VdmConfig.configFlash.systemConfig.stationName)+
+                      "/valves/"+rbName+"/control/mode/set";
+
+            haItem.options = 
+                "\"temperature_command_topic\":"+ String(tcTopic)+"\",\n"+  
+                "\"current_temperature_topic\":" +String(ctTopic)+"\",\n"+ 
+                "\"mode_command_topic\":" +String(modeTopic)+"\",\n"+ 
+                "\"modes\" : [\"auto\", \"off\"]"; 
+
+            haItem.state_topic = "";
+            haItem.command_topic = "";
+
+            sendDiscoveryHA(haItem);
+        } 
+    }
 
     // valves
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {

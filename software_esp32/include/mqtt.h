@@ -75,6 +75,8 @@ typedef struct {
   uint16_t meanCurrent;
   int temp1;
   int temp2;
+  float tTarget;
+  float tValue;
   uint32_t ts;
   bool publishNow;
   bool publishTimeOut;

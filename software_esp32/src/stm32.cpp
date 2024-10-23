@@ -126,6 +126,8 @@ void CStm32::STM32ota_loop()
                   stm32ota_state = STM32OTA_PREPAREFILE;
                   stmUpdPercent = 0;
                   stm32ota_command = 0;
+                  baudRateBoot0 = otaBaudrateNormal;
+                  retryBoot0 = 0;
                 }
 
                 break;
@@ -155,9 +157,9 @@ void CStm32::STM32ota_loop()
                   STM32ota_begin(otaBaudrateNormal);
                 } else { 
                   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-                    syslog.log(LOG_DEBUG, "STM32 ota: prepare boot0");
+                    syslog.log(LOG_DEBUG, "STM32 ota: prepare boot0 with "+String(baudRateBoot0)+" Bd");
                   }  
-                  STM32ota_begin(otaBaudrateBoot0);
+                  STM32ota_begin(baudRateBoot0);
                 }
             
 
@@ -226,7 +228,7 @@ void CStm32::STM32ota_loop()
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
                   syslog.log(LOG_DEBUG, "STM32 ota: ready to beef");
                 }  
-                if (timeout >= 30) {      // 300 ms
+                if (timeout >= 30) {      // 30*50 ms
                   UART_STM32.write(STM32INIT);
                   stm32ota_state = STM32OTA_GETID;
                   stmUpdPercent = 10;
@@ -240,17 +242,28 @@ void CStm32::STM32ota_loop()
                 #ifdef EnvDevelop 
                   if (timeout==0) {
                     UART_DBG.println("STM32 ota: get id");
-                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-                      syslog.log(LOG_DEBUG, "STM32 ota: get id");
-                    }  
                   }
                 #endif
+                
                 if (timeout >= 3) {
+                  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                      syslog.log(LOG_DEBUG, "STM32 ota: get id");
+                  }  
                   if (StmOta.stm32GetId()) {
                     stm32ota_state = STM32OTA_ERASE_START;
                     stmUpdPercent = 15;
+                    timeout = 0;
                   }
-                  else stm32ota_state = STM32OTA_ERROR;
+                  else {
+                    retryBoot0 ++;
+                    if (retryBoot0<3) {
+                      baudRateBoot0 = baudRateBoot0 / 2;
+                      if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                        syslog.log(LOG_DEBUG, "STM32 ota: failed, try with "+String(baudRateBoot0)+ "Bd");
+                      }  
+                      stm32ota_state = STM32OTA_PREPARE;
+                    } else stm32ota_state = STM32OTA_ERROR;
+                  }
                 }
                 else timeout++;
 

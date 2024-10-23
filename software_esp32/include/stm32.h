@@ -103,7 +103,8 @@ private:
   uint8_t stm32StartRead(uint32_t rdaddress, uint16_t rdlen);
   int stm32ota_command;
   ota_state stm32ota_state;
-  
+  int baudRateBoot0;
+  uint8_t retryBoot0;
   int timeout;
   int count;
   uint8_t buffer[STM32OTA_BLOCKSIZE];
