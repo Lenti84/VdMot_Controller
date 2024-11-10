@@ -10,11 +10,18 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 ## [Unreleased] - Development
+## [1.4.4]
+### Added
+- Mqtt :       publish ip added
+               send initial value for valve/control/mode after boot. 
+               Discovery of 0.5 degree step with climate
 
 ## [1.4.3]
 ### Added
 - STM :        Boot0 ota : reduce Baudrate by div 2 if init failed. Retry 2 times
 - Mqtt :       discovery: climate and valve added
+- Mqtt :       tValue and tTarget will be resend by VDMot if received from a server and differs from the last one. 
+               (Only if strict seperate topics is enabled)
 
 ## [1.4.2]
 ### Changed

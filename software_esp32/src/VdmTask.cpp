@@ -170,6 +170,7 @@ void CVdmTask::startPIServices(bool startTask)
         UART_DBG.println("Start pi tasks "+String(startTask));
     #endif
     for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) { 
+        PiControl[picIdx].setControlActive(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].controlFlags.active);
         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].controlFlags.active) {
             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].link==0) { 
                 PiControl[picIdx].valveIndex=picIdx;

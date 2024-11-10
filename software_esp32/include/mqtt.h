@@ -77,6 +77,7 @@ typedef struct {
   int temp2;
   float tTarget;
   float tValue;
+  uint8_t controlMode;
   uint32_t ts;
   bool publishNow;
   bool publishTimeOut;

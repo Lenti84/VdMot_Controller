@@ -212,7 +212,6 @@ void CMqtt::mqtt_loop()
         switch (hadState) {
             case HAD_IDLE : {
                 if (check!=0) { 
-                    firstPublish=false;
                     publish_all(check);
                 }   
                 break; 
@@ -714,6 +713,16 @@ void CMqtt::publish_valves () {
                         lastValveValues[x].tValue=PiControl[x].value;
                     }
                 }
+                if ((lastValveValues[x].controlMode!=PiControl[x].controlActive) || forcePublish || lastValveValues[x].publishTimeOut) {
+                    topicstr[len] = '\0';
+                    strncat(topicstr, "/control/mode",sizeof(topicstr) - strlen (topicstr) - 1);
+                    if (VdmConfig.configFlash.protConfig.protocolFlags.publishPlainText) {
+                        strcpy(valstr,PiControl[x].controlActive ? "auto" : "off");
+                    } else itoa(PiControl[x].controlActive, valstr, 10);
+                    publishValue(topicstr, valstr);
+                    lastValveValues[x].controlMode=PiControl[x].controlActive;
+                }
+
                 // calibration repetitions
                 if ((lastValveValues[x].calibRetries!=StmApp.actuators[x].calibRetries) || forcePublish || lastValveValues[x].publishTimeOut) {
                     topicstr[len] = '\0';
@@ -914,6 +923,13 @@ void CMqtt::publish_common ()
     strncat(topicstr,mqtt_commonTopic,sizeof(topicstr) - strlen (topicstr) - 1);
     len = strlen(topicstr);
    
+    if (firstPublish) {
+        strncat(topicstr, "ip",sizeof(topicstr) - strlen (topicstr) - 1);
+        strcpy(valstr,VdmNet.networkInfo.ip.toString().c_str());
+        publishValue(topicstr, valstr);
+    }
+
+    topicstr[len] = '\0';
     if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || forcePublish || (lastCommonValues.heatControl!=VdmConfig.heatValues.heatControl)) {
         strncat(topicstr, "heatControl",sizeof(topicstr) - strlen (topicstr) - 1);
         if (VdmConfig.configFlash.protConfig.protocolFlags.publishPlainText) {
@@ -973,6 +989,7 @@ void CMqtt::publish_all (uint8_t publishFlags)
    if (CHECK_BIT(publishFlags,1)==1) publish_valves ();
    if (CHECK_BIT(publishFlags,2)==1) publish_temps ();
    if (CHECK_BIT(publishFlags,3)==1) publish_volts ();
+   firstPublish=false;
 }
 
 void CMqtt::checktValueTimeOut () 
@@ -1244,6 +1261,7 @@ static const HA_Item haCommonItems[] = {
         {"number","parkPosition","parkPosition","common.parkPosition","common/parkPosition","common/parkPosition","mdi:parking","","volume","measurement",""},
         {"text","state","state","common.state","common/state","common/state","mdi:state-machine","","volume","measurement",""},
         {"text","uptime","uptime","common.uptime","common/uptime","common/uptime","mdi:timelapse","","volume","measurement",""},
+        {"text","ip","ip","common.ip","common/ip","common/ip","mdi:message","","volume","measurement",""},
         {""}
     };
 
@@ -1364,6 +1382,7 @@ static const HA_Item haVoltsItems[] = {
             haItem.options = 
                 "\"temperature_command_topic\":"+ String(tcTopic)+"\",\n"+  
                 "\"current_temperature_topic\":" +String(ctTopic)+"\",\n"+ 
+                "\"temp_step\":0.5,\n"+ 
                 "\"mode_command_topic\":" +String(modeTopic)+"\",\n"+ 
                 "\"modes\" : [\"auto\", \"off\"]"; 
 

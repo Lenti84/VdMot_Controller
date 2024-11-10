@@ -198,6 +198,7 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
               "\"link\":"+String(valvesControlConfig.valveControlConfig[x].link) + ","+
               "\"vSource\":"+String(valvesControlConfig.valveControlConfig[x].valueSource) + ","+
               "\"tSource\":"+String(valvesControlConfig.valveControlConfig[x].targetSource) + ","+
+              "\"inittTarget\":"+String(VdmConfig.configFlash.valvesControlInit.valveControlInit[x].tTarget,1) + ","+
               "\"xp\":"+String(valvesControlConfig.valveControlConfig[x].xp) + ","+
               "\"offset\":"+String(valvesControlConfig.valveControlConfig[x].offset) + ","+
               "\"ti\":"+String(valvesControlConfig.valveControlConfig[x].ti) + ","+
@@ -403,8 +404,7 @@ String CWeb::getValvesStatus()
                     result +=",\"tTarget\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
                     result +=",\"tValue\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
                   }
-                 }
-
+                 } 
                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
                    result +=",\"window\":"+String(PiControl[x].windowState);
                  }

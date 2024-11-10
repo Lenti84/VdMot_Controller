@@ -44,6 +44,7 @@
 #include "web.h"
 #include "Services.h"
 #include "stmApp.h"
+#include "PIControl.h"
 
 CVdmConfig VdmConfig;
 
@@ -136,6 +137,7 @@ void CVdmConfig::clearConfig()
     configFlash.valvesControlConfig.valveControlConfig[i].ki=0.01;
     configFlash.valvesControlConfig.valveControlConfig[i].startActiveZone=0;
     configFlash.valvesControlConfig.valveControlConfig[i].endActiveZone=100;
+    configFlash.valvesControlInit.valveControlInit[i].tTarget=20;
   }
   configFlash.valvesControlConfig.heatControl=0;
   configFlash.valvesControlConfig.parkingPosition=10;
@@ -258,6 +260,9 @@ void CVdmConfig::readConfig()
       heatValues.heatControl=configFlash.valvesControlConfig.heatControl;
       heatValues.parkPosition=configFlash.valvesControlConfig.parkingPosition;
     }
+    if (prefs.isKey(nvsValvesControlInit)) {
+      prefs.getBytes(nvsValvesControlInit, (void *) configFlash.valvesControlInit.valveControlInit, sizeof(configFlash.valvesControlInit.valveControlInit));
+    }
     prefs.end();
   }
  
@@ -315,6 +320,11 @@ void CVdmConfig::readConfig()
       miscValues.lastCalib=prefs.getLong(nvsMiscLastCalib,0);
     prefs.end();
   }
+  
+  for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) { 
+    PiControl[picIdx].target=VdmConfig.configFlash.valvesControlInit.valveControlInit[picIdx].tTarget;
+  }
+
 }
 
 void CVdmConfig::writeConfig(bool reboot)
@@ -422,6 +432,7 @@ void CVdmConfig::writeValvesControlConfig(bool reboot, bool restartTask)
   prefs.begin(nvsValvesControlCfg,false);
   prefs.clear();
   prefs.putBytes(nvsValvesControl, (void *) configFlash.valvesControlConfig.valveControlConfig, sizeof(configFlash.valvesControlConfig.valveControlConfig));
+  prefs.putBytes(nvsValvesControlInit, (void *) configFlash.valvesControlInit.valveControlInit, sizeof(configFlash.valvesControlInit.valveControlInit));
   prefs.putUChar (nvsValvesControlHeatControl,configFlash.valvesControlConfig.heatControl);
   prefs.putUChar (nvsValvesControlParkPos,configFlash.valvesControlConfig.parkingPosition);
   prefs.end();
@@ -584,6 +595,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
         if (!doc["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["scheme"];  
         if (!doc["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["startAZ"];  
         if (!doc["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["endAZ"]; 
+        if (!doc["inittTarget"].isNull()) configFlash.valvesControlInit.valveControlInit[idx].tTarget=doc["inittTarget"]; 
       }
   } else {
     for (uint8_t i=0; i<size; i++) {
@@ -609,6 +621,7 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
           if (!doc["valves"][i]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["valves"][i]["scheme"];  
           if (!doc["valves"][i]["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["valves"][i]["startAZ"];  
           if (!doc["valves"][i]["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["valves"][i]["endAZ"];  
+          if (!doc["valves"][i]["inittTarget"].isNull()) configFlash.valvesControlInit.valveControlInit[idx].tTarget=doc["valves"][i]["inittTarget"];  
         }
       }
     } 
