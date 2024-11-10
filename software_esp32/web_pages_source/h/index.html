@@ -3442,7 +3442,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			let display = thisLink.value==0 ? 'hidden' : 'visible'; 
 			id('cfgVCKi'+linkNo).style.visibility=display;
 		}		
-		
+
 		function setCfgVCLink(thisLink){
 			const linkId= thisLink.id;
 			let linkNo = linkId.slice(linkId.indexOf("-")+1);
@@ -3461,7 +3461,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id('cfgVCEZ'+linkNo).style.visibility=display;
 			id('cfgVCWindow'+linkNo).style.visibility=display;
 
-			if (display=='block') setCfgVCScheme(id('cfgVCScheme-'+linkNo));
+			if (display=='visible') setCfgVCScheme(id('cfgVCScheme-'+linkNo));
 		}
 				
 		function setCfgVCWindow(thisLink){
