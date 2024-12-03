@@ -75,7 +75,7 @@ int CMessenger::testPO(JsonObject doc)
     char userToken [31]={0};
     char title [31]={0};
     char message [31] = {"Test from "};
-    strncat (message,VdmConfig.configFlash.systemConfig.stationName,sizeof(message) - strlen(message) - 1) ; 
+    strlcat (message,VdmConfig.configFlash.systemConfig.stationName,sizeof(message)) ; 
 
     if (!doc["appToken"].isNull()) strncpy(appToken,doc["appToken"].as<const char*>(),sizeof(appToken));
     if (!doc["userToken"].isNull()) strncpy(userToken,doc["userToken"].as<const char*>(),sizeof(userToken));
@@ -108,7 +108,7 @@ void CMessenger::testEmail(JsonObject doc)
   char recipient [65]={0};
   uint16_t port=465;
   char message [65] = {"Test from "};
-  strncat (message,VdmConfig.configFlash.systemConfig.stationName,sizeof(message) - strlen(message) - 1) ; 
+  strlcat (message,VdmConfig.configFlash.systemConfig.stationName,sizeof(message)) ; 
   if (!doc["user"].isNull()) strncpy(user,doc["user"].as<const char*>(),sizeof(user));
   if (!doc["pwd"].isNull()) strncpy(pwd,doc["pwd"].as<const char*>(),sizeof(pwd));
   if (!doc["host"].isNull()) strncpy(host,doc["host"].as<const char*>(),sizeof(host));

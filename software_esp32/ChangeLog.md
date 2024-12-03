@@ -10,11 +10,21 @@ All notable changes to this project will be documented in this file.
 ### Removed
 
 ## [Unreleased] - Development
+
+## [1.4.5]
+### Added
+- Mqtt :       publish min/max for valve control
+- Discovery :  topics for temp and volt sensors corrected
+- WebUI :      hover on table line -> orange 
+- Temp :       Index of temp offset in config was wrong 
+
 ## [1.4.4]
 ### Added
 - Mqtt :       publish ip added
                send initial value for valve/control/mode after boot. 
                Discovery of 0.5 degree step with climate
+- Control :    Initial value for target temperature after boot 
+- Config :     Increase email config to 64 chars
 
 ## [1.4.3]
 ### Added

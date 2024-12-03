@@ -215,7 +215,7 @@ void CPiControl::controlValve()
     case nothing:
       break;
     case gotoMin:
-      setPosition(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[valveIndex].startActiveZone);
+      setPosition(startActiveZone);
       break;
     case gotoPark:
       setPosition(VdmConfig.heatValues.parkPosition);

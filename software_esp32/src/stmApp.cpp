@@ -166,7 +166,7 @@ int16_t CStmApp::getTOffset(uint8_t tIdx)
 {
     int16_t result = 0;
     if (tIdx>0) {
-        result = VdmConfig.configFlash.tempsConfig.tempConfig[tIdx].offset;
+        result = VdmConfig.configFlash.tempsConfig.tempConfig[tIdx-1].offset;
     } 
     return (result); 
 }
@@ -757,10 +757,10 @@ void  CStmApp::app_check_data()
                     volts[idx].vad=atoi(argptr[1]);
                     volts[idx].failed=(volts[idx].vad<=-1000);
                     float c = (float) volts[idx].vad;
-                    volts[idx].value=(c/100+VdmConfig.configFlash.voltsConfig.voltConfig[idx].offset) * VdmConfig.configFlash.voltsConfig.voltConfig[idx].factor;
+                    volts[idx].value=(c/100.0+VdmConfig.configFlash.voltsConfig.voltConfig[idx].offset) * VdmConfig.configFlash.voltsConfig.voltConfig[idx].factor;
                 } 
                 voltIndex++;
-
+                
                 
                 if (voltIndex>=voltsCount) {  // all volt sensors read
                     voltIndex=0;
@@ -982,16 +982,16 @@ void CStmApp::app_comm_send(String thisAppCmd,uint8_t * value1,uint8_t * value2)
 {
     char valbuffer[20];
     memset(sendbuffer,0x0,sizeof(sendbuffer));
-    strncat(sendbuffer,thisAppCmd.c_str(),sizeof(sendbuffer) - strlen (sendbuffer) - 1);
-    strncat(sendbuffer," ",sizeof(sendbuffer) - strlen (sendbuffer) - 1);
+    strlcat(sendbuffer,thisAppCmd.c_str(),sizeof(sendbuffer));
+    strlcat(sendbuffer," ",sizeof(sendbuffer));
     if (value1!=NULL) {
         itoa(*value1, valbuffer, 10);
-        strncat(sendbuffer,valbuffer,sizeof(sendbuffer) - strlen (sendbuffer) - 1);
-        strncat(sendbuffer," ",sizeof(sendbuffer) - strlen (sendbuffer) - 1);
+        strlcat(sendbuffer,valbuffer,sizeof(sendbuffer));
+        strlcat(sendbuffer," ",sizeof(sendbuffer));
         if (value2!=NULL) {
             itoa(*value2, valbuffer, 10);
-            strncat(sendbuffer,valbuffer,sizeof(sendbuffer) - strlen (sendbuffer) - 1);
-            strncat(sendbuffer," ",sizeof(sendbuffer) - strlen (sendbuffer) - 1);
+            strlcat(sendbuffer,valbuffer,sizeof(sendbuffer));
+            strlcat(sendbuffer," ",sizeof(sendbuffer));
         }
     }
     UART_STM32.println(sendbuffer);   

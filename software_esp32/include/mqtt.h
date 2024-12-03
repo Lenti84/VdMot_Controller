@@ -78,6 +78,8 @@ typedef struct {
   float tTarget;
   float tValue;
   uint8_t controlMode;
+  uint8_t startActiveZone;
+  uint8_t endActiveZone;
   uint32_t ts;
   bool publishNow;
   bool publishTimeOut;

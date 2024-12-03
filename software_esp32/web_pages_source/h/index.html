@@ -117,7 +117,7 @@
 		width: 300px;
 	}
 	.form-input2{
-		width: 250px;
+		width: 300px;
 	}
 	form-input3{
 		width: 50px;
@@ -218,7 +218,13 @@
 		align-items: center;
 		text-align: center;
 		align-content: center;
-		
+	}
+
+	table.tabTableCtl tr:hover {
+		background-color: coral;
+	}
+	table.tabTableCtl tr:first-child:hover {
+		background-color: gray;
 	}
 
 	.hide {
@@ -623,19 +629,19 @@ details > ul {
 		<tr>
 			<th>User</th>
 			<td>
-			<input type="text" class="form-input2" maxlength="30" id="cfgEmailUser" name="cfgEmailUser"/>
+			<input type="text" class="form-input2" maxlength="64" id="cfgEmailUser" name="cfgEmailUser"/>
 			</td>
 		</tr>
 		<tr>
 			<th>Password</th>
 			<td>
-			<input type="password" class="form-input2" maxlength="30" id="cfgEmailPwd" name="cfgEmailPwd"/>
+			<input type="password" class="form-input2" maxlength="64" id="cfgEmailPwd" name="cfgEmailPwd"/>
 			</td>
 		</tr>
 		<tr>
 			<th>Host</th>
 			<td>
-			<input type="text" class="form-input2" maxlength="30" id="cfgEmailHost" name="cfgEmailHost"/>
+			<input type="text" class="form-input2" maxlength="64" id="cfgEmailHost" name="cfgEmailHost"/>
 			</td>
 		</tr>
 		<tr>
@@ -647,7 +653,7 @@ details > ul {
 		<tr>
 			<th>Recipient</th>
 			<td>
-			<input type="text" class="form-input2" maxlength="30" id="cfgEmailRecipient" name="cfgEmailRecipient"/>
+			<input type="text" class="form-input2" maxlength="64" id="cfgEmailRecipient" name="cfgEmailRecipient"/>
 			</td>
 		</tr>
 		<tr>
@@ -784,7 +790,7 @@ details > ul {
 	<div class="container3">
 		<div id="divValvesTable" class="rtabframe3">  
 		<h3>Valves</h3>	
-		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		<table id="valvesTable" class="tabTableCtl" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
 		<div class="rtabframe" style="overflow-y:auto" id="addStatusTabFrame">  
@@ -808,12 +814,12 @@ details > ul {
 		</div>
 		<div class="rtabframe" style="overflow-y:auto" id="tempStatusTabFrame">  
 		<h3>Temperature</h3>
-		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		<table id="tempsTable" class="tabTableCtl" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
 		<div class="rtabframe" style="overflow-y:auto" id="voltStatusTabFrame">  
 			<h3>Sensors</h3>
-			<table id="voltsTable" class="tabTable" border="3" frame="box" style="text-align:center">
+			<table id="voltsTable" class="tabTableCtl" border="3" frame="box" style="text-align:center">
 			</table>
 		</div>
 	</div>
@@ -1153,7 +1159,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 
 		<div class="rtabframe">
 		<h3>Valves</h3>
-		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center;">
+		<table id="cfgValvesTable" class="tabTableCtl" border="3" frame="box" style="text-align:center;">
 		
 		</table>
 		<table class="tabTable">
@@ -1208,7 +1214,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		<div class="rtabframe2">
 			<h3>Temperature sensor</h3>
 			<div style="height:30em;overflow-y:scroll">
-				<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center"></table>
+				<table id="cfgTSensorTable" class="tabTableCtl" border="3" frame="box" style="text-align:center"></table>
 			</div>
 			<div class="tabiframe">	
 				<table id="cfgTSensorTable1" class="tabTable">
@@ -1227,10 +1233,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 			</div>
 		</div>
 
-		<div class="rtabframe2">
+		<div class="rtabframe3">
 			<h3>Voltage sensor</h3>
 			<div style="height:22.3em;overflow-y:scroll">
-				<table id="cfgVSensorTable" class="tabTable" border="3" frame="box" style="text-align:center"></table>
+				<table id="cfgVSensorTable" class="tabTableCtl" border="3" frame="box" style="text-align:center"></table>
 			</div>
 		</div>
 
@@ -1316,7 +1322,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 	<div class="container">
 		<div class="rtabframe3">  
 			<h3>Valves</h3>	
-			<table id="cfgValvesControlTable" class="tabTable" border="3" frame="box">
+			<table id="cfgValvesControlTable" class="tabTableCtl" border="3" frame="box">
 			</table>
 			<table class="tabTable">
 			<tr>
@@ -2668,6 +2674,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('name', 'cfgVCWindow' + row);
 				el.setAttribute('id', 'cfgVCWindow' + row);
 				el.setAttribute('onchange','setCfgVCWindow(this);');
+				el.setAttribute('title','Activate window handling');
 				thiscell.appendChild(el);
 			}
 			let col=0;
@@ -3534,7 +3541,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 					case 4: 
 					case 6:
 					{
-						valvesTable.rows[index+1].cells[0].style.backgroundColor="gray";
+						valvesTable.rows[index+1].cells[0].style.backgroundColor=""; //gray";
 						valvesTable.rows[index+1].cells[0].style.color="white";
 						break;
 					}
@@ -3592,7 +3599,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 							valvesTable.rows[index+1].cells[4].title="Warning : "+item.cr.toString()+" calibration failed";
 							valveWarnLevel=1;
 						} else {
-							valvesTable.rows[index+1].cells[4].style.backgroundColor="gray";
+							valvesTable.rows[index+1].cells[4].style.backgroundColor=""; //gray";
 							valvesTable.rows[index+1].cells[4].style.color="white";
 						}
 						break;
@@ -3607,14 +3614,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 				if (valveTempsExists===true) {
 					if (item.temp1) {
 						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp1;
-						if (item.temp1==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						if (item.temp1==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor=""; //gray";
 						colIdx++;
 					}
 					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
 
 					if (item.temp2) {
 						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp2;
-						if (item.temp2==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						if (item.temp2==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor=""; //gray";
 						colIdx++;
 					}
 					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
@@ -3626,7 +3633,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 					if ('tValue' in item) {
 						valvesTable.rows[index+1].cells[colIdx].textContent = item.tValue;
 						if ('tValueFailed' in item) valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; 
-						else  valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						else  valvesTable.rows[index+1].cells[colIdx].style.backgroundColor=""; //gray";
 					}
 					else valvesTable.rows[index+1].cells[colIdx].textContent = "";
 				}
@@ -3734,7 +3741,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 						tempsTable.rows[index+1].cells[2].style.backgroundColor="red"; 
 						tempWarning =true;
 					} else {
-						tempsTable.rows[index+1].cells[2].style.backgroundColor="gray";
+						tempsTable.rows[index+1].cells[2].style.backgroundColor=""; //gray";
 					}
 					tempsTable.rows[index+1].cells[2].textContent = item.temp;
 				});
