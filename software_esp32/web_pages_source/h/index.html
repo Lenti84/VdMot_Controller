@@ -255,6 +255,8 @@
 		margin: 2px;
 		padding: 0.6em;
 		border-radius: 5px;
+		outline-style: outset;
+		outline-width: thin;
 
 	}
 	.buttonclass:disabled {
@@ -278,6 +280,8 @@
 		padding: 0.6em;
 		border-radius: 5px;
 		float: right;
+		outline-style: outset;
+		outline-width: thin;
 
 	}
 	.buttonclass1:disabled {
@@ -289,8 +293,8 @@
 	.buttonDialogClass:hover {
 		padding: 0.6em;
 		font-weight: bold;
-		background-color: #74e0db;
-		color: green;
+		background-color: white;
+		color: #355fb9;
 	}
 
 	.buttonDialogClass {
@@ -299,8 +303,9 @@
 		color: #fff;
 		margin: 2px;
 		padding: 0.6em;
-		border-radius: 5px;
+		border-radius: 20px;
 		float: right;
+		outline-style: outset;
 
 	}
 	.buttonDialogClass:disabled {
@@ -308,6 +313,30 @@
 		background-color: gray;
 		color: #c0c0c0;
 	}
+
+	.redButtonDialogClass:hover {
+		padding: 0.6em;
+		font-weight: bold;
+		background-color: white;
+		color: red;
+	}
+
+	.redButtonDialogClass {
+		font-weight: bold;
+		background-color: red;
+		color: #fff;
+		margin: 2px;
+		padding: 0.6em;
+		border-radius: 5px;
+		float: right;
+
+	}
+	.redButtonDialogClass:disabled {
+		font-weight: bold;
+		background-color: gray;
+		color: #c0c0c0;
+	}
+
 
 	.dialogClass{
 		width: 30em;
@@ -687,6 +716,21 @@ details > ul {
 			<button id="ha-Cancel" class="buttonDialogClass" value="cancel">Cancel</button>
 		</footer>
 	</dialog>
+
+	<dialog id="enableStrictTopicsDialog" class="dialogClass">
+		<h3>It is mandatory to enable strict seperate topics while you select homeassistant</h3>
+		<table class="tabTable">
+			<th>Do you want to enable strict seperate topics now ?</th>
+			<td>
+				<button id="enableScrictTopics-Yes" class="buttonclass" value="yes">Yes</button>
+			</td>
+		</table>
+		<footer>
+			<button id="enableScrictTopics-Confirm" class="buttonDialogClass" value="confirm">Save</button>
+			<button id="enableScrictTopics-Cancel" class="buttonDialogClass" value="cancel">Cancel</button>
+		</footer>
+	</dialog>
+
 
 
 	<div class="topNav" id="mytopNav">
@@ -1940,6 +1984,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		var windowImageObjects = [null,null,null,null,null,null,null,null,null,null,null,null];
 	    const tabImageSrc = ["","warning_yellow.png","warning_red.png"];
 		const haDialog = id("haDialog");
+		const enableStrictTopicsDialog = id("enableStrictTopicsDialog");
 
 		// Get the modal
 		var modal = id("pwdModal");
@@ -2022,6 +2067,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id("valvesStartCalib").disabled=doDisable;
 			id("valvesAssembly").disabled=doDisable;
 			id("protcfg-discoverHA").disabled=doDisable;
+			id("saveConfig").disabled=doDisable;
+			id("factoryRestore").disabled=doDisable;
+			id("resetConfig").disabled=doDisable;
 		}
 
 		window.onhashchange = function() { 
@@ -2992,6 +3040,15 @@ Publish on change on server side is not recommended with this option">tValue aft
 					await postCmd('{"action":"discoveryHA","actionHA":'+id("HA_Action").selectedIndex+'}');
 				}
 			});
+
+			id("enableScrictTopics-Yes").addEventListener('click', () => id("protcfg-pubSeparate").checked=true);
+			id("enableScrictTopics-Confirm").addEventListener('click', () => enableStrictTopicsDialog.close("confirm"));
+			id("enableScrictTopics-Cancel").addEventListener('click', () => enableStrictTopicsDialog.close("cancel"));   
+			enableStrictTopicsDialog.addEventListener("close", async () => {
+				if (enableStrictTopicsDialog.returnValue==="confirm") {
+					await saveConfigNow();
+				}
+			});
 		}
 		
 		async function testPushOver(){
@@ -3138,18 +3195,24 @@ Publish on change on server side is not recommended with this option">tValue aft
 				reloadDoc("http:/#home",4000,true);
 			}
 		}
-			
+
 		async function saveConfig(){
-			if (confirm('Are you sure you want to save configuration ?')) {
+			if (!(id("protcfg-pubSeparate").checked) && (id("protcfg-dataProt").selectedIndex===2)) {
+				enableStrictTopicsDialog.showModal();
+			} else {
+				if (confirm('Are you sure you want to save configuration ?')) {	
+					await saveConfigNow();
+				}
+			}
+		}
+
+		async function saveConfigNow() {
 				if (!(await postNetCfg())) return;
 				if (!(await postProtCfg())) return;
 				await postMessengerCfg();
 				await postSystemConfig();
 				await postValvesCfg();
 				await postValvesControlCfg();
-				//await postTempsCfg(1,11);
-				//await postTempsCfg(12,23);
-				//await postTempsCfg(24,34);
 				await postTempsCfg(1,34);
 				await postVoltsCfg();
 				await postCmd('{"action":"saveCfg"}');
@@ -3157,7 +3220,6 @@ Publish on change on server side is not recommended with this option">tValue aft
 				UserPwdHasChanged=false;
 				brokerPwdHasChanged=false;
 				reloadDoc("http:/#home",4000,true);
-			}
 		}
 		
 		async function postSystemConfig() {

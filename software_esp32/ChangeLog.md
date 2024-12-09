@@ -11,12 +11,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
-## [1.4.5]
+## [1.4.6]
+### Changed
+- Mqtt :       bugfix in topic generation 
+- Webui :      disable config save button while loading
+- Temp :       Index of temp offset in config was wrong 
+
 ### Added
 - Mqtt :       publish min/max for valve control
 - Discovery :  topics for temp and volt sensors corrected
 - WebUI :      hover on table line -> orange 
-- Temp :       Index of temp offset in config was wrong 
 
 ## [1.4.4]
 ### Added

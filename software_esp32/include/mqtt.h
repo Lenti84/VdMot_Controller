@@ -164,7 +164,7 @@ class CMqtt
     bool checkTopicName(char* topic,char* ref,bool set=true);
     bool checkTopicPath(char* topic,char* ref);
     void subscribe (char* topicstr, char* thisTopic, uint8_t size, bool publishValue=false);
-    void publishValue (char* topicstr, char* valstr);
+    void publishValue (char* topicstr, char* valstr, size_t size);
     bool messengerSend;
     bool firstPublish;
     char mqtt_mainTopic[MAINTOPIC_LEN] = {0};

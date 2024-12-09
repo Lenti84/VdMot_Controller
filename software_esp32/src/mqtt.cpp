@@ -638,10 +638,10 @@ void CMqtt::callback(char* topic, byte* payload, unsigned int length)
     if (!topicsReceived && found) topicsReceived=true; 
 }
 
-void CMqtt::publishValue (char* topicstr, char* valstr) 
+void CMqtt::publishValue (char* topicstr, char* valstr, size_t size) 
 {
     if (VdmConfig.configFlash.protConfig.protocolFlags.publishSeparate) {
-        strlcat(topicstr, "/value",sizeof(topicstr));
+        strlcat(topicstr, "/value",size);
     }
     mqtt_client.publish(topicstr, valstr,VdmConfig.configFlash.protConfig.protocolFlags.publishRetained);
 }
@@ -677,7 +677,7 @@ void CMqtt::publish_valves () {
                     topicstr[len] = '\0';
                     strlcat(topicstr, "/target",sizeof(topicstr));
                     itoa(StmApp.actuators[x].target_position, valstr, 10);
-                    publishValue(topicstr, valstr);
+                    publishValue(topicstr, valstr, sizeof(topicstr));
                     lastValveValues[x].target=StmApp.actuators[x].target_position;
                 }
                 // state
@@ -691,19 +691,19 @@ void CMqtt::publish_valves () {
                     } else {
                         itoa(valveStates[x].thisState, valstr, 10);        
                     }
-                    publishValue(topicstr, valstr);
+                    publishValue(topicstr, valstr, sizeof(topicstr));
 
                     if (StmApp.actuators[x].calibration) {
                         topicstr[len] = '\0';
                         strlcat(topicstr, "/calibration/date",sizeof(topicstr));
-                        publishValue(topicstr, (char*) VdmSystem.localTime().c_str());
+                        publishValue(topicstr, (char*) VdmSystem.localTime().c_str(), sizeof(topicstr));
                     }
 
                     if ((VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link>0) && (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link<13)) {
                         topicstr[len] = '\0';
                         strlcat(topicstr, "/control/link",sizeof(topicstr));
                         strcpy(valstr,VdmConfig.configFlash.valvesConfig.valveConfig[VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link-1].name);
-                        publishValue(topicstr, valstr);
+                        publishValue(topicstr, valstr, sizeof(topicstr));
                     }
                     lastValveValues[x].state=valveStates[x].thisState;
                 }
@@ -712,14 +712,14 @@ void CMqtt::publish_valves () {
                     if ((lastValveValues[x].tTarget!=PiControl[x].target) || forcePublish || lastValveValues[x].publishTimeOut) {
                         topicstr[len] = '\0';
                         strlcat(topicstr, "/tTarget",sizeof(topicstr));
-                        publishValue(topicstr, (char*) (String(PiControl[x].target,1)).c_str());
+                        publishValue(topicstr, (char*) (String(PiControl[x].target,1)).c_str(), sizeof(topicstr));
                         lastValveValues[x].tTarget=PiControl[x].target;
                     }
                     // tTarget
                     if ((lastValveValues[x].tValue!=PiControl[x].value) || forcePublish || lastValveValues[x].publishTimeOut) {
                         topicstr[len] = '\0';
                         strlcat(topicstr, "/tValue",sizeof(topicstr));
-                        publishValue(topicstr, (char*) (String(PiControl[x].value,1)).c_str());
+                        publishValue(topicstr, (char*) (String(PiControl[x].value,1)).c_str(), sizeof(topicstr));
                         lastValveValues[x].tValue=PiControl[x].value;
                     }
                 }
@@ -729,21 +729,21 @@ void CMqtt::publish_valves () {
                     if (VdmConfig.configFlash.protConfig.protocolFlags.publishPlainText) {
                         strcpy(valstr,PiControl[x].controlActive ? "auto" : "off");
                     } else itoa(PiControl[x].controlActive, valstr, 10);
-                    publishValue(topicstr, valstr);
+                    publishValue(topicstr, valstr, sizeof(topicstr));
                     lastValveValues[x].controlMode=PiControl[x].controlActive;
                 }
                 if ((lastValveValues[x].startActiveZone!=PiControl[x].startActiveZone) || forcePublish || lastValveValues[x].publishTimeOut) {
                     topicstr[len] = '\0';
                     strlcat(topicstr, "/control/min",sizeof(topicstr));
                     itoa(PiControl[x].startActiveZone, valstr, 10);
-                    publishValue(topicstr, valstr);
+                    publishValue(topicstr, valstr, sizeof(topicstr));
                     lastValveValues[x].startActiveZone=PiControl[x].startActiveZone;
                 }
                 if ((lastValveValues[x].endActiveZone!=PiControl[x].endActiveZone) || forcePublish || lastValveValues[x].publishTimeOut) {
                     topicstr[len] = '\0';
                     strlcat(topicstr, "/control/max",sizeof(topicstr));
                     itoa(PiControl[x].endActiveZone, valstr, 10);
-                    publishValue(topicstr, valstr);
+                    publishValue(topicstr, valstr, sizeof(topicstr));
                     lastValveValues[x].endActiveZone=PiControl[x].endActiveZone;
                 }
 
@@ -752,7 +752,7 @@ void CMqtt::publish_valves () {
                     topicstr[len] = '\0';
                     strlcat(topicstr, "/calibration/repetitions",sizeof(topicstr));
                     itoa(StmApp.actuators[x].calibRetries, valstr, 10);
-                    publishValue(topicstr, valstr);
+                    publishValue(topicstr, valstr, sizeof(topicstr));
                     lastValveValues[x].calibRetries=StmApp.actuators[x].calibRetries;
                 }
                 // diag
@@ -762,7 +762,7 @@ void CMqtt::publish_valves () {
                         topicstr[len] = '\0';
                         strlcat(topicstr, "/diag/meanCurrrent",sizeof(topicstr));
                         itoa(StmApp.actuators[x].meancurrent, valstr, 10);
-                        publishValue(topicstr, valstr);
+                        publishValue(topicstr, valstr, sizeof(topicstr));
                         lastValveValues[x].meanCurrent=StmApp.actuators[x].meancurrent;
                     }
                     // counts
@@ -770,21 +770,21 @@ void CMqtt::publish_valves () {
                         topicstr[len] = '\0';
                         strlcat(topicstr, "/diag/openCount",sizeof(topicstr));
                         itoa(StmApp.actuators[x].opening_count, valstr, 10);
-                        publishValue(topicstr, valstr);
+                        publishValue(topicstr, valstr, sizeof(topicstr));
                         lastValveValues[x].openCount=StmApp.actuators[x].opening_count;
                     }
                     if ((lastValveValues[x].closeCount!=StmApp.actuators[x].closing_count) || forcePublish || lastValveValues[x].publishTimeOut) {
                         topicstr[len] = '\0';
                         strlcat(topicstr, "/diag/closeCount",sizeof(topicstr));
                         itoa(StmApp.actuators[x].closing_count, valstr, 10);
-                        publishValue(topicstr, valstr);
+                        publishValue(topicstr, valstr, sizeof(topicstr));
                         lastValveValues[x].closeCount=StmApp.actuators[x].closing_count;
                     }
                     if ((lastValveValues[x].deadzoneCount!=StmApp.actuators[x].deadzone_count) || forcePublish || lastValveValues[x].publishTimeOut) {
                         topicstr[len] = '\0';
                         strlcat(topicstr, "/diag/deadZoneCount",sizeof(topicstr));
                         itoa(StmApp.actuators[x].deadzone_count, valstr, 10);
-                        publishValue(topicstr, valstr);
+                        publishValue(topicstr, valstr, sizeof(topicstr));
                         lastValveValues[x].deadzoneCount=StmApp.actuators[x].deadzone_count;
                     }
                     // moves
@@ -792,7 +792,7 @@ void CMqtt::publish_valves () {
                         topicstr[len] = '\0';
                         strlcat(topicstr, "/diag/moves",sizeof(topicstr));
                         itoa(StmApp.actuators[x].movements, valstr, 10);
-                        publishValue(topicstr, valstr);
+                        publishValue(topicstr, valstr, sizeof(topicstr));
                         lastValveValues[x].movements=StmApp.actuators[x].movements;
                     }
                 }
@@ -807,7 +807,7 @@ void CMqtt::publish_valves () {
                                 s = String(((float)StmApp.actuators[x].temp1)/10,1); 
                                 if (VdmConfig.configFlash.protConfig.mqttConfig.flags.numFormat==numFormatGer) s.replace('.',',');
                             } else s="failed";
-                            publishValue(topicstr, (char*) &s);
+                            publishValue(topicstr, (char*) &s, sizeof(topicstr));
                             lastValveValues[x].temp1=StmApp.actuators[x].temp1;
                         }
                     }
@@ -820,7 +820,7 @@ void CMqtt::publish_valves () {
                                 s = String(((float)StmApp.actuators[x].temp2)/10,1); 
                                 if (VdmConfig.configFlash.protConfig.mqttConfig.flags.numFormat==numFormatGer) s.replace('.',',');
                             } else s="failed";
-                            publishValue(topicstr, (char*) &s);
+                            publishValue(topicstr, (char*) &s, sizeof(topicstr));
                             lastValveValues[x].temp2=StmApp.actuators[x].temp2;
                         }
                     }
@@ -861,7 +861,7 @@ void CMqtt::publish_temps()
                             len = strlen(topicstr);
                             // id
                             strlcat(topicstr, "/id",sizeof(topicstr));     
-                            publishValue(topicstr, StmApp.temps[x].id);
+                            publishValue(topicstr, StmApp.temps[x].id, sizeof(topicstr));
                             // actual value
                             topicstr[len] = '\0';
                             strlcat(topicstr, "/value",sizeof(topicstr));
@@ -872,7 +872,7 @@ void CMqtt::publish_temps()
                                 s = String(((float)StmApp.temps[x].temperature)/10,1); 
                                 if (VdmConfig.configFlash.protConfig.mqttConfig.flags.numFormat==numFormatGer) s.replace('.',','); 
                             }
-                            publishValue(topicstr, (char*) &s);
+                            publishValue(topicstr, (char*) &s, sizeof(topicstr));
                         }
                     }
                 }
@@ -910,7 +910,7 @@ void CMqtt::publish_volts()
                     len = strlen(topicstr);
                     // id
                     strlcat(topicstr, "/id",sizeof(topicstr));     
-                    publishValue(topicstr, StmApp.volts[voltIdx].id);
+                    publishValue(topicstr, StmApp.volts[voltIdx].id, sizeof(topicstr));
                     // actual value
                     topicstr[len] = '\0';
                     strlcat(topicstr, "/value",sizeof(topicstr));
@@ -918,11 +918,11 @@ void CMqtt::publish_volts()
                     else
                     s = String(StmApp.volts[voltIdx].value,3); 
                     if (VdmConfig.configFlash.protConfig.mqttConfig.flags.numFormat==numFormatGer) s.replace('.',',');    
-                    publishValue(topicstr, (char*) &s);
+                    publishValue(topicstr, (char*) &s, sizeof(topicstr));
                     // unit
                     topicstr[len] = '\0';
                     strlcat(topicstr, "/unit",sizeof(topicstr)); 
-                    publishValue(topicstr, VdmConfig.configFlash.voltsConfig.voltConfig[voltIdx].unit);
+                    publishValue(topicstr, VdmConfig.configFlash.voltsConfig.voltConfig[voltIdx].unit, sizeof(topicstr));
                 }
             }
             lastVoltValues[x].vad=StmApp.volts[x].vad;
@@ -950,7 +950,7 @@ void CMqtt::publish_common ()
     if (firstPublish) {
         strlcat(topicstr, "ip",sizeof(topicstr));
         strcpy(valstr,VdmNet.networkInfo.ip.toString().c_str());
-        publishValue(topicstr, valstr);
+        publishValue(topicstr, valstr, sizeof(topicstr));
     }
 
     topicstr[len] = '\0';
@@ -963,7 +963,7 @@ void CMqtt::publish_common ()
         } else {
             itoa(VdmConfig.heatValues.heatControl, valstr, 10);        
         }
-        publishValue(topicstr, valstr);
+        publishValue(topicstr, valstr, sizeof(topicstr));
         lastCommonValues.heatControl=VdmConfig.heatValues.heatControl; 
     }
 
@@ -971,7 +971,7 @@ void CMqtt::publish_common ()
     if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || forcePublish || (lastCommonValues.parkingPosition!=VdmConfig.heatValues.parkPosition)) {
         strlcat(topicstr, "parkPosition",sizeof(topicstr));
         itoa(VdmConfig.heatValues.parkPosition, valstr, 10);         
-        publishValue(topicstr, valstr);
+        publishValue(topicstr, valstr, sizeof(topicstr));
         lastCommonValues.parkingPosition=VdmConfig.heatValues.parkPosition; 
     }
     topicstr[len] = '\0';
@@ -985,7 +985,7 @@ void CMqtt::publish_common ()
         } else {
             itoa(VdmSystem.systemState , valstr, 10);        
         }
-        publishValue(topicstr, valstr);
+        publishValue(topicstr, valstr, sizeof(topicstr));
         lastCommonValues.systemState=VdmSystem.systemState;
     }
     topicstr[len] = '\0';
@@ -994,7 +994,7 @@ void CMqtt::publish_common ()
         String upTime = VdmSystem.getUpTime();
         if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || forcePublish || (lastCommonValues.upTime!=upTime)) {
             lastCommonValues.upTime = upTime;
-            publishValue(topicstr, (char*) upTime.c_str());
+            publishValue(topicstr, (char*) upTime.c_str(), sizeof(topicstr));
         }
     }
     
@@ -1002,7 +1002,7 @@ void CMqtt::publish_common ()
     if ((!VdmConfig.configFlash.protConfig.protocolFlags.publishOnChange) || forcePublish || (lastCommonValues.systemMessage!=VdmSystem.systemMessage)) {
         topicstr[len] = '\0';
         strlcat(topicstr, "message",sizeof(topicstr));        
-        publishValue(topicstr, (char*) VdmSystem.systemMessage.c_str());
+        publishValue(topicstr, (char*) VdmSystem.systemMessage.c_str(), sizeof(topicstr));
         lastCommonValues.systemMessage=VdmSystem.systemMessage; 
     }
 }
@@ -1488,7 +1488,7 @@ static const HA_Item haVoltsItems[] = {
                 haItem.topic=haItem.topic+"_"+rbName;
                 haItem.name=haItem.name+"."+rbName;
                 haItem.unique_id=VdmConfig.configFlash.tempsConfig.tempConfig[x].ID;
-                haItem.state_topic=haItem.state_topic+"/"+rbName; //+String("/value");
+                haItem.state_topic=haItem.state_topic+"/"+rbName+String("/value");
                 if (haItem.unique_id.length()>0) sendDiscoveryHA(haItem);
                 i++;
             }
@@ -1507,7 +1507,7 @@ static const HA_Item haVoltsItems[] = {
                 haItem.topic=haItem.topic+"_"+rbName;
                 haItem.name=haItem.name+"."+VdmConfig.configFlash.voltsConfig.voltConfig[x].name;
                 haItem.unique_id=VdmConfig.configFlash.voltsConfig.voltConfig[x].ID;
-                haItem.state_topic=haItem.state_topic+"/"+rbName; //+String("/value");
+                haItem.state_topic=haItem.state_topic+"/"+rbName+String("/value");
                 haItem.unit_of_measurement = VdmConfig.configFlash.voltsConfig.voltConfig[x].unit;
                 if (haItem.unique_id.length()>0) sendDiscoveryHA(haItem);
                 i++;
