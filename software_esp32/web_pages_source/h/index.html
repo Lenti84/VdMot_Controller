@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 <head>
 <link rel="icon" href="data:,">
 <link rel="icon" href="../favicon.ico">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -397,8 +397,8 @@
 	  padding-top: 100px; /* Location of the box */
 	  left: 0;
 	  top: 0;
-	  width: 100%; /* Full width */
-	  height: 100%; /* Full height */
+	  width: 100%; /*Full width */
+	  height: 100%; /*Full height */
 	  overflow: auto; /* Enable scroll if needed */
 	  background-color: rgb(0,0,0); /* Fallback color */
 	  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
@@ -410,7 +410,7 @@
 	  margin: auto;
 	  padding: 20px;
 	  border: 1px solid #888;
-	  width: 80%;
+	  width: 400px;
 	}
 
 	/* The Close Button */
@@ -461,7 +461,6 @@
 		pointer-events: none;     
 		opacity: 0.4;
 	}
-
 
 	dialog {
 	    border: 0.125rem solid var(--border-color);
@@ -763,13 +762,20 @@ details > ul {
 				<th>Up Time</th>
 				<td id="upTime"></td>
 			</tr>
-			<tr>
-				<td>
-				<input type="button" class="buttonclass" id="login-button" style ="display:none" value="Login" title="Login" />
-				</td>
-			</tr>
 		</table>
+
+		<div id="login-div" class="tabiframe" style ="display:none"> 
+			<table class="tabTable">
+				<tr>
+					<td>
+						<input type="button" class="buttonclass" id="login-button"  value="Login" title="Login" />
+						<input type="button" class="buttonclass" id="logout-button" value="Logout" title="Logout" />
+					</td>
+				</tr>
+			</table>
+			</div>
 		</div>
+
 		<div class="rtabframe">
 		<h3>WT32 Controller</h3>
 		<table id="homeInfoWT32" class="tabTable">
@@ -1448,33 +1454,42 @@ Publish on change on server side is not recommended with this option">tValue aft
 		</table>
 		</div>
 	</div>
-
+	
 	<div id="pwdModal" class="modal">
 	  <div class="modal-content">
+		<form name="login" id="loginForm" action="" method="get">
 		<span class="close">&times;</span>
 		<p>Please type user and password</p>
 		<table>
 			<th>User name</th>
-				<td colspan='10'>
-				<input type="text" maxlength="64" class="form-input1" id="dialogUserInput" name="dialogUserInput" />
+				<td colspan='3'>
+				<input type="text" maxlength="64" class="form-input1" id="dialogUserInput" name="dialogUserInput" title="Please enter user name"/>
 				</td>
 			</tr>
 			<tr>
 				<th>User password</th>
-				<td colspan='10'>
-				<input type="password" maxlength="64" class="form-input1" id="dialogPwdInput" name="dialogPwdInput"/>
+				<td colspan='3'>
+				<input type="password" maxlength="64" class="form-input1" id="dialogPwdInput" name="dialogPwdInput" title="Please enter password"/>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>
+					<input type="button" class="buttonclass" id="loginDialogOk" value="ok"/>
+				</td><td>
+					<input type="button" class="buttonclass" id="loginDialogCancel" value="cancel"/>
 				</td>
 			</tr>
 			<tr>
-			<td></td><td>
-	          <input type="button" class="buttonclass" id="dialogOk" value="ok" title="Please enter user name" />
-			</td><td>
-			 <input type="button" class="buttonclass" id="dialogCancel" value="cancel" title="Please enter password" />
-			</td>
+				<th>Remember me</th>
+				<td>
+					<input type="checkbox" id="login-rememberMe" name="login-rememberMe" title="Remember the login of this device"/>
+				</td>
 			</tr>
+			
 		</table>
+		</form>
 	  </div>
-
 	</div>
 
 
@@ -1961,7 +1976,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 		var motorCharsHasChanged=false;
 		var movCalibHasChanged=false;
 		var emailPwdChanged=false;
+		if (localStorage.rememberMe!==null) 
+			id("login-rememberMe").checked=localStorage.rememberMe==="true";
 		var showAllTabs=window.location.href.startsWith('file');
+		if (localStorage.rememberMe==="true") {
+			if (localStorage.login!==null) showAllTabs=(localStorage.login==="true");
+		} else {
+			if (sessionStorage.login!==null) showAllTabs=(sessionStorage.login==="true");
+		}
 		var getStatusInterval;
 		var dataTempSensorsID=null;
 		const NoOfMaxTSensors = 34;
@@ -1986,8 +2008,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 		const haDialog = id("haDialog");
 		const enableStrictTopicsDialog = id("enableStrictTopicsDialog");
 
-		// Get the modal
-		var modal = id("pwdModal");
+		// Get the login modal
+		var loginModal = id("pwdModal");
 		// Get the <span> element that closes the modal
 		var span = document.getElementsByClassName("close")[0];
 				
@@ -2154,10 +2176,20 @@ Publish on change on server side is not recommended with this option">tValue aft
 				case 1 : alert ("User name wrong"); break;
 				case 2 : alert ("Password wrong"); break;
 				case 3 : {	
+							let rememberMe = id("login-rememberMe").checked;
+							localStorage.rememberMe=rememberMe===true;
+							if (localStorage.rememberMe==="true") {
+								localStorage.login=true;
+								sessionStorage.login=null;
+							} else {
+								sessionStorage.login=true;
+								localStorage.login=null;
+							}
 							showAllTabs= true;
 							showAllTabsNow();
 							activeSetValvesDisplay = "block";
 							id('activeSetValves').style.display="block";
+							id("loginForm").submit();
 							break;
 						 }
 			}
@@ -2249,8 +2281,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('max' , '100');
 				el.setAttribute('style','height:15px');
 				el.setAttribute('readonly','true');
-				
 				thiscell.appendChild(el);
+
 				thiscell = valvesTable.rows[row].cells[6];
 				el = document.createElement('input');
 				el.setAttribute('type', 'button');
@@ -2262,6 +2294,29 @@ Publish on change on server side is not recommended with this option">tValue aft
 				thiscell.appendChild(el);
 				valvesTable.rows[row].cells[0].innerHTML = row;
 				thiscell.classList.add('hide');
+				if (valveTempsExists===true) {
+					thiscell = valvesTable.rows[row].cells[11];
+					let p = document.createElement('p');
+					p.setAttribute('id', 'tNode1-' + row);
+					p.setAttribute('style','font-size:8px;margin-top:0px;');
+					thiscell.appendChild(p);
+
+					p = document.createElement('p');
+					p.setAttribute('id', 'tp1-' + row);
+					p.setAttribute('style','margin-top:0px;');
+					thiscell.appendChild(p);
+
+					thiscell = valvesTable.rows[row].cells[12];
+					p = document.createElement('p');
+					p.setAttribute('id', 'tNode2-' + row);
+					p.setAttribute('style','font-size:8px;margin-top:0px;');
+					thiscell.appendChild(p);
+
+					p = document.createElement('p');
+					p.setAttribute('id', 'tp2-' + row);
+					p.setAttribute('style','margin-top:0px;');
+					thiscell.appendChild(p);
+				}
 			}
 			let thiscell = valvesTable.rows[0].cells[6];
 			thiscell.classList.add('hide');
@@ -2926,6 +2981,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id("login-button").onclick = function(){
 				doLogin();
 			};
+
+			id("logout-button").onclick = function(){
+				localStorage.login=null; 
+				sessionStorage.login=null;
+				showAllTabs=false;
+				showAllTabsNow();
+				setLoginButton();
+			};
 			
 			id("fileDelete").onclick = function(){
 				fileDelete();
@@ -2979,15 +3042,15 @@ Publish on change on server side is not recommended with this option">tValue aft
 
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
-			  modal.style.display = "none";
+				loginModal.style.display = "none";
 			}
 			
-			id("dialogOk").onclick = function () {
+			id("loginDialogOk").onclick = function () {
 				checkLogin();
-				modal.style.display = "none";
+				loginModal.style.display = "none";
 			};
-			id("dialogCancel").onclick = function () {
-				modal.style.display = "none";
+			id("loginDialogCancel").onclick = function () {
+				loginModal.style.display = "none";
 			};
 			
 			id("saveVCtrlConfig").onclick = async function(){
@@ -3157,7 +3220,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 		}
 
 		function doLogin() {
-			modal.style.display = "block";
+			setLoginButton();
+			loginModal.style.display = "block";
 		}
 		
 		function reloadDoc (path,timeOut,clear=false,reLoad=true) {
@@ -3675,14 +3739,16 @@ Publish on change on server side is not recommended with this option">tValue aft
 				let colIdx=11;
 				if (valveTempsExists===true) {
 					if (item.temp1) {
-						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp1;
+						id("tp1-"+(index+1)).textContent=item.temp1;
+						id("tNode1-"+(index+1)).textContent=item.tIdxName1;
 						if (item.temp1==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor=""; //gray";
 						colIdx++;
 					}
 					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
 
 					if (item.temp2) {
-						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp2;
+						id("tp2-"+(index+1)).textContent=item.temp2;
+						id("tNode2-"+(index+1)).textContent=item.tIdxName2;
 						if (item.temp2==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor=""; //gray";
 						colIdx++;
 					}
@@ -4137,7 +4203,28 @@ Publish on change on server side is not recommended with this option">tValue aft
 					id('activeSetValves').style.display="block";
 					showAllTabs=true;
 					showAllTabsNow();
-				} else id("login-button").style.display = "block";
+				} else {
+					id("login-div").style.display = "block";
+					setLoginButton();
+				}
+			}
+		}
+
+		function setLoginButton() {
+			if (localStorage.rememberMe==="true") {
+				showLoginButton (localStorage.getItem("login"));
+			} else {
+				showLoginButton (sessionStorage.getItem("login"));
+			}
+		}
+
+		function showLoginButton (state) {
+			if (state==="true") {
+				id("login-button").style.display = "none";
+				id("logout-button").style.display = "block";
+			} else {
+				id("login-button").style.display = "block";
+				id("logout-button").style.display = "none";	
 			}
 		}
 		

@@ -163,7 +163,8 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
     result += "{\"name\":\""+String(valvesConfig.valveConfig[x].name) + "\"," +
               "\"active\":"+String(valvesConfig.valveConfig[x].active) + ","+
               "\"tIdx1\":"+String(StmApp.actuators[x].tIdx1) + ","+
-              "\"tIdx2\":"+String(StmApp.actuators[x].tIdx2) + "}";
+              "\"tIdx2\":"+String(StmApp.actuators[x].tIdx2);       
+    result+="}";
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
   result += "]}"; 
@@ -385,14 +386,17 @@ String CWeb::getValvesStatus()
 
                  if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
                   if (StmApp.actuators[x].tIdx1>0) { 
+                    result += ",\"tIdxName1\":\""+String(VdmConfig.configFlash.tempsConfig.tempConfig[StmApp.actuators[x].tIdx1-1].name)+"\"";
                     if (StmApp.actuators[x].temp1>-500) {
                         result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
                     } else result +=",\"temp1\":\"failed\"";
                   }
                   if (StmApp.actuators[x].tIdx2>0) { 
+                    result += ",\"tIdxName2\":\""+String(VdmConfig.configFlash.tempsConfig.tempConfig[StmApp.actuators[x].tIdx2-1].name)+"\"";
                     if (StmApp.actuators[x].temp2>-500) {
                         result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
                     } else result +=",\"temp2\":\"failed\"";
+
                   }
                  }
 

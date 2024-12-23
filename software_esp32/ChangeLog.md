@@ -11,6 +11,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.4.7]
+### Changed
+- Webui :      handling for login to save login parameters in browser password manager
+- Webui :      display temp sensor name on status page in temp1 and temp2 
+### Added
+- WebUI :      logout button 
+
 ## [1.4.6]
 ### Changed
 - Mqtt :       bugfix in topic generation 
