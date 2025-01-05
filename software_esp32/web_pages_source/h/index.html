@@ -2003,6 +2003,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		var stmLoaded=false;
 		var activeSetValvesDisplay = "none";
 		var reconnectMQTT=false;
+		var stmTimeOut = false;
 		var windowImageObjects = [null,null,null,null,null,null,null,null,null,null,null,null];
 	    const tabImageSrc = ["","warning_yellow.png","warning_red.png"];
 		const haDialog = id("haDialog");
@@ -2123,6 +2124,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		async function OnStart() {
 			stmLoaded=false;
+			setTimeout(function() {
+					checkStmTimeOut();	
+			},120000);
 			disable_enable_ValvesCfg(true);
 			fillTZList();
 			await getSystemConfig();
@@ -4133,28 +4137,39 @@ Publish on change on server side is not recommended with this option">tValue aft
 
 				id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[dataSystemDynInfo["heatControl"]].value;
 				id("miscStatusLC").textContent=dataSystemDynInfo["lastCalib"];
-				let newStmInit=dataSystemDynInfo["stmInit"];
-				disable_enable_ValvesCfg((newStmInit!=2) || (!stmLoaded));
-				if (newStmInit!=stmInit) {
-					stmInit=newStmInit;
-					if (stmInit===2) {
-						setTimeout(async function() {
-							await loadStmData();
-							stmLoaded=true;
-						},5000);
+				if (stmTimeOut===false) {
+					let newStmInit=dataSystemDynInfo["stmInit"];
+					disable_enable_ValvesCfg((newStmInit!=2) || (!stmLoaded));
+					if (newStmInit!=stmInit) {
+						stmInit=newStmInit;
+						if (stmInit===2) {
+							setTimeout(async function() {
+								await loadStmData();
+								stmLoaded=true;
+							},5000);
+						}
 					}
-				}
-				if (!stmLoaded) {
-					id("spinner-Config").classList.add("spinner");
-				} else {
-					id("spinner-Config").classList.remove("spinner");
-				}
-				if (!checkCfgTempsID()) {
-					await getTempSensorsID();
+					if (!stmLoaded) {
+						id("spinner-Config").classList.add("spinner");
+					} else {
+						id("spinner-Config").classList.remove("spinner");
+					}
+					if (!checkCfgTempsID()) {
+						await getTempSensorsID();
+					}
 				}
 			}
 		}
 		
+		function checkStmTimeOut() {
+			if (!stmLoaded) {
+				alert ("Stm not responding");
+				stmLoaded=true;
+				stmTimeOut = true;
+				disable_enable_ValvesCfg(false);
+				id("spinner-Config").classList.remove("spinner");
+			}	
+		}
 		
 		async function getSystemConfig() {
 			const dataSysCfg=await getJson("sysconfig");
