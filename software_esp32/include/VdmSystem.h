@@ -103,6 +103,8 @@ public:
   String systemMessage;
   bool getFSInProgress;
   uint32_t stackSize;
+
+  
 private:
   bool spiffsStarted;
   File dir;

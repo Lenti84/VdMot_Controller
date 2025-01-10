@@ -2042,6 +2042,12 @@ Publish on change on server side is not recommended with this option">tValue aft
 					tabLinks[i].style.display = "none";
 				}
 			}
+			if (showAllTabs) {
+				activeSetValvesDisplay = "block";
+			} else {
+				activeSetValvesDisplay = "none";
+			}
+			id('activeSetValves').style.display=activeSetValvesDisplay;
 		}
 		
 		function openPage(pageName,elmnt,color) {
@@ -3707,7 +3713,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				if (item.link>0) thisImg.src="blank.png";
 				valvesTable.rows[index+1].cells[3].textContent = item.meanCur;
 				if ('calibration' in item) {
-					windowImageObjects[index].childNodes[0].nodeValue="calibration";
+					windowImageObjects[index].childNodes[0].nodeValue="calibration "+States[item.state];
 				} else 
 					windowImageObjects[index].childNodes[0].nodeValue = States[item.state];
 				

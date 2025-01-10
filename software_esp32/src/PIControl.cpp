@@ -45,10 +45,42 @@
 #include "VdmConfig.h"
 #include "VdmNet.h"
 #include <Syslog.h>
+#include "RtcRam.h"
 
 
 CPiControl PiControl[ACTUATOR_COUNT];
 
+void CPiControl::savePiControl() {
+  piControlRtcs.piControlRtc[valveIndex].target=target;
+  piControlRtcs.piControlRtc[valveIndex].value=value;
+  piControlRtcs.piControlRtc[valveIndex].iProp=iProp;
+  piControlRtcs.piControlRtc[valveIndex].esum=esum;
+  strncpy(piControlRtcs.piControlRtc[valveIndex].pattern,RTC_RAM_PATTERN,sizeof(piControlRtcs.piControlRtc[valveIndex].pattern));
+  piControlRtcs.piControlRtc[valveIndex].lastControlPosition=lastControlPosition;
+}
+
+void CPiControl::reloadPiControl() {
+  if (strncmp(piControlRtcs.piControlRtc[valveIndex].pattern,RTC_RAM_PATTERN,sizeof(RTC_RAM_PATTERN))==0) {
+    target=piControlRtcs.piControlRtc[valveIndex].target;
+    value=piControlRtcs.piControlRtc[valveIndex].value;
+    iProp=piControlRtcs.piControlRtc[valveIndex].iProp;
+    esum=piControlRtcs.piControlRtc[valveIndex].esum;
+    lastControlPosition=piControlRtcs.piControlRtc[valveIndex].lastControlPosition;
+    start=true;
+    time(&ts);
+    setValveAction(lastControlPosition);
+  //  UART_DBG.println("Reload pi valve # "+String(valveIndex+1));
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+      syslog.log(LOG_DEBUG, "pic: reload pi valve # "+String(valveIndex+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[valveIndex].name)+") tTarget = "+String(target)+" tValue = "+String(value)+" iProp = "+String(iProp)+" esum = "+String(esum)+" position = "+String(lastControlPosition));
+    }
+  } else  {
+    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+      syslog.log(LOG_DEBUG, "pic: no reload pi valve # "+String(valveIndex+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[valveIndex].name)+")");
+    }
+   // UART_DBG.println("No reload pi valve # "+String(valveIndex+1));
+    setValveAction(VdmConfig.configFlash.valvesControlInit.valveControlInit[valveIndex].tTarget);
+  }
+}
 
 float CPiControl::piCtrl(float target,float value) {
   float p;
@@ -98,7 +130,7 @@ float CPiControl::piCtrl(float target,float value) {
   // pi
   y = p + iProp;
   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-      syslog.log(LOG_DEBUG, "pic:calc valve position : #"+String(valveIndex+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[valveIndex].name)+") tTarget = "+String(target)+" tValue = "+String(value)+" diff = "+String(e)+" iProp = "+String(iProp)+" kp = "+String(kp)+" esum = "+String(esum)+" p = "+String(p)+" y = "+String(y));
+      syslog.log(LOG_DEBUG, "pic: calc valve position : #"+String(valveIndex+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[valveIndex].name)+") tTarget = "+String(target)+" tValue = "+String(value)+" diff = "+String(e)+" iProp = "+String(iProp)+" kp = "+String(kp)+" esum = "+String(esum)+" p = "+String(p)+" y = "+String(y));
   }
   if (y > 100.0) {
     y = 100.0;
@@ -108,7 +140,6 @@ float CPiControl::piCtrl(float target,float value) {
     y = 0.0;
     iProp = 0.0 - p;
   }
-   
   return y;
 }
 
@@ -274,6 +305,7 @@ void CPiControl::doControlValve()
     if (controlActive==0) valvePosition=0; 
     setPosition(valvePosition);
     lastControlPosition=valvePosition;
+    savePiControl();
 }
   
 void CPiControl::setControlActive(uint8_t thisControl)

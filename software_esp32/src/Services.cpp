@@ -167,6 +167,7 @@ void CServices::runOnce()
 void CServices::runOnceDelayed10()
 {
   VdmTask.startApp();
+  GetLastTargetValues();
   VdmNet.startBroker();
   checkGetNtp();
 }
@@ -175,6 +176,18 @@ void CServices::runOnceDelayed60()
 {
   VdmTask.startPIServices();
   VdmTask.piTaskInitiated=true;
+}
+
+void CServices::GetLastTargetValues()
+{
+  for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) { 
+    if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].controlFlags.active) {
+      if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].link==0) { 
+          PiControl[picIdx].valveIndex=picIdx;
+          PiControl[picIdx].reloadPiControl();
+      }
+    }
+  }
 }
 
 void CServices::restartSystem(bool waitQueueFinished) {

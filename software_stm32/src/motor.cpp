@@ -647,9 +647,8 @@ void valve_loop () {
                       else  myvalvemots[valveindex].status = VLV_STATE_IDLE;
                       COMM_DBG.println(myvalvemots[valveindex].status); 
                       myvalvemots[valveindex].calibration = false;
-                      myvalvemots[valveindex].calibState=calibIdle;
-                      valveindex = 255;                                                                                  
-                      valvestate = A_IDLE;
+                      myvalvemots[valveindex].calibState=calibIdle;                                                                                
+                      valvestate = A_SET;
                     }    
                     else if (temp == M_RES_NOCURRENT) {
                       #ifdef motDebug
@@ -673,6 +672,15 @@ void valve_loop () {
                   }           
                   break;
 
+     case A_SET:  // set to previous %
+                  myvalvemots[valveindex].actual_position=0;
+                  COMM_DBG.println("A: set target A_SET");
+                  valvestate = A_OPEN1;
+                  PSU_ON();
+                  waittimer = 50;
+                  psuofftimer = 0;
+                  pos_change = myvalvemots[valveindex].target_position;
+                  break;
      case A_TEST:  // test if a valve is connected                  
                   if (!waittimer) {
                     
@@ -1218,9 +1226,9 @@ enum ASTATE valve_getstate () {
 }
 
 
-int16_t appsetaction(char cmd, unsigned int valveindex, byte posdelta) {
+int16_t appsetaction(char cmd, unsigned int valveindex, byte posdelta, bool force) {
 
-  if(valvestate == A_IDLE && valveindex < ACTUATOR_COUNT) {
+  if(((valvestate == A_IDLE) || force) && (valveindex < ACTUATOR_COUNT)) {
     valvenr = (int) valveindex;
     command = cmd;
     poschangecmd = posdelta;

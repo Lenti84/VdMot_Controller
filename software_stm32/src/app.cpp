@@ -124,7 +124,9 @@ int16_t app_loop (void) {
           {
               #ifdef appDebug
                 COMM_DBG.print("App: target pos changed for valve "); 
-                COMM_DBG.println(lastvalve, 10);
+                COMM_DBG.print(lastvalve, 10);
+                COMM_DBG.print(" target = ");
+                COMM_DBG.println(myvalvemots[lastvalve].target_position, 10);
               #endif
 
               firstchange = 1;
@@ -204,12 +206,14 @@ byte app_10s_loop () {
     for (x=0; x< ACTUATOR_COUNT; x++) {
       // timeout for calibration 
       if (myvalvemots[x].connected) {
-        if (myvalvemots[x].calibTime>0) myvalvemots[x].calibTime--;
-        if (myvalvemots[x].calibTime==0)  {
-          myvalvemots[x].calibration=false;
-          myvalvemots[x].calibState=calibIdle;
+        if (myvalvemots[x].calibState==calibInProgress) {
+          if (myvalvemots[x].calibTime>0) 
+            myvalvemots[x].calibTime--;
+          else  {
+            myvalvemots[x].calibration=false;
+            myvalvemots[x].calibState=calibIdle;
+          }
         }
-
         if((myvalves[x].learn_movements == 0) && (myvalvemots[x].calibState == calibIdle)) {
           myvalvemots[x].calibration=true;
           myvalvemots[x].calibTime=10;
@@ -285,7 +289,7 @@ int16_t app_set_valvelearning(uint16_t valve) {
   }
   else if (valve == 255) {
     // update all valves
-    for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+    for(uint8_t xx=0;xx<ACTUATOR_COUNT;xx++){
       if (myvalvemots[xx].connected) {
         //myvalvemots[xx].actual_position = 0;      // fake some position deviation
         myvalvemots[xx].status = VLV_STATE_PRESENT; //VLV_STATE_UNKNOWN;

@@ -11,12 +11,25 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.4.8]
+### Fixed
+- Webui :      if stm32 is not responding after reset an error message is displayed in config and config save button is enabled again
+- Webui :      manual set valve button on status page was not displayed after login. 
+- update :     if the file-end is 256 byte aligned a verify error occurs during update stm after flashing 
+### Changed
+- Webui :      display all temp sensors on status page if 'publish all temps' is enabled 
+### Added
+- Pi Control : actual pi control values will be saved in rtc ram and
+               reloaded after reset by SW (will take by update or reboot with SW, not when power off/on or hardware reset)
+- Webui :      more in state info during calibration
+               
 ## [1.4.7]
 ### Changed
 - Webui :      handling for login to save login parameters in browser password manager
 - Webui :      display temp sensor name on status page in temp1 and temp2 
 ### Added
 - WebUI :      logout button 
+
 
 ## [1.4.6]
 ### Changed

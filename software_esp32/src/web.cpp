@@ -442,7 +442,7 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
   String s;
 
   for (uint8_t i=0;i<StmApp.tempsCount;i++) {
-    if ((StmApp.findTempIdxInValve(i)<0) && (VdmConfig.configFlash.tempsConfig.tempConfig[i].active)) {
+    if (((StmApp.findTempIdxInValve(i)<0) || (VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps)) && (VdmConfig.configFlash.tempsConfig.tempConfig[i].active)) {
       if (start) result += ",";
       temperature = StmApp.temps[i].temperature;
       if (StmApp.temps[i].temperature<=-500) s="\"failed\""; else s=String(((float)temperature)/10,1);

@@ -398,9 +398,11 @@ void CStm32::STM32ota_loop()
                   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
                     syslog.log(LOG_DEBUG, "STM32 ota: write last bytes");
                   }  
-                  if (FlashBytes(myflashfile.blockcnt, myflashfile.lastbytes) != 0) {
-                    stm32ota_state = STM32OTA_ERROR;
-                    break;
+                  if (myflashfile.lastbytes>0) {
+                    if (FlashBytes(myflashfile.blockcnt, myflashfile.lastbytes) != 0) {
+                      stm32ota_state = STM32OTA_ERROR;
+                      break;
+                    }
                   }
                   stm32ota_state = STM32OTA_VERIFY;
                   blockcounter = 0;
@@ -792,6 +794,7 @@ int CStm32::FlashBytes(int Block, int Bytes)
 // unTested
 uint8_t CStm32::stm32StartRead(uint32_t rdaddress, uint16_t rdlen) 
 {
+  if (rdlen==0) return STM32OK;
   // send read request
   StmOta.stm32SendCommand(STM32RD);
 

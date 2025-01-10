@@ -81,6 +81,8 @@ public:
     controlValve();
 	}
   float piCtrl(float target,float value);
+  void savePiControl();
+  void reloadPiControl();
   void updateControllerGains(float observedError);
   uint8_t calcValve();
   void controlValve();

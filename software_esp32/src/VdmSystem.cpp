@@ -73,6 +73,7 @@ String ResetReason[] =  {
 
 CVdmSystem VdmSystem;
 
+
 CVdmSystem::CVdmSystem()
 {
   spiffsStarted=false;
@@ -84,6 +85,7 @@ CVdmSystem::CVdmSystem()
   stmNRevision=0;
   stmMinRequired=0;
   stmVersionFalse=false;
+ 
 }
 
 void CVdmSystem::getSystemInfo()

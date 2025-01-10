@@ -78,7 +78,7 @@ extern valvemotor myvalvemots[ACTUATOR_COUNT];
 
 enum ASTATE {
 A_INIT, A_IDLE, A_CLOSE, A_OPEN1, A_OPEN2, A_LEARN1, 
-A_LEARN2, A_LEARN3, A_LEARN4, A_CLOSE1, A_CLOSE2, A_TEST };
+A_LEARN2, A_LEARN3, A_LEARN4, A_SET, A_CLOSE1, A_CLOSE2, A_TEST };
 
 extern enum ASTATE valvestate;
 
@@ -91,7 +91,7 @@ void valve_loop ();
 byte valve_setup ();
 
 enum ASTATE valve_getstate ();
-int16_t appsetaction(char cmd, unsigned int valveindex, byte pos);
+int16_t appsetaction(char cmd, unsigned int valveindex, byte pos, bool force=false);
 
 extern uint8_t currentbound_low_fac;      // lower current limit factor for detection of end stop
 extern uint8_t currentbound_high_fac;     // upper current limit factor for detection of end stop

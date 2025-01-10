@@ -185,7 +185,8 @@ void CVdmTask::startPIServices(bool startTask)
                 PiControl[picIdx].startActiveZone=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].startActiveZone;
                 PiControl[picIdx].endActiveZone=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].endActiveZone;
                 if (StmApp.motorChars.startOnPower>100) StmApp.motorChars.startOnPower=0;
-                PiControl[picIdx].startValvePos=StmApp.motorChars.startOnPower;
+                PiControl[picIdx].startValvePos=VdmConfig.configFlash.valvesControlInit.valveControlInit[picIdx].tTarget; //StmApp.motorChars.startOnPower;
+                PiControl[picIdx].reloadPiControl();
                 if (startTask) {
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts>0) {
                         if (taskIdPiControl[picIdx]==TASKMGR_INVALIDID) {
@@ -194,6 +195,9 @@ void CVdmTask::startPIServices(bool startTask)
                             //UART_DBG.println("Start pi tasks valve #"+String(picIdx)+":"+String(taskIdPiControl[picIdx]));
                         }
                     }
+                }
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_DEBUG, "pic: start task pi valve # "+String(picIdx+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[picIdx].name)+") "+String(startTask));
                 }
             }
         }
