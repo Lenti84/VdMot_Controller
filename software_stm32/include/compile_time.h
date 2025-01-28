@@ -54,7 +54,8 @@
                                 (month == 8 ? 0 : 31 +                      \
                                 (month == 9 ? 0 : 30 +                      \
                                 (month == 10 ? 0 : 31 +                     \
-                                (month == 11 ? 0 : 30))))))))))))           \
+                                (month == 11 ? 0 : 30 +                     \
+                                (month == 12 ? 0 : 31)))))))))))))          \
 
 
 #define GET_LEAP_DAYS           ((__TIME_YEARS__-1968)/4 - (__TIME_MONTH__ <=2 ? 1 : 0))
@@ -68,15 +69,20 @@
 #define __TIME_MONTH__          GET_MONTH(__DATE__, 0)
 #define __TIME_YEARS__          CONV_STR2DEC_4(__DATE__, 7)
 
+
 #define __TIME_UNIX__         ((__TIME_YEARS__-UNIX_START_YEAR)*SEC_PER_YEAR+       \
                                 GET_LEAP_DAYS*SEC_PER_DAY+                          \
+                                SEC_PER_DAY+                                        \
                                 GET_MONTH2DAYS(__TIME_MONTH__)*SEC_PER_DAY+         \
                                 __TIME_DAYS__*SEC_PER_DAY-SEC_PER_DAY+              \
                                 __TIME_HOURS__*SEC_PER_HOUR+                        \
                                 __TIME_MINUTES__*SEC_PER_MIN+                       \
                                 __TIME_SECONDS__)
 
- 
+
+
+
 #endif /* COMPILE_TIME_H_ */
+
 
 

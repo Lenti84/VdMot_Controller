@@ -136,10 +136,12 @@
   // MUX pin definition for C1-sample
   #define MUX_ON()     digitalWrite(CTRL_MUX, HIGH)
   #define MUX_OFF()    digitalWrite(CTRL_MUX, LOW)
+  #define WAIT_MUX     2*50
 #elif HARDWARE_REVISION_C2
   // MUX pin definition for C2-sample
   #define MUX_ON()     digitalWrite(CTRL_MUX, LOW)
   #define MUX_OFF()    digitalWrite(CTRL_MUX, HIGH)
+  #define WAIT_MUX     2*50
 #endif
 
 #define PSU_ON()     digitalWrite(POWER_ENA, LOW);   // enable PSU for valves   

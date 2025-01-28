@@ -265,7 +265,7 @@ int16_t communication_loop (void) {
 				#endif
 				if (y >= 0 && y <= 100 && x < ACTUATOR_COUNT) 
 				{
-					if (!myvalvemots[x].calibration) 
+					if (!myvalvemots[x].calibration)  // wdu ???
 						myvalvemots[x].target_position = (byte) y;
 					COMM_SER.println(APP_PRE_SETTARGETPOS);
 				}

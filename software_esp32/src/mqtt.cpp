@@ -1364,6 +1364,7 @@ static const HA_Item haVoltsItems[] = {
   
    // climate
     String tcTopic;
+    String tsTopic;
     String ctTopic;
     String modeCmdTopic;
     String modeStateTopic;
@@ -1395,6 +1396,8 @@ static const HA_Item haVoltsItems[] = {
             tcTopic = "\""+String(root)+String(VdmConfig.configFlash.systemConfig.stationName)+
                       "/valves/"+rbName+"/"+haItem.command_topic+"/set";
 
+            tsTopic = "\""+String(root)+String(VdmConfig.configFlash.systemConfig.stationName)+
+                      "/valves/"+rbName+"/"+haItem.command_topic+"/value";
             
             ctTopic = "\""+String(root)+String(VdmConfig.configFlash.systemConfig.stationName)+
                       "/valves/"+rbName+"/"+haItem.state_topic+"/value";
@@ -1407,6 +1410,7 @@ static const HA_Item haVoltsItems[] = {
 
             haItem.options = 
                 "\"temperature_command_topic\":"+ String(tcTopic)+"\",\n"+  
+                "\"temperature_state_topic\":"+ String(tsTopic)+"\",\n"+
                 "\"current_temperature_topic\":" +String(ctTopic)+"\",\n"+ 
                 "\"temp_step\":0.5,\n"+ 
                 "\"mode_command_topic\":" +String(modeCmdTopic)+"\",\n"+ 

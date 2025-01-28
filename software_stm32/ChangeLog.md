@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+## [1.4.9]
+### Fixed
+- System :     valves detection went sometimes wrong
+
 ## [1.4.8]
 ### Changed
 - System :      set the valves to previous % state after calibration

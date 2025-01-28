@@ -11,6 +11,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.4.9]
+### Added
+- HA discovery : temperature_state_topic added
+
 ## [1.4.8]
 ### Fixed
 - Webui :      if stm32 is not responding after reset an error message is displayed in config and config save button is enabled again
