@@ -635,8 +635,9 @@ void valve_loop () {
                       else  myvalvemots[valveindex].status = VLV_STATE_IDLE;
                       COMM_DBG.println(myvalvemots[valveindex].status); 
                       myvalvemots[valveindex].calibration = false;
-                      myvalvemots[valveindex].calibState=calibIdle;                                                                                
-                      valvestate = A_SET;
+                      myvalvemots[valveindex].calibState=calibIdle;
+                      valveindex = 255;                                                                                  
+                      valvestate = A_IDLE;
                     }    
                     else if (temp == M_RES_NOCURRENT) {
                       #ifdef motDebug
