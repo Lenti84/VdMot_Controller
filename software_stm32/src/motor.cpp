@@ -634,10 +634,12 @@ void valve_loop () {
                       }
                       else  myvalvemots[valveindex].status = VLV_STATE_IDLE;
                       COMM_DBG.println(myvalvemots[valveindex].status); 
+                      /*
                       myvalvemots[valveindex].calibration = false;
                       myvalvemots[valveindex].calibState=calibIdle;
                       valveindex = 255;                                                                                  
-                      valvestate = A_IDLE;
+                      valvestate = A_IDLE;*/
+                      valvestate = A_SET;
                     }    
                     else if (temp == M_RES_NOCURRENT) {
                       #ifdef motDebug
@@ -662,14 +664,101 @@ void valve_loop () {
                   break;
 
      case A_SET:  // set to previous %
+                  valveindex = valvenr;
+                  #ifdef motDebug                   
+                      COMM_DBG.print("A_SET: set position "); COMM_DBG.println(myvalvemots[valveindex].target_position);
+                  #endif
                   myvalvemots[valveindex].actual_position=0;
-                  COMM_DBG.println("A: set target A_SET");
-                  valvestate = A_OPEN1;
-                  PSU_ON();
-                  waittimer = WAIT_TIMER50;
-                  psuofftimer = 0;
-                  pos_change = myvalvemots[valveindex].target_position;
+                  if (myvalvemots[valveindex].target_position==0) {
+                      myvalvemots[valveindex].calibration = false;
+                      myvalvemots[valveindex].calibState=calibIdle;
+                      valveindex = 255;                                                                                  
+                      valvestate = A_IDLE;
+                  } else {
+                    valvestate = A_SET1;
+                    PSU_ON();
+                    waittimer = WAIT_TIMER50;
+                    psuofftimer = 0;
+                    pos_change = myvalvemots[valveindex].target_position;
+                  }
                   break;
+
+     case A_SET1:  // start valve opening
+                  if (!waittimer) {
+                    if(pos_change==255) isr_target = 65535;
+                    else isr_target = myvalvemots[valveindex].scaler * pos_change;
+                    m_meancurrent = myvalvemots[valveindex].meancurrent;
+                    
+                    if (motorcycle (valveindex, CMD_M_OPEN) == M_RES_OPENS) {
+                      #ifdef motDebug
+                        COMM_DBG.print("A_SET1: begin opening by ");                  
+                        COMM_DBG.println(pos_change);
+                      #endif
+                      myvalvemots[valveindex].status = VLV_STATE_OPENING;                                                            
+                      valvestate = A_SET2;
+                      isr_counter=0;
+                    }
+                    else {
+                      #ifdef motDebug
+                        COMM_DBG.print("A_SET1: cant open valve");                  
+                      #endif
+                      valvestate = A_IDLE;
+                    }
+                  }
+                  break;
+  
+    case A_SET2:  // wait for finish opening
+                  temp = motorcycle (valveindex, 0);
+                  if (temp == M_RES_STOP) {
+                    #ifdef motDebug
+                      COMM_DBG.println("A_SET2: opened valve"); 
+                    #endif                 
+                    myvalvemots[valveindex].actual_position += pos_change;
+                    #ifdef motDebug                   
+                      COMM_DBG.print("A_SET2: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
+                    #endif
+                    myvalvemots[valveindex].status = VLV_STATE_IDLE; 
+                    myvalvemots[valveindex].calibration = false;
+                    myvalvemots[valveindex].calibState=calibIdle;
+                    valveindex = 255;                                                                                  
+                    valvestate = A_IDLE;
+                  }
+                  else if (temp == M_RES_NOCURRENT) {
+                    #ifdef motDebug
+                      COMM_DBG.println("A_SET2: (A_OPEN2) undercurrent");
+                    #endif
+                    myvalvemots[valveindex].status = VLV_STATE_OPENCIR;
+                    myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
+                    myvalvemots[valveindex].calibration = false;
+                    myvalvemots[valveindex].calibState=calibIdle;
+                    valvestate = A_IDLE;
+                    isr_counter=0;
+                  } 
+                  else if (temp == M_RES_ENDSTOP) {
+                    #ifdef motDebug
+                      COMM_DBG.println("A_SET2: opened valve to end stop");
+                    #endif
+                    valvestate = A_IDLE;
+                    myvalvemots[valveindex].status = VLV_STATE_IDLE;
+                    myvalvemots[valveindex].actual_position = 100;
+                    myvalvemots[valveindex].calibration = false;
+                    myvalvemots[valveindex].calibState=calibIdle;
+                    #ifdef motDebug
+                      COMM_DBG.print("A_SET2: new position "); COMM_DBG.println(myvalvemots[valveindex].actual_position);
+                    #endif
+                  }
+                  else if (temp == M_RES_ERROR) {
+                    #ifdef motDebug
+                      COMM_DBG.println("A_SET2: opening valve failed, timeout");
+                    #endif
+                    valvestate = A_IDLE;
+                    myvalvemots[valveindex].status = VLV_STATE_FAILED;
+                    myvalvemots[valveindex].actual_position = myvalvemots[valveindex].target_position;
+                    myvalvemots[valveindex].calibration = false;
+                    myvalvemots[valveindex].calibState=calibIdle;
+                  }                                     
+                  break;
+
      case A_TEST:  // test if a valve is connected                  
                   if (!waittimer) {
                     
