@@ -826,11 +826,14 @@ details > ul {
 				<th>Chip Id</th>
 				<td id="sysSTM32-ChipId"></td>
 			</tr>
-			<tr id="sysSTM32-Info" style="display:hidden">
+			<tr id="sysSTM32-Info" style="visibility:hidden">
 				<th>Info</th>
 				<td id="sysSTM32-InfoText"></td>
 			</tr>
-			
+			<tr id="sysSTM32-Error" style="visibility:hidden">
+				<th>Error</th>
+				<td id="sysSTM32-ErrorText"></td>
+			</tr>
 		</table>
 		</div>
 	</div>
@@ -3643,6 +3646,21 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 		}
 
+		function showStmFailedWarningIcon(stmFailed)
+		{
+			if (stmFailed == 0) {
+				id("homeImg").style.visibility="hidden";
+				id("homeImg").src=tabImageSrc[0];
+				id("sysSTM32-Error").style.visibility="hidden";
+			} else {
+				id("homeImg").style.visibility="visible";
+				id("homeImg").src=tabImageSrc[2];
+				id("sysSTM32-Error").style.visibility="visible";
+				id("sysSTM32-Error").style.background="red";
+				id("sysSTM32-ErrorText").textContent="Stm32 not responding ! Try reset.";
+			}
+		}
+
 		function checkValvesConnected (valvesJson){
 			const cfgValvesTable = id('cfgValvesTable');
 			const cfgValvesControlTable = id('cfgValvesControlTable');
@@ -4151,7 +4169,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 						if (stmInit===2) {
 							setTimeout(async function() {
 								await loadStmData();
-								stmLoaded=true;
+								setTimeout(async function() {
+									stmLoaded=true;
+								},3000);
 							},5000);
 						}
 					}
@@ -4163,6 +4183,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 					if (!checkCfgTempsID()) {
 						await getTempSensorsID();
 					}
+				}
+				if (dataSystemDynInfo["stmFailed"]===1) {
+					showStmFailedWarningIcon(dataSystemDynInfo["stmFailed"]);
 				}
 			}
 		}

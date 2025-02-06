@@ -105,7 +105,7 @@ CStmApp::CStmApp()
     stmInitState=STM_INIT_NOT_STARTED;
     fastGetOneWire=false;
     oneWireAllRead=false;
-    
+    stmFailed=false;
 }
 
 void  CStmApp::app_setup() {
@@ -465,7 +465,7 @@ void  CStmApp::app_check_data()
         found = false;
 
         if (stmStatus==STM_NOT_READY) stmStatus=STM_READY;
-         
+        stmFailed=false;
         // devide buffer into command and data
 		// ****************************************
 
@@ -965,6 +965,7 @@ void CStmApp::appHandler()
                 appTimeOuts=0; 
                 Stm32.ResetSTM32(true);
                 Messenger.sendMessage ("STM failed","STM failed: max app timeouts reached, reset STM"); 
+                stmFailed=true;
                 appState=APP_IDLE; 
             } else {
                 commstate = COMM_GETDATA;

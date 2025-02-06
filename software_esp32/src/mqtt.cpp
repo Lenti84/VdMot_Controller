@@ -131,7 +131,7 @@ uint8_t CMqtt::checkForPublish()
         }
     } else {
         if ((millis()-tsForcePublish)>(1000*VdmConfig.configFlash.protConfig.publishInterval)) {
-            #ifdef EnvDevelop
+            #ifdef EnvDevelop_Level1
                  UART_DBG.println("force publish");
             #endif
             tsForcePublish = millis();

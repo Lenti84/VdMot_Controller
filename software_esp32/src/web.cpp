@@ -335,6 +335,7 @@ String CWeb::getSysDynInfo()
                   "\"wifich\":"+WiFi.channel()+ "," +
                   "\"wifiStatus\":"+WiFi.status()+ "," +
                   "\"stmStatus\":"+String(StmApp.stmStatus)+ "," +
+                  "\"stmFailed\":"+String(StmApp.stmFailed)+ "," +
                   "\"stmInit\":"+String(StmApp.stmInitState);
                   if (VdmConfig.configFlash.protConfig.dataProtocol>0) {
                     result += ",\"brokerStatus\":"+String(Mqtt.mqttState);
