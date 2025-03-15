@@ -40,6 +40,7 @@
 #include "globals.h"
 #include "VdmSystem.h"
 #include "VdmNet.h"
+#include "VdmTask.h"
 #include "Messenger.h"
 #include "esp_spi_flash.h" 
 #include "helper.h"
@@ -130,16 +131,17 @@ String CVdmSystem::localTime() {
 bool CVdmSystem::getLocalTime(struct tm * info)
 {
     uint32_t start = millis();
-    uint32_t ms=10;
+    uint32_t ms=1000;
     time_t now;
-   // while((millis()-start) <= ms) {
+    while((millis()-start) <= ms) {
         time(&now);
         localtime_r(&now, info);
         if(info->tm_year > (2016 - 1900)){
             return true;
         }
+        VdmTask.yieldTask(10);
    //     delay(10);
-   // }
+    }
     return false;
 }
 

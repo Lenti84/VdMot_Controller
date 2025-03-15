@@ -153,6 +153,7 @@ class CMqtt
     VALVESTATE valveStates[ACTUATOR_COUNT];
     HAD_STATE hadState;
     ACTION_HA actionHA;
+    bool forceReconnect;
   private:
     void publish_all (uint8_t publishFlags);
     void publish_common (); 

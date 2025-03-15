@@ -108,6 +108,7 @@ void CMqtt::mqtt_setup(IPAddress brokerIP,uint16_t brokerPort)
     for (uint8_t x = 0;x<ACTUATOR_COUNT;x++) {
         lastValveValues[x].lasttValuets=millis();
     }
+    forceReconnect=false;
 }
 
 CMqtt::CMqtt()
@@ -200,8 +201,9 @@ uint8_t CMqtt::checkForPublish()
 
 void CMqtt::mqtt_loop() 
 {
-    if (!mqtt_client.connected()) {
+    if ((!mqtt_client.connected()) || forceReconnect) {
         firstPublish=true;
+        forceReconnect=false;
         reconnect();      
     }
     if (mqtt_client.connected()) {

@@ -201,6 +201,7 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
               "\"tSource\":"+String(valvesControlConfig.valveControlConfig[x].targetSource) + ","+
               "\"inittTarget\":"+String(VdmConfig.configFlash.valvesControlInit.valveControlInit[x].tTarget,1) + ","+
               "\"xp\":"+String(valvesControlConfig.valveControlConfig[x].xp) + ","+
+              "\"deadband\":"+String(VdmConfig.configFlash.valvesControl1Config.valveControl1Config[x].deadband) + ","+
               "\"offset\":"+String(valvesControlConfig.valveControlConfig[x].offset) + ","+
               "\"ti\":"+String(valvesControlConfig.valveControlConfig[x].ti) + ","+
               "\"ts\":"+String(valvesControlConfig.valveControlConfig[x].ts) + ","+

@@ -165,11 +165,9 @@ typedef struct {
 
 typedef struct {
   float alpha;
-} VDM_VALVE_CONTROL_CONFIG_ALPHA;
-
-typedef struct {
-  uint8_t usePrediction : 1; 
-} VDM_VALVES_CONTROL_CONFIG_FLAGS;
+  float beta;
+  float deadband;
+} VDM_VALVE_CONTROL1_CONFIG;
 
 typedef struct {
   VDM_VALVE_CONTROL_CONFIG valveControlConfig[ACTUATOR_COUNT];
@@ -178,8 +176,13 @@ typedef struct {
 } VDM_VALVES_CONTROL_CONFIG;
 
 typedef struct {
+  VDM_VALVE_CONTROL1_CONFIG valveControl1Config[ACTUATOR_COUNT];
+} VDM_VALVES_CONTROL1_CONFIG;
+
+typedef struct {
   VDM_VALVE_CONTROL_INIT valveControlInit[ACTUATOR_COUNT];
 } VDM_VALVES_CONTROL_INIT;
+
 
 typedef struct {
   char name[11];
@@ -267,6 +270,7 @@ typedef struct
   VDM_SYSTEM_TIME_ZONE_CONFIG timeZoneConfig;
   VDM_MSG_CONFIG messengerConfig;
   VDM_VALVES_CONTROL_INIT valvesControlInit;
+  VDM_VALVES_CONTROL1_CONFIG valvesControl1Config;
 } CONFIG_FLASH;
 
 typedef struct {
@@ -319,10 +323,9 @@ typedef struct {
 #define nvsValvesControlCfg         "valvesCtrlCfg"
 #define nvsValves                   "valves"
 #define nvsValvesControl            "valvesCtrl"
-#define nvsValvesControlAlpha       "vCtrlAlpha"
+#define nvsValvesControl1           "valvesCtrl1"
 #define nvsValvesControlHeatControl "vCtrlHeat"
 #define nvsValvesControlParkPos     "vCtrlParkPos"
-#define nvsValvesControlFlags       "vCtrlFlags"
 #define nvsValvesControlInit        "vCtrlInit"
 
 #define nvsTempsCfg                 "tempsCfg"

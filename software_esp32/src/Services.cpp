@@ -136,7 +136,7 @@ void CServices::checkGetNtp()
     VdmNet.sntpReachable=VdmNet.checkSntpReachable();
     #ifdef EnvDevelop
         UART_DBG.println("checkGetNtp : "+String(VdmNet.sntpReachable));
-      #endif
+    #endif
     if (VdmNet.sntpReachable) {
       if (VdmSystem.getLocalTime(&VdmNet.startTimeinfo)) {
         if ((VdmNet.startTimeinfo.tm_hour==getNtpHour) && (VdmNet.startTimeinfo.tm_min==getNtpMin)) {
@@ -161,7 +161,8 @@ void CServices::servicesLoop()
 
 void CServices::runOnce() 
 {
-    StmApp.getParametersFromSTM();
+  VdmNet.setupNtp();
+  StmApp.getParametersFromSTM();
 }
 
 void CServices::runOnceDelayed10()

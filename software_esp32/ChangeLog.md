@@ -11,6 +11,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.4.10]
+### Added
+- Webui :       Show information if stm failed
+- PI Control :  deadband added
+### Fixed
+- Mqtt :        reconnect mqtt if control setup is saved to subscribe topics again
+- SNTP :        connection improved
+
 ## [1.4.9]
 ### Added
 - HA discovery : temperature_state_topic added

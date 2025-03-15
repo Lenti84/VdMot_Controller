@@ -1283,6 +1283,12 @@ Publish on change on server side is not recommended with this option">tValue aft
 					</td>
 				</tr>
 				</table>
+				<table>
+					<tr>
+						<th>Detected sensors</th>
+						<td id="tcfg-sensors"></td>
+					</tr>
+				</table>
 			</div>
 		</div>
 
@@ -1290,6 +1296,12 @@ Publish on change on server side is not recommended with this option">tValue aft
 			<h3>Voltage sensor</h3>
 			<div style="height:22.3em;overflow-y:scroll">
 				<table id="cfgVSensorTable" class="tabTableCtl" border="3" frame="box" style="text-align:center"></table>
+				<table>	
+					<tr>
+						<th>Detected sensors</th>
+						<td id="vcfg-sensors"></td>
+					</tr>
+				</table>
 			</div>
 		</div>
 
@@ -2601,7 +2613,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			const valvesControlTable = id('cfgValvesControlTable');	 
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesControlTable.insertRow(0);
-				for (let i = 0; i < 15; i++) {
+				for (let i = 0; i < 16; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -2706,13 +2718,25 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el = document.createElement('input');
 				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCDB' + row);
+				el.setAttribute('id', 'cfgVCDB' + row);
+				el.setAttribute('min','0');
+				el.setAttribute('step','0.1');
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('title','Enter deadband');
+				thiscell.appendChild(el);
+
+				thiscell = valvesControlTable.rows[row].cells[9];
+				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
+				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCOffs' + row);
 				el.setAttribute('id', 'cfgVCOffs' + row);
 				el.setAttribute('style','width:50px;');
 				el.setAttribute('title','Enter offset');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[9];
+				thiscell = valvesControlTable.rows[row].cells[10];
 				el = document.createElement('input');
 				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
@@ -2723,7 +2747,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Enter integral time in seconds');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[10];
+				thiscell = valvesControlTable.rows[row].cells[11];
 				el = document.createElement('input');
 				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
@@ -2734,7 +2758,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Enter sampling time in seconds');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[11];
+				thiscell = valvesControlTable.rows[row].cells[12];
 				el = document.createElement('select');
 				el.className = "alignTabCellCenter";
 				el.setAttribute('name', 'cfgVCScheme-' + row);
@@ -2748,7 +2772,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Enter scheme for control calculation');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[12];
+				thiscell = valvesControlTable.rows[row].cells[13];
 				el = document.createElement('input');
 				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
@@ -2760,7 +2784,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Value ki for constant integral control calculation');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[13];
+				thiscell = valvesControlTable.rows[row].cells[14];
 				el = document.createElement('input');
 				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
@@ -2783,7 +2807,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Active zone (opened) of the valve (1-100%)');
 				thiscell.appendChild(el);
 
-				thiscell = valvesControlTable.rows[row].cells[14];
+				thiscell = valvesControlTable.rows[row].cells[15];
 				el = document.createElement('input');
 				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'checkbox');
@@ -2807,6 +2831,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 			valvesControlTable.rows[0].cells[col++].title = 'Select target source for this valve';
 			valvesControlTable.rows[0].cells[col].textContent = 'Xp';
 			valvesControlTable.rows[0].cells[col++].title = 'Enter band (xp). Kp=100/xp';
+			valvesControlTable.rows[0].cells[col].textContent = 'Deadband';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter deadband';
 			valvesControlTable.rows[0].cells[col].textContent = 'Offset(%)';
 			valvesControlTable.rows[0].cells[col++].title = 'Enter offset';
 			valvesControlTable.rows[0].cells[col].textContent = 'Ti(s)';
@@ -3492,6 +3518,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				valveValues.tSource = id('cfgVCTarget'+row).value;
 				valveValues.inittTarget = id('cfgInittTarget'+row).value;
 				valveValues.xp = id('cfgVCXp'+row).value;
+				valveValues.deadband = id('cfgVCDB'+row).value;
 				valveValues.offset = id('cfgVCOffs'+row).value;
 				valveValues.ti = id('cfgVCTi'+row).value;
 				valveValues.ts = id('cfgVCTs'+row).value;
@@ -3598,6 +3625,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id('cfgVCTarget'+linkNo).style.visibility=display;
 			id('cfgInittTarget'+linkNo).style.visibility=display;
 			id('cfgVCXp'+linkNo).style.visibility=display;
+			id('cfgVCDB'+linkNo).style.visibility=display;
 			id('cfgVCOffs'+linkNo).style.visibility=display;
 			id('cfgVCTi'+linkNo).style.visibility=display;
 			id('cfgVCTs'+linkNo).style.visibility=display;
@@ -3868,6 +3896,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id('cfgVCTarget'+row).value = cfgValvesControlJson.valves[row-1].tSource;
 				id('cfgInittTarget'+row).value = cfgValvesControlJson.valves[row-1].inittTarget;
 				id('cfgVCXp'+row).value = cfgValvesControlJson.valves[row-1].xp;
+				id('cfgVCDB'+row).value = cfgValvesControlJson.valves[row-1].deadband;
 				id('cfgVCOffs'+row).value = cfgValvesControlJson.valves[row-1].offset;
 				id('cfgVCTi'+row).value = cfgValvesControlJson.valves[row-1].ti;
 				id('cfgVCTs'+row).value = cfgValvesControlJson.valves[row-1].ts;
@@ -4359,6 +4388,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		async function getTempSensorsID() {
 			const thisDataTempSensorsID=await getJson("tempsensorsid");
+			id('tcfg-sensors').textContent = thisDataTempSensorsID.length.toString();
 			if (thisDataTempSensorsID) {
 				dataTempSensorsID = thisDataTempSensorsID;
 				fillTSensorIDSelect(); 
@@ -4378,6 +4408,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 
 		async function getVoltSensorsID() {
 			const thisDataVoltSensorsID=await getJson("voltsensorsid");
+			id('vcfg-sensors').textContent = thisDataVoltSensorsID.length.toString();
 			if (thisDataVoltSensorsID) {
 				dataVoltSensorsID = thisDataVoltSensorsID;
 				fillVSensorIDSelect(); 

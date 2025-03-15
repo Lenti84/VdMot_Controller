@@ -164,6 +164,7 @@ void valvesDetect (JsonObject doc)
 void writeValvesControl (JsonObject doc)
 {  
   VdmConfig.writeValvesControlConfig(false,VdmTask.restartPiTask);
+  Mqtt.forceReconnect=true;
 }
 
 void mqttReconnect (JsonObject doc)
