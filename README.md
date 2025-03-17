@@ -69,8 +69,6 @@ For details please see [software.md](./software.md)
 Latest Software can be found here :
 https://github.com/SurfGargano/VdMot_Controller/releases/latest
 
-Latest Software can be found here :
-https://github.com/SurfGargano/VdMot_Controller/releases/latest
 
 ## License
 This project is licensed under the terms of the GNU General Public License v3.0 license.
