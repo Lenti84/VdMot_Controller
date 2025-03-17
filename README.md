@@ -65,6 +65,9 @@ For details please see [software.md](./software.md)
     - temperature sensors
     - optional: integrated control algorithm 
   - OTA software update (of ESP32 and STM32)
+  - 
+Latest Software can be found here :
+https://github.com/SurfGargano/VdMot_Controller/releases/latest
 
 Latest Software can be found here :
 https://github.com/SurfGargano/VdMot_Controller/releases/latest
