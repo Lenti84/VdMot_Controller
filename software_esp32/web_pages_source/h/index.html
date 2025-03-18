@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 <head>
 <link rel="icon" href="data:,">
 <link rel="icon" href="../favicon.ico">
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -117,7 +117,7 @@
 		width: 300px;
 	}
 	.form-input2{
-		width: 250px;
+		width: 300px;
 	}
 	form-input3{
 		width: 50px;
@@ -153,6 +153,13 @@
 		grid-column : span 4;
 	}
 	
+	.alignTabCellCenter{
+	 float: center;
+	}
+	.alignTabCellLeft{
+	 float: left;
+	}
+
 	.alignTabCellState{
 	 float: center;
 	 padding-top: 10px;
@@ -164,7 +171,7 @@
 	}
 
 	table.tabTable {
-		width : 100%
+		width : 100%;
 	}
 
 	table.tabTable td {
@@ -190,6 +197,36 @@
 		width : 140px;
 	}
 	
+	table.tabTableCtl {
+		width : 100%;
+  		align-items: center;
+		text-align: center;
+		align-content: center;
+	}
+
+	table.tabTableCtl td {
+		padding-left: 5px;
+		height:21px;
+		align-items: center;
+		text-align: center;
+		align-content: center;
+	}
+
+	table.tabTableCtl th {
+		padding-left: 5px;
+		height:21px;
+		align-items: center;
+		text-align: center;
+		align-content: center;
+	}
+
+	table.tabTableCtl tr:hover {
+		background-color: coral;
+	}
+	table.tabTableCtl tr:first-child:hover {
+		background-color: gray;
+	}
+
 	.hide {
 		display: none;
 	}
@@ -218,6 +255,8 @@
 		margin: 2px;
 		padding: 0.6em;
 		border-radius: 5px;
+		outline-style: outset;
+		outline-width: thin;
 
 	}
 	.buttonclass:disabled {
@@ -241,6 +280,8 @@
 		padding: 0.6em;
 		border-radius: 5px;
 		float: right;
+		outline-style: outset;
+		outline-width: thin;
 
 	}
 	.buttonclass1:disabled {
@@ -249,6 +290,54 @@
 		color: #c0c0c0;
 	}
 	
+	.buttonDialogClass:hover {
+		padding: 0.6em;
+		font-weight: bold;
+		background-color: white;
+		color: #355fb9;
+	}
+
+	.buttonDialogClass {
+		font-weight: bold;
+		background-color: #355fb9;
+		color: #fff;
+		margin: 2px;
+		padding: 0.6em;
+		border-radius: 20px;
+		float: right;
+		outline-style: outset;
+
+	}
+	.buttonDialogClass:disabled {
+		font-weight: bold;
+		background-color: gray;
+		color: #c0c0c0;
+	}
+
+	.redButtonDialogClass:hover {
+		padding: 0.6em;
+		font-weight: bold;
+		background-color: white;
+		color: red;
+	}
+
+	.redButtonDialogClass {
+		font-weight: bold;
+		background-color: red;
+		color: #fff;
+		margin: 2px;
+		padding: 0.6em;
+		border-radius: 5px;
+		float: right;
+
+	}
+	.redButtonDialogClass:disabled {
+		font-weight: bold;
+		background-color: gray;
+		color: #c0c0c0;
+	}
+
+
 	.dialogClass{
 		width: 30em;
 		overflow-y: auto;
@@ -308,8 +397,8 @@
 	  padding-top: 100px; /* Location of the box */
 	  left: 0;
 	  top: 0;
-	  width: 100%; /* Full width */
-	  height: 100%; /* Full height */
+	  width: 100%; /*Full width */
+	  height: 100%; /*Full height */
 	  overflow: auto; /* Enable scroll if needed */
 	  background-color: rgb(0,0,0); /* Fallback color */
 	  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
@@ -321,7 +410,7 @@
 	  margin: auto;
 	  padding: 20px;
 	  border: 1px solid #888;
-	  width: 80%;
+	  width: 400px;
 	}
 
 	/* The Close Button */
@@ -371,6 +460,22 @@
 	{
 		pointer-events: none;     
 		opacity: 0.4;
+	}
+
+	dialog {
+	    border: 0.125rem solid var(--border-color);
+	    border-radius: 20px;
+	    box-shadow:
+	        0 11px 15px -7px #0003,
+	        0 24px 38px 3px #00000024,
+	        0 9px 46px 8px #0000001f;
+	    font-size: 1rem;
+	   
+	}
+	
+	dialog::backdrop {
+	    background: rgba(36, 32, 20, 0.5);
+	    backdrop-filter: blur(0.25rem);
 	}
 
 	/* slider checkbox */ 
@@ -462,13 +567,173 @@
 		to {transform: rotate(359deg);}
 	}
 
+details {
+  /*width: 80%;*/
+  margin: 0 auto ;
+  background: #807f7f;
+  margin-bottom: .5rem;
+  box-shadow: 0 .1rem 1rem -.5rem rgba(0,0,0,.4);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+summary {
+  padding: 0.4rem;
+  display: block;
+  background: #575656;
+  padding-left: 2.0rem;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+summary:before {
+  content: '';
+  border-width: .4rem;
+  border-style: solid;
+  border-color: transparent transparent transparent #fff;
+  position: absolute;
+  top: 0.6rem;
+  left: 0.8rem;
+  transform: rotate(0);
+  transform-origin: .2rem 50%;
+  transition: .25s transform ease;
+}
+
+/* THE MAGIC 🧙‍♀️ */
+details[open] > summary:before {
+  transform: rotate(90deg);
+}
+
+
+details summary::-webkit-details-marker {
+  display:none;
+}
+
+details > ul {
+  padding-bottom: 1rem;
+  margin-bottom: 0;
+}
+
 
 </style>
 
 </head>
 <body>
+
+	<dialog id="pushOverParameterDialog" class="dialogClass">
+		<h3>PushOver</h3>
+		<table id="cfgPushOverParam" class="tabTable">
+		<tr>
+			<th>API Token</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgPushOverAPIToken" name="cfgPushOverAPIToken"/>
+			</td>
+		</tr>
+		<tr>
+			<th>User Token</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgPushOverUserToken" name="cfgPushOverUserToken"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Title</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgPushOverTitle" name="cfgPushOverTitle"/>
+			</td>
+		</tr>
+		</table>
+
+		<footer>
+			<button id="test-pushOver" class="buttonDialogClass">test</button>
+			<button id="close-pushOverParameterDialog" class="buttonDialogClass">close</button>
+		</footer>
+		
+	</dialog>
+
+	<dialog id="emailParameterDialog" class="dialogClass">
+		<h3>Email</h3>
+		<table id="cfgEmailParam" class="tabTable">
+		<tr>
+			<th>User</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="64" id="cfgEmailUser" name="cfgEmailUser"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Password</th>
+			<td>
+			<input type="password" class="form-input2" maxlength="64" id="cfgEmailPwd" name="cfgEmailPwd"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Host</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="64" id="cfgEmailHost" name="cfgEmailHost"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Port</th>
+			<td>
+			<input type="number" class="form-input2" id="cfgEmailPort" name="cfgEmailPort"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Recipient</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="64" id="cfgEmailRecipient" name="cfgEmailRecipient"/>
+			</td>
+		</tr>
+		<tr>
+			<th>Title</th>
+			<td>
+			<input type="text" class="form-input2" maxlength="30" id="cfgEmailTitle" name="cfgEmailTitle"/>
+			</td>
+		</tr>
+		</table>
+		<footer>
+			<button id="test-email" class="buttonDialogClass">test</button>
+			<button id="close-emailParameterDialog" class="buttonDialogClass">close</button>
+		</footer>
+	</dialog>
+	
+	<dialog id="haDialog" class="dialogClass">
+		<h3>Are you sure you want to discover Home Assistant ?</h3>
+		<table class="tabTable">
+			<tr>
+				<td>
+					<label><select id="HA_Action">
+						<option>Discovery only</option>
+						<option>Delete last discovery only</option>
+						<option>Delete last discovery and send new discovery</option>
+					</select> Action</label>
+				</td>
+			</tr>
+		</table>
+		<footer>
+			<button id="ha-Ok" class="buttonDialogClass" value="confirm">Ok</button>
+			<button id="ha-Cancel" class="buttonDialogClass" value="cancel">Cancel</button>
+		</footer>
+	</dialog>
+
+	<dialog id="enableStrictTopicsDialog" class="dialogClass">
+		<h3>It is mandatory to enable strict seperate topics while you select homeassistant</h3>
+		<table class="tabTable">
+			<th>Do you want to enable strict seperate topics now ?</th>
+			<td>
+				<button id="enableScrictTopics-Yes" class="buttonclass" value="yes">Yes</button>
+			</td>
+		</table>
+		<footer>
+			<button id="enableScrictTopics-Confirm" class="buttonDialogClass" value="confirm">Save</button>
+			<button id="enableScrictTopics-Cancel" class="buttonDialogClass" value="cancel">Cancel</button>
+		</footer>
+	</dialog>
+
+
+
 	<div class="topNav" id="mytopNav">
-	  <a href="#home" class="tabLink" id="defaultOpen" name="Home" onclick="openPage('Home', this, 'red')">Home</a>
+	  <a href="#home" class="tabLink" id="defaultOpen" name="Home" onclick="openPage('Home', this, 'red')">Home<img id="homeImg" src="" style="margin-left:5px;height:16px;width:16px"></a>
 	  <a href="#status" class="tabLink" id="statusOpen" name="Status" style ="display:none"; onclick="openPage('Status', this, 'green');">Status<img id="statusImg" src="" style="margin-left:5px;height:16px;width:16px"></a>
 	  <a href="#network" class="tabLink" id="networkOpen" name="Network" style ="display:none" onclick="openPage('Network', this, 'blue')">Network</a>
 	  <a href="#config" class="tabLink" id="configOpen" name="Config" style ="display:none" onclick="openPage('Config', this, 'gray')">Config</a>
@@ -497,16 +762,23 @@
 				<th>Up Time</th>
 				<td id="upTime"></td>
 			</tr>
-			<tr>
-				<td>
-				<input type="button" class="buttonclass" id="login-button" style ="display:none" value="Login" title="Login" />
-				</td>
-			</tr>
 		</table>
+
+		<div id="login-div" class="tabiframe" style ="display:none"> 
+			<table class="tabTable">
+				<tr>
+					<td>
+						<input type="button" class="buttonclass" id="login-button"  value="Login" title="Login" />
+						<input type="button" class="buttonclass" id="logout-button" value="Logout" title="Logout" />
+					</td>
+				</tr>
+			</table>
+			</div>
 		</div>
+
 		<div class="rtabframe">
 		<h3>WT32 Controller</h3>
-		<table id="homeInfo" class="tabTable">
+		<table id="homeInfoWT32" class="tabTable">
 			<tr>
 				<th width=100>SW Version</th>
 				<td id="sysWt32-Version"></td>
@@ -545,7 +817,7 @@
 		</div>
 		<div class="rtabframe">
 		<h3>STM32 Controller</h3>
-		<table id="homeInfo" class="tabTable">
+		<table id="homeInfoSTM32" class="tabTable">
 			<tr>
 				<th>Version</th>
 				<td id="sysSTM32-Version"></td>
@@ -553,6 +825,14 @@
 			<tr>
 				<th>Chip Id</th>
 				<td id="sysSTM32-ChipId"></td>
+			</tr>
+			<tr id="sysSTM32-Info" style="visibility:hidden">
+				<th>Info</th>
+				<td id="sysSTM32-InfoText"></td>
+			</tr>
+			<tr id="sysSTM32-Error" style="visibility:hidden">
+				<th>Error</th>
+				<td id="sysSTM32-ErrorText"></td>
 			</tr>
 		</table>
 		</div>
@@ -563,7 +843,7 @@
 	<div class="container3">
 		<div id="divValvesTable" class="rtabframe3">  
 		<h3>Valves</h3>	
-		<table id="valvesTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		<table id="valvesTable" class="tabTableCtl" border="3" frame="box" style="text-align:center">
 		</table>
 		</div>
 		<div class="rtabframe" style="overflow-y:auto" id="addStatusTabFrame">  
@@ -587,8 +867,13 @@
 		</div>
 		<div class="rtabframe" style="overflow-y:auto" id="tempStatusTabFrame">  
 		<h3>Temperature</h3>
-		<table id="tempsTable" class="tabTable" border="3" frame="box" style="text-align:center">
+		<table id="tempsTable" class="tabTableCtl" border="3" frame="box" style="text-align:center">
 		</table>
+		</div>
+		<div class="rtabframe" style="overflow-y:auto" id="voltStatusTabFrame">  
+			<h3>Sensors</h3>
+			<table id="voltsTable" class="tabTableCtl" border="3" frame="box" style="text-align:center">
+			</table>
 		</div>
 	</div>
 	</div>
@@ -812,6 +1097,7 @@
 				<select id="protcfg-dataProt">
                     <option>none</option>
                     <option>MQTT</option>
+					<option>MQTT HA</option>
 				</select>
 				</td>
             </tr> 
@@ -883,10 +1169,11 @@
 		</table>
 		</div>
 		<div class="tabpframe"> 
-		<table id="protcfg-Broker1" style="display:none;" class="tabTable1">
+		<table id="protcfg-Broker1" style="display:none;" class="tabTable1">			  
 			<tr>
-				<fieldset id="protcfg-Broker2" class="checkboxgroup2" style="height:14em;display:none;">
-					<legend>Publish</legend>
+				<details id="protcfg-BrokerDPublish">
+				<summary>Publish</summary>
+				<fieldset id="protcfg-Broker2" class="checkboxgroup2" style="height:14em;">
 					<label><input type="checkbox" id="protcfg-pubRetained" name="theGroupP" title="Publish values retained">Retained </label>
 					<label><input type="checkbox" id="protcfg-pubPlainText" name="theGroupP" title="Publish values as plaintext instead 0/1">Plaintext </label>
 					<label><input type="checkbox" id="protcfg-pubSeparate" name="theGroupP" title="Handle topics strict separate for write and read. Topics sent from server has to be added a /set">Strict separate topics </label>
@@ -894,27 +1181,38 @@
 					<label><input type="checkbox" id="protcfg-pubPathAsRoot" name="theGroupP">Path as root </label>
 					<label><input type="checkbox" id="protcfg-pubUpTime" name="theGroupP">Up time </label>
 					<label><input type="checkbox" id="protcfg-pubDiag" name="theGroupP">Diag </label>
+					<label><select id="protcfg-numFormat" name="theGroupP" style="width:100px" title="Handle decimal point as international (.) or like german (,)">
+						<option>International</option>
+						<option>German</option>
+					</select>Numeric format</label>
 				</fieldset>
+				</details>
 			</tr>
-
 			<tr>
-				<fieldset id="protcfg-Broker21" class="checkboxgroup2" style="height:7em;display:none;">
-					<legend>Failed</legend>
+				<details id="protcfg-BrokerDFailed">
+				<summary>Failure Handling</summary>
+				<fieldset id="protcfg-Broker21" class="checkboxgroup2" style="height:5em;">
 					<label><input type="checkbox" id="protcfg-timeOutDSActive" name="theGroupP21" title="Time out for DS18 sensor (fixed 5 min)">DS18 </label>
 					<label><input type="checkbox" id="protcfg-timeOutTSActive" name="theGroupP21" title="If there is no tValue received via mqtt after this time the corresponding valve goes to the defined position.
 Caution : If this option is activated it is absolutely mandatory to ensure that the tValue is received within the time frame. 
 Publish on change on server side is not recommended with this option">tValue after<input type="number" class="form-input3" maxlength="4" style="width:3em;" min="10" id="protcfg-timeOutValue" name="protcfg-timeOutValue" />min</label>
 					<label><input type="number" class="form-input" min="0" max="100" maxlength="3" style="width:40px" id="protcfg-timeOutPosition" name="protcfg-timeOutPosition" title="Valve position after time out."/>Valve position </label>
 				</fieldset>
+				</details>
 			</tr>
-
+			<tr>
+				<details id="protcfg-BrokerDHA">
+				<summary>Home Assistant</summary>
+					<input type="button" class="buttonclass" id="protcfg-discoverHA" name="theGroupP22" value="Discovery" title="Discovery Home Assistant">
+				</details>
+			</tr>
 		</table>
 		</div>
 		</div>
 
 		<div class="rtabframe">
 		<h3>Valves</h3>
-		<table id="cfgValvesTable" class="tabTable" border="3" frame="box" style="text-align:center;">
+		<table id="cfgValvesTable" class="tabTableCtl" border="3" frame="box" style="text-align:center;">
 		
 		</table>
 		<table class="tabTable">
@@ -955,11 +1253,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 	
 			</fieldset>
 			</tr>
-			<fieldset class="checkboxgroup2" style="height:4em;" id="cfgValvesTableFieldSet2">
+			<fieldset class="checkboxgroup2" style="height:5em;" id="cfgValvesTableFieldSet2">
 				<legend>Assembly/Calibration</legend>	
-				<label> 
-					<select id="valvesAsmCalib-select">
-					</select>	
+				<label><select id="valvesAsmCalib-select"></select></label>
+				<label>
 					<input type="button" class="buttonclass" id="valvesAssembly" value="Assembly" title="Set valves to assembly position">
 					<input type="button" class="buttonclass" id="valvesStartCalib" value="Calib" title="Start manual calibration of valves" />
 				</label>	
@@ -967,18 +1264,16 @@ Publish on change on server side is not recommended with this option">tValue aft
 			</table>
 	
 		</div>	
-			<div class="rtabframe2">
+		<div class="rtabframe2">
 			<h3>Temperature sensor</h3>
-			<div style="height:390px;overflow-y:scroll">
-			<table id="cfgTSensorTable" class="tabTable" border="3" frame="box" style="text-align:center">
-			
-			</table>
+			<div style="height:30em;overflow-y:scroll">
+				<table id="cfgTSensorTable" class="tabTableCtl" border="3" frame="box" style="text-align:center"></table>
 			</div>
 			<div class="tabiframe">	
 				<table id="cfgTSensorTable1" class="tabTable">
 				<tr>
 					<td>
-					<input type="button" class="buttonclass" id="tempSensorScan" value="Scan" title="Scan temperature sensors" />
+					<input type="button" class="buttonclass" id="tempSensorScan" value="Scan" title="Scan onewire sensors" />
 					</td>
 					<td>
 					<select id="sysCfg-CF">
@@ -988,89 +1283,29 @@ Publish on change on server side is not recommended with this option">tValue aft
 					</td>
 				</tr>
 				</table>
+				<table>
+					<tr>
+						<th>Detected sensors</th>
+						<td id="tcfg-sensors"></td>
+					</tr>
+				</table>
 			</div>
 		</div>
 
-		<dialog id="pushOverParameterDialog" class="dialogClass">
-			<h3>PushOver</h3>
-			<table id="cfgPushOverParam" class="tabTable">
-			<tr>
-				<button id="test-pushOver" class="buttonclass1">test</button>
-			</tr>
-			<tr>
-				<button id="close-pushOverParameterDialog" class="buttonclass1">close</button>
-			</tr>
-			<tr>
-				<th>API Token</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverAPIToken" name="cfgPushOverAPIToken"/>
-				</td>
-			</tr>
-			<tr>
-				<th>User Token</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverUserToken" name="cfgPushOverUserToken"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Title</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgPushOverTitle" name="cfgPushOverTitle"/>
-				</td>
-			</tr>
-			
-			</table>
-		</dialog>
+		<div class="rtabframe3">
+			<h3>Voltage sensor</h3>
+			<div style="height:22.3em;overflow-y:scroll">
+				<table id="cfgVSensorTable" class="tabTableCtl" border="3" frame="box" style="text-align:center"></table>
+				<table>	
+					<tr>
+						<th>Detected sensors</th>
+						<td id="vcfg-sensors"></td>
+					</tr>
+				</table>
+			</div>
+		</div>
 
-		<dialog id="emailParameterDialog" class="dialogClass">
-			<h3>Email</h3>
-			<table id="cfgEmailParam" class="tabTable">
-			<tr>
-				<button id="test-email" class="buttonclass1">test</button>
-			</tr>
-			<tr>
-				<button id="close-emailParameterDialog" class="buttonclass1">close</button>
-			</tr>
-			<tr>
-				<th>User</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgEmailUser" name="cfgEmailUser"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Password</th>
-				<td>
-				<input type="password" class="form-input2" maxlength="30" id="cfgEmailPwd" name="cfgEmailPwd"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Host</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgEmailHost" name="cfgEmailHost"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Port</th>
-				<td>
-				<input type="number" class="form-input2" id="cfgEmailPort" name="cfgEmailPort"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Recipient</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgEmailRecipient" name="cfgEmailRecipient"/>
-				</td>
-			</tr>
-			<tr>
-				<th>Title</th>
-				<td>
-				<input type="text" class="form-input2" maxlength="30" id="cfgEmailTitle" name="cfgEmailTitle"/>
-				</td>
-			</tr>
-			</table>
-		</dialog>
-		
-		<div class="rtabframe" id ="messengerTabFrame" style="height:400px">
+		<div class="rtabframe" id ="messengerTabFrame" style="height:26em">
 			<h3>Messenger</h3>
 			<table id="cfgValvesTable1" class="tabTable">
 				<tr>
@@ -1093,7 +1328,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			</table>
 		</div>
 
-		<div class="rtabframe" id ="fileTabFrame" style="height:290px">
+		<div class="rtabframe" id ="fileTabFrame" style="height:20em">
 		<h3>Files</h3>
 		<table id="filesConfig" class="tabTable">
 			<tr>
@@ -1119,7 +1354,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		</table>
 		</div>
 		
-		<div class="rtabframe" style="height:290px">
+		<div class="rtabframe" style="height:20em">
 		<h3>System</h3>
 		<table id="sysConfig" class="tabTable">
 			<tr>
@@ -1152,7 +1387,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 	<div class="container">
 		<div class="rtabframe3">  
 			<h3>Valves</h3>	
-			<table id="cfgValvesControlTable" class="tabTable" border="3" frame="box" style="text-align:center">
+			<table id="cfgValvesControlTable" class="tabTableCtl" border="3" frame="box">
 			</table>
 			<table class="tabTable">
 			<tr>
@@ -1234,33 +1469,42 @@ Publish on change on server side is not recommended with this option">tValue aft
 		</table>
 		</div>
 	</div>
-
+	
 	<div id="pwdModal" class="modal">
 	  <div class="modal-content">
+		<form name="login" id="loginForm" action="" method="get">
 		<span class="close">&times;</span>
 		<p>Please type user and password</p>
 		<table>
 			<th>User name</th>
-				<td colspan='10'>
-				<input type="text" maxlength="64" class="form-input1" id="dialogUserInput" name="dialogUserInput" />
+				<td colspan='3'>
+				<input type="text" maxlength="64" class="form-input1" id="dialogUserInput" name="dialogUserInput" title="Please enter user name"/>
 				</td>
 			</tr>
 			<tr>
 				<th>User password</th>
-				<td colspan='10'>
-				<input type="password" maxlength="64" class="form-input1" id="dialogPwdInput" name="dialogPwdInput"/>
+				<td colspan='3'>
+				<input type="password" maxlength="64" class="form-input1" id="dialogPwdInput" name="dialogPwdInput" title="Please enter password"/>
+				</td>
+			</tr>
+			
+			<tr>
+				<td>
+					<input type="button" class="buttonclass" id="loginDialogOk" value="ok"/>
+				</td><td>
+					<input type="button" class="buttonclass" id="loginDialogCancel" value="cancel"/>
 				</td>
 			</tr>
 			<tr>
-			<td></td><td>
-	          <input type="button" class="buttonclass" id="dialogOk" value="ok" title="Please enter user name" />
-			</td><td>
-			 <input type="button" class="buttonclass" id="dialogCancel" value="cancel" title="Please enter password" />
-			</td>
+				<th>Remember me</th>
+				<td>
+					<input type="checkbox" id="login-rememberMe" name="login-rememberMe" title="Remember the login of this device"/>
+				</td>
 			</tr>
+			
 		</table>
+		</form>
 	  </div>
-
 	</div>
 
 
@@ -1747,10 +1991,22 @@ Publish on change on server side is not recommended with this option">tValue aft
 		var motorCharsHasChanged=false;
 		var movCalibHasChanged=false;
 		var emailPwdChanged=false;
+		if (localStorage.rememberMe!==null) 
+			id("login-rememberMe").checked=localStorage.rememberMe==="true";
 		var showAllTabs=window.location.href.startsWith('file');
+		if (localStorage.rememberMe==="true") {
+			if (localStorage.login!==null) showAllTabs=(localStorage.login==="true");
+		} else {
+			if (sessionStorage.login!==null) showAllTabs=(sessionStorage.login==="true");
+		}
 		var getStatusInterval;
 		var dataTempSensorsID=null;
-		const NoOfMaxSensors = 34;
+		const NoOfMaxTSensors = 34;
+		var dataVoltSensorsID=null;
+		const NoOfMaxVSensors = 8;
+		var valveWarnLevel = 0;
+		var tempWarning = false;
+		var sensorWarning = false;
 		var stmInit = 0;
 		const cfgVCKiCol= 12;
 		var getFSIntervalID = null;
@@ -1762,11 +2018,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 		var stmLoaded=false;
 		var activeSetValvesDisplay = "none";
 		var reconnectMQTT=false;
+		var stmTimeOut = false;
 		var windowImageObjects = [null,null,null,null,null,null,null,null,null,null,null,null];
 	    const tabImageSrc = ["","warning_yellow.png","warning_red.png"];
+		const haDialog = id("haDialog");
+		const enableStrictTopicsDialog = id("enableStrictTopicsDialog");
 
-		// Get the modal
-		var modal = id("pwdModal");
+		// Get the login modal
+		var loginModal = id("pwdModal");
 		// Get the <span> element that closes the modal
 		var span = document.getElementsByClassName("close")[0];
 				
@@ -1798,6 +2057,12 @@ Publish on change on server side is not recommended with this option">tValue aft
 					tabLinks[i].style.display = "none";
 				}
 			}
+			if (showAllTabs) {
+				activeSetValvesDisplay = "block";
+			} else {
+				activeSetValvesDisplay = "none";
+			}
+			id('activeSetValves').style.display=activeSetValvesDisplay;
 		}
 		
 		function openPage(pageName,elmnt,color) {
@@ -1845,6 +2110,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id("cfgValvesTableFieldSet2").disabled=doDisable;
 			id("valvesStartCalib").disabled=doDisable;
 			id("valvesAssembly").disabled=doDisable;
+			id("protcfg-discoverHA").disabled=doDisable;
+			id("saveConfig").disabled=doDisable;
+			id("factoryRestore").disabled=doDisable;
+			id("resetConfig").disabled=doDisable;
 		}
 
 		window.onhashchange = function() { 
@@ -1876,13 +2145,18 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		async function OnStart() {
 			stmLoaded=false;
+			setTimeout(function() {
+					checkStmTimeOut();	
+			},120000);
 			disable_enable_ValvesCfg(true);
 			fillTZList();
 			await getSystemConfig();
 			makeTempsTable(0);
+			makeVoltsTable(0);
 			makeCfgValvesTable();
 			makeValvesControlTable();
 			makeCfgTempTable();
+			makeCfgVoltTable();
 			await getValvesStatus();
 			await getSystemInfo();
 			await getSystemDynInfo();
@@ -1891,6 +2165,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			await getProtConfig();
 			await getMsgConfig();
 			await getTempsConfig();
+			await getVoltsConfig();
 			await getValvesConfig();
 			await getValvesControlConfig();
 			
@@ -1909,7 +2184,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 		async function loadStmData() {
 			await getMotorConfig();
 			await getTempSensorsID();
+			await getVoltSensorsID();
 			await getTempsStatus();
+			await getVoltsStatus();
 			await getSystemInfo();
 			await getValvesConfig();
 		}
@@ -1924,10 +2201,20 @@ Publish on change on server side is not recommended with this option">tValue aft
 				case 1 : alert ("User name wrong"); break;
 				case 2 : alert ("Password wrong"); break;
 				case 3 : {	
+							let rememberMe = id("login-rememberMe").checked;
+							localStorage.rememberMe=rememberMe===true;
+							if (localStorage.rememberMe==="true") {
+								localStorage.login=true;
+								sessionStorage.login=null;
+							} else {
+								sessionStorage.login=true;
+								localStorage.login=null;
+							}
 							showAllTabs= true;
 							showAllTabsNow();
 							activeSetValvesDisplay = "block";
 							id('activeSetValves').style.display="block";
+							id("loginForm").submit();
 							break;
 						 }
 			}
@@ -2019,8 +2306,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('max' , '100');
 				el.setAttribute('style','height:15px');
 				el.setAttribute('readonly','true');
-				
 				thiscell.appendChild(el);
+
 				thiscell = valvesTable.rows[row].cells[6];
 				el = document.createElement('input');
 				el.setAttribute('type', 'button');
@@ -2032,6 +2319,29 @@ Publish on change on server side is not recommended with this option">tValue aft
 				thiscell.appendChild(el);
 				valvesTable.rows[row].cells[0].innerHTML = row;
 				thiscell.classList.add('hide');
+				if (valveTempsExists===true) {
+					thiscell = valvesTable.rows[row].cells[11];
+					let p = document.createElement('p');
+					p.setAttribute('id', 'tNode1-' + row);
+					p.setAttribute('style','font-size:8px;margin-top:0px;');
+					thiscell.appendChild(p);
+
+					p = document.createElement('p');
+					p.setAttribute('id', 'tp1-' + row);
+					p.setAttribute('style','margin-top:0px;');
+					thiscell.appendChild(p);
+
+					thiscell = valvesTable.rows[row].cells[12];
+					p = document.createElement('p');
+					p.setAttribute('id', 'tNode2-' + row);
+					p.setAttribute('style','font-size:8px;margin-top:0px;');
+					thiscell.appendChild(p);
+
+					p = document.createElement('p');
+					p.setAttribute('id', 'tp2-' + row);
+					p.setAttribute('style','margin-top:0px;');
+					thiscell.appendChild(p);
+				}
 			}
 			let thiscell = valvesTable.rows[0].cells[6];
 			thiscell.classList.add('hide');
@@ -2149,13 +2459,13 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		function makeCfgTempTable() {
 			const cfgTempTable = id('cfgTSensorTable');	  
-			for (let row=0; row<NoOfMaxSensors+1; row++) { 
+			for (let row=0; row<NoOfMaxTSensors+1; row++) { 
 				const thisRow = cfgTempTable.insertRow(0);
 				for (let i = 0; i < 5; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
-			for (let row=1;row<NoOfMaxSensors+1;row++) {
+			for (let row=1;row<NoOfMaxTSensors+1;row++) {
 				cfgTempTable.rows[row].cells[0].innerHTML = row;
 				let thiscell = cfgTempTable.rows[row].cells[1];
 				let el = document.createElement('input');
@@ -2173,12 +2483,13 @@ Publish on change on server side is not recommended with this option">tValue aft
 				thiscell.appendChild(el);
 				thiscell = cfgTempTable.rows[row].cells[3];
 				el = document.createElement('input');
-				el.setAttribute('type', 'text');
+				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgTOffset' + row);
 				el.setAttribute('id', 'cfgTOffset' + row);
 				el.setAttribute('size', '5');
 				el.setAttribute('maxlength' , '5');
-				el.setAttribute('style','width:40px;');
+				el.setAttribute('step' , '0.1');
+				el.setAttribute('style','width:45px;');
 				thiscell.appendChild(el);
 				thiscell = cfgTempTable.rows[row].cells[4];
 				el = document.createElement('input');
@@ -2186,7 +2497,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('name', 'cfgTID' + row);
 				el.setAttribute('id', 'cfgTID' + row);
 				el.setAttribute('style','width:150px;');
-				el.setAttribute('onchange', 'fillSensorIDSelect()');
+				el.setAttribute('onchange', 'fillTSensorIDSelect()');
 				thiscell.appendChild(el);
 				el = document.createElement('input');
 				el.setAttribute('type', 'button');
@@ -2194,13 +2505,13 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('id', 'cfgTBtn' + row);
 				el.setAttribute('style','width:20px;');
 				el.setAttribute('value','x');
-				el.setAttribute('onclick', 'deleteID(this.id)');
+				el.setAttribute('onclick', 'deleteTID(this.id)');
 				thiscell.appendChild(el);
 				el = document.createElement('select');
 				el.setAttribute('name', 'cfgTSel' + row);
 				el.setAttribute('id', 'cfgTSel' + row);
 				el.setAttribute('style','width:20px;');
-				el.setAttribute('onchange', 'copyIDFromSelect(this.id)');
+				el.setAttribute('onchange', 'copyTIDFromSelect(this.id)');
 				thiscell.appendChild(el);
 			}
 			
@@ -2210,12 +2521,99 @@ Publish on change on server side is not recommended with this option">tValue aft
 			cfgTempTable.rows[0].cells[3].textContent = 'Offset';
 			cfgTempTable.rows[0].cells[4].textContent = 'ID';
 		}
+
+		function makeCfgVoltTable() {
+			const cfgVoltTable = id('cfgVSensorTable');	  
+			for (let row=0; row<NoOfMaxVSensors+1; row++) { 
+				const thisRow = cfgVoltTable.insertRow(0);
+				for (let i = 0; i < 7; i++) {
+					cell = thisRow.insertCell();
+				}
+			}
+
+			for (let row=1;row<NoOfMaxVSensors+1;row++) {
+				cfgVoltTable.rows[row].cells[0].innerHTML = row;
+				let thiscell = cfgVoltTable.rows[row].cells[1];
+				let el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgVoltName' + row);
+				el.setAttribute('id', 'cfgVoltName' + row);
+				el.setAttribute('style','width:80px;');
+				el.setAttribute('maxlength' , '10');
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[2];
+				el = document.createElement('input');
+				el.setAttribute('type', 'checkbox');
+				el.setAttribute('name', 'cfgVoltActive' + row);
+				el.setAttribute('id', 'cfgVoltActive' + row);
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[3];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVoltOffset' + row);
+				el.setAttribute('id', 'cfgVoltOffset' + row);
+				el.setAttribute('size', '12');
+				el.setAttribute('maxlength' , '8');
+				el.setAttribute('step' , '0.001');
+				el.setAttribute('style','width:60px;');
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[4];
+				el = document.createElement('input');
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVoltFactor' + row);
+				el.setAttribute('id', 'cfgVoltFactor' + row);
+				el.setAttribute('size', '12');
+				el.setAttribute('maxlength' , '8');
+				el.setAttribute('step' , '0.001');
+				el.setAttribute('style','width:60px;');
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[5];
+				el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgVoltUnit' + row);
+				el.setAttribute('id', 'cfgVoltUnit' + row);
+				el.setAttribute('size', '8');
+				el.setAttribute('maxlength' , '8');
+				el.setAttribute('style','width:55px;');
+				thiscell.appendChild(el);
+				thiscell = cfgVoltTable.rows[row].cells[6];
+				el = document.createElement('input');
+				el.setAttribute('type', 'text');
+				el.setAttribute('name', 'cfgVoltID' + row);
+				el.setAttribute('id', 'cfgVoltID' + row);
+				el.setAttribute('style','width:150px;');
+				el.setAttribute('onchange', 'fillVSensorIDSelect()');
+				thiscell.appendChild(el);
+				el = document.createElement('input');
+				el.setAttribute('type', 'button');
+				el.setAttribute('name', 'cfgVoltBtn' + row);
+				el.setAttribute('id', 'cfgVoltBtn' + row);
+				el.setAttribute('style','width:20px;');
+				el.setAttribute('value','x');
+				el.setAttribute('onclick', 'deleteVID(this.id)');
+				thiscell.appendChild(el);
+				el = document.createElement('select');
+				el.setAttribute('name', 'cfgVoltSel' + row);
+				el.setAttribute('id', 'cfgVoltSel' + row);
+				el.setAttribute('style','width:20px;');
+				el.setAttribute('onchange', 'copyVIDFromSelect(this.id)');
+				thiscell.appendChild(el);
+			}
+			
+			cfgVoltTable.rows[0].cells[0].textContent = 'No';
+			cfgVoltTable.rows[0].cells[1].textContent = 'Name';
+			cfgVoltTable.rows[0].cells[2].textContent = 'Active';
+			cfgVoltTable.rows[0].cells[3].textContent = 'Offset';
+			cfgVoltTable.rows[0].cells[4].textContent = 'Factor';
+			cfgVoltTable.rows[0].cells[5].textContent = 'Unit';
+			cfgVoltTable.rows[0].cells[6].textContent = 'ID';
+		}
 		
 		function makeValvesControlTable () {
-			const valvesControlTable = id('cfgValvesControlTable');	  
+			const valvesControlTable = id('cfgValvesControlTable');	 
 			for (let row=0; row<13; row++) { 
 				const thisRow = valvesControlTable.insertRow(0);
-				for (let i = 0; i < 15; i++) {
+				for (let i = 0; i < 16; i++) {
 					cell = thisRow.insertCell();
 				}
 			}
@@ -2224,6 +2622,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				
 				thiscell = valvesControlTable.rows[row].cells[2];
 				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'checkbox');
 				el.setAttribute('name', 'cfgVCActive' + row);
 				el.setAttribute('id', 'cfgVCActive' + row);
@@ -2231,6 +2630,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 
 				thiscell = valvesControlTable.rows[row].cells[3];
 				el = document.createElement('select');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('name', 'cfgVCAllow' + row);
 				el.setAttribute('id', 'cfgVCAllow' + row);
 				el.setAttribute('style','width:90px;');
@@ -2245,6 +2645,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				
 				thiscell = valvesControlTable.rows[row].cells[4];
 				el = document.createElement('select');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('name', 'cfgVCLink-' + row);
 				el.setAttribute('id', 'cfgVCLink-' + row);
 				el.setAttribute('style','width:60px;');
@@ -2264,6 +2665,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				
 				thiscell = valvesControlTable.rows[row].cells[5];
 				el = document.createElement('select');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('name', 'cfgVCValue' + row);
 				el.setAttribute('id', 'cfgVCValue' + row);
 				el.setAttribute('style','width:60px;');
@@ -2280,6 +2682,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				
 				thiscell = valvesControlTable.rows[row].cells[6];
 				el = document.createElement('select');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('name', 'cfgVCTarget' + row);
 				el.setAttribute('id', 'cfgVCTarget' + row);
 				el.setAttribute('style','width:60px;');
@@ -2289,9 +2692,20 @@ Publish on change on server side is not recommended with this option">tValue aft
 				option = new Option('json', 1);
 				el.options[1] = option;
 				thiscell.appendChild(el);
+
+				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgInittTarget' + row);
+				el.setAttribute('id', 'cfgInittTarget' + row);
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('min','0');
+				el.setAttribute('title','Initial target temperature value after boot');
+				thiscell.appendChild(el);
 				
 				thiscell = valvesControlTable.rows[row].cells[7];
 				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCXp' + row);
 				el.setAttribute('id', 'cfgVCXp' + row);
@@ -2302,6 +2716,19 @@ Publish on change on server side is not recommended with this option">tValue aft
 				
 				thiscell = valvesControlTable.rows[row].cells[8];
 				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
+				el.setAttribute('type', 'number');
+				el.setAttribute('name', 'cfgVCDB' + row);
+				el.setAttribute('id', 'cfgVCDB' + row);
+				el.setAttribute('min','0');
+				el.setAttribute('step','0.1');
+				el.setAttribute('style','width:50px;');
+				el.setAttribute('title','Enter deadband');
+				thiscell.appendChild(el);
+
+				thiscell = valvesControlTable.rows[row].cells[9];
+				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCOffs' + row);
 				el.setAttribute('id', 'cfgVCOffs' + row);
@@ -2309,8 +2736,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Enter offset');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[9];
+				thiscell = valvesControlTable.rows[row].cells[10];
 				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCTi' + row);
 				el.setAttribute('id', 'cfgVCTi' + row);
@@ -2319,8 +2747,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Enter integral time in seconds');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[10];
+				thiscell = valvesControlTable.rows[row].cells[11];
 				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCTs' + row);
 				el.setAttribute('id', 'cfgVCTs' + row);
@@ -2329,8 +2758,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Enter sampling time in seconds');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[11];
+				thiscell = valvesControlTable.rows[row].cells[12];
 				el = document.createElement('select');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('name', 'cfgVCScheme-' + row);
 				el.setAttribute('id', 'cfgVCScheme-' + row);
 				el.setAttribute('style','width:90px;');
@@ -2342,8 +2772,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Enter scheme for control calculation');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[12];
+				thiscell = valvesControlTable.rows[row].cells[13];
 				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
 				el.setAttribute('step', 'any');
 				el.setAttribute('name', 'cfgVCKi' + row);
@@ -2353,8 +2784,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Value ki for constant integral control calculation');
 				thiscell.appendChild(el);
 				
-				thiscell = valvesControlTable.rows[row].cells[13];
+				thiscell = valvesControlTable.rows[row].cells[14];
 				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCSZ' + row);
 				el.setAttribute('id', 'cfgVCSZ' + row);
@@ -2365,6 +2797,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				thiscell.appendChild(el);
 				
 				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'number');
 				el.setAttribute('name', 'cfgVCEZ' + row);
 				el.setAttribute('id', 'cfgVCEZ' + row);
@@ -2374,12 +2807,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 				el.setAttribute('title','Active zone (opened) of the valve (1-100%)');
 				thiscell.appendChild(el);
 
-				thiscell = valvesControlTable.rows[row].cells[14];
+				thiscell = valvesControlTable.rows[row].cells[15];
 				el = document.createElement('input');
+				el.className = "alignTabCellCenter";
 				el.setAttribute('type', 'checkbox');
 				el.setAttribute('name', 'cfgVCWindow' + row);
 				el.setAttribute('id', 'cfgVCWindow' + row);
 				el.setAttribute('onchange','setCfgVCWindow(this);');
+				el.setAttribute('title','Activate window handling');
 				thiscell.appendChild(el);
 			}
 			let col=0;
@@ -2396,6 +2831,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 			valvesControlTable.rows[0].cells[col++].title = 'Select target source for this valve';
 			valvesControlTable.rows[0].cells[col].textContent = 'Xp';
 			valvesControlTable.rows[0].cells[col++].title = 'Enter band (xp). Kp=100/xp';
+			valvesControlTable.rows[0].cells[col].textContent = 'Deadband';
+			valvesControlTable.rows[0].cells[col++].title = 'Enter deadband';
 			valvesControlTable.rows[0].cells[col].textContent = 'Offset(%)';
 			valvesControlTable.rows[0].cells[col++].title = 'Enter offset';
 			valvesControlTable.rows[0].cells[col].textContent = 'Ti(s)';
@@ -2414,18 +2851,32 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		function showBrokerIP() {
 			let x = id("protcfg-Broker");
+			let xha=id("protcfg-BrokerDHA");
 			let div1=id("div-protcfg-Broker3");
 			let select = id("protcfg-dataProt").selectedIndex;
-			if (select === 0) {
-				x.style.display = "none";
-				div1.classList.remove("tabpframe");
-			} else {
-				x.style.display = "block";
-				div1.classList.add("tabpframe");
+			switch (select) {
+				case 0: {
+					x.style.display = "none";
+					div1.classList.remove("tabpframe");
+					xha.style.display = "none";
+					break;
+				}
+				case 1: {
+					x.style.display = "block";
+					div1.classList.add("tabpframe");
+					xha.style.display = "none";
+					break;
+				}
+				case 2: {
+					x.style.display = "block";
+					div1.classList.add("tabpframe");
+					xha.style.display = "block";
+					break;
+				}
 			}
 			id("protcfg-Broker1").style.display=x.style.display;
-			id("protcfg-Broker2").style.display=x.style.display;
-			id("protcfg-Broker21").style.display=x.style.display;
+			id("protcfg-BrokerDPublish").style.display=x.style.display;
+			id("protcfg-BrokerDFailed").style.display=x.style.display;
 			id("protcfg-Broker3").style.display=x.style.display;
 			
 
@@ -2500,7 +2951,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			show_hide_column('valvesTable',10, enabled);
 		}
 
-		function generateOnClick() {
+		async function generateOnClick() {
 			id("netcfg-EthWifi").onclick = function(){
 				showWifi();
 			}
@@ -2569,6 +3020,14 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id("login-button").onclick = function(){
 				doLogin();
 			};
+
+			id("logout-button").onclick = function(){
+				localStorage.login=null; 
+				sessionStorage.login=null;
+				showAllTabs=false;
+				showAllTabsNow();
+				setLoginButton();
+			};
 			
 			id("fileDelete").onclick = function(){
 				fileDelete();
@@ -2622,15 +3081,15 @@ Publish on change on server side is not recommended with this option">tValue aft
 
 			// When the user clicks on <span> (x), close the modal
 			span.onclick = function() {
-			  modal.style.display = "none";
+				loginModal.style.display = "none";
 			}
 			
-			id("dialogOk").onclick = function () {
+			id("loginDialogOk").onclick = function () {
 				checkLogin();
-				modal.style.display = "none";
+				loginModal.style.display = "none";
 			};
-			id("dialogCancel").onclick = function () {
-				modal.style.display = "none";
+			id("loginDialogCancel").onclick = function () {
+				loginModal.style.display = "none";
 			};
 			
 			id("saveVCtrlConfig").onclick = async function(){
@@ -2669,6 +3128,27 @@ Publish on change on server side is not recommended with this option">tValue aft
 			id("protcfg-timeOutTSActive").addEventListener("change", () => {
 				if (id("protcfg-timeOutTSActive").checked) {
 					alert ("Caution : If this option is activated it is absolutely mandatory to ensure that the tValue is received within the time frame. Publish on change on server side is not recommended with this option");
+				}
+			});
+
+			id("protcfg-discoverHA").addEventListener("click", () => {
+    			haDialog.showModal();
+			});
+			
+			id("ha-Ok").addEventListener('click', () => haDialog.close("confirmed"));
+			id("ha-Cancel").addEventListener('click', () => haDialog.close("cancel"));   
+			haDialog.addEventListener("close", async () => {
+				if (haDialog.returnValue==="confirmed") {
+					await postCmd('{"action":"discoveryHA","actionHA":'+id("HA_Action").selectedIndex+'}');
+				}
+			});
+
+			id("enableScrictTopics-Yes").addEventListener('click', () => id("protcfg-pubSeparate").checked=true);
+			id("enableScrictTopics-Confirm").addEventListener('click', () => enableStrictTopicsDialog.close("confirm"));
+			id("enableScrictTopics-Cancel").addEventListener('click', () => enableStrictTopicsDialog.close("cancel"));   
+			enableStrictTopicsDialog.addEventListener("close", async () => {
+				if (enableStrictTopicsDialog.returnValue==="confirm") {
+					await saveConfigNow();
 				}
 			});
 		}
@@ -2717,21 +3197,21 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 		}
 		
-		function valvesStartCalib(){
+		async function valvesStartCalib(){
 			if (confirm('Are you sure you want to start calibration of valve ?')) {
-				postCmd('{"action":"vCalib","valve":'+id("valvesAsmCalib-select").value+'}');
+				await postCmd('{"action":"vCalib","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
-		function valvesAssembly(){
+		async function valvesAssembly(){
 			if (confirm('Are you sure you want to set valve to assembly position ?')) {
-				postCmd('{"action":"vAssembly","valve":'+id("valvesAsmCalib-select").value+'}');
+				await postCmd('{"action":"vAssembly","valve":'+id("valvesAsmCalib-select").value+'}');
 			}
 		}
 		
-		function valvesDetect(){
+		async function valvesDetect(){
 			if (confirm('Are you sure you want to detect valves ?')) {
-				postCmd('{"action":"valvesDetect"}');
+				await postCmd('{"action":"valvesDetect"}');
 			}
 		}
 				
@@ -2747,7 +3227,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		async function formatFS() {
 			if (confirm('Are you sure you want to format the file system ?')) {
-					postCmd('{"action":"clearFS"}');
+					await postCmd('{"action":"clearFS"}');
 					reloadDoc("http:/#home",15000,true);
 			}
 		}
@@ -2769,9 +3249,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 		}
 		
-		function scanTSensors(){
+		async function scanTSensors(){
 			if (confirm('Are you sure you want to scan temperature sensors ?')) {
-				postCmd('{"action":"scanTempSensors"}');
+				await postCmd('{"action":"scanTempSensors"}');
 				setTimeout(function() {
 					getTempSensorsID();	
 				},5000);
@@ -2779,7 +3259,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 		}
 
 		function doLogin() {
-			modal.style.display = "block";
+			setLoginButton();
+			loginModal.style.display = "block";
 		}
 		
 		function reloadDoc (path,timeOut,clear=false,reLoad=true) {
@@ -2797,45 +3278,51 @@ Publish on change on server side is not recommended with this option">tValue aft
 				},timeOut);
 		}
 		
-		function factoryRestore(){
+		async function factoryRestore(){
 			if (confirm('Are you sure you want to restore configuration to factory settings ?')) {
-				postCmd('{"action":"restoreCfg"}');
+				await postCmd('{"action":"restoreCfg"}');
 				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
-		function resetConfig(){
+		async function resetConfig(){
 			if (confirm('Are you sure you want to reset configuration to factory settings except network ?')) {
-				postCmd('{"action":"resetCfg"}');
+				await postCmd('{"action":"resetCfg"}');
 				reloadDoc("http:/#home",4000,true);
 			}
 		}
 		
-		function reboot(){
+		async function reboot(){
 			if (confirm('Are you sure you want to reboot ?')) {
-				postCmd('{"action":"reboot"}');
+				await postCmd('{"action":"reboot"}');
 				reloadDoc("http:/#home",4000,true);
 			}
 		}
-			
+
 		async function saveConfig(){
-			if (confirm('Are you sure you want to save configuration ?')) {
+			if (!(id("protcfg-pubSeparate").checked) && (id("protcfg-dataProt").selectedIndex===2)) {
+				enableStrictTopicsDialog.showModal();
+			} else {
+				if (confirm('Are you sure you want to save configuration ?')) {	
+					await saveConfigNow();
+				}
+			}
+		}
+
+		async function saveConfigNow() {
 				if (!(await postNetCfg())) return;
 				if (!(await postProtCfg())) return;
 				await postMessengerCfg();
 				await postSystemConfig();
 				await postValvesCfg();
 				await postValvesControlCfg();
-				//await postTempsCfg(1,11);
-				//await postTempsCfg(12,23);
-				//await postTempsCfg(24,34);
-				postTempsCfg(1,34);
+				await postTempsCfg(1,34);
+				await postVoltsCfg();
 				await postCmd('{"action":"saveCfg"}');
 				WifiPwdHasChanged=false;
 				UserPwdHasChanged=false;
 				brokerPwdHasChanged=false;
 				reloadDoc("http:/#home",4000,true);
-			}
 		}
 		
 		async function postSystemConfig() {
@@ -2884,7 +3371,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 		async function postProtCfg() {
 			let protCfg = {};
 			protCfg.prot = id("protcfg-dataProt").selectedIndex;
-			if (id("protcfg-dataProt").selectedIndex==1) {
+			if (id("protcfg-dataProt").selectedIndex!=0) {
 				protCfg.ip = id("protcfg-Ip").value;
 				protCfg.port = id("protcfg-Port").value;
 				protCfg.interval = id("protcfg-Interval").value;
@@ -2904,6 +3391,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				protCfg.mqttTODSActive= id("protcfg-timeOutDSActive").checked ? 1 : 0;
 				protCfg.mqttTO= id("protcfg-timeOutValue").value;
 				protCfg.mqttToPos= id("protcfg-timeOutPosition").value;
+				protCfg.numFormat= id("protcfg-numFormat").selectedIndex;
 			}
 			if (brokerPwdHasChanged===true) {
 				protCfg.pwd = id("protcfg-Pwd").value;
@@ -3028,7 +3516,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 				valveValues.link = id('cfgVCLink-'+row).value;
 				valveValues.vSource = id('cfgVCValue'+row).value;
 				valveValues.tSource = id('cfgVCTarget'+row).value;
+				valveValues.inittTarget = id('cfgInittTarget'+row).value;
 				valveValues.xp = id('cfgVCXp'+row).value;
+				valveValues.deadband = id('cfgVCDB'+row).value;
 				valveValues.offset = id('cfgVCOffs'+row).value;
 				valveValues.ti = id('cfgVCTi'+row).value;
 				valveValues.ts = id('cfgVCTs'+row).value;
@@ -3069,6 +3559,30 @@ Publish on change on server side is not recommended with this option">tValue aft
 			await postJson("tempsconfig",JSON.stringify(tempsCfg));
 		}
 		
+		async function postVoltsCfg() {
+			const cfgVoltsTable = id('cfgVSensorTable');
+			let voltsItemsCfg = [];
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {
+				let voltValues={};
+				voltValues.name = id('cfgVoltName'+row).value; 
+				voltValues.id = id('cfgVoltID'+row).value; 
+				voltValues.active = id('cfgVoltActive'+row).checked  ? 1 : 0;
+				let f = id('cfgVoltOffset'+row).value.replace(/ /g, "");
+				f  = f.replace(/,/g, '.');
+				f = parseFloat(f).toFixed(3);
+				voltValues.offset = parseFloat(f);
+				f = id('cfgVoltFactor'+row).value.replace(/ /g, "");
+				f  = f.replace(/,/g, '.');
+				f = parseFloat(f).toFixed(3)
+				voltValues.factor = parseFloat(f);
+				voltValues.unit = id('cfgVoltUnit'+row).value; 
+				voltsItemsCfg.push(voltValues);
+			}
+			let voltsCfg={};
+			voltsCfg.volts=voltsItemsCfg;
+			await postJson("voltsconfig",JSON.stringify(voltsCfg));
+		}
+
 		async function 	postSysLogCfg() {	
 			let sysLogCfg = {};
 			sysLogCfg.syslogLevel=id("netcfg-syslog-select").selectedIndex;
@@ -3098,32 +3612,30 @@ Publish on change on server side is not recommended with this option">tValue aft
 		function setCfgVCScheme(thisLink){
 			const linkId= thisLink.id;
 			let linkNo = linkId.slice(linkId.indexOf("-")+1);
-			let display = 'block';
-			if (thisLink.value==0) {
-				display = 'none';
-			}  
-			id('cfgVCKi'+linkNo).style.display=display;
+			let display = thisLink.value==0 ? 'hidden' : 'visible'; 
+			id('cfgVCKi'+linkNo).style.visibility=display;
 		}		
-		
+
 		function setCfgVCLink(thisLink){
 			const linkId= thisLink.id;
 			let linkNo = linkId.slice(linkId.indexOf("-")+1);
-			let display = 'block';
-			if (thisLink.value>0) {
-				display = 'none';
-			}  
-			id('cfgVCValue'+linkNo).style.display=display;
-			id('cfgVCTarget'+linkNo).style.display=display;
-			id('cfgVCXp'+linkNo).style.display=display;
-			id('cfgVCOffs'+linkNo).style.display=display;
-			id('cfgVCTi'+linkNo).style.display=display;
-			id('cfgVCTs'+linkNo).style.display=display;
-			id('cfgVCScheme-'+linkNo).style.display=display;
-			id('cfgVCKi'+linkNo).style.display=display;
-			id('cfgVCSZ'+linkNo).style.display=display;
-			id('cfgVCEZ'+linkNo).style.display=display;
-			id('cfgVCWindow'+linkNo).style.display=display;
-			if (display=='block') setCfgVCScheme(id('cfgVCScheme-'+linkNo));
+			let display = thisLink.value>0 ? 'hidden' : 'visible'; 
+			
+			id('cfgVCValue'+linkNo).style.visibility=display;
+			id('cfgVCTarget'+linkNo).style.visibility=display;
+			id('cfgInittTarget'+linkNo).style.visibility=display;
+			id('cfgVCXp'+linkNo).style.visibility=display;
+			id('cfgVCDB'+linkNo).style.visibility=display;
+			id('cfgVCOffs'+linkNo).style.visibility=display;
+			id('cfgVCTi'+linkNo).style.visibility=display;
+			id('cfgVCTs'+linkNo).style.visibility=display;
+			id('cfgVCScheme-'+linkNo).style.visibility=display;
+			id('cfgVCKi'+linkNo).style.visibility=display;
+			id('cfgVCSZ'+linkNo).style.visibility=display;
+			id('cfgVCEZ'+linkNo).style.visibility=display;
+			id('cfgVCWindow'+linkNo).style.visibility=display;
+
+			if (display=='visible') setCfgVCScheme(id('cfgVCScheme-'+linkNo));
 		}
 				
 		function setCfgVCWindow(thisLink){
@@ -3144,8 +3656,39 @@ Publish on change on server side is not recommended with this option">tValue aft
 			await getSystemDynInfo();
 			await getValvesStatus();
 			await getTempsStatus();
+			await getVoltsStatus();
 		}
 		
+		function showHomeWarningIcon(homeWarning,minStmVersion)
+		{
+			if (homeWarning == 0) {
+				id("homeImg").style.visibility="hidden";
+				id("homeImg").src=tabImageSrc[0];
+				id("sysSTM32-Info").style.visibility="hidden";
+			} else {
+				id("homeImg").style.visibility="visible";
+				id("homeImg").src=tabImageSrc[2];
+				id("sysSTM32-Info").style.visibility="visible";
+				id("sysSTM32-Info").style.background="red";
+				id("sysSTM32-InfoText").textContent="Stm32 version incompatible, min. version should be "+minStmVersion+". Please update STM32";
+			}
+		}
+
+		function showStmFailedWarningIcon(stmFailed)
+		{
+			if (stmFailed == 0) {
+				id("homeImg").style.visibility="hidden";
+				id("homeImg").src=tabImageSrc[0];
+				id("sysSTM32-Error").style.visibility="hidden";
+			} else {
+				id("homeImg").style.visibility="visible";
+				id("homeImg").src=tabImageSrc[2];
+				id("sysSTM32-Error").style.visibility="visible";
+				id("sysSTM32-Error").style.background="red";
+				id("sysSTM32-ErrorText").textContent="Stm32 not responding ! Try reset.";
+			}
+		}
+
 		function checkValvesConnected (valvesJson){
 			const cfgValvesTable = id('cfgValvesTable');
 			const cfgValvesControlTable = id('cfgValvesControlTable');
@@ -3169,8 +3712,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 			const States = ["---","idle","opens","closes","failed","unknown","no valve","full open","connected","blocked"];
 			let thisImg=null;
-			let statusWarning = 0;
+			valveWarnLevel = 0;
+			
 			valvesJson.forEach(function(item, index){
+				valvesTable.rows[index+1].cells[0].title="";
 				valvesTable.rows[index+1].cells[0].textContent = item.idx;	
 				switch (item.controlActive) {
 					case 0:
@@ -3178,7 +3723,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 					case 4: 
 					case 6:
 					{
-						valvesTable.rows[index+1].cells[0].style.backgroundColor="gray";
+						valvesTable.rows[index+1].cells[0].style.backgroundColor=""; //gray";
 						valvesTable.rows[index+1].cells[0].style.color="white";
 						break;
 					}
@@ -3187,6 +3732,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 					{
 						valvesTable.rows[index+1].cells[0].style.backgroundColor="yellow";
 						valvesTable.rows[index+1].cells[0].style.color="blue";
+						valvesTable.rows[index+1].cells[0].title="Control disabled";
 						break;
 					}
 					case 3: {
@@ -3197,6 +3743,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 					case 7: {
 						valvesTable.rows[index+1].cells[0].style.backgroundColor="red";
 						valvesTable.rows[index+1].cells[0].style.color="white";
+						valvesTable.rows[index+1].cells[0].title="Valve failed";
 						break;
 					}
 				}
@@ -3212,25 +3759,29 @@ Publish on change on server side is not recommended with this option">tValue aft
 				if (item.link>0) thisImg.src="blank.png";
 				valvesTable.rows[index+1].cells[3].textContent = item.meanCur;
 				if ('calibration' in item) {
-					windowImageObjects[index].childNodes[0].nodeValue="calibration";
+					windowImageObjects[index].childNodes[0].nodeValue="calibration "+States[item.state];
 				} else 
 					windowImageObjects[index].childNodes[0].nodeValue = States[item.state];
 				
+				valvesTable.rows[index+1].cells[4].title="";
+
 				switch (item.state) {
 					case 4 :
 					case 9 : {
 						valvesTable.rows[index+1].cells[4].style.backgroundColor="red";
 						valvesTable.rows[index+1].cells[4].style.color="white";
-						statusWarning=2;
+						valvesTable.rows[index+1].cells[4].title="Error : all calibration repetitions failed";
+						valveWarnLevel=2;
 						break;
 					}
 					default : {
 						if (item.cr>0) {
 							valvesTable.rows[index+1].cells[4].style.backgroundColor="yellow";
 							valvesTable.rows[index+1].cells[4].style.color="blue";
-							statusWarning=1;
+							valvesTable.rows[index+1].cells[4].title="Warning : "+item.cr.toString()+" calibration failed";
+							valveWarnLevel=1;
 						} else {
-							valvesTable.rows[index+1].cells[4].style.backgroundColor="gray";
+							valvesTable.rows[index+1].cells[4].style.backgroundColor=""; //gray";
 							valvesTable.rows[index+1].cells[4].style.color="white";
 						}
 						break;
@@ -3244,15 +3795,17 @@ Publish on change on server side is not recommended with this option">tValue aft
 				let colIdx=11;
 				if (valveTempsExists===true) {
 					if (item.temp1) {
-						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp1;
-						if (item.temp1==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						id("tp1-"+(index+1)).textContent=item.temp1;
+						id("tNode1-"+(index+1)).textContent=item.tIdxName1;
+						if (item.temp1==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor=""; //gray";
 						colIdx++;
 					}
 					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
 
 					if (item.temp2) {
-						valvesTable.rows[index+1].cells[colIdx].textContent = item.temp2;
-						if (item.temp2==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						id("tp2-"+(index+1)).textContent=item.temp2;
+						id("tNode2-"+(index+1)).textContent=item.tIdxName2;
+						if (item.temp2==="failed") valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; else valvesTable.rows[index+1].cells[colIdx].style.backgroundColor=""; //gray";
 						colIdx++;
 					}
 					else valvesTable.rows[index+1].cells[colIdx++].textContent = "";
@@ -3264,7 +3817,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 					if ('tValue' in item) {
 						valvesTable.rows[index+1].cells[colIdx].textContent = item.tValue;
 						if ('tValueFailed' in item) valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="red"; 
-						else  valvesTable.rows[index+1].cells[colIdx].style.backgroundColor="gray";
+						else  valvesTable.rows[index+1].cells[colIdx].style.backgroundColor=""; //gray";
 					}
 					else valvesTable.rows[index+1].cells[colIdx].textContent = "";
 				}
@@ -3273,8 +3826,16 @@ Publish on change on server side is not recommended with this option">tValue aft
 					id('setValveP'+(index+1)).value=item.targetPos;
 				}
 			});
+			showWarningIcon();
+		}
+
+		function showWarningIcon()
+		{
+			let statusWarning = 0;
+			if (valveWarnLevel>0) statusWarning=valveWarnLevel;
+			if (tempWarning || sensorWarning) statusWarning = 2;
 			if (statusWarning == 0) id("statusImg").style.visibility="hidden"; else id("statusImg").style.visibility="visible";
-			id("statusImg").src=tabImageSrc[statusWarning];
+			id("statusImg").src=tabImageSrc[statusWarning];	
 		}
 		
 		function fillCfgValvesTable (cfgValvesJson) {
@@ -3333,7 +3894,9 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id('cfgVCLink-'+row).value = cfgValvesControlJson.valves[row-1].link;
 				id('cfgVCValue'+row).value = cfgValvesControlJson.valves[row-1].vSource;
 				id('cfgVCTarget'+row).value = cfgValvesControlJson.valves[row-1].tSource;
+				id('cfgInittTarget'+row).value = cfgValvesControlJson.valves[row-1].inittTarget;
 				id('cfgVCXp'+row).value = cfgValvesControlJson.valves[row-1].xp;
+				id('cfgVCDB'+row).value = cfgValvesControlJson.valves[row-1].deadband;
 				id('cfgVCOffs'+row).value = cfgValvesControlJson.valves[row-1].offset;
 				id('cfgVCTi'+row).value = cfgValvesControlJson.valves[row-1].ti;
 				id('cfgVCTs'+row).value = cfgValvesControlJson.valves[row-1].ts;
@@ -3348,7 +3911,8 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		function fillTempsTable (tempsJson) {
 			const tempsTable = id('tempsTable');
-			const tempStatusTabFrame = id("tempStatusTabFrame")
+			const tempStatusTabFrame = id("tempStatusTabFrame");
+			tempWarning =false;
 			if (tempsJson.length==0) {
 				tempStatusTabFrame.style.display="none";
 			} else {
@@ -3358,15 +3922,21 @@ Publish on change on server side is not recommended with this option">tValue aft
 				}
 				tempsJson.forEach(function (item, index) {            
 					tempsTable.rows[index+1].cells[1].textContent = item.name;
-					if (item.temp==="failed") tempsTable.rows[index+1].cells[2].style.backgroundColor="red"; else tempsTable.rows[index+1].cells[2].style.backgroundColor="gray";
+					if (item.temp==="failed") {
+						tempsTable.rows[index+1].cells[2].style.backgroundColor="red"; 
+						tempWarning =true;
+					} else {
+						tempsTable.rows[index+1].cells[2].style.backgroundColor=""; //gray";
+					}
 					tempsTable.rows[index+1].cells[2].textContent = item.temp;
 				});
 			}
+			showWarningIcon();
 		}
 		
 		function fillCfgTempsTable (cfgTempsJson) {
 			const cfgTempsTable = id('cfgTSensorTable');
-			for (let row = 1; row<NoOfMaxSensors+1; row++) {				
+			for (let row = 1; row<NoOfMaxTSensors+1; row++) {				
 				id('cfgTName'+row).value = cfgTempsJson[row-1].name;
 				id('cfgTActive'+row).checked = cfgTempsJson[row-1].active;
 				id('cfgTOffset'+row).value = cfgTempsJson[row-1].offset;
@@ -3374,7 +3944,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 			}
 		}
 		
-		function findTID(TId){
+		function findTSIDinData(TId){
 			let retVal=false;
 			if (dataTempSensorsID) {
 				dataTempSensorsID.forEach(function(item) {
@@ -3389,10 +3959,10 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		function checkCfgTempsID () {
 			var result=true;
-			for (let row = 1; row<NoOfMaxSensors+1; row++) {
+			for (let row = 1; row<NoOfMaxTSensors+1; row++) {
 				let TID = id('cfgTID'+row);
 				if (TID.value!="") {
-					if (!findTID(TID.value)) {
+					if (!findTSIDinData(TID.value)) {
 						TID.style.backgroundColor = "red";
 						result=false;
 					 } else TID.style.backgroundColor = "";
@@ -3401,32 +3971,32 @@ Publish on change on server side is not recommended with this option">tValue aft
 			return result;
 		}
 		
-		function findID (SensorID) {
-			for (let row = 1; row<NoOfMaxSensors+1; row++) {	
+		function findTSIDinTable (SensorID) {
+			for (let row = 1; row<NoOfMaxTSensors+1; row++) {	
 				let selectElement=id('cfgTID'+row);
 				if (selectElement.value===SensorID) return (true);
 			}
 			return (false);
 		}
 		
-		function deleteID (thisButton) {
+		function deleteTID (thisButton) {
 			const button=id(thisButton);
 			let thisRow=button.id.slice(7);
 			const thisInput=id('cfgTID' + thisRow);
 			thisInput.value="";	
-			fillSensorIDSelect();
+			fillTSensorIDSelect();
 		}
 		
-		function copyIDFromSelect (thisSelect) {
+		function copyTIDFromSelect (thisSelect) {
 			const select=id(thisSelect);
 			let thisRow=select.id.slice(7);
 			const thisInput=id('cfgTID' + thisRow);
 			thisInput.value=select.value;
-			fillSensorIDSelect();
+			fillTSensorIDSelect();
 		}
 		
-		function fillSensorIDSelect() {
-			for (let row = 1; row<NoOfMaxSensors+1; row++) {	
+		function fillTSensorIDSelect() {
+			for (let row = 1; row<NoOfMaxTSensors+1; row++) {	
 				let selectElement=id('cfgTSel'+row);
 				while (selectElement.options.length > 0) {                
 					selectElement.remove(0);
@@ -3435,7 +4005,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				selectElement.options[0] = option;
 				let i=1;
 				dataTempSensorsID.forEach(function (item, index) { 
-					if (!findID(item.id)) {
+					if (!findTSIDinTable(item.id)) {
 						option = new Option(item.id, item.id);
 						selectElement.options[i] = option;
 						i++;
@@ -3445,6 +4015,139 @@ Publish on change on server side is not recommended with this option">tValue aft
 			checkCfgTempsID();
 		}
 		
+		function fillVoltsTable (voltsJson) {
+			const voltsTable = id('voltsTable');
+			const voltStatusTabFrame = id("voltStatusTabFrame");
+			sensorWarning = false;
+			if (voltsJson.length==0) {
+				voltStatusTabFrame.style.display="none";
+			} else {
+				voltStatusTabFrame.style.display="block";
+				if (voltsJson.length!=voltsTable.rows.length-1) {
+					makeVoltsTable(voltsJson.length);
+				}
+				voltsJson.forEach(function (item, index) {            
+					voltsTable.rows[index+1].cells[1].textContent = item.name;
+					voltsTable.rows[index+1].cells[2].textContent = item.value;
+					voltsTable.rows[index+1].cells[3].textContent = item.unit;
+					if (item.value==="failed")  {
+						voltsTable.rows[index+1].style.backgroundColor = "red";	
+						sensorWarning = true;
+					} else {
+						voltsTable.rows[index+1].style.backgroundColor = "";
+					}
+				});
+			}
+			showWarningIcon();
+		}
+
+		function makeVoltsTable(NoOfSensors) {
+			const voltsTable = id('voltsTable');			
+			while (voltsTable.rows.length>0) { 
+					voltsTable.deleteRow(0);
+			}
+			for (row=0; row<NoOfSensors+1; row++) { 
+				const thisRow = voltsTable.insertRow(0);
+				
+				for (let i = 0; i < 4; i++) {
+					cell = thisRow.insertCell();
+					cell.innerHTML = '--';
+					if (i==2) cell.setAttribute('style','width:60px;');	
+				}
+			}
+			for (let row=1;row<NoOfSensors+1;row++) voltsTable.rows[row].cells[0].innerHTML = row;
+			voltsTable.rows[0].cells[0].textContent = 'No';
+			voltsTable.rows[0].cells[1].textContent = 'Name';
+			voltsTable.rows[0].cells[2].textContent = 'Value';
+			voltsTable.rows[0].cells[3].textContent = 'Unit';
+			if (NoOfSensors>12) voltsTable.style.height="430px";
+		}
+
+		function fillCfgVoltsTable (cfgVoltsJson) {
+			const cfgVoltsTable = id('cfgVSensorTable');
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {				
+				id('cfgVoltName'+row).value = cfgVoltsJson[row-1].name;
+				id('cfgVoltActive'+row).checked = cfgVoltsJson[row-1].active;
+				id('cfgVoltOffset'+row).value = cfgVoltsJson[row-1].offset;
+				id('cfgVoltFactor'+row).value = cfgVoltsJson[row-1].factor;
+				id('cfgVoltUnit'+row).value = cfgVoltsJson[row-1].unit;
+				id('cfgVoltID'+row).value = cfgVoltsJson[row-1].id;
+			}
+		}
+
+		
+		function checkCfgVoltsID () {
+			var result=true;
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {
+				let VID = id('cfgVoltID'+row);
+				if (VID.value!="") {
+					if (!findVSIDinData(VID.value)) {
+						VID.style.backgroundColor = "red";
+						result=false;
+					 } else VID.style.backgroundColor = "";
+				}
+			}
+			return result;
+		}
+
+		function findVSIDinData(VId){
+			let retVal=false;
+			if (dataVoltSensorsID) {
+				dataVoltSensorsID.forEach(function(item) {
+					if (VId===item.id) {
+						retVal=true;
+						return;
+					}
+				});
+			}
+			return (retVal);
+		}
+
+			
+		function findVSIDinTable (SensorID) {
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {	
+				let selectElement=id('cfgVoltID'+row);
+				if (selectElement.value===SensorID) return (true);
+			}
+			return (false);
+		}
+		
+		function deleteVID (thisButton) {
+			const button=id(thisButton);
+			let thisRow=button.id.slice(10);
+			const thisInput=id('cfgVoltID' + thisRow);
+			thisInput.value="";	
+			fillVSensorIDSelect();
+		}
+		
+		function copyVIDFromSelect (thisSelect) {
+			const select=id(thisSelect);
+			let thisRow=select.id.slice(10);
+			const thisInput=id('cfgVoltID' + thisRow);
+			thisInput.value=select.value;
+			fillVSensorIDSelect();
+		}
+		
+		function fillVSensorIDSelect() {
+			for (let row = 1; row<NoOfMaxVSensors+1; row++) {	
+				let selectElement=id('cfgVoltSel'+row);
+				while (selectElement.options.length > 0) {                
+					selectElement.remove(0);
+				}   
+				let option = new Option(' -Select-', 0);
+				selectElement.options[0] = option;
+				let i=1;
+				dataVoltSensorsID.forEach(function (item, index) { 
+					if (!findVSIDinTable(item.id)) {
+						option = new Option(item.id, item.id);
+						selectElement.options[i] = option;
+						i++;
+					}
+				});
+			}
+			checkCfgVoltsID();
+		}
+
 		async function getSystemInfo() {
 			const dataSystemInfo=await getJson("sysinfo");
 			if (dataSystemInfo) {
@@ -3457,6 +4160,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id("wt32-ChipStack").textContent = dataSystemInfo["wt32ChipStack"]+" bytes";
 				id("sysSTM32-Version").textContent = dataSystemInfo["stm32version"];
 				id("sysSTM32-ChipId").textContent = dataSystemInfo["stm32ChipId"];
+				showHomeWarningIcon(dataSystemInfo["stm32VFalse"],dataSystemInfo["stm32MinReq"]);
 			}
 		}
 		
@@ -3486,28 +4190,44 @@ Publish on change on server side is not recommended with this option">tValue aft
 
 				id ("miscStatusHC").textContent=id("VCtrlConfigHeatControl").options[dataSystemDynInfo["heatControl"]].value;
 				id("miscStatusLC").textContent=dataSystemDynInfo["lastCalib"];
-				let newStmInit=dataSystemDynInfo["stmInit"];
-				disable_enable_ValvesCfg((newStmInit!=2) || (!stmLoaded));
-				if (newStmInit!=stmInit) {
-					stmInit=newStmInit;
-					if (stmInit===2) {
-						setTimeout(async function() {
-							await loadStmData();
-							stmLoaded=true;
-						},5000);
+				if (stmTimeOut===false) {
+					let newStmInit=dataSystemDynInfo["stmInit"];
+					disable_enable_ValvesCfg((newStmInit!=2) || (!stmLoaded));
+					if (newStmInit!=stmInit) {
+						stmInit=newStmInit;
+						if (stmInit===2) {
+							setTimeout(async function() {
+								await loadStmData();
+								setTimeout(async function() {
+									stmLoaded=true;
+								},3000);
+							},5000);
+						}
+					}
+					if (!stmLoaded) {
+						id("spinner-Config").classList.add("spinner");
+					} else {
+						id("spinner-Config").classList.remove("spinner");
+					}
+					if (!checkCfgTempsID()) {
+						await getTempSensorsID();
 					}
 				}
-				if (!stmLoaded) {
-					id("spinner-Config").classList.add("spinner");
-				} else {
-					id("spinner-Config").classList.remove("spinner");
-				}
-				if (!checkCfgTempsID()) {
-					await getTempSensorsID();
+				if (dataSystemDynInfo["stmFailed"]===1) {
+					showStmFailedWarningIcon(dataSystemDynInfo["stmFailed"]);
 				}
 			}
 		}
 		
+		function checkStmTimeOut() {
+			if (!stmLoaded) {
+				alert ("Stm not responding");
+				stmLoaded=true;
+				stmTimeOut = true;
+				disable_enable_ValvesCfg(false);
+				id("spinner-Config").classList.remove("spinner");
+			}	
+		}
 		
 		async function getSystemConfig() {
 			const dataSysCfg=await getJson("sysconfig");
@@ -3556,7 +4276,28 @@ Publish on change on server side is not recommended with this option">tValue aft
 					id('activeSetValves').style.display="block";
 					showAllTabs=true;
 					showAllTabsNow();
-				} else id("login-button").style.display = "block";
+				} else {
+					id("login-div").style.display = "block";
+					setLoginButton();
+				}
+			}
+		}
+
+		function setLoginButton() {
+			if (localStorage.rememberMe==="true") {
+				showLoginButton (localStorage.getItem("login"));
+			} else {
+				showLoginButton (sessionStorage.getItem("login"));
+			}
+		}
+
+		function showLoginButton (state) {
+			if (state==="true") {
+				id("login-button").style.display = "none";
+				id("logout-button").style.display = "block";
+			} else {
+				id("login-button").style.display = "block";
+				id("logout-button").style.display = "none";	
 			}
 		}
 		
@@ -3583,7 +4324,7 @@ Publish on change on server side is not recommended with this option">tValue aft
 				id("protcfg-timeOutDSActive").checked=dataProtConfig["mqttTODSActive"];
 				id("protcfg-timeOutValue").value=dataProtConfig["mqttTO"];
 				id("protcfg-timeOutPosition").value=dataProtConfig["mqttToPos"];
-
+				id("protcfg-numFormat").selectedIndex=dataProtConfig["numFormat"];
 				showBrokerIP();
 				showMinPublish();
 			}
@@ -3647,15 +4388,36 @@ Publish on change on server side is not recommended with this option">tValue aft
 		
 		async function getTempSensorsID() {
 			const thisDataTempSensorsID=await getJson("tempsensorsid");
+			id('tcfg-sensors').textContent = thisDataTempSensorsID.length.toString();
 			if (thisDataTempSensorsID) {
 				dataTempSensorsID = thisDataTempSensorsID;
-				fillSensorIDSelect(); 
+				fillTSensorIDSelect(); 
 			}
 		}
 		
 		async function getTempsStatus() {
 			const dataTempsStatus=await getJson("temps");
 			if (dataTempsStatus) fillTempsTable(dataTempsStatus);
+		}
+
+		async function getVoltsConfig() {
+			const dataVoltsConfig=await getJson("voltsconfig");
+			if (dataVoltsConfig) fillCfgVoltsTable(dataVoltsConfig);
+			checkCfgVoltsID();
+		}
+
+		async function getVoltSensorsID() {
+			const thisDataVoltSensorsID=await getJson("voltsensorsid");
+			id('vcfg-sensors').textContent = thisDataVoltSensorsID.length.toString();
+			if (thisDataVoltSensorsID) {
+				dataVoltSensorsID = thisDataVoltSensorsID;
+				fillVSensorIDSelect(); 
+			}
+		}
+
+		async function getVoltsStatus() {
+			const dataVoltsStatus=await getJson("volts");
+			if (dataVoltsStatus) fillVoltsTable(dataVoltsStatus);
 		}
 			
 		async function updateWT32() {

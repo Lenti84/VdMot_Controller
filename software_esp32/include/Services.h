@@ -67,7 +67,7 @@ public:
   void checkDS18();
   void valvesSetLearn();
   void checkGetNtp();
-
+  void GetLastTargetValues();
   bool serviceValvesStarted;
 private:
   TEMPSTATES tempStates[TEMP_SENSORS_COUNT];

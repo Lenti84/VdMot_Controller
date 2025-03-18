@@ -39,6 +39,7 @@
 
 
 #include "helper.h"
+#include "VdmSystem.h"
 
 String ip2String (IPAddress ipv4addr)
 {
@@ -76,4 +77,90 @@ bool isFloat(const std::string& str)
     char* ptr;
     strtof(str.c_str(), &ptr);
     return (*ptr) == '\0';
+}
+
+
+void replace (char* buffer,uint16_t size,char find, char with)
+{
+  for(int i = 0; i<size;i++)
+	{
+		if(buffer[i] == find)
+		{
+			buffer[i] = with;
+		}
+	}
+}
+
+uint32_t versionExplode (String sv)
+{
+  uint8_t arr[3]={0};
+  int8_t pos;
+  String s;
+  uint32_t result=0;
+  
+  for (uint8_t i=0;i<3;i++) {
+    pos=sv.indexOf('.');
+    if (pos>=0) memcpy(&s,sv.c_str(),pos); else s=sv;
+    arr[2-i]=s.toInt();
+    sv.remove(0,pos+1);
+   // UART_DBG.println("versionExplode pos "+String(pos)+":"+s+","+sv);
+  }
+ 
+  for (uint8_t i=0;i<3;i++) {
+    result|=(uint32_t)arr[i]<<(8*i);
+  }
+  // UART_DBG.println("versionExplode "+sv+": result="+String(result,16));
+  return result;
+}
+
+ char* findCharInString (char c,char* pString,size_t size)
+ {
+  char* p = pString;
+  size_t len = 0;
+  while ((*p!=c) && (*p!=0) && (len<size)) {
+    p++;
+    len++;
+  }
+  if ((*p==0) || (len==size)) p=NULL;
+  return (p);
+ }
+
+ char* copyStringUntilChar (char* pString,char* buffer,char c,size_t pSize,size_t bSize)
+ {
+  char* p = pString;
+  char* b = buffer;
+  size_t len = 0;
+  while ((*p!=c) && (*p!=0) && (len<pSize) && (len<bSize)) {
+    *b++=*p++;
+    len++;
+  }
+  if (len>=bSize) return NULL;
+  return p;
+ }
+
+size_t strlcat(char *dst, const char *src, size_t dsize)
+{
+	const char *odst = dst;
+	const char *osrc = src;
+	size_t n = dsize;
+	size_t dlen;
+
+	/* Find the end of dst and adjust bytes left but don't go past end. */
+	while (n-- != 0 && *dst != '\0')
+		dst++;
+	dlen = dst - odst;
+	n = dsize - dlen;
+
+	if (n-- == 0)
+		return(dlen + strlen(src));
+	while (*src != '\0') {
+		if (n != 0) {
+			*dst++ = *src;
+			n--;
+		}
+		src++;
+	}
+	*dst = '\0';
+
+	return(dlen + (src - osrc));	/* count does not include NUL */
 }

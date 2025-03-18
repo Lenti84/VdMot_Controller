@@ -49,11 +49,13 @@
 #include "esp_err.h"
 #include "Messenger.h"
 #include "VdmTask.h"
+#include "RtcRam.h"
 
 uint32_t * StackPtrAtStart;
 uint32_t * StackPtrEnd;
 UBaseType_t watermarkStart;
 uint32_t stackSize;
+
 
 
 void setup(void) {
@@ -76,8 +78,11 @@ void setup(void) {
     UART_DBG.printf("Free Stack near start is:  %d \r\n",  (uint32_t)StackPtrAtStart - (uint32_t)StackPtrEnd);
     UART_DBG.printf("Free Prefs entries  %d \r\n",  VdmConfig.prefs.freeEntries());
     UART_DBG.printf("Config space  %d bytes (max 20k) \r\n",  sizeof(VdmConfig.configFlash));
+    UART_DBG.println("readingCnt read at Start "+String(readingCnt));
   #endif
+  readingCnt = 123;
 
+  UART_DBG.println("readingCnt read "+String(readingCnt));
   Stm32.STM32ota_setup();
   uint8_t rr=esp_reset_reason();
   if (rr!=1) {  // not at power on reset

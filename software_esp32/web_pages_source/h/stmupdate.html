@@ -346,10 +346,10 @@ var getFSIntervalID = null;
 				selectBox.remove(0);
 			}     
 			filesList.forEach((item) => {
-				//if (item.fName.startsWith("stm/")) {
+				if (item.fName.indexOf(".bin")>=0) {
 					let newOption = new Option(item.fName,item.fName);
 					selectBox.add(newOption,undefined);
-				//}
+				}
 			});
 		}
 	,

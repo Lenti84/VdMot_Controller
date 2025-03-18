@@ -56,6 +56,9 @@
 #define windowActionOpen          2
 #define windowActionClose         3
 
+#define piControlDynamicKi        0
+#define piControlStaticKi         1
+
 
 enum CHECKACTION {nothing,gotoMin,gotoPark,control};
 enum WINDOWSTATE {windowIdle,windowOpenLock,windowCloseRestore};
@@ -80,7 +83,10 @@ public:
   void exec() override {
     controlValve();
 	}
+  double getpProp(float e);
   float piCtrl(float target,float value);
+  void savePiControl();
+  void reloadPiControl();
   void updateControllerGains(float observedError);
   uint8_t calcValve();
   void controlValve();
@@ -109,15 +115,15 @@ public:
   uint8_t  windowOpenTarget;
   bool controlActive;
   bool failed;
-  float esum;
+  double esum;
+  double old_esum;
+  bool start;
 private:
   void doControlValve(); 
   CHECKACTION checkAction(uint8_t idx);
   
-  float iProp;
+  double iProp;
   time_t ts;
-  bool start;
-  
   uint8_t lastControlPosition;
 };
 

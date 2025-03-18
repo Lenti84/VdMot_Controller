@@ -40,10 +40,14 @@
 #include "globals.h"
 #include "VdmSystem.h"
 #include "VdmNet.h"
+#include "VdmTask.h"
 #include "Messenger.h"
 #include "esp_spi_flash.h" 
 #include "helper.h"
 #include <esp_task_wdt.h>
+#include <FS.h>
+#include <CRC32.h>
+#include <LittleFS.h>
 
 #include <FS.h>
 #ifdef USE_LittleFS
@@ -70,6 +74,7 @@ String ResetReason[] =  {
 
 CVdmSystem VdmSystem;
 
+
 CVdmSystem::CVdmSystem()
 {
   spiffsStarted=false;
@@ -78,6 +83,10 @@ CVdmSystem::CVdmSystem()
   systemMessage="";
   systemState = systemStateOK;
   getFSInProgress = false;
+  stmNRevision=0;
+  stmMinRequired=0;
+  stmVersionFalse=false;
+ 
 }
 
 void CVdmSystem::getSystemInfo()
@@ -122,16 +131,17 @@ String CVdmSystem::localTime() {
 bool CVdmSystem::getLocalTime(struct tm * info)
 {
     uint32_t start = millis();
-    uint32_t ms=10;
+    uint32_t ms=1000;
     time_t now;
-   // while((millis()-start) <= ms) {
+    while((millis()-start) <= ms) {
         time(&now);
         localtime_r(&now, info);
         if(info->tm_year > (2016 - 1900)){
             return true;
         }
+        VdmTask.yieldTask(10);
    //     delay(10);
-   // }
+    }
     return false;
 }
 
@@ -150,7 +160,8 @@ String CVdmSystem::getUpTime() {
 
 
 void CVdmSystem::sendResetReason() {
-  String ResetMsg = systemMsgReset+':'+getLastResetReason();
+  String ResetMsg = String(systemMsgReset)+String(":")+getLastResetReason();
+  // UART_DBG.println("SystemMsgReason: "+ResetMsg);
   VdmSystem.setSystemState(systemStateInfo,ResetMsg);
   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_DETAIL) {
       syslog.log(LOG_DEBUG, ResetMsg);
@@ -181,8 +192,7 @@ void CVdmSystem::getFSDirectory()
       Filenames[numfiles].ftype    = (file.isDirectory() ? "Dir" : "File");
       Filenames[numfiles].fsize    = ConvBinUnits(file.size(), 1);
       #ifdef EnvDevelop
-        UART_DBG.print("get file : ");
-        UART_DBG.println(file.name());
+        UART_DBG.println("get file : "+String(file.name())+", type "+Filenames[numfiles].ftype+", size "+Filenames[numfiles].fsize);
       #endif
       file = root.openNextFile();
       numfiles++;
@@ -218,10 +228,9 @@ void CVdmSystem::fileDelete (String fileName)
 void CVdmSystem::setSystemState(uint8_t thisSystemState,String thisSystemMsg)
 {
   systemState=thisSystemState; 
-  systemMessage= String(thisSystemMsg);
+  systemMessage= thisSystemMsg;
   
-  UART_DBG.print("SystemMsg: ");
-  UART_DBG.println(systemMessage);
+  UART_DBG.println("SystemMsg: "+systemMessage);
 }
 
 String CVdmSystem::getLastResetReason()
@@ -229,4 +238,35 @@ String CVdmSystem::getLastResetReason()
   uint8_t rr=esp_reset_reason();
   if (rr>10) rr=0;
   return (ResetReason[rr]);
+}
+
+void CVdmSystem::openFile (String fName,char mode)
+{
+  if (!spiffsStarted) SPIFFS.begin(true);
+  spiffsStarted=true;
+  if ((mode==FS_WRITE_MODE) && SPIFFS.exists(fName)) SPIFFS.remove(fName); 
+  fsfile = SPIFFS.open(fName,(const char*) &mode,(mode==FS_WRITE_MODE));
+  fsfile.seek(0);
+}
+
+void CVdmSystem::writelnToFile (String line)
+{
+  String thisLine=line;
+  if (!thisLine.endsWith("\n")) thisLine=thisLine+"\n";
+  fsfile.write((const uint8_t*) thisLine.c_str(), thisLine.length());
+}
+
+String CVdmSystem::readlnFromFile ()
+{
+  return fsfile.readStringUntil('\n');
+}
+
+int CVdmSystem::fileAvailable ()
+{
+  return fsfile.available();
+}
+
+void CVdmSystem::closeFile ()
+{
+  fsfile.close();
 }

@@ -47,11 +47,13 @@
 
 #define pinSetFactoryCfg  2
 
-enum protType  {protTypeNone=0,protTypeMqtt=1};
+enum protType  {protTypeNone=0,protTypeMqtt=1,protTypeMqttHA=2};
 
 #define allowHeatingCooling 0
 #define allowHeating 1
 #define allowCooling 2
+
+enum numFormat {numFormatIntl=0,numFormatGer=1};
 
 typedef struct {
   uint8_t eth_wifi;
@@ -97,6 +99,7 @@ typedef struct  {
 typedef struct  {
   uint8_t timeoutTSActive : 1 ;
   uint8_t timeoutDSActive : 1 ;
+  uint8_t numFormat : 1 ;
 } VDM_PROTOCOL_MQTT_CONFIG_FLAGS;
 
 
@@ -108,7 +111,7 @@ typedef struct  {
 
 
 typedef struct {
-  uint8_t  dataProtocol; // 0 = no protocol , 1 = mqtt
+  uint8_t  dataProtocol; // 0 = no protocol , 1 = mqtt, 2 = mqtt HA
   uint32_t brokerIp;
   uint16_t brokerPort;
   uint32_t brokerInterval;
@@ -157,18 +160,28 @@ typedef struct {
 } VDM_VALVE_CONTROL_CONFIG;
 
 typedef struct {
-  float alpha;
-} VDM_VALVE_CONTROL_CONFIG_ALPHA;
+  float tTarget;
+} VDM_VALVE_CONTROL_INIT;
 
 typedef struct {
-  uint8_t usePrediction : 1; 
-} VDM_VALVES_CONTROL_CONFIG_FLAGS;
+  float alpha;
+  float beta;
+  float deadband;
+} VDM_VALVE_CONTROL1_CONFIG;
 
 typedef struct {
   VDM_VALVE_CONTROL_CONFIG valveControlConfig[ACTUATOR_COUNT];
   uint8_t heatControl;
   uint8_t parkingPosition;
 } VDM_VALVES_CONTROL_CONFIG;
+
+typedef struct {
+  VDM_VALVE_CONTROL1_CONFIG valveControl1Config[ACTUATOR_COUNT];
+} VDM_VALVES_CONTROL1_CONFIG;
+
+typedef struct {
+  VDM_VALVE_CONTROL_INIT valveControlInit[ACTUATOR_COUNT];
+} VDM_VALVES_CONTROL_INIT;
 
 
 typedef struct {
@@ -181,6 +194,25 @@ typedef struct {
 typedef struct {
   VDM_TEMP_CONFIG tempConfig[TEMP_SENSORS_COUNT];
 } VDM_TEMPS_CONFIG;
+
+typedef struct {
+  char name[11];
+  bool active;
+  float offset;
+  float factor;
+  char unit[9];
+  char ID[25];
+} VDM_VOLT_CONFIG;
+
+typedef struct {
+  uint8_t avType;
+  uint16_t noOfAv;
+} VDM_VOLT_AV_CONFIG;
+
+typedef struct {
+  VDM_VOLT_CONFIG voltConfig[VOLT_SENSORS_COUNT];
+  VDM_VOLT_AV_CONFIG voltAVConfig[VOLT_SENSORS_COUNT];
+} VDM_VOLTS_CONFIG;
 
 typedef struct  {
   uint8_t pushOver : 1 ;
@@ -232,10 +264,13 @@ typedef struct
   VDM_PROTOCOL_CONFIG protConfig;
   VDM_VALVES_CONFIG valvesConfig;
   VDM_TEMPS_CONFIG tempsConfig;
+  VDM_VOLTS_CONFIG voltsConfig;
   VDM_SYSTEM_CONFIG systemConfig;
   VDM_VALVES_CONTROL_CONFIG valvesControlConfig;
   VDM_SYSTEM_TIME_ZONE_CONFIG timeZoneConfig;
   VDM_MSG_CONFIG messengerConfig;
+  VDM_VALVES_CONTROL_INIT valvesControlInit;
+  VDM_VALVES_CONTROL1_CONFIG valvesControl1Config;
 } CONFIG_FLASH;
 
 typedef struct {
@@ -288,13 +323,16 @@ typedef struct {
 #define nvsValvesControlCfg         "valvesCtrlCfg"
 #define nvsValves                   "valves"
 #define nvsValvesControl            "valvesCtrl"
-#define nvsValvesControlAlpha       "vCtrlAlpha"
+#define nvsValvesControl1           "valvesCtrl1"
 #define nvsValvesControlHeatControl "vCtrlHeat"
 #define nvsValvesControlParkPos     "vCtrlParkPos"
-#define nvsValvesControlFlags       "vCtrlFlags"
+#define nvsValvesControlInit        "vCtrlInit"
 
 #define nvsTempsCfg                 "tempsCfg"
 #define nvsTemps                    "temps"
+
+#define nvsVoltsCfg                 "voltsCfg"
+#define nvsVolts                    "volts"
 
 #define nvsDayOfCalib               "dayOfCalib"
 #define nvsHourOfCalib              "hourOfCalib"
@@ -345,6 +383,7 @@ public:
   void postValvesCfg (JsonObject doc);
   void postValvesControlCfg (JsonObject doc);
   void postTempsCfg (JsonObject doc);
+  void postVoltsCfg (JsonObject doc);
   void postSysCfg (JsonObject doc);
   void postMessengerCfg (JsonObject doc);
   String handleAuth (JsonObject doc);

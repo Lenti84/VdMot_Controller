@@ -32,7 +32,7 @@
 #include "hardware.h"
 #include "terminal.h"
 #include "motor.h"
-#include "temperature.h"
+#include "owDevices.h"
 #include "communication.h"
 #include "eeprom.h"
 
@@ -118,8 +118,7 @@ int16_t Terminal_Serve (void) {
     char valbuffer[10];
 
 	DeviceAddress currAddress;
-	uint8_t numberOfDevices = 0;
-
+	
 	availcnt = COMM_DBG.available(); 
     if(availcnt>0)
     {    
@@ -346,8 +345,7 @@ int16_t Terminal_Serve (void) {
 			COMM_DBG.println("comm: set 1st sensor index");
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXONEWIRECNT) 
 				{
-					numberOfDevices = sensors.getDeviceCount();
-					if (numberOfDevices > 0) 
+					if (noOfDS18Devices > 0) 
 					{
 						// write sensor address code to eeprom layout mirror
 						sensors.getAddress(currAddress, y);
@@ -381,8 +379,7 @@ int16_t Terminal_Serve (void) {
 				COMM_DBG.println("comm: set 2nd sensor index");
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXONEWIRECNT) 
 				{
-					numberOfDevices = sensors.getDeviceCount();
-					if (numberOfDevices > 0) 
+					if (noOfDS18Devices > 0) 
 					{
 						// write sensor address code to eeprom layout mirror
 						sensors.getAddress(currAddress, y);

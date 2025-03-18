@@ -44,6 +44,7 @@
 #include "web.h"
 #include "Services.h"
 #include "stmApp.h"
+#include "PIControl.h"
 
 CVdmConfig VdmConfig;
 
@@ -136,6 +137,8 @@ void CVdmConfig::clearConfig()
     configFlash.valvesControlConfig.valveControlConfig[i].ki=0.01;
     configFlash.valvesControlConfig.valveControlConfig[i].startActiveZone=0;
     configFlash.valvesControlConfig.valveControlConfig[i].endActiveZone=100;
+    configFlash.valvesControlInit.valveControlInit[i].tTarget=20;
+    configFlash.valvesControl1Config.valveControl1Config[i].deadband=0.0;
   }
   configFlash.valvesControlConfig.heatControl=0;
   configFlash.valvesControlConfig.parkingPosition=10;
@@ -147,6 +150,17 @@ void CVdmConfig::clearConfig()
     memset (configFlash.tempsConfig.tempConfig[i].ID,0,sizeof(configFlash.tempsConfig.tempConfig[i].ID));
   }
   configFlash.systemConfig.celsiusFahrenheit=0;
+
+  for (uint8_t i=0; i<VOLT_SENSORS_COUNT; i++) {
+    configFlash.voltsConfig.voltConfig[i].active = false;
+    configFlash.voltsConfig.voltConfig[i].offset = 0;
+    configFlash.voltsConfig.voltConfig[i].factor = 1.0;
+    memset (configFlash.voltsConfig.voltConfig[i].unit,0,sizeof(configFlash.voltsConfig.voltConfig[i].unit));
+    memset (configFlash.voltsConfig.voltConfig[i].name,0,sizeof(configFlash.voltsConfig.voltConfig[i].name));
+    memset (configFlash.voltsConfig.voltConfig[i].ID,0,sizeof(configFlash.voltsConfig.voltConfig[i].ID));
+  }
+  memset (configFlash.voltsConfig.voltAVConfig,0,sizeof(configFlash.voltsConfig.voltAVConfig));
+
   memset (configFlash.systemConfig.stationName,0,sizeof(configFlash.systemConfig.stationName));
   strncpy(configFlash.systemConfig.stationName,DEVICE_HOSTNAME,sizeof(configFlash.systemConfig.stationName));
 
@@ -204,12 +218,7 @@ void CVdmConfig::readConfig()
       prefs.getString(nvsNetUserPwd,(char*) configFlash.netConfig.userPwd,sizeof(configFlash.netConfig.userPwd));
     if (prefs.isKey(nvsNetTimeServer))
       prefs.getString(nvsNetTimeServer,(char*) configFlash.netConfig.timeServer,sizeof(configFlash.netConfig.timeServer));
-    /*
-    if (strlen(configFlash.netConfig.timeServer) == 0) {
-      memset (configFlash.netConfig.pwd,0,sizeof(configFlash.netConfig.timeServer));
-      strncpy(configFlash.netConfig.timeServer,"pool.ntp.org",sizeof(configFlash.netConfig.timeServer));
-    }
-    */
+   
     configFlash.netConfig.syslogLevel=prefs.getUChar(nvsNetSysLogEnable);
     configFlash.netConfig.syslogIp=prefs.getULong(nvsNetSysLogIp);
     configFlash.netConfig.syslogPort=prefs.getUShort(nvsNetSysLogPort);
@@ -252,12 +261,26 @@ void CVdmConfig::readConfig()
       heatValues.heatControl=configFlash.valvesControlConfig.heatControl;
       heatValues.parkPosition=configFlash.valvesControlConfig.parkingPosition;
     }
+    if (prefs.isKey(nvsValvesControl1)) {
+      prefs.getBytes(nvsValvesControl1, (void *) configFlash.valvesControl1Config.valveControl1Config, sizeof(configFlash.valvesControl1Config.valveControl1Config));
+    }
+    if (prefs.isKey(nvsValvesControlInit)) {
+      prefs.getBytes(nvsValvesControlInit, (void *) configFlash.valvesControlInit.valveControlInit, sizeof(configFlash.valvesControlInit.valveControlInit));
+    }
     prefs.end();
   }
  
+
+
   if (prefs.begin(nvsTempsCfg,false)) {
     if (prefs.isKey(nvsTemps))
       prefs.getBytes(nvsTemps,(void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
+    prefs.end();
+  }
+
+   if (prefs.begin(nvsVoltsCfg,false)) {
+    if (prefs.isKey(nvsVolts))
+      prefs.getBytes(nvsVolts,(void *) &configFlash.voltsConfig, sizeof(configFlash.voltsConfig));
     prefs.end();
   }
 
@@ -303,6 +326,11 @@ void CVdmConfig::readConfig()
       miscValues.lastCalib=prefs.getLong(nvsMiscLastCalib,0);
     prefs.end();
   }
+  
+  for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) { 
+    PiControl[picIdx].target=VdmConfig.configFlash.valvesControlInit.valveControlInit[picIdx].tTarget;
+  }
+
 }
 
 void CVdmConfig::writeConfig(bool reboot)
@@ -334,7 +362,7 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.begin(nvsProtCfg,false);
   prefs.clear();
   prefs.putUChar(nvsProtDataProt,configFlash.protConfig.dataProtocol);
-  if (configFlash.protConfig.dataProtocol==protTypeMqtt) {
+  if (configFlash.protConfig.dataProtocol>=protTypeMqtt) {
     prefs.putULong(nvsProtBrokerIp,configFlash.protConfig.brokerIp);
     prefs.putUShort(nvsProtBrokerPort,configFlash.protConfig.brokerPort);
     prefs.putULong(nvsProtBrokerInterval,configFlash.protConfig.brokerInterval);
@@ -362,6 +390,11 @@ void CVdmConfig::writeConfig(bool reboot)
   prefs.begin(nvsTempsCfg,false);
   prefs.clear();
   prefs.putBytes(nvsTemps, (void *) configFlash.tempsConfig.tempConfig, sizeof(configFlash.tempsConfig.tempConfig));
+  prefs.end();
+
+  prefs.begin(nvsVoltsCfg,false);
+  prefs.clear();
+  prefs.putBytes(nvsVolts, (void *) &configFlash.voltsConfig, sizeof(configFlash.voltsConfig));
   prefs.end();
   
   prefs.begin(nvsTZCfg,false);
@@ -405,9 +438,14 @@ void CVdmConfig::writeValvesControlConfig(bool reboot, bool restartTask)
   prefs.begin(nvsValvesControlCfg,false);
   prefs.clear();
   prefs.putBytes(nvsValvesControl, (void *) configFlash.valvesControlConfig.valveControlConfig, sizeof(configFlash.valvesControlConfig.valveControlConfig));
+  prefs.putBytes(nvsValvesControl1, (void *) configFlash.valvesControl1Config.valveControl1Config, sizeof(configFlash.valvesControl1Config.valveControl1Config));
+  prefs.putBytes(nvsValvesControlInit, (void *) configFlash.valvesControlInit.valveControlInit, sizeof(configFlash.valvesControlInit.valveControlInit));
   prefs.putUChar (nvsValvesControlHeatControl,configFlash.valvesControlConfig.heatControl);
   prefs.putUChar (nvsValvesControlParkPos,configFlash.valvesControlConfig.parkingPosition);
   prefs.end();
+  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+    syslog.log(LOG_DEBUG, "pic: write control config, reboot = "+String(reboot)+" , restart = "+String(restartTask)+" , initiated = "+String(VdmTask.piTaskInitiated));
+  }
   if (reboot) {
     Services.restartSystem();
   } else {
@@ -485,6 +523,7 @@ void CVdmConfig::postProtCfg (JsonObject doc)
   if (!doc["mqttTODSActive"].isNull()) configFlash.protConfig.mqttConfig.flags.timeoutDSActive = doc["mqttTODSActive"];
   if (!doc["mqttTO"].isNull()) configFlash.protConfig.mqttConfig.timeOut = doc["mqttTO"];
   if (!doc["mqttToPos"].isNull()) configFlash.protConfig.mqttConfig.toPos = doc["mqttToPos"];
+  if (!doc["numFormat"].isNull()) configFlash.protConfig.mqttConfig.flags.numFormat = doc["numFormat"];
 }
 
 void CVdmConfig::postValvesCfg (JsonObject doc)
@@ -566,6 +605,8 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
         if (!doc["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["scheme"];  
         if (!doc["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["startAZ"];  
         if (!doc["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["endAZ"]; 
+        if (!doc["inittTarget"].isNull()) configFlash.valvesControlInit.valveControlInit[idx].tTarget=doc["inittTarget"];
+        if (!doc["deadband"].isNull()) configFlash.valvesControl1Config.valveControl1Config[idx].deadband=doc["deadband"];  
       }
   } else {
     for (uint8_t i=0; i<size; i++) {
@@ -591,6 +632,8 @@ void CVdmConfig::postValvesControlCfg (JsonObject doc)
           if (!doc["valves"][i]["scheme"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].scheme=doc["valves"][i]["scheme"];  
           if (!doc["valves"][i]["startAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].startActiveZone=doc["valves"][i]["startAZ"];  
           if (!doc["valves"][i]["endAZ"].isNull()) configFlash.valvesControlConfig.valveControlConfig[idx].endActiveZone=doc["valves"][i]["endAZ"];  
+          if (!doc["valves"][i]["inittTarget"].isNull()) configFlash.valvesControlInit.valveControlInit[idx].tTarget=doc["valves"][i]["inittTarget"];  
+          if (!doc["valves"][i]["deadband"].isNull()) configFlash.valvesControl1Config.valveControl1Config[idx].deadband=doc["valves"][i]["deadband"];
         }
       }
     } 
@@ -619,6 +662,20 @@ void CVdmConfig::postTempsCfg (JsonObject doc)
     idx++;
   }
 }
+
+void CVdmConfig::postVoltsCfg (JsonObject doc)
+{
+  size_t size=doc["volts"].size(); 
+  for (uint8_t i=0; i<size; i++) {
+    if (!doc["volts"][i]["name"].isNull()) strncpy(configFlash.voltsConfig.voltConfig[i].name,doc["volts"][i]["name"].as<const char*>(),sizeof(configFlash.voltsConfig.voltConfig[i].name));
+    if (!doc["volts"][i]["id"].isNull()) strncpy(configFlash.voltsConfig.voltConfig[i].ID,doc["volts"][i]["id"].as<const char*>(),sizeof(configFlash.voltsConfig.voltConfig[i].ID));
+    if (!doc["volts"][i]["active"].isNull()) configFlash.voltsConfig.voltConfig[i].active=doc["volts"][i]["active"];
+    if (!doc["volts"][i]["offset"].isNull()) configFlash.voltsConfig.voltConfig[i].offset=(doc["volts"][i]["offset"].as<float>()) ;
+    if (!doc["volts"][i]["factor"].isNull()) configFlash.voltsConfig.voltConfig[i].factor=(doc["volts"][i]["factor"].as<float>()) ;
+    if (!doc["volts"][i]["unit"].isNull()) strncpy(configFlash.voltsConfig.voltConfig[i].unit,doc["volts"][i]["unit"].as<const char*>(),sizeof(configFlash.voltsConfig.voltConfig[i].unit));
+  }
+}
+
 
 void CVdmConfig::postSysCfg (JsonObject doc)
 {

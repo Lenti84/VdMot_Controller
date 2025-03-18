@@ -44,6 +44,8 @@ extern int16_t communication_loop (void);
 #define APP_PRE_SETTARGETPOS        "stgtp"			// doc
 #define APP_PRE_GETONEWIRECNT       "gonec"			// doc
 #define APP_PRE_GETONEWIREDATA      "goned"			// doc
+#define APP_PRE_GETOWVOLTCNT        "gowvc"			// doc
+#define APP_PRE_GETOWVOLTDATA       "gowvd"			// doc
 #define APP_PRE_SET1STSENSORINDEX   "stsnx"			// doc
 #define APP_PRE_SET2NDSENSORINDEX   "stsny"			// doc
 #define APP_PRE_SETALLVLVOPEN       "staop"			// doc

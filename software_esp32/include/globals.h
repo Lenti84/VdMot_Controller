@@ -48,6 +48,7 @@
 
 #define ACTUATOR_COUNT      12
 #define TEMP_SENSORS_COUNT  34
+#define VOLT_SENSORS_COUNT  8
 
 // debug mode
 #define VISMODE_DEFAULT     VISMODE_ATOMIC               

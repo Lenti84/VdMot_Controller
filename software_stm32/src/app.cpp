@@ -32,7 +32,7 @@
 #include "app.h"
 #include "hardware.h"
 #include "motor.h"
-#include "temperature.h"
+#include "owDevices.h"
 #include "eeprom.h"
 
 
@@ -124,7 +124,9 @@ int16_t app_loop (void) {
           {
               #ifdef appDebug
                 COMM_DBG.print("App: target pos changed for valve "); 
-                COMM_DBG.println(lastvalve, 10);
+                COMM_DBG.print(lastvalve, 10);
+                COMM_DBG.print(" target = ");
+                COMM_DBG.println(myvalvemots[lastvalve].target_position, 10);
               #endif
 
               firstchange = 1;
@@ -204,12 +206,14 @@ byte app_10s_loop () {
     for (x=0; x< ACTUATOR_COUNT; x++) {
       // timeout for calibration 
       if (myvalvemots[x].connected) {
-        if (myvalvemots[x].calibTime>0) myvalvemots[x].calibTime--;
-        if (myvalvemots[x].calibTime==0)  {
-          myvalvemots[x].calibration=false;
-          myvalvemots[x].calibState=calibIdle;
+        if (myvalvemots[x].calibState==calibInProgress) {
+          if (myvalvemots[x].calibTime>0) 
+            myvalvemots[x].calibTime--;
+          else  {
+            myvalvemots[x].calibration=false;
+            myvalvemots[x].calibState=calibIdle;
+          }
         }
-
         if((myvalves[x].learn_movements == 0) && (myvalvemots[x].calibState == calibIdle)) {
           myvalvemots[x].calibration=true;
           myvalvemots[x].calibTime=10;
@@ -285,7 +289,7 @@ int16_t app_set_valvelearning(uint16_t valve) {
   }
   else if (valve == 255) {
     // update all valves
-    for(unsigned int xx=0;xx<ACTUATOR_COUNT;xx++){
+    for(uint8_t xx=0;xx<ACTUATOR_COUNT;xx++){
       if (myvalvemots[xx].connected) {
         //myvalvemots[xx].actual_position = 0;      // fake some position deviation
         myvalvemots[xx].status = VLV_STATE_PRESENT; //VLV_STATE_UNKNOWN;
@@ -340,20 +344,21 @@ int16_t app_set_valveopen(int16_t valve) {
 
 // match sensor address from eeprom with found sensors and set index/slot to valve struct
 int16_t app_match_sensors() {
-  for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
-       myvalves[i].sensorindex1 = VALVE_SENSOR_UNKNOWN;
-       myvalves[i].sensorindex2 = VALVE_SENSOR_UNKNOWN;
-  }
-
-
   uint8_t   numberOfDevices = 0;
   DeviceAddress currAddress;
   uint8_t   found1 = 0, found2 = 0;
   uint8_t   valveindexlast = 0;
+
+
+  for (uint8_t i=0;i<ACTUATOR_COUNT;i++) {
+       myvalves[i].sensorindex1 = VALVE_SENSOR_UNKNOWN;
+       myvalves[i].sensorindex2 = VALVE_SENSOR_UNKNOWN;
+  }
+ 
   #ifdef appDebug
     COMM_DBG.println("Read 1-wire sensor addresses from eeprom");
   #endif
-  numberOfDevices = sensors.getDeviceCount();  
+  numberOfDevices = sensors.getDeviceCount();
     
   for (unsigned int owsensorindex=0; owsensorindex<numberOfDevices; owsensorindex++)
   {

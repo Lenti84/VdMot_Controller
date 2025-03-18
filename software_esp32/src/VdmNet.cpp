@@ -167,7 +167,6 @@ void CVdmNet::setupEth()
             UART_DBG.println("Setup Eth cable is connected");
           #endif
           ServerServices.initServer();
-          setupNtp();
           UART_DBG.println(ETH.localIP());
           serverIsStarted=true; 
           ethState=ethConnected;
@@ -251,17 +250,35 @@ void CVdmNet::setupWifi()
 
 bool CVdmNet::checkSntpReachable()
 {
-  return sntp_getreachability(0)==1;
+  u8_t ret = sntp_getreachability(0);
+ // UART_DBG.println("checkSntpReachable "+String(ret)+':'+String(sntp_getservername(0)));
+  return (ret==1);
+}
+
+void CVdmNet::configTzTime(const char* tz, const char* server1, const char* server2, const char* server3)
+{
+    //tcpip_adapter_init();  // Should not hurt anything if already inited
+    esp_err_t err=esp_netif_init();
+    if(sntp_enabled()){
+        sntp_stop();
+    }
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, (char*)server1);
+    if (server2!=NULL) sntp_setservername(1, (char*)server2);
+    if (server3!=NULL) sntp_setservername(2, (char*)server3);
+    sntp_init();
+    int senv=setenv("TZ", tz, 1);
+    tzset();
+    UART_DBG.println("configTzTime "+String(err)+" , "+String(senv));
 }
 
 void CVdmNet::setupNtp() 
 {
   // Init and get the time
-  
   VdmNet.sntpActive=strlen(VdmConfig.configFlash.netConfig.timeServer)>0; 
   if (VdmNet.sntpActive)
   {
-    UART_DBG.println("Get time from server "+String(VdmConfig.configFlash.netConfig.timeServer));
+    UART_DBG.println("Get time from server "+String(VdmConfig.configFlash.netConfig.timeServer)+":"+String(sntp_enabled()));
     configTzTime(VdmConfig.configFlash.timeZoneConfig.tzCode ,VdmConfig.configFlash.netConfig.timeServer);
     VdmSystem.getLocalTime(&startTimeinfo);
   }
@@ -271,6 +288,7 @@ void CVdmNet::startBroker()
 {
   switch (VdmConfig.configFlash.protConfig.dataProtocol) {
     case mqttProtocol:
+    case mqttProtocolHA:
     {
       Mqtt.mqtt_setup(VdmConfig.configFlash.protConfig.brokerIp,VdmConfig.configFlash.protConfig.brokerPort);
       VdmTask.startMqtt(VdmConfig.configFlash.protConfig.brokerInterval);
@@ -298,9 +316,6 @@ void CVdmNet::checkNet()
     #endif
    
     startSysLog();
-    //delay (3000);
-    //VdmTask.startApp();
-    //delay (2000);
     VdmTask.startServices();
    
   } else {

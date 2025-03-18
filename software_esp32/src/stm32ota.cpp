@@ -48,6 +48,7 @@ Credits to https://github.com/csnol/1CHIP-Programmers
 #include "globals.h"
 #include "stm32ota.h"
 #include "stm32.h"
+#include "VdmNet.h"
 
 CStmOta StmOta;
 
@@ -125,7 +126,7 @@ uint8_t CStmOta::stm32ErasenStart()
 
   stm32SendCommand(STM32ERASEN);
 
-  for (x=0;x<100;x++) {
+  for (x=0;x<200;x++) {
     if (UART_STM32.available()>0) {    
       if (UART_STM32.read() == STM32ACK)
       {
@@ -243,22 +244,35 @@ char CStmOta::stm32Version()
   
   stm32SendCommand(STM32GET);
 
-  for (x=0;x<100;x++) {
+  for (x=0;x<200;x++) {
     if (UART_STM32.available()>0) {  
       vsbuf[0] = UART_STM32.read();
       if (vsbuf[0] != STM32ACK) {
         Serial.println("Error GetVersion: wrong answer");
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+          syslog.log(LOG_DEBUG, "STM32 : Error GetVersion: wrong answer");
+        }  
         return STM32ERR;
       }
       else {
         UART_STM32.readBytesUntil(STM32ACK, vsbuf, 14);
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+          syslog.log(LOG_DEBUG, "STM32 :GetVersion time "+String(x));
+        }  
         return vsbuf[1];
       }
     }
-    else Serial.println("Error GetVersion: no data");
+    else {
+      Serial.println("Error GetVersion: no data");
+      if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+        syslog.log(LOG_DEBUG, "STM32 : Error GetVersion: no data");
+      }  
+    }
     delayMicroseconds(otaDelayCmd);
   }
-
+  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+        syslog.log(LOG_DEBUG, "STM32 : Error GetVersion: timeout");
+  }  
   return STM32ERR;  
 }
 
@@ -274,7 +288,7 @@ uint8_t CStmOta::stm32GetId()
   
   stm32SendCommand(STM32ID);
   
-  for (x=0;x<100;x++) {
+  for (x=0;x<200;x++) {
     if (UART_STM32.available()>0) {          
       sbuf[0] = UART_STM32.read();
       if (sbuf[0] == STM32ACK) {
@@ -289,12 +303,18 @@ uint8_t CStmOta::stm32GetId()
           UART_DBG.print("--> type is ");
           UART_DBG.println(chipName);
         #endif
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+          syslog.log(LOG_DEBUG, "STM32 ota: getid: Id: 0x"+String(chipId,HEX)+" type : "+String(chipName)+" elapsed "+String(x));
+        }  
         return 1;
       }
       else {
         #ifdef EnvDevelop
           UART_DBG.println("Error: wrong answer");
         #endif
+        if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+          syslog.log(LOG_DEBUG, "STM32 ota: Error getid : wrong answer");
+        }  
         return 0;
       }
     }    
@@ -303,6 +323,9 @@ uint8_t CStmOta::stm32GetId()
   #ifdef EnvDevelop
     UART_DBG.println("- Error: no data");
   #endif
+  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+      syslog.log(LOG_DEBUG, "STM32 ota: Error getid: no data");
+  }  
   return 0;
 }
 

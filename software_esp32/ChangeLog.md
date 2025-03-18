@@ -11,6 +11,80 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - Development
 
+## [1.4.10]
+### Added
+- Webui :       Show information if stm failed
+- PI Control :  deadband added
+### Fixed
+- Mqtt :        reconnect mqtt if control setup is saved to subscribe topics again
+- SNTP :        connection improved
+
+## [1.4.9]
+### Added
+- HA discovery : temperature_state_topic added
+
+## [1.4.8]
+### Fixed
+- Webui :      if stm32 is not responding after reset an error message is displayed in config and config save button is enabled again
+- Webui :      manual set valve button on status page was not displayed after login. 
+- update :     if the file-end is 256 byte aligned a verify error occurs during update stm after flashing 
+### Changed
+- Webui :      display all temp sensors on status page if 'publish all temps' is enabled 
+### Added
+- Pi Control : actual pi control values will be saved in rtc ram and
+               reloaded after reset by SW (will take by update or reboot with SW, not when power off/on or hardware reset)
+- Webui :      more in state info during calibration
+               
+## [1.4.7]
+### Changed
+- Webui :      handling for login to save login parameters in browser password manager
+- Webui :      display temp sensor name on status page in temp1 and temp2 
+### Added
+- WebUI :      logout button 
+
+
+## [1.4.6]
+### Changed
+- Mqtt :       bugfix in topic generation 
+- Webui :      disable config save button while loading
+- Temp :       Index of temp offset in config was wrong 
+
+### Added
+- Mqtt :       publish min/max for valve control
+- Discovery :  topics for temp and volt sensors corrected
+- WebUI :      hover on table line -> orange 
+
+## [1.4.4]
+### Added
+- Mqtt :       publish ip added
+               send initial value for valve/control/mode after boot. 
+               Discovery of 0.5 degree step with climate
+- Control :    Initial value for target temperature after boot 
+- Config :     Increase email config to 64 chars
+
+## [1.4.3]
+### Added
+- STM :        Boot0 ota : reduce Baudrate by div 2 if init failed. Retry 2 times
+- Mqtt :       discovery: climate and valve added
+- Mqtt :       tValue and tTarget will be resend by VDMot if received from a server and differs from the last one. 
+               (Only if strict seperate topics is enabled)
+
+## [1.4.2]
+### Changed
+- Mqtt :       discovery: if valve name und temp name is empty then the idx-number is set as name
+                          delete last topics (user can avtivate) in HA prior sending new discovery 
+### Added
+- STM :        check for compatibility to WTH32 version
+
+## [1.4.1]
+### Changed
+- Mqtt :        blanks in valve name und temp name allowed
+### Added
+- Mqtt :        discovery for home assistant
+
+## [1.4.0]
+### Changed
+- System :      add DS2438 for voltage sensors
 
 ## [1.3.7]
 ### Changed
