@@ -61,8 +61,9 @@
 #include <Syslog.h>
 #include <AsyncWebServer_WT32_ETH01.h>
 
-#define noneProtocol 0
-#define mqttProtocol 1
+#define noneProtocol    0
+#define mqttProtocol    1
+#define mqttProtocolHA  2
 
 #define interfaceAuto 0
 #define interfaceEth  1
@@ -103,6 +104,7 @@ public:
   void startBroker();
   void mqttBroker();
   void startSysLog();
+  void configTzTime(const char* tz, const char* server1, const char* server2=NULL, const char* server3=NULL);
   bool checkSntpReachable();
    
   TWifiState wifiState;

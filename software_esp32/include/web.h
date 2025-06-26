@@ -58,6 +58,7 @@ public:
   void postValvesPos();
   String getValvesStatus();
   String getTempsStatus(VDM_TEMPS_CONFIG tempsConfig);
+  String getVoltsStatus(VDM_VOLTS_CONFIG voltsConfig); 
   String getNetInfo(VDM_NETWORK_INFO networkInfo); 
   String getNetConfig (VDM_NETWORK_CONFIG netConfig);
   String getProtConfig (VDM_PROTOCOL_CONFIG protConfig);
@@ -65,7 +66,9 @@ public:
   String getMotorConfig (MOTOR_CHARS motorConfig);
   String getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConfig);
   String getTempsConfig (VDM_TEMPS_CONFIG tempsConfig);
+  String getVoltsConfig (VDM_VOLTS_CONFIG voltsConfig);
   String getTempSensorsID();
+  String getVoltSensorsID();
   String getSysDynInfo();
   String getSysInfo();
   String getSysConfig (VDM_SYSTEM_CONFIG sysConfig);

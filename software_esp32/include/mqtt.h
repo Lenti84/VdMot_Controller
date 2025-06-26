@@ -43,22 +43,29 @@
 #include "globals.h"
 #include "VdmConfig.h"
 
-#define MAINTOPIC_LEN 100
+#define MAINTOPIC_LEN 120
 
 // MQTT settings
 #define DEFAULT_MAINTOPIC    "VdMotFBH/"           //  /VdMotFBH/valve/1/actual
 #define DEFAULT_COMMONTOPIC  "common/"
 #define DEFAULT_VALVESTOPIC  "valves/"
 #define DEFAULT_TEMPSTOPIC   "temps/"
-
+#define DEFAULT_VOLTSTOPIC   "sensors/" 
+#define HA_FILE_NAME         "/HADiscovery.cfg"
 
 #define publishNothing  0
 #define publishCommon   1
 #define publishValves   2
 #define publishTemps    4
+#define publishVolts    8
+
+#define publishAll      publishCommon+publishValves+publishTemps+publishVolts     
 
 #define MAX_MQTT_RETRIES 100
 #define STATE_FAILED 9
+
+enum HAD_STATE { HAD_IDLE, HAD_STARTED, HAD_INPROGRSS,HAD_FINISHED };
+enum ACTION_HA { HA_DISCOVERY_ONLY, HA_DELETE_ONLY, HA_DELETE_AND_DISCOVERY};
 
 typedef struct {
   bool controlActive;
@@ -68,6 +75,11 @@ typedef struct {
   uint16_t meanCurrent;
   int temp1;
   int temp2;
+  float tTarget;
+  float tValue;
+  uint8_t controlMode;
+  uint8_t startActiveZone;
+  uint8_t endActiveZone;
   uint32_t ts;
   bool publishNow;
   bool publishTimeOut;
@@ -87,6 +99,13 @@ typedef struct {
 } LASTTEMPVALUES; 
 
 typedef struct {
+  float vad;          // temperature of assigned sensor
+  char id[25];
+  uint32_t ts;
+  bool publishNow;
+} LASTVOLTVALUES; 
+
+typedef struct {
   uint8_t heatControl;          
   uint8_t parkingPosition;
   uint8_t systemState;
@@ -100,6 +119,20 @@ typedef struct {
   bool messengerSent;        
 } VALVESTATE; 
 
+typedef struct {
+  String topicClass;
+  String topic;
+  String name; 
+  String unique_id;
+  String state_topic;
+  String command_topic;
+  String icon;
+  String options;
+  String device_class;
+  String state_class;
+  String unit_of_measurement;
+  String configuration_url;    
+} HA_Item; 
 
 class CMqtt
 {
@@ -110,27 +143,36 @@ class CMqtt
     void mqtt_setup(IPAddress brokerIP,uint16_t brokerPort);
     void mqtt_loop();
     void callback(char* topic, byte* payload, unsigned int length);
+    void deleteDiscoveryHA();
+    void sendDiscoveryHA(HA_Item thisHAItem); 
+    void executeDiscoveryHA();
+    void executeDiscoveryHANow();
     int mqttState;
     bool mqttConnected;
     bool mqttReceived;
     VALVESTATE valveStates[ACTUATOR_COUNT];
+    HAD_STATE hadState;
+    ACTION_HA actionHA;
+    bool forceReconnect;
   private:
     void publish_all (uint8_t publishFlags);
     void publish_common (); 
     void publish_valves ();
     void publish_temps ();
+    void publish_volts();
     uint8_t checkForPublish (); 
     void checktValueTimeOut (); 
     bool checkTopicName(char* topic,char* ref,bool set=true);
     bool checkTopicPath(char* topic,char* ref);
     void subscribe (char* topicstr, char* thisTopic, uint8_t size, bool publishValue=false);
-    void publishValue (char* topicstr, char* valstr);
+    void publishValue (char* topicstr, char* valstr, size_t size);
     bool messengerSend;
     bool firstPublish;
     char mqtt_mainTopic[MAINTOPIC_LEN] = {0};
     char mqtt_commonTopic[MAINTOPIC_LEN] = {0};
     char mqtt_valvesTopic[MAINTOPIC_LEN]= {0};
     char mqtt_tempsTopic[MAINTOPIC_LEN]= {0};
+    char mqtt_voltsTopic[MAINTOPIC_LEN]= {0};
     char mqtt_callbackTopic[MAINTOPIC_LEN]= {0};
     char stationName[sizeof(VdmConfig.configFlash.systemConfig.stationName)+5]= {0};
     uint32_t tsPublish;
@@ -140,7 +182,10 @@ class CMqtt
     LASTCOMMONVALUES lastCommonValues;
     LASTVALVEVALUES lastValveValues[ACTUATOR_COUNT];
     LASTTEMPVALUES lastTempValues[TEMP_SENSORS_COUNT];
+    LASTVOLTVALUES lastVoltValues[VOLT_SENSORS_COUNT];
     boolean topicsReceived;
+    String haDiscoveryTopic;
+    
 };
 
 extern CMqtt Mqtt;

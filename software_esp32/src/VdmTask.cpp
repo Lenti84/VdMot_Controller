@@ -114,7 +114,9 @@ void CVdmTask::startApp()
 void CVdmTask::startStm32Ota(uint8_t command,String thisFileName)
 {
     taskManager.setTaskEnabled (taskIdApp,false);
+    taskManager.setTaskEnabled (taskIdMqtt,false);
     delay (1000);           // wait to finish task;
+
     Stm32.STM32ota_setup();
     Stm32.STM32ota_start(command,thisFileName);
     if (taskIdStm32Ota==TASKMGR_INVALIDID) {
@@ -155,7 +157,12 @@ void CVdmTask::stopPIServices()
 {
     for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) {
         if (taskIdPiControl[picIdx]!=TASKMGR_INVALIDID) {
-            taskManager.cancelTask (taskIdPiControl[picIdx]);
+            if (taskManager.getTask(taskIdPiControl[picIdx])!=nullptr) {
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_DEBUG, "pic: stop task pi valve # "+String(picIdx+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[picIdx].name)+") "+String(taskIdPiControl[picIdx],16));
+                }
+                taskManager.cancelTask (taskIdPiControl[picIdx]);
+            }
             taskIdPiControl[picIdx]=TASKMGR_INVALIDID;
         }
     }
@@ -168,8 +175,12 @@ void CVdmTask::startPIServices(bool startTask)
         UART_DBG.println("Start pi tasks "+String(startTask));
     #endif
     for (uint8_t picIdx=0; picIdx<ACTUATOR_COUNT; picIdx++) { 
+        PiControl[picIdx].setControlActive(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].controlFlags.active);
         if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].controlFlags.active) {
             if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].link==0) { 
+                if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_DEBUG, "pic: start task pi valve # "+String(picIdx+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[picIdx].name)+") "+String(startTask)+" , ts = "+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts));
+                }
                 PiControl[picIdx].valveIndex=picIdx;
                 PiControl[picIdx].ti=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ti;
                 PiControl[picIdx].xp=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].xp;
@@ -182,16 +193,22 @@ void CVdmTask::startPIServices(bool startTask)
                 PiControl[picIdx].startActiveZone=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].startActiveZone;
                 PiControl[picIdx].endActiveZone=VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].endActiveZone;
                 if (StmApp.motorChars.startOnPower>100) StmApp.motorChars.startOnPower=0;
-                PiControl[picIdx].startValvePos=StmApp.motorChars.startOnPower;
+                PiControl[picIdx].startValvePos=VdmConfig.configFlash.valvesControlInit.valveControlInit[picIdx].tTarget; //StmApp.motorChars.startOnPower;
+                PiControl[picIdx].reloadPiControl();
+                //PiControl[picIdx].start=false;
                 if (startTask) {
                     if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts>0) {
                         if (taskIdPiControl[picIdx]==TASKMGR_INVALIDID) {
                             //UART_DBG.println("Start pi tasks valve # "+String(picIdx)+":"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts));
                             taskIdPiControl[picIdx] = taskManager.scheduleFixedRate(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[picIdx].ts, &PiControl[picIdx], TIME_SECONDS);
                             //UART_DBG.println("Start pi tasks valve #"+String(picIdx)+":"+String(taskIdPiControl[picIdx]));
+                            if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                                syslog.log(LOG_DEBUG, "pic: started task pi valve # "+String(picIdx+1)+" ("+String(VdmConfig.configFlash.valvesConfig.valveConfig[picIdx].name)+") "+String(startTask));
+                            }
                         }
                     }
                 }
+               
             }
         }
     }

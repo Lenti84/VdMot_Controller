@@ -136,10 +136,12 @@
   // MUX pin definition for C1-sample
   #define MUX_ON()     digitalWrite(CTRL_MUX, HIGH)
   #define MUX_OFF()    digitalWrite(CTRL_MUX, LOW)
+  #define WAIT_MUX     2*50
 #elif HARDWARE_REVISION_C2
   // MUX pin definition for C2-sample
   #define MUX_ON()     digitalWrite(CTRL_MUX, LOW)
   #define MUX_OFF()    digitalWrite(CTRL_MUX, HIGH)
+  #define WAIT_MUX     2*50
 #endif
 
 #define PSU_ON()     digitalWrite(POWER_ENA, LOW);   // enable PSU for valves   
@@ -149,10 +151,10 @@
 
 // defines 
 
-#define ACTUATOR_COUNT      		12    	// how many valves are supported
-#define ADDITIONAL_SENSOR_COUNT		10 		// some additional sensors for x
+#define ACTUATOR_COUNT      		12    // how many valves are supported
+#define ADDITIONAL_SENSOR_COUNT	10 		// some additional sensors for x
 #define MAXONEWIRECNT		(ACTUATOR_COUNT*2)+ADDITIONAL_SENSOR_COUNT				// max count of usable 1-wire sensors
-
+#define MAXDS2438CNT  8
 #define SYSTEM_NAME         "VdMot Controller"
 
 #define EEPROM_MARK_ADD		0		// address 4 byte mark: 0x1F2F3F4F

@@ -11,6 +11,18 @@ All notable changes to this project will be documented in this file.
 
 ### Removed
 
+## [1.4.9]
+### Fixed
+- System :     valves detection went sometimes wrong
+
+## [1.4.8]
+### Changed
+- System :      set the valves to previous % state after calibration
+
+## [1.4.0]
+### Changed
+- System :      add DS2438 for voltage sensors
+
 ## [1.3.7]
 ### Fixed
 - Config :      fix bug valve 12 set tIdx1 and tIdx2 was not saved

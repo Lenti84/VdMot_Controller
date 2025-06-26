@@ -147,6 +147,7 @@ String CWeb::getProtConfig (VDM_PROTOCOL_CONFIG protConfig)
                     "\"pubPathAsRoot\":"+String(protConfig.protocolFlags.publishPathAsRoot)+","+
                     "\"pubUpTime\":"+String(protConfig.protocolFlags.publishUpTime)+","+
                     "\"pubDiag\":"+String(protConfig.protocolFlags.publishDiag)+","+
+                    "\"numFormat\":"+String(protConfig.mqttConfig.flags.numFormat)+","+
                     "\"keepAliveTime\":"+String(protConfig.keepAliveTime)+","+
                     "\"user\":\""+String(protConfig.userName)+"\"}";  
   return result;  
@@ -162,7 +163,8 @@ String CWeb::getValvesConfig (VDM_VALVES_CONFIG valvesConfig)
     result += "{\"name\":\""+String(valvesConfig.valveConfig[x].name) + "\"," +
               "\"active\":"+String(valvesConfig.valveConfig[x].active) + ","+
               "\"tIdx1\":"+String(StmApp.actuators[x].tIdx1) + ","+
-              "\"tIdx2\":"+String(StmApp.actuators[x].tIdx2) + "}";
+              "\"tIdx2\":"+String(StmApp.actuators[x].tIdx2);       
+    result+="}";
     if (x<ACTUATOR_COUNT-1) result += ",";
   }  
   result += "]}"; 
@@ -197,7 +199,9 @@ String CWeb::getValvesControlConfig (VDM_VALVES_CONTROL_CONFIG valvesControlConf
               "\"link\":"+String(valvesControlConfig.valveControlConfig[x].link) + ","+
               "\"vSource\":"+String(valvesControlConfig.valveControlConfig[x].valueSource) + ","+
               "\"tSource\":"+String(valvesControlConfig.valveControlConfig[x].targetSource) + ","+
+              "\"inittTarget\":"+String(VdmConfig.configFlash.valvesControlInit.valveControlInit[x].tTarget,1) + ","+
               "\"xp\":"+String(valvesControlConfig.valveControlConfig[x].xp) + ","+
+              "\"deadband\":"+String(VdmConfig.configFlash.valvesControl1Config.valveControl1Config[x].deadband) + ","+
               "\"offset\":"+String(valvesControlConfig.valveControlConfig[x].offset) + ","+
               "\"ti\":"+String(valvesControlConfig.valveControlConfig[x].ti) + ","+
               "\"ts\":"+String(valvesControlConfig.valveControlConfig[x].ts) + ","+
@@ -246,6 +250,34 @@ bool CWeb::findIdInValve (uint8_t idx) {
   return (false);
 }  
 
+String CWeb::getVoltsConfig (VDM_VOLTS_CONFIG voltsConfig)
+{
+  String result = "[";
+  for (uint8_t x=0;x<VOLT_SENSORS_COUNT;x++) {
+    result += "{\"name\":\""+String(voltsConfig.voltConfig[x].name) + "\"," +
+              "\"active\":"+String(voltsConfig.voltConfig[x].active) + "," +
+              "\"id\":\""+String(voltsConfig.voltConfig[x].ID) + "\"," +
+              "\"offset\":\""+String(((float)voltsConfig.voltConfig[x].offset),3) + "\"," +
+              "\"factor\":\""+String(((float)voltsConfig.voltConfig[x].factor),3) + "\"," +
+              "\"unit\":\""+String(voltsConfig.voltConfig[x].unit) + "\"}";
+    if (x<VOLT_SENSORS_COUNT-1) result += ",";
+  }  
+  result += "]"; 
+  return result;  
+}
+
+String CWeb::getVoltSensorsID()
+{
+  String result = "[";
+  String id="";
+  for (uint8_t x=0;x<StmApp.voltsCount;x++) {
+    result += "{\"id\":\""+String(StmApp.voltsId[x].id) + "\"}";
+    if (x<StmApp.voltsCount-1) result += ",";
+  }  
+  result += "]"; 
+  return result;  
+}
+
 String CWeb::getSysInfo()
 {
   String wt32Build="";
@@ -277,6 +309,8 @@ String CWeb::getSysInfo()
                   "\"wt32Sketch\":"+ESP.getSketchSize()+","+
                   "\"wt32FlashUsed\":"+String(usedFlashProz,1)+","+
                   "\"stm32version\":\""+VdmSystem.stmVersion+stmBuild+"\","+
+                  "\"stm32VFalse\":\""+VdmSystem.stmVersionFalse+"\","+
+                  "\"stm32MinReq\":\""+minSTMRequired+"\","+
                   "\"stm32ChipId\":\"0x"+String(VdmSystem.stmID,16)+" "+String(StmOta.checkChipName(VdmSystem.stmID))+"\""+
                   "}";
   return result;  
@@ -302,6 +336,7 @@ String CWeb::getSysDynInfo()
                   "\"wifich\":"+WiFi.channel()+ "," +
                   "\"wifiStatus\":"+WiFi.status()+ "," +
                   "\"stmStatus\":"+String(StmApp.stmStatus)+ "," +
+                  "\"stmFailed\":"+String(StmApp.stmFailed)+ "," +
                   "\"stmInit\":"+String(StmApp.stmInitState);
                   if (VdmConfig.configFlash.protConfig.dataProtocol>0) {
                     result += ",\"brokerStatus\":"+String(Mqtt.mqttState);
@@ -353,14 +388,17 @@ String CWeb::getValvesStatus()
 
                  if ((StmApp.stmInitState==STM_INIT_FINISHED) && StmApp.oneWireAllRead) {
                   if (StmApp.actuators[x].tIdx1>0) { 
+                    result += ",\"tIdxName1\":\""+String(VdmConfig.configFlash.tempsConfig.tempConfig[StmApp.actuators[x].tIdx1-1].name)+"\"";
                     if (StmApp.actuators[x].temp1>-500) {
                         result +=",\"temp1\":" + String(((float)StmApp.actuators[x].temp1)/10,1);
                     } else result +=",\"temp1\":\"failed\"";
                   }
                   if (StmApp.actuators[x].tIdx2>0) { 
+                    result += ",\"tIdxName2\":\""+String(VdmConfig.configFlash.tempsConfig.tempConfig[StmApp.actuators[x].tIdx2-1].name)+"\"";
                     if (StmApp.actuators[x].temp2>-500) {
                         result +=",\"temp2\":" + String(((float)StmApp.actuators[x].temp2)/10,1);
                     } else result +=",\"temp2\":\"failed\"";
+
                   }
                  }
 
@@ -372,8 +410,7 @@ String CWeb::getValvesStatus()
                     result +=",\"tTarget\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
                     result +=",\"tValue\":\"link #"+String(VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].link)+"\"";
                   }
-                 }
-
+                 } 
                  if (VdmConfig.configFlash.valvesControlConfig.valveControlConfig[x].controlFlags.windowInstalled) {
                    result +=",\"window\":"+String(PiControl[x].windowState);
                  }
@@ -407,7 +444,7 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
   String s;
 
   for (uint8_t i=0;i<StmApp.tempsCount;i++) {
-    if ((StmApp.findTempIdxInValve(i)<0) && (VdmConfig.configFlash.tempsConfig.tempConfig[i].active)) {
+    if (((StmApp.findTempIdxInValve(i)<0) || (VdmConfig.configFlash.protConfig.protocolFlags.publishAllTemps)) && (VdmConfig.configFlash.tempsConfig.tempConfig[i].active)) {
       if (start) result += ",";
       temperature = StmApp.temps[i].temperature;
       if (StmApp.temps[i].temperature<=-500) s="\"failed\""; else s=String(((float)temperature)/10,1);
@@ -420,6 +457,29 @@ String CWeb::getTempsStatus(VDM_TEMPS_CONFIG tempsConfig)
   result += "]";
   return result;
 }
+
+String CWeb::getVoltsStatus(VDM_VOLTS_CONFIG voltsConfig) 
+{
+  String result = "[";
+  bool start = false;
+  
+  for (uint8_t i=0;i<StmApp.voltsCount;i++) {
+     if (voltsConfig.voltConfig[i].active) {
+      if (start) result += ",";
+      result += "{\"id\":\"" + String(StmApp.volts[i].id) + "\","+
+                 "\"name\":\"" + String(voltsConfig.voltConfig[i].name) + "\","+
+                 "\"unit\":\"" + String(voltsConfig.voltConfig[i].unit) + "\",";
+      if (StmApp.volts[i].failed) 
+        result+="\"value\":\"failed\"}";
+      else
+        result+="\"value\":" + String(StmApp.volts[i].value,3)+"}";
+      start = true;
+     }
+  }  
+  result += "]";
+  return result;
+}
+
 
 String CWeb::getFSDir() 
 {

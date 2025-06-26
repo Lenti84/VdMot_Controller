@@ -36,7 +36,7 @@
 #include "app.h"
 #include "terminal.h"
 #include "communication.h"
-#include "temperature.h"
+#include "owDevices.h"
 #include "eeprom.h"
 #include "otasupport.h"
 #include "STM32TimerInterrupt.h"      

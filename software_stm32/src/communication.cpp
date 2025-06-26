@@ -36,7 +36,7 @@
 #include "app.h"
 #include "motor.h"
 #include "communication.h"
-#include "temperature.h"
+#include "owDevices.h"
 #include "eeprom.h"
 #include "DallasTemperature.h"
 #include <string.h>
@@ -244,7 +244,11 @@ int16_t communication_loop (void) {
 		// ****************************************************************************************
 		// clear sendbuffer, otherwise there is something from older commands
 		memset (sendbuffer,0x0,sizeof(sendbuffer));	
-		
+	/*	#ifdef commDebug
+			COMM_DBG.print("cmd ");
+			COMM_DBG.println(cmd); 
+		#endif
+	*/
 		// set target position
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		if(memcmp(APP_PRE_SETTARGETPOS,&cmd[0],5) == 0) {
@@ -261,7 +265,7 @@ int16_t communication_loop (void) {
 				#endif
 				if (y >= 0 && y <= 100 && x < ACTUATOR_COUNT) 
 				{
-					if (!myvalvemots[x].calibration) 
+					if (!myvalvemots[x].calibration)  // wdu ???
 						myvalvemots[x].target_position = (byte) y;
 					COMM_SER.println(APP_PRE_SETTARGETPOS);
 				}
@@ -407,31 +411,30 @@ int16_t communication_loop (void) {
 			COMM_SER.println(" ");
 		}
 
-		// get onewire sensor count
+		// get temp onewire sensor count
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIRECNT,&cmd[0],5) == 0) {
 			
 			if(argcnt == 0) {
 				COMM_SER.print(APP_PRE_GETONEWIRECNT);
 				COMM_SER.print(" ");			
-				COMM_SER.print(sensors.getDeviceCount(), DEC);
+				COMM_SER.print(noOfDS18Devices, DEC);
 				COMM_SER.println(" ");
 			}	
 			if(argcnt == 1) {	
 				x = atoi(argptr[0]);
 				if (x==255) {
 					// get all onewire detected sensor
-					uint8_t nDevices = sensors.getDeviceCount();
 					COMM_SER.print(APP_PRE_GETONEWIRECNT);
 					COMM_SER.print(" ");		
-					COMM_SER.print(nDevices, DEC);
-					if (nDevices>0) COMM_SER.print(" ");
-					for (uint8_t i=0;i<nDevices;i++){
+					COMM_SER.print(noOfDS18Devices, DEC);
+					if (noOfDS18Devices>0) COMM_SER.print(" ");
+					for (uint8_t i=0;i<noOfDS18Devices;i++){
 						memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
 						// 8 Byte adress
 						sensorID2Ascii (&tempsensors[i].address[0],sendbuffer);
 						COMM_SER.print(sendbuffer);
-						if (i<nDevices-1) COMM_SER.print(",");
+						if (i<noOfDS18Devices-1) COMM_SER.print(",");
 					}	
 					COMM_SER.println(" ");
 				}
@@ -439,7 +442,7 @@ int16_t communication_loop (void) {
 			} 		
 		}
 
-		// get onewire sensor data of sensor x (adress and temperature)
+		// get temp onewire sensor data of sensor x (adress and temperature)
 		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 		else if(memcmp(APP_PRE_GETONEWIREDATA,&cmd[0],5) == 0) {
 
@@ -532,6 +535,67 @@ int16_t communication_loop (void) {
 				COMM_SER.println(" error ");			
 			}			
 		}
+
+		// get volt onewire sensor count
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETOWVOLTCNT,&cmd[0],5) == 0) {
+			if(argcnt == 0) {
+				COMM_SER.print(APP_PRE_GETOWVOLTCNT);
+				COMM_SER.print(" ");			
+				COMM_SER.print(noOfDS2438Devices, DEC);
+				COMM_SER.println(" ");
+			}	
+			if(argcnt == 1) {	
+				x = atoi(argptr[0]);
+				if (x==255) {
+					// get all onewire detected sensor
+					COMM_SER.print(APP_PRE_GETOWVOLTCNT);
+					COMM_SER.print(" ");		
+					COMM_SER.print(noOfDS2438Devices, DEC);
+					if (noOfDS2438Devices>0) COMM_SER.print(" ");
+					for (uint8_t i=0;i<noOfDS2438Devices;i++){
+						memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
+						// 8 Byte adress
+						sensorID2Ascii (&voltsensors[i].address[0],sendbuffer);
+						COMM_SER.print(sendbuffer);
+						if (i<noOfDS2438Devices-1) COMM_SER.print(",");
+					}	
+					COMM_SER.println(" ");
+				}
+			
+			} 		
+		}
+
+		// get volt onewire sensor data of sensor x (adress and temperature)
+		// ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		else if(memcmp(APP_PRE_GETOWVOLTDATA,&cmd[0],5) == 0) {
+
+			x = atoi(argptr[0]);
+
+			if(argcnt == 1) {
+
+				if(x<MAXDS2438CNT)
+				{
+					memset (sendbuffer,0x0,sizeof(sendbuffer));				// reset sendbuffer
+					// 8 Byte adress
+					sensorID2Ascii (&voltsensors[x].address[0],sendbuffer);
+					
+					strcat(sendbuffer," ");
+					// volt
+					itoa(voltsensors[x].vad, valbuffer, 10);      
+					strcat(sendbuffer, valbuffer);
+				}
+				else strcat(sendbuffer, "0");
+
+			}
+			else strcat(sendbuffer, "0");
+
+			COMM_SER.print(APP_PRE_GETOWVOLTDATA);
+			COMM_SER.print(" ");			
+			COMM_SER.print(sendbuffer);
+			COMM_SER.println(" ");			
+		}
+
 
 
 		// start new onewire sensor search
@@ -646,8 +710,7 @@ int16_t communication_loop (void) {
 				#endif
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXONEWIRECNT) 
 				{
-					numberOfDevices = sensors.getDeviceCount();
-					if (numberOfDevices > 0) 
+					if (noOfDS18Devices > 0) 
 					{
 						// write sensor address code to eeprom layout mirror
 						sensors.getAddress(currAddress, y);
@@ -690,8 +753,7 @@ int16_t communication_loop (void) {
 				#endif
 				if (x >= 0 && x < ACTUATOR_COUNT && y < MAXONEWIRECNT) 
 				{
-					numberOfDevices = sensors.getDeviceCount();
-					if (numberOfDevices > 0) 
+					if (noOfDS18Devices > 0) 
 					{
 						// write sensor address code to eeprom layout mirror
 						sensors.getAddress(currAddress, y);

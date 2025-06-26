@@ -70,6 +70,18 @@ typedef struct  {
   char id[25];
 } TEMPID_STRUC;
 
+typedef struct  {
+  int16_t vad;          // temperature of assigned sensor
+  float value;
+  char id[25];
+  bool failed;
+} VOLT_STRUC;
+
+typedef struct  {
+  char id[25];
+} VOLTID_STRUC;
+
+
 typedef struct {
   uint16_t maxHighCurrent;
   uint16_t maxLowCurrent;
@@ -87,6 +99,8 @@ typedef struct {
 #define APP_PRE_SETTARGETPOS       	"stgtp"			
 #define APP_PRE_GETONEWIRECNT		    "gonec"			
 #define APP_PRE_GETONEWIREDATA		  "goned"	
+#define APP_PRE_GETOWVOLTCNT        "gowvc"		
+#define APP_PRE_GETOWVOLTDATA       "gowvd"		
 #define APP_PRE_SETONEWIRESEARCH    "stons"		
 #define APP_PRE_SET1STSENSORINDEX	  "stsnx"   		
 #define APP_PRE_SET2NDSENSORINDEX	  "stsny"			
@@ -135,11 +149,11 @@ typedef struct {
 #define ARG_DELIMITER       String(" ")
 
 enum COMM_STATE {COMM_IDLE,COMM_SENDTARGET,COMM_CHECKTARGET,COMM_GETDATA,
-                  COMM_GETONEWIRE,COMM_GETONEWIRECOUNT,COMM_GETEEPSTATE,COMM_HANDLEQUEUE};
+                  COMM_GETONEWIRE,COMM_GETONEWIRECOUNT,COMM_GETOWVOLT,COMM_GETOWVOLTCOUNT,COMM_GETEEPSTATE,COMM_HANDLEQUEUE};
 
 enum STM_START_PROC {STM_NOT_READY,STM_READY,STM_READ_ALL_FROM_QUEUE};
 
-enum STM_INIT_STATE {STM_INIT_NOT_STARTED,STM_INIT_STARTED,STM_INIT_FINISHED};
+enum STM_INIT_STATE {STM_INIT_NOT_STARTED,STM_INIT_STARTED,STM_INIT_FINISHED,STM_FAILED};
 
 enum APP_STATE {APP_IDLE,APP_PENDING,APP_TIMEOUT};
 enum EEP_STATE {EEP_IDLE,EEP_REQUEST,EEP_DONE};
@@ -169,12 +183,16 @@ public:
   void getParametersFromSTM();
   void softReset();
   int8_t findTempID(char* ID);
+  int8_t findVoltID(char* ID);
   int8_t findTempIdxInValve (uint8_t tempIdx);
   
   ACTUATOR_STRUC actuators[ACTUATOR_COUNT];
   TEMP_STRUC temps[TEMP_SENSORS_COUNT];
   TEMPID_STRUC tempsId[TEMP_SENSORS_COUNT];
+  VOLT_STRUC volts[VOLT_SENSORS_COUNT];
+  VOLTID_STRUC voltsId[VOLT_SENSORS_COUNT];
   uint8_t tempsCount;
+  uint8_t voltsCount;
   bool setTempIdxActive;
   bool waitForFinishQueue;
   MOTOR_CHARS motorChars;
@@ -186,6 +204,7 @@ public:
   EEP_STATE eepState;
   bool waitEEPFinished;
   bool oneWireAllRead;
+  bool stmFailed;
   
 private:
   void appHandler();
@@ -212,8 +231,11 @@ private:
   APP_STATE appState;
   COMM_STATE commstate;    
   uint8_t tempIndex;
+  uint8_t voltIndex;
   uint8_t checkTempsCount;
+  uint8_t checkVoltsCount;
   uint8_t tempsPrivCount;
+  uint8_t voltsPrivCount;
   String cmd_buffer;
   
   char buffer[1200];

@@ -126,6 +126,8 @@ void CStm32::STM32ota_loop()
                   stm32ota_state = STM32OTA_PREPAREFILE;
                   stmUpdPercent = 0;
                   stm32ota_command = 0;
+                  baudRateBoot0 = otaBaudrateNormal;
+                  retryBoot0 = 0;
                 }
 
                 break;
@@ -147,8 +149,20 @@ void CStm32::STM32ota_loop()
 
                 break;
 
-        case STM32OTA_PREPARE: 
-                STM32ota_begin();
+        case STM32OTA_PREPARE:
+                if (!skipsigning) { 
+                  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_DEBUG, "STM32 ota: prepare normal");
+                  }  
+                  STM32ota_begin(otaBaudrateNormal);
+                } else { 
+                  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                    syslog.log(LOG_DEBUG, "STM32 ota: prepare boot0 with "+String(baudRateBoot0)+" Bd");
+                  }  
+                  STM32ota_begin(baudRateBoot0);
+                }
+            
+
                 ResetSTM32(true);           
                 VdmTask.yieldTask(1500); // stm32 is a little slow
                 UART_STM32.flush();     // flush garbage in rx buffer
@@ -214,7 +228,7 @@ void CStm32::STM32ota_loop()
                 if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
                   syslog.log(LOG_DEBUG, "STM32 ota: ready to beef");
                 }  
-                if (timeout >= 30) {      // 300 ms
+                if (timeout >= 30) {      // 30*50 ms
                   UART_STM32.write(STM32INIT);
                   stm32ota_state = STM32OTA_GETID;
                   stmUpdPercent = 10;
@@ -228,20 +242,28 @@ void CStm32::STM32ota_loop()
                 #ifdef EnvDevelop 
                   if (timeout==0) {
                     UART_DBG.println("STM32 ota: get id");
-                    if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-                      syslog.log(LOG_DEBUG, "STM32 ota: get id");
-                    }  
                   }
                 #endif
+                
                 if (timeout >= 3) {
-                                    
-                 // id = StmOta.stm32GetId();
-
+                  if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                      syslog.log(LOG_DEBUG, "STM32 ota: get id");
+                  }  
                   if (StmOta.stm32GetId()) {
                     stm32ota_state = STM32OTA_ERASE_START;
                     stmUpdPercent = 15;
+                    timeout = 0;
                   }
-                  else stm32ota_state = STM32OTA_ERROR;
+                  else {
+                    retryBoot0 ++;
+                    if (retryBoot0<3) {
+                      baudRateBoot0 = baudRateBoot0 / 2;
+                      if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
+                        syslog.log(LOG_DEBUG, "STM32 ota: failed, try with "+String(baudRateBoot0)+ "Bd");
+                      }  
+                      stm32ota_state = STM32OTA_PREPARE;
+                    } else stm32ota_state = STM32OTA_ERROR;
+                  }
                 }
                 else timeout++;
 
@@ -376,9 +398,11 @@ void CStm32::STM32ota_loop()
                   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
                     syslog.log(LOG_DEBUG, "STM32 ota: write last bytes");
                   }  
-                  if (FlashBytes(myflashfile.blockcnt, myflashfile.lastbytes) != 0) {
-                    stm32ota_state = STM32OTA_ERROR;
-                    break;
+                  if (myflashfile.lastbytes>0) {
+                    if (FlashBytes(myflashfile.blockcnt, myflashfile.lastbytes) != 0) {
+                      stm32ota_state = STM32OTA_ERROR;
+                      break;
+                    }
                   }
                   stm32ota_state = STM32OTA_VERIFY;
                   blockcounter = 0;
@@ -572,17 +596,17 @@ void CStm32::STM32ota_start(uint8_t command, String thisFileName)
 
 
 // has to be called prior to stm32 flash transactions
-void CStm32::STM32ota_begin() 
+void CStm32::STM32ota_begin(int BaudRate) 
 {
   #ifdef EnvDevelop
     UART_DBG.println("STM32 ota: begin");
   #endif
   if (VdmConfig.configFlash.netConfig.syslogLevel>=VISMODE_ATOMIC) {
-    syslog.log(LOG_DEBUG, "STM32 ota: begin");
+    syslog.log(LOG_DEBUG, "STM32 ota: begin Baudrate = "+String(BaudRate));
   }  
   // flash interface
   // ATTENTION: on WT32-ETH01 use for UART_STM32 pins: RX2 IO35 and TX2 IO17
-  UART_STM32.begin(115200, SERIAL_8E1, STM32_RX, STM32_TX, false, 20000UL);
+  UART_STM32.begin(BaudRate, SERIAL_8E1, STM32_RX, STM32_TX, false, 20000UL);
   clearUART_STM32Buffer();
   #ifdef EnvDevelop
     UART_DBG.println("STM32 ota: init state machine");
@@ -770,6 +794,7 @@ int CStm32::FlashBytes(int Block, int Bytes)
 // unTested
 uint8_t CStm32::stm32StartRead(uint32_t rdaddress, uint16_t rdlen) 
 {
+  if (rdlen==0) return STM32OK;
   // send read request
   StmOta.stm32SendCommand(STM32RD);
 
